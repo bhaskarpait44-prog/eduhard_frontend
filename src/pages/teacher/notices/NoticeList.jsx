@@ -2,17 +2,15 @@ import { useMemo, useState } from 'react'
 import {
   BellPlus,
   BellRing,
-  CheckCheck,
   Edit3,
   Eye,
   Filter,
   Search,
-  UserRoundPlus,
   CalendarDays,
   User2,
   Users,
-  Paperclip,
   Clock,
+  Trash2,
 } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import useAuthStore from '@/store/authStore'
@@ -46,727 +44,197 @@ const CATEGORY_BADGE_VARIANT = {
 }
 
 const NoticeList = () => {
-  usePageTitle('Notice')
+  usePageTitle('Teacher Notices')
 
   const navigate = useNavigate()
   const user = useAuthStore((state) => state.user)
   const { can } = usePermissions()
   const { toastSuccess, toastError } = useToast()
-  const { notices, loadingBase, loadingNotices, markAsRead } = useTeacherNotices()
+  const { notices, loadingBase, loadingNotices, deleteNotice } = useTeacherNotices()
 
   const [filters, setFilters] = useState({
     search: '',
     category: '',
-    readState: '',
-    mineOnly: false,
   })
   const [selectedNotice, setSelectedNotice] = useState(null)
-  const [markingId, setMarkingId] = useState(null)
+  const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(null)
 
   const canPost = can('notices.post')
 
   const filteredNotices = useMemo(
     () =>
       notices.filter((notice) => {
-        const haystack =
-          `${notice.title} ${notice.content} ${notice.teacher_name || ''}`.toLowerCase()
-        const matchesSearch =
-          !filters.search.trim() ||
-          haystack.includes(filters.search.trim().toLowerCase())
-        const matchesCategory =
-          !filters.category || notice.category === filters.category
-        const matchesRead =
-          !filters.readState ||
-          (filters.readState === 'read' ? notice.is_read : !notice.is_read)
-        const matchesMine =
-          !filters.mineOnly || Number(notice.teacher_id) === Number(user?.id)
-        return matchesSearch && matchesCategory && matchesRead && matchesMine
+        const haystack = `${notice.title} ${notice.body}`.toLowerCase()
+        const matchesSearch = !filters.search.trim() || haystack.includes(filters.search.trim().toLowerCase())
+        const matchesCategory = !filters.category || notice.priority === filters.category // Map category to priority if needed, or just skip category filter if not in unified
+        return matchesSearch
       }),
-    [filters, notices, user?.id],
+    [filters, notices],
   )
 
   const stats = useMemo(
-    () =>
-      filteredNotices.reduce(
-        (acc, notice) => {
-          acc.total += 1
-          if (!notice.is_read) acc.unread += 1
-          if (Number(notice.teacher_id) === Number(user?.id)) acc.mine += 1
-          if (notice.target_scope === 'my_class_only') acc.classOnly += 1
-          return acc
-        },
-        { total: 0, unread: 0, mine: 0, classOnly: 0 },
-      ),
-    [filteredNotices, user?.id],
+    () => ({
+      total: notices.length,
+      urgent: notices.filter(n => n.priority === 'urgent').length,
+      info: notices.filter(n => n.priority === 'info').length
+    }),
+    [notices],
   )
 
-  const openNotice = async (notice) => {
-    setSelectedNotice(notice)
-    if (!notice.is_read) {
-      try {
-        setMarkingId(notice.id)
-        await markAsRead(notice.id)
-        toastSuccess('Notice marked as read.')
-        setSelectedNotice((prev) =>
-          prev
-            ? {
-                ...prev,
-                is_read: true,
-                read_count: Number(prev.read_count || 0) + 1,
-              }
-            : prev,
-        )
-      } catch (error) {
-        toastError(error?.message || 'Unable to mark notice as read.')
-      } finally {
-        setMarkingId(null)
-      }
+  const handleDelete = async () => {
+    try {
+      await deleteNotice(isDeleteConfirmOpen)
+      toastSuccess('Notice deleted.')
+      setIsDeleteConfirmOpen(null)
+    } catch (err) {
+      toastError('Failed to delete notice.')
     }
   }
-
-  const isMyNotice = (notice) =>
-    Number(notice?.teacher_id) === Number(user?.id)
 
   return (
     <div className="space-y-5">
       {/* ── Header ── */}
       <section
         className="rounded-[24px] border px-4 py-3 sm:px-5 sm:py-4"
-        style={{
-          borderColor: 'var(--color-border)',
-          backgroundColor: 'var(--color-surface)',
-        }}
+        style={{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface)' }}
       >
-        {/* Top row: icon + title + buttons */}
         <div className="flex items-center gap-3">
-          {/* Icon pill */}
-          <div
-            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl"
-            style={{ backgroundColor: 'rgba(13,148,136,0.12)' }}
-          >
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl" style={{ backgroundColor: 'rgba(13,148,136,0.12)' }}>
             <BellRing size={16} style={{ color: '#0f766e' }} />
           </div>
 
-          {/* Title block */}
           <div className="min-w-0 flex-1">
-            <h1
-              className="text-base font-semibold leading-tight"
-              style={{ color: 'var(--color-text-primary)' }}
-            >
-              Notice Board
-            </h1>
-            <p
-              className="truncate text-xs"
-              style={{ color: 'var(--color-text-secondary)' }}
-            >
-              Manage and view all teacher &amp; class notices
-            </p>
+            <h1 className="text-base font-semibold leading-tight" style={{ color: 'var(--color-text-primary)' }}>My Notices</h1>
+            <p className="truncate text-xs" style={{ color: 'var(--color-text-secondary)' }}>View and manage notices you have posted</p>
           </div>
 
-          {/* Action buttons */}
           <div className="flex shrink-0 items-center gap-2">
-            <Button
-              variant="secondary"
-              icon={UserRoundPlus}
-              size="sm"
-              onClick={() =>
-                navigate(ROUTES.TEACHER_NOTICE_NEW, {
-                  state: { targetMode: 'student' },
-                })
-              }
-            >
-              <span className="hidden sm:inline">Student Notice</span>
-            </Button>
-            <Button
-              variant="primary"
-              icon={BellPlus}
-              size="sm"
-              onClick={() => navigate(ROUTES.TEACHER_NOTICE_NEW)}
-            >
-              <span className="hidden sm:inline">Create</span>
+            <Button variant="primary" icon={BellPlus} size="sm" onClick={() => navigate(ROUTES.TEACHER_NOTICE_NEW)}>
+              <span className="hidden sm:inline">Post Notice</span>
             </Button>
           </div>
         </div>
 
-        {/* Divider */}
-        <div
-          className="my-3 h-px"
-          style={{ backgroundColor: 'var(--color-border)' }}
-        />
+        <div className="my-3 h-px" style={{ backgroundColor: 'var(--color-border)' }} />
 
-        {/* Stats row */}
-        <div className="grid grid-cols-4 gap-2">
+        <div className="grid grid-cols-3 gap-2">
           <CompactStat label="Total" value={stats.total} color="#0f766e" />
-          <CompactStat label="Unread" value={stats.unread} color="#ef4444" />
-          <CompactStat label="My Posts" value={stats.mine} color="#14b8a6" />
-          <CompactStat label="Class Only" value={stats.classOnly} color="#10b981" />
+          <CompactStat label="Urgent" value={stats.urgent} color="#ef4444" />
+          <CompactStat label="Info" value={stats.info} color="#14b8a6" />
         </div>
       </section>
 
       {/* ── Filters ── */}
       <section
         className="rounded-[18px] border px-3 py-3"
-        style={{
-          borderColor: 'var(--color-border)',
-          backgroundColor: 'var(--color-surface)',
-        }}
+        style={{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface)' }}
       >
         <div className="flex flex-wrap items-center gap-2">
-          <div
-            className="flex h-7 w-7 shrink-0 items-center justify-center rounded-[8px]"
-            style={{ backgroundColor: 'var(--color-surface-raised)' }}
-          >
-            <Filter size={13} style={{ color: 'var(--color-text-muted)' }} />
-          </div>
-
           <div className="relative flex-1 min-w-[130px]">
-            <Search
-              size={12}
-              className="absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none"
-              style={{ color: 'var(--color-text-muted)' }}
-            />
+            <Search size={12} className="absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400" />
             <input
               value={filters.search}
               onChange={(e) => setFilters((prev) => ({ ...prev, search: e.target.value }))}
-              placeholder="Search notices…"
+              placeholder="Search my notices…"
               className="w-full rounded-[10px] border py-1.5 pl-7 pr-3 text-xs outline-none transition-colors"
-              style={{
-                borderColor: 'var(--color-border)',
-                backgroundColor: 'var(--color-surface-raised)',
-                color: 'var(--color-text-primary)',
-              }}
+              style={{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface-raised)', color: 'var(--color-text-primary)' }}
             />
           </div>
-
-          <select
-            value={filters.category}
-            onChange={(e) => setFilters((prev) => ({ ...prev, category: e.target.value }))}
-            className="rounded-[10px] border py-1.5 px-2.5 text-xs outline-none"
-            style={{
-              borderColor: 'var(--color-border)',
-              backgroundColor: 'var(--color-surface-raised)',
-              color: filters.category ? 'var(--color-text-primary)' : 'var(--color-text-muted)',
-            }}
-          >
-            <option value="">All categories</option>
-            {CATEGORY_OPTIONS.map((o) => (
-              <option key={o.value} value={o.value}>{o.label}</option>
-            ))}
-          </select>
-
-          <select
-            value={filters.readState}
-            onChange={(e) => setFilters((prev) => ({ ...prev, readState: e.target.value }))}
-            className="rounded-[10px] border py-1.5 px-2.5 text-xs outline-none"
-            style={{
-              borderColor: 'var(--color-border)',
-              backgroundColor: 'var(--color-surface-raised)',
-              color: filters.readState ? 'var(--color-text-primary)' : 'var(--color-text-muted)',
-            }}
-          >
-            <option value="">All status</option>
-            <option value="unread">Unread</option>
-            <option value="read">Read</option>
-          </select>
-
-          <button
-            type="button"
-            onClick={() => setFilters((prev) => ({ ...prev, mineOnly: !prev.mineOnly }))}
-            className="rounded-[10px] border px-3 py-1.5 text-xs font-semibold transition-colors"
-            style={{
-              borderColor: filters.mineOnly ? '#0f766e' : 'var(--color-border)',
-              backgroundColor: filters.mineOnly ? '#0f766e' : 'var(--color-surface-raised)',
-              color: filters.mineOnly ? '#fff' : 'var(--color-text-secondary)',
-            }}
-          >
-            Mine only
-          </button>
         </div>
       </section>
 
       {/* ── Notice Cards ── */}
       <section className="space-y-4">
         {loadingBase || loadingNotices ? (
-          [...Array(4)].map((_, i) => (
-            <div
-              key={i}
-              className="h-52 animate-pulse rounded-[28px]"
-              style={{ backgroundColor: 'var(--color-surface-raised)' }}
-            />
+          [...Array(3)].map((_, i) => (
+            <div key={i} className="h-40 animate-pulse rounded-[22px]" style={{ backgroundColor: 'var(--color-surface-raised)' }} />
           ))
         ) : filteredNotices.length === 0 ? (
-          <EmptyState
-            icon={BellRing}
-            title="No notices found"
-            description="There are no notices matching your current filters."
-            action={
-              canPost ? (
-                <Button
-                  variant="primary"
-                  onClick={() => navigate(ROUTES.TEACHER_NOTICE_NEW)}
-                >
-                  Create Notice
-                </Button>
-              ) : null
-            }
-          />
+          <EmptyState icon={BellRing} title="No notices found" description="You haven't posted any notices yet." />
         ) : (
           filteredNotices.map((notice) => (
             <NoticeCard
               key={notice.id}
               notice={notice}
-              userId={user?.id}
-              canPost={canPost}
-              markingId={markingId}
-              onOpen={openNotice}
-              onEdit={() =>
-                navigate(ROUTES.TEACHER_NOTICE_NEW, {
-                  state: { notice },
-                })
-              }
+              onOpen={() => setSelectedNotice(notice)}
+              onEdit={() => navigate(ROUTES.TEACHER_NOTICE_NEW, { state: { notice } })}
+              onDelete={() => setIsDeleteConfirmOpen(notice.id)}
             />
           ))
         )}
       </section>
 
       {/* ── Detail Modal ── */}
-      <Modal
-        open={Boolean(selectedNotice)}
-        onClose={() => setSelectedNotice(null)}
-        title=""
-        size="xl"
-        footer={
-          <>
-            {canPost && isMyNotice(selectedNotice) ? (
-              <Button
-                variant="secondary"
-                icon={Edit3}
-                onClick={() =>
-                  navigate(ROUTES.TEACHER_NOTICE_NEW, {
-                    state: { notice: selectedNotice },
-                  })
-                }
-              >
-                Edit Notice
-              </Button>
-            ) : null}
-            <Button
-              variant="primary"
-              onClick={() => setSelectedNotice(null)}
-            >
-              Close
-            </Button>
-          </>
-        }
-      >
-        {selectedNotice ? (
-          <NoticeDetail notice={selectedNotice} />
-        ) : null}
+      <Modal open={Boolean(selectedNotice)} onClose={() => setSelectedNotice(null)} title="Notice Detail" size="xl">
+        {selectedNotice && <NoticeDetail notice={selectedNotice} />}
+      </Modal>
+
+      {/* ── Delete Modal ── */}
+      <Modal open={!!isDeleteConfirmOpen} onClose={() => setIsDeleteConfirmOpen(null)} title="Delete Notice" size="sm">
+        <div className="space-y-4">
+          <p className="text-sm text-slate-500">Delete this notice permanently?</p>
+          <div className="flex gap-3">
+            <Button variant="danger" onClick={handleDelete} className="flex-1">Delete</Button>
+            <Button variant="secondary" onClick={() => setIsDeleteConfirmOpen(null)} className="flex-1">Cancel</Button>
+          </div>
+        </div>
       </Modal>
     </div>
   )
 }
 
-/* ─────────────────────────────────────────
-   NoticeCard
-───────────────────────────────────────── */
-const CATEGORY_ACCENT = {
-  general:  { bg: 'rgba(56,130,221,0.08)',  border: 'rgba(56,130,221,0.22)',  dot: '#378ADD' },
-  homework: { bg: 'rgba(127,119,221,0.08)', border: 'rgba(127,119,221,0.22)', dot: '#7F77DD' },
-  exam:     { bg: 'rgba(226,75,74,0.08)',   border: 'rgba(226,75,74,0.22)',   dot: '#E24B4A' },
-  event:    { bg: 'rgba(99,153,34,0.08)',   border: 'rgba(99,153,34,0.22)',   dot: '#639922' },
-  holiday:  { bg: 'rgba(29,158,117,0.08)',  border: 'rgba(29,158,117,0.22)',  dot: '#1D9E75' },
-  other:    { bg: 'rgba(136,135,128,0.08)', border: 'rgba(136,135,128,0.22)', dot: '#888780' },
-}
-
-const NoticeCard = ({ notice, userId, canPost, markingId, onOpen, onEdit }) => {
-  const isOwn = Number(notice.teacher_id) === Number(userId)
-  const accent = CATEGORY_ACCENT[notice.category] || CATEGORY_ACCENT.other
-
+const NoticeCard = ({ notice, onOpen, onEdit, onDelete }) => {
   return (
-    <article
-      className="overflow-hidden rounded-[22px] border transition-all duration-200 hover:-translate-y-[1px]"
-      style={{
-        borderColor: notice.is_read ? 'var(--color-border)' : 'rgba(226,75,74,0.3)',
-        backgroundColor: 'var(--color-surface)',
-      }}
-    >
-      {/* Coloured top accent bar */}
-      <div
-        className="h-1 w-full"
-        style={{ backgroundColor: accent.dot, opacity: notice.is_read ? 0.35 : 0.8 }}
-      />
-
-      <div className="p-5 sm:p-6">
-        {/* ── Top row: category icon + title + unread dot ── */}
-        <div className="flex items-start gap-3">
-          {/* Category icon box */}
-          <div
-            className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-[12px] border"
-            style={{ backgroundColor: accent.bg, borderColor: accent.border }}
-          >
-            <CategoryIcon category={notice.category} color={accent.dot} />
+    <article className="rounded-[22px] border p-5 transition-all hover:shadow-sm" style={{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface)' }}>
+      <div className="flex items-start justify-between gap-4">
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-2 mb-2">
+            <Badge variant={notice.priority === 'urgent' ? 'red' : notice.priority === 'info' ? 'blue' : 'green'}>{notice.priority}</Badge>
+            <Badge variant="blue" className="capitalize">{notice.audience}</Badge>
           </div>
-
-          {/* Title + badges */}
-          <div className="min-w-0 flex-1">
-            <div className="flex flex-wrap items-center gap-1.5 mb-1">
-              {!notice.is_read && (
-                <span
-                  className="inline-block h-2 w-2 rounded-full"
-                  style={{ backgroundColor: '#E24B4A' }}
-                />
-              )}
-              <Badge variant={CATEGORY_BADGE_VARIANT[notice.category] || 'blue'}>
-                {labelForCategory(notice.category)}
-              </Badge>
-              <Badge variant="green">{labelForTarget(notice.target_scope)}</Badge>
-              {isOwn && <Badge variant="yellow">Mine</Badge>}
-            </div>
-            <h3
-              className="text-[16px] font-semibold leading-snug"
-              style={{ color: 'var(--color-text-primary)' }}
-            >
-              {notice.title}
-            </h3>
+          <h3 className="text-base font-bold text-slate-900 dark:text-slate-100 truncate">{notice.title}</h3>
+          <p className="mt-1 text-sm text-slate-500 line-clamp-2">{notice.body}</p>
+          
+          <div className="mt-4 flex flex-wrap items-center gap-4 text-[11px] text-slate-400">
+            <span className="flex items-center gap-1"><CalendarDays size={12} /> {formatDate(notice.created_at, 'long')}</span>
+            <span className="flex items-center gap-1"><Users size={12} /> {notice.read_count || 0} Views</span>
+            {notice.class_name && <span className="font-bold text-brand">{notice.class_name} {notice.section_name}</span>}
           </div>
-
-          {/* Read badge pushed right */}
-          <span
-            className="mt-0.5 shrink-0 rounded-full px-2.5 py-0.5 text-[11px] font-semibold"
-            style={
-              notice.is_read
-                ? { backgroundColor: 'var(--color-surface-raised)', color: 'var(--color-text-muted)' }
-                : { backgroundColor: 'rgba(226,75,74,0.1)', color: '#A32D2D' }
-            }
-          >
-            {notice.is_read ? 'Read' : 'Unread'}
-          </span>
         </div>
-
-        {/* ── Content preview ── */}
-        <div className="mt-3">
-          <p
-            className="line-clamp-2 text-sm leading-[1.7]"
-            style={{ color: 'var(--color-text-secondary)' }}
-          >
-            {notice.content}
-          </p>
-          {notice.content?.length > 120 && (
-            <button
-              onClick={() => onOpen(notice)}
-              className="mt-2 flex items-center gap-1.5 text-[10px] font-bold transition-all hover:opacity-70"
-              style={{ color: 'var(--color-brand)' }}
-            >
-              <Eye size={12} strokeWidth={2.5} />
-              <span className="underline decoration-1 underline-offset-2">Read More</span>
-            </button>
-          )}
-        </div>
-
-        {/* ── Meta strip ── */}
-        <div
-          className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2 rounded-[14px] px-3 py-2.5 text-[11px]"
-          style={{ backgroundColor: 'var(--color-surface-raised)' }}
-        >
-          <span className="flex items-center gap-1">
-            <User2 size={11} style={{ color: 'var(--color-text-muted)' }} />
-            <span className="font-medium text-[var(--color-text-secondary)]">By:</span>
-            <span style={{ color: 'var(--color-text-muted)' }}>{notice.teacher_name || 'Teacher'} ({notice.teacher_role})</span>
-          </span>
-          <span className="flex items-center gap-1">
-            <CalendarDays size={11} style={{ color: 'var(--color-text-muted)' }} />
-            <span className="font-medium text-[var(--color-text-secondary)]">Date:</span>
-            <span style={{ color: 'var(--color-text-muted)' }}>{formatDate(notice.publish_date, 'long')}</span>
-          </span>
-          <span className="flex items-center gap-1 rounded-md bg-white/50 px-1.5 py-0.5 dark:bg-black/20">
-            <Users size={11} style={{ color: 'var(--color-brand)' }} />
-            <span className="font-bold" style={{ color: 'var(--color-brand)' }}>{notice.read_count || 0}</span>
-            <span style={{ color: 'var(--color-text-muted)' }}>Views</span>
-          </span>
-          {notice.expiry_date ? (
-            <span className="flex items-center gap-1" style={{ color: '#854F0B' }}>
-              <Clock size={11} />
-              <span className="font-medium">Expires:</span>
-              <span>{formatDate(notice.expiry_date, 'short')}</span>
-            </span>
-          ) : null}
+        
+        <div className="flex flex-col gap-2">
+          <Button variant="secondary" size="sm" icon={Edit3} onClick={onEdit}>Edit</Button>
+          <Button variant="outline" size="sm" icon={Trash2} className="!text-red-500 hover:!bg-red-50" onClick={onDelete}>Delete</Button>
         </div>
       </div>
-
-      {/* ── Action footer ── */}
-      <div
-        className="flex flex-wrap items-center justify-between gap-2 border-t px-5 py-3 sm:px-6"
-        style={{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface-raised)' }}
-      >
-        <div className="flex flex-wrap gap-2">
-          <Button variant="primary" icon={Eye} onClick={() => onOpen(notice)} size="sm">
-            Open Notice
-          </Button>
-          {canPost && isOwn ? (
-            <Button variant="secondary" icon={Edit3} onClick={onEdit} size="sm">
-              Edit
-            </Button>
-          ) : null}
-        </div>
-        {!notice.is_read ? (
-          <Button
-            variant="outline"
-            icon={CheckCheck}
-            onClick={() => onOpen(notice)}
-            loading={markingId === notice.id}
-            size="sm"
-          >
-            Mark as Read
-          </Button>
-        ) : (
-          <span
-            className="flex items-center gap-1 text-xs font-medium"
-            style={{ color: 'var(--color-text-muted)' }}
-          >
-            <CheckCheck size={13} />
-            Marked read
-          </span>
-        )}
-      </div>
+      <button onClick={onOpen} className="mt-3 w-full text-center text-[10px] font-bold text-brand uppercase tracking-wider py-2 rounded-lg bg-slate-50 dark:bg-slate-900/50 hover:opacity-70 transition-all">
+        View Full Notice
+      </button>
     </article>
   )
 }
 
-/* ─────────────────────────────────────────
-   NoticeDetail  (modal body)
-───────────────────────────────────────── */
-const NoticeDetail = ({ notice }) => {
-  const accent = CATEGORY_ACCENT[notice.category] || CATEGORY_ACCENT.other
-
-  return (
-    <div>
-      {/* ── Hero band ── */}
-      <div
-        className="rounded-[18px] border p-5 mb-5"
-        style={{ backgroundColor: accent.bg, borderColor: accent.border }}
-      >
-        {/* Badges */}
-        <div className="flex flex-wrap items-center gap-2 mb-3">
-          <span
-            className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-semibold"
-            style={{ backgroundColor: accent.dot + '22', color: accent.dot }}
-          >
-            <CategoryIcon category={notice.category} color={accent.dot} size={11} />
-            {labelForCategory(notice.category)}
-          </span>
-          <Badge variant="green">{labelForTarget(notice.target_scope)}</Badge>
-          <span
-            className="rounded-full px-2.5 py-1 text-[11px] font-semibold"
-            style={
-              notice.is_read
-                ? { backgroundColor: 'rgba(136,135,128,0.15)', color: '#5F5E5A' }
-                : { backgroundColor: 'rgba(226,75,74,0.12)', color: '#A32D2D' }
-            }
-          >
-            {notice.is_read ? '✓ Read' : '● Unread'}
-          </span>
-        </div>
-
-        {/* Title */}
-        <h2
-          className="text-[22px] font-bold leading-tight sm:text-[26px]"
-          style={{ color: 'var(--color-text-primary)' }}
-        >
-          {notice.title}
-        </h2>
-
-        {/* Byline */}
-        <p className="mt-2 text-sm" style={{ color: 'var(--color-text-secondary)' }}>
-          Posted by{' '}
-          <span className="font-semibold" style={{ color: 'var(--color-text-primary)' }}>
-            {notice.teacher_name || 'Teacher'} ({notice.teacher_role})
-          </span>
-          {' · '}
-          {formatDate(notice.publish_date, 'long')}
-        </p>
+const NoticeDetail = ({ notice }) => (
+  <div className="space-y-6">
+    <div className="space-y-2">
+      <div className="flex items-center gap-2">
+        <Badge variant={notice.priority === 'urgent' ? 'red' : 'green'}>{notice.priority}</Badge>
+        <Badge variant="blue" className="capitalize">{notice.audience}</Badge>
       </div>
-
-      {/* ── Meta cards row ── */}
-      <div className="grid grid-cols-2 gap-3 mb-5 sm:grid-cols-4">
-        <ModalMetaCard icon={CalendarDays} label="Published" value={formatDate(notice.publish_date, 'long')} />
-        <ModalMetaCard icon={User2} label="Posted By" value={`${notice.teacher_name || 'Teacher'} (${notice.teacher_role})`} />
-        <ModalMetaCard
-          icon={Users}
-          label="Read By"
-          value={`${notice.read_count || 0} teacher${notice.read_count !== 1 ? 's' : ''}`}
-        />
-        <ModalMetaCard
-          icon={Clock}
-          label="Expires"
-          value={notice.expiry_date ? formatDate(notice.expiry_date, 'long') : 'No expiry'}
-          warn={Boolean(notice.expiry_date)}
-        />
-      </div>
-
-      {/* ── Target class ── */}
-      {notice.class_name && notice.section_name ? (
-        <div
-          className="flex items-center gap-2.5 rounded-[14px] border px-4 py-3 mb-5"
-          style={{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface-raised)' }}
-        >
-          <Users size={14} style={{ color: 'var(--color-text-muted)', flexShrink: 0 }} />
-          <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>
-            Targeted to{' '}
-            <span className="font-semibold" style={{ color: 'var(--color-text-primary)' }}>
-              {notice.class_name} – {notice.section_name}
-            </span>
-          </p>
-        </div>
-      ) : null}
-
-      {/* ── Notice body ── */}
-      <div className="mb-5">
-        <div className="flex items-center gap-2 mb-2.5">
-          <div
-            className="h-px flex-1"
-            style={{ backgroundColor: 'var(--color-border)' }}
-          />
-          <p
-            className="text-[10px] font-semibold uppercase tracking-[0.15em] px-2"
-            style={{ color: 'var(--color-text-muted)' }}
-          >
-            Notice Content
-          </p>
-          <div
-            className="h-px flex-1"
-            style={{ backgroundColor: 'var(--color-border)' }}
-          />
-        </div>
-        <div
-          className="rounded-[18px] border px-5 py-5"
-          style={{
-            borderColor: 'var(--color-border)',
-            backgroundColor: 'var(--color-surface-raised)',
-          }}
-        >
-          <p
-            className="whitespace-pre-wrap text-[15px] leading-[1.9]"
-            style={{ color: 'var(--color-text-secondary)' }}
-          >
-            {notice.content}
-          </p>
-        </div>
-      </div>
-
-      {/* ── Attachment ── */}
-      {notice.attachment_path ? (
-        <div
-          className="flex items-start gap-3 rounded-[14px] border px-4 py-3.5"
-          style={{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface-raised)' }}
-        >
-          <div
-            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-[10px]"
-            style={{ backgroundColor: 'rgba(56,130,221,0.1)' }}
-          >
-            <Paperclip size={14} style={{ color: '#378ADD' }} />
-          </div>
-          <div>
-            <p
-              className="text-[10px] font-semibold uppercase tracking-[0.12em] mb-1"
-              style={{ color: 'var(--color-text-muted)' }}
-            >
-              Attachment
-            </p>
-            <p className="break-all text-sm" style={{ color: 'var(--color-text-secondary)' }}>
-              {notice.attachment_path}
-            </p>
-          </div>
-        </div>
-      ) : null}
+      <h2 className="text-2xl font-bold">{notice.title}</h2>
+      <p className="text-xs text-slate-400">Posted on {formatDate(notice.created_at, 'long')}</p>
     </div>
-  )
-}
+    <div className="p-5 rounded-2xl bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-slate-800">
+      <p className="text-sm whitespace-pre-wrap leading-relaxed">{notice.body}</p>
+    </div>
+  </div>
+)
 
-/* ─────────────────────────────────────────
-   Small helpers
-───────────────────────────────────────── */
 const CompactStat = ({ label, value, color }) => (
-  <div
-    className="flex flex-col items-center justify-center rounded-[14px] py-2"
-    style={{ backgroundColor: 'var(--color-surface-raised)' }}
-  >
-    <p
-      className="text-lg font-bold leading-none"
-      style={{ color }}
-    >
-      {value}
-    </p>
-    <p
-      className="mt-1 text-[10px] font-medium uppercase tracking-[0.1em]"
-      style={{ color: 'var(--color-text-muted)' }}
-    >
-      {label}
-    </p>
+  <div className="flex flex-col items-center justify-center rounded-[14px] py-2 bg-slate-50/50 dark:bg-slate-900/20">
+    <p className="text-lg font-bold" style={{ color }}>{value}</p>
+    <p className="text-[10px] font-medium uppercase text-slate-400 tracking-wider">{label}</p>
   </div>
 )
-
-const MetaItem = ({ icon: Icon, children, warn }) => (
-  <span
-    className="inline-flex items-center gap-1 text-xs font-medium"
-    style={{ color: warn ? '#854F0B' : 'var(--color-text-secondary)' }}
-  >
-    <Icon size={11} style={{ flexShrink: 0 }} />
-    {children}
-  </span>
-)
-
-const MetaDot = () => (
-  <span
-    className="inline-block h-1 w-1 rounded-full"
-    style={{ backgroundColor: 'var(--color-text-muted)', opacity: 0.5 }}
-  />
-)
-
-const ModalMetaCard = ({ icon: Icon, label, value, warn }) => (
-  <div
-    className="rounded-[14px] border px-3 py-3"
-    style={{
-      borderColor: warn ? 'rgba(186,117,23,0.25)' : 'var(--color-border)',
-      backgroundColor: warn ? 'rgba(250,238,218,0.4)' : 'var(--color-surface-raised)',
-    }}
-  >
-    <div className="flex items-center gap-1.5 mb-1.5">
-      <Icon size={12} style={{ color: warn ? '#854F0B' : 'var(--color-text-muted)', flexShrink: 0 }} />
-      <p
-        className="text-[10px] font-semibold uppercase tracking-widest"
-        style={{ color: warn ? '#854F0B' : 'var(--color-text-muted)' }}
-      >
-        {label}
-      </p>
-    </div>
-    <p
-      className="text-[13px] font-semibold leading-snug"
-      style={{ color: 'var(--color-text-primary)' }}
-    >
-      {value}
-    </p>
-  </div>
-)
-
-const CategoryIcon = ({ category, color, size = 14 }) => {
-  const props = { size, style: { color, flexShrink: 0 } }
-  if (category === 'exam')     return <Eye {...props} />
-  if (category === 'homework') return <Edit3 {...props} />
-  if (category === 'event')    return <CalendarDays {...props} />
-  if (category === 'holiday')  return <Clock {...props} />
-  if (category === 'general')  return <BellRing {...props} />
-  return <BellRing {...props} />
-}
-
-const labelForCategory = (value) =>
-  CATEGORY_OPTIONS.find((item) => item.value === value)?.label || value
-
-const labelForTarget = (value) => {
-  if (value === 'teachers') return 'Teachers'
-  if (value === 'my_class_only') return 'My Class Only'
-  if (value === 'specific_section') return 'Specific Section'
-  return value
-}
 
 export default NoticeList

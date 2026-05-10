@@ -24,4 +24,4 @@ export const deleteDocument = (id, docId)  => api.delete(`/students/${id}/docume
 
 export const createEnrollment = (data)     => api.post('/enrollments', data)
 export const getClasses     = ()           => api.get('/classes')
-export const getSections    = (classId)    => api.get(`/sections?class_id=${classId}`)
+export const getSections    = (classId) => api.get(`/classes/${classId}/sections`)

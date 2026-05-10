@@ -1,487 +1,492 @@
 import { useEffect, useMemo, useState, useCallback } from 'react'
-import { Bell, Send, Filter, Eye } from 'lucide-react'
-import * as teacherControlApi from '@/api/adminTeacherControlApi'
-import { getClasses, getSections, getClassList, getClassOptions } from '@/api/classApi'
+import { Bell, Send, Filter, Eye, Trash2, Edit3, User, Users, GraduationCap, School } from 'lucide-react'
+import { noticesApi } from '@/api'
+import { getClasses, getSections, getClassOptions } from '@/api/classApi'
 import { getStudents } from '@/api/studentsApi'
 import usePageTitle from '@/hooks/usePageTitle'
 import useToast from '@/hooks/useToast'
-import useAuthStore from '@/store/authStore'
 import Input from '@/components/ui/Input'
 import Select from '@/components/ui/Select'
 import Button from '@/components/ui/Button'
 import Badge from '@/components/ui/Badge'
 import EmptyState from '@/components/ui/EmptyState'
 import Modal from '@/components/ui/Modal'
+import { format } from 'date-fns'
 
 const AdminNoticePage = () => {
-  usePageTitle('Notices')
+  usePageTitle('Admin Notices')
   const { toastSuccess, toastError } = useToast()
-  const { user: currentUser } = useAuthStore()
 
+  const [activeTab, setActiveTab] = useState('list') // 'list' or 'create'
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
-  const [teachers, setTeachers] = useState([])
   const [classes, setClasses] = useState([])
+  const [sections, setSections] = useState([])
+  const [students, setStudents] = useState([])
   const [notices, setNotices] = useState([])
-  const [sectionsByClass, setSectionsByClass] = useState({})
-  const [noticeStudents, setNoticeStudents] = useState([])
-  const [filter, setFilter] = useState('all')
-  const [startDate, setStartDate] = useState('')
-  const [endDate, setEndDate] = useState('')
-  const [limit, setLimit] = useState(7)
-  const [selectedNotice, setSelectedNotice] = useState(null)
-  const [isViewAllOpen, setIsViewAllOpen] = useState(false)
-
-  const [noticeForm, setNoticeForm] = useState({
-    audience: 'all_students',
-    teacher_id: '',
-    class_id: '',
-    section_id: '',
-    student_id: '',
-    category: 'general',
-    title: '',
-    content: '',
-    expiry_date: '',
+  const [pagination, setPagination] = useState({ page: 1, totalPages: 1 })
+  
+  // Filters
+  const [filters, setFilters] = useState({
+    audience: '',
+    priority: '',
+    page: 1,
+    perPage: 10
   })
 
-  const load = useCallback(async (currentFilter = filter) => {
+  // Form State
+  const [form, setNoticeForm] = useState({
+    title: '',
+    body: '',
+    audience: 'school_wide',
+    target_class_id: '',
+    target_section_id: '',
+    target_student_id: '',
+    priority: 'normal',
+    expires_at: '',
+  })
+
+  const [editingNotice, setEditingNotice] = useState(null)
+  const [viewingNotice, setViewingNotice] = useState(null)
+  const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(null)
+
+  const loadNotices = useCallback(async () => {
     setLoading(true)
     try {
-      const params = { limit }
-      if (currentFilter === 'teacher') params.role = 'teacher'
-      else if (currentFilter === 'accountant') params.role = 'accountant'
-      else if (currentFilter === 'myself') params.teacher_id = currentUser.id
-
-      if (startDate) params.startDate = startDate
-      if (endDate) params.endDate = endDate
-
-      const [noticesRes, teachersRes, classesRes] = await Promise.all([
-        teacherControlApi.getTeacherControlNotices(params),
-        teacherControlApi.getTeacherControlTeachers(),
-        getClasses(),
-      ])
-      setNotices(noticesRes?.data?.notices || [])
-      setTeachers(teachersRes?.data?.teachers || [])
-      setClasses(getClassOptions(classesRes))
+      const res = await noticesApi.adminListNotices(filters)
+      setNotices(res.data.notices)
+      setPagination(res.data.pagination)
     } catch (err) {
       toastError('Failed to load notices.')
     } finally {
       setLoading(false)
     }
-  }, [filter, startDate, endDate, limit, currentUser.id, toastError])
+  }, [filters, toastError])
 
   useEffect(() => {
-    load()
-  }, [load])
+    loadNotices()
+  }, [loadNotices])
 
-  const ensureClassMeta = async (classId) => {
-    if (!classId) return
-    if (!sectionsByClass[classId]) {
-      const r = await getSections(classId)
-      setSectionsByClass((p) => ({ ...p, [classId]: Array.isArray(r?.data) ? r.data : (r?.data?.sections || []) }))
+  useEffect(() => {
+    getClasses().then(res => setClasses(getClassOptions(res))).catch(console.error)
+  }, [])
+
+  useEffect(() => {
+    if (form.target_class_id) {
+      getSections(form.target_class_id).then(res => {
+        const data = res.data?.sections || res.data || []
+        setSections(data.map(s => ({ value: String(s.id), label: s.name })))
+      }).catch(console.error)
+    } else {
+      setSections([])
     }
-  }
+  }, [form.target_class_id])
 
   useEffect(() => {
-    ensureClassMeta(noticeForm.class_id).catch(() => {})
-  }, [noticeForm.class_id])
+    if (form.audience === 'student' && (form.target_class_id || form.target_section_id)) {
+      getStudents({ 
+        class_id: form.target_class_id || undefined, 
+        section_id: form.target_section_id || undefined,
+        perPage: 100 
+      }).then(res => {
+        const data = res.data?.students || res.data?.data || []
+        setStudents(data.map(s => ({ 
+          value: String(s.id), 
+          label: `${s.first_name} ${s.last_name} (${s.admission_no})` 
+        })))
+      }).catch(console.error)
+    } else {
+      setStudents([])
+    }
+  }, [form.audience, form.target_class_id, form.target_section_id])
 
-  useEffect(() => {
-    if (noticeForm.audience !== 'student' && noticeForm.audience !== 'section' && noticeForm.audience !== 'class') return
-    getStudents({
-      class_id: noticeForm.class_id || undefined,
-      section_id: noticeForm.section_id || undefined,
-      perPage: 100,
-    })
-      .then((res) => setNoticeStudents(res?.data?.students || res?.data?.data || []))
-      .catch(() => setNoticeStudents([]))
-  }, [noticeForm.audience, noticeForm.class_id, noticeForm.section_id])
-
-  const classOptions = classes
-  const teacherOptions = useMemo(() => teachers.map((r) => ({ value: String(r.id), label: r.name })), [teachers])
-  const noticeSectionOpts = useMemo(() => (sectionsByClass[noticeForm.class_id] || []).map((r) => ({ value: String(r.id), label: r.name })), [sectionsByClass, noticeForm.class_id])
-  const noticeStudentOptions = useMemo(() => noticeStudents.map((s) => ({
-    value: String(s.id),
-    label: `${s.first_name} ${s.last_name} | ${s.class || ''} ${s.section || ''} | Roll ${s.roll_number || '--'}`,
-  })), [noticeStudents])
-
-  const handleNoticeCreate = async (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
     setSaving(true)
     try {
-      const payload = {
-        title: noticeForm.title.trim(),
-        content: noticeForm.content.trim(),
-        category: noticeForm.category,
-        expiry_date: noticeForm.expiry_date || null,
+      if (editingNotice) {
+        await noticesApi.adminUpdateNotice(editingNotice.id, form)
+        toastSuccess('Notice updated successfully.')
+      } else {
+        await noticesApi.adminCreateNotice(form)
+        toastSuccess('Notice posted successfully.')
       }
-
-      if (noticeForm.audience === 'all_teachers') payload.target_scope = 'teachers'
-      if (noticeForm.audience === 'teacher') {
-        payload.target_scope = 'specific_teacher'
-        payload.target_teacher_id = Number(noticeForm.teacher_id)
-      }
-      if (noticeForm.audience === 'all_students') payload.target_scope = 'all_students'
-      if (noticeForm.audience === 'class') {
-        payload.target_scope = 'specific_section'
-        payload.class_id = Number(noticeForm.class_id)
-      }
-      if (noticeForm.audience === 'section') {
-        payload.target_scope = 'specific_section'
-        payload.class_id = Number(noticeForm.class_id)
-        payload.section_id = Number(noticeForm.section_id)
-      }
-      if (noticeForm.audience === 'student') {
-        payload.target_scope = 'specific_student'
-        payload.target_student_id = Number(noticeForm.student_id)
-      }
-
-      await teacherControlApi.createTeacherControlNotice(payload)
-      toastSuccess('Notice sent.')
-      setNoticeForm({ audience: 'all_students', teacher_id: '', class_id: '', section_id: '', student_id: '', category: 'general', title: '', content: '', expiry_date: '' })
-      await load()
+      resetForm()
+      setActiveTab('list')
+      loadNotices()
     } catch (err) {
-      toastError(err?.message || 'Unable to send notice.')
+      toastError(err.response?.data?.message || 'Failed to save notice.')
     } finally {
       setSaving(false)
     }
   }
 
-  const toggleNotice = async (item) => {
-    setSaving(true)
+  const handleDelete = async () => {
     try {
-      await teacherControlApi.updateTeacherControlNotice(item.id, { is_active: !item.is_active })
-      toastSuccess('Notice updated.')
-      await load()
+      await noticesApi.adminDeleteNotice(isDeleteConfirmOpen)
+      toastSuccess('Notice deleted.')
+      setIsDeleteConfirmOpen(null)
+      loadNotices()
     } catch (err) {
-      toastError(err?.message || 'Failed to update notice.')
-    } finally {
-      setSaving(false)
+      toastError('Failed to delete notice.')
     }
   }
 
-  const NoticeListItem = ({ item }) => (
-    <div className="rounded-[22px] border p-4" style={{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface-raised)' }}>
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-        <div className="min-w-0">
-          <div className="flex flex-wrap items-center gap-2">
-            <Badge variant={item.is_active ? 'green' : 'grey'}>{item.is_active ? 'Active' : 'Inactive'}</Badge>
-            <Badge variant="blue">{formatNoticeAudience(item)}</Badge>
-          </div>
-          <p className="mt-2 text-sm font-semibold" style={{ color: 'var(--color-text-primary)' }}>{item.title}</p>
-          <div className="mt-1">
-            <p className="line-clamp-2 text-xs" style={{ color: 'var(--color-text-secondary)' }}>{item.content}</p>
-            {item.content?.length > 120 && (
-              <button
-                onClick={() => setSelectedNotice(item)}
-                className="mt-2 flex items-center gap-1.5 text-[10px] font-bold transition-all hover:opacity-70"
-                style={{ color: 'var(--color-brand)' }}
-              >
-                <Eye size={12} strokeWidth={2.5} />
-                <span className="underline decoration-1 underline-offset-2">Read More</span>
-              </button>
-            )}
-          </div>
-          <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-[11px]" style={{ color: 'var(--color-text-muted)' }}>
-            <span className="flex items-center gap-1">
-              <span className="font-medium" style={{ color: 'var(--color-text-secondary)' }}>By:</span> {item.teacher_name} ({item.teacher_role})
-            </span>
-            <span className="flex items-center gap-1">
-              <span className="font-medium" style={{ color: 'var(--color-text-secondary)' }}>Category:</span> {item.category}
-            </span>
-            <span className="flex items-center gap-1">
-              <span className="font-medium" style={{ color: 'var(--color-text-secondary)' }}>Published:</span> {formatDateTime(item.publish_date)}
-            </span>
-            <span className="flex items-center gap-1 rounded-md bg-slate-100 px-1.5 py-0.5 dark:bg-slate-800">
-              <span className="font-bold" style={{ color: 'var(--color-brand)' }}>
-                {Number(item.teacher_read_count || 0) + Number(item.student_read_count || 0)}
-              </span>
-              <span>Views</span>
-            </span>
-          </div>
-        </div>
-        <Button variant="secondary" size="sm" onClick={() => toggleNotice(item)} disabled={saving}>
-          {item.is_active ? 'Deactivate' : 'Activate'}
-        </Button>
-      </div>
-    </div>
-  )
+  const resetForm = () => {
+    setNoticeForm({
+      title: '',
+      body: '',
+      audience: 'school_wide',
+      target_class_id: '',
+      target_section_id: '',
+      target_student_id: '',
+      priority: 'normal',
+      expires_at: '',
+    })
+    setEditingNotice(null)
+  }
+
+  const startEdit = (notice) => {
+    setEditingNotice(notice)
+    setNoticeForm({
+      title: notice.title,
+      body: notice.body,
+      audience: notice.audience,
+      target_class_id: notice.target_class_id || '',
+      target_section_id: notice.target_section_id || '',
+      target_student_id: notice.target_student_id || '',
+      priority: notice.priority,
+      expires_at: notice.expires_at ? format(new Date(notice.expires_at), 'yyyy-MM-dd') : '',
+    })
+    setActiveTab('create')
+  }
+
+  const getAudienceIcon = (audience) => {
+    switch (audience) {
+      case 'school_wide': return <School size={14} />
+      case 'class': return <GraduationCap size={14} />
+      case 'section': return <Users size={14} />
+      case 'student': return <User size={14} />
+      default: return <Bell size={14} />
+    }
+  }
+
+  const getPriorityBadge = (priority) => {
+    switch (priority) {
+      case 'urgent': return <Badge variant="red">Urgent</Badge>
+      case 'info': return <Badge variant="blue">Info</Badge>
+      default: return <Badge variant="green">Normal</Badge>
+    }
+  }
 
   return (
     <div className="space-y-6 pb-20">
-      <section
-        className="overflow-hidden rounded-3xl border p-6 lg:p-8"
-        style={{
-          background: 'linear-gradient(135deg, color-mix(in srgb, var(--color-brand) 10%, var(--color-surface)) 0%, var(--color-surface) 52%, color-mix(in srgb, var(--color-surface-raised) 70%, white) 100%)',
-          borderColor: 'color-mix(in srgb, var(--color-brand) 16%, var(--color-border))',
-        }}
-      >
-        <div className="flex items-center gap-4">
-          <div className="rounded-2xl bg-white/50 p-3 shadow-sm backdrop-blur-sm dark:bg-slate-900/50">
-            <Bell size={24} className="text-brand" style={{ color: 'var(--color-brand)' }} />
-          </div>
-          <div>
-            <h1 className="text-2xl font-bold tracking-tight sm:text-3xl" style={{ color: 'var(--color-text-primary)' }}>School Notices</h1>
-            <p className="mt-1 text-sm" style={{ color: 'var(--color-text-secondary)' }}>
-              Broadcast announcements and manage school-wide communications.
-            </p>
-          </div>
+      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight" style={{ color: 'var(--color-text-primary)' }}>Notice Board Management</h1>
+          <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>Manage all school announcements and targeted notifications.</p>
         </div>
-      </section>
+        <div className="flex gap-2 rounded-xl bg-slate-100 p-1 dark:bg-slate-800">
+          <button
+            onClick={() => { setActiveTab('list'); resetForm(); }}
+            className={`rounded-lg px-4 py-1.5 text-sm font-medium transition-all ${activeTab === 'list' ? 'bg-white shadow-sm dark:bg-slate-700' : 'text-slate-500 hover:text-slate-700'}`}
+          >
+            All Notices
+          </button>
+          <button
+            onClick={() => setActiveTab('create')}
+            className={`rounded-lg px-4 py-1.5 text-sm font-medium transition-all ${activeTab === 'create' ? 'bg-white shadow-sm dark:bg-slate-700' : 'text-slate-500 hover:text-slate-700'}`}
+          >
+            {editingNotice ? 'Edit Notice' : 'Post Notice'}
+          </button>
+        </div>
+      </div>
 
-      <div className="grid gap-6 xl:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)]">
-        <section className="rounded-[24px] border p-5" style={{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface)' }}>
-          <div className="mb-4 flex items-center gap-2">
-            <Send size={15} style={{ color: '#0f766e' }} />
-            <h2 className="text-base font-semibold" style={{ color: 'var(--color-text-primary)' }}>Create Notice</h2>
-          </div>
-          <form className="space-y-3" onSubmit={handleNoticeCreate}>
-            <Select
-              label="Send To"
-              value={noticeForm.audience}
-              onChange={(e) => setNoticeForm((p) => ({ ...p, audience: e.target.value, teacher_id: '', class_id: '', section_id: '', student_id: '' }))}
-              options={[
-                { value: 'all_students', label: 'All Students' },
-                { value: 'class', label: 'Class Wise' },
-                { value: 'section', label: 'Section Wise' },
-                { value: 'student', label: 'Student Wise' },
-                { value: 'all_teachers', label: 'All Teachers' },
-                { value: 'teacher', label: 'Teacher Wise' },
-              ]}
-              required
-            />
-
-            {noticeForm.audience === 'teacher' && (
-              <Select label="Teacher" value={noticeForm.teacher_id} onChange={(e) => setNoticeForm((p) => ({ ...p, teacher_id: e.target.value }))} options={teacherOptions} required />
-            )}
-
-            {['class', 'section', 'student'].includes(noticeForm.audience) && (
-              <Select label="Class" value={noticeForm.class_id} onChange={(e) => setNoticeForm((p) => ({ ...p, class_id: e.target.value, section_id: '', student_id: '' }))} options={classOptions} required={noticeForm.audience !== 'student'} />
-            )}
-
-            {['section', 'student'].includes(noticeForm.audience) && noticeForm.class_id && (
-              <Select label="Section" value={noticeForm.section_id} onChange={(e) => setNoticeForm((p) => ({ ...p, section_id: e.target.value, student_id: '' }))} options={noticeSectionOpts} required={noticeForm.audience === 'section'} />
-            )}
-
-            {noticeForm.audience === 'student' && (
-              <Select label="Student" value={noticeForm.student_id} onChange={(e) => setNoticeForm((p) => ({ ...p, student_id: e.target.value }))} options={noticeStudentOptions} placeholder="Select student" required />
-            )}
-
-            <div className="grid gap-3 sm:grid-cols-2">
-              <Select
-                label="Category"
-                value={noticeForm.category}
-                onChange={(e) => setNoticeForm((p) => ({ ...p, category: e.target.value }))}
-                options={[
-                  { value: 'general', label: 'General' },
-                  { value: 'exam', label: 'Exam' },
-                  { value: 'event', label: 'Event' },
-                  { value: 'holiday', label: 'Holiday' },
-                  { value: 'homework', label: 'Homework' },
-                  { value: 'other', label: 'Other' },
-                ]}
-              />
-              <Input type="date" label="Expiry Date" value={noticeForm.expiry_date} onChange={(e) => setNoticeForm((p) => ({ ...p, expiry_date: e.target.value }))} />
-            </div>
-
-            <Input label="Title" value={noticeForm.title} onChange={(e) => setNoticeForm((p) => ({ ...p, title: e.target.value }))} placeholder="Notice title" required />
-            <label className="block">
-              <span className="mb-1 block text-xs font-semibold" style={{ color: 'var(--color-text-secondary)' }}>Message</span>
-              <textarea
-                value={noticeForm.content}
-                onChange={(e) => setNoticeForm((p) => ({ ...p, content: e.target.value }))}
-                className="min-h-32 w-full rounded-2xl px-3 py-2 text-sm outline-none"
-                style={{ backgroundColor: 'var(--color-surface-raised)', border: '1px solid var(--color-border)', color: 'var(--color-text-primary)' }}
-                placeholder="Write notice message"
-                required
-              />
-            </label>
-            <Button type="submit" variant="primary" loading={saving} className="w-full">Send Notice</Button>
-          </form>
-        </section>
-
-        <section className="rounded-[24px] border p-5" style={{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface)' }}>
-          <div className="mb-4 flex flex-col gap-4">
-            <div className="flex items-center justify-between">
+      {activeTab === 'list' ? (
+        <div className="space-y-4">
+          {/* Filters */}
+          <div className="rounded-2xl border p-4 shadow-sm" style={{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface)' }}>
+            <div className="flex flex-wrap items-center gap-4">
               <div className="flex items-center gap-2">
-                <Bell size={15} style={{ color: 'var(--color-text-secondary)' }} />
-                <h2 className="text-base font-semibold" style={{ color: 'var(--color-text-primary)' }}>Notice History</h2>
-                {notices.length > 0 && (
-                  <span className="ml-2 rounded-xl px-2.5 py-0.5 text-xs font-bold" style={{ backgroundColor: 'var(--color-surface-raised)', color: 'var(--color-text-secondary)' }}>{notices.length}</span>
-                )}
+                <Filter size={16} className="text-slate-400" />
+                <span className="text-sm font-semibold">Filters:</span>
               </div>
-            </div>
-            
-            <div className="grid grid-cols-2 gap-3 rounded-2xl bg-slate-50/50 p-3 dark:bg-slate-900/20 md:grid-cols-5 md:items-end">
-              <div className="space-y-1">
-                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">From Date</span>
-                <input
-                  type="date"
-                  value={startDate}
-                  onChange={(e) => setStartDate(e.target.value)}
-                  className="block w-full rounded-xl border bg-transparent px-3 py-1.5 text-xs font-medium outline-none transition-all focus:ring-2"
-                  style={{ borderColor: 'var(--color-border)', color: 'var(--color-text-primary)', focusRingColor: 'var(--color-brand)' }}
-                />
-              </div>
-              <div className="space-y-1">
-                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">To Date</span>
-                <input
-                  type="date"
-                  value={endDate}
-                  onChange={(e) => setEndDate(e.target.value)}
-                  className="block w-full rounded-xl border bg-transparent px-3 py-1.5 text-xs font-medium outline-none transition-all focus:ring-2"
-                  style={{ borderColor: 'var(--color-border)', color: 'var(--color-text-primary)', focusRingColor: 'var(--color-brand)' }}
-                />
-              </div>
-              <div className="space-y-1">
-                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Filter By</span>
-                <select
-                  value={filter}
-                  onChange={(e) => setFilter(e.target.value)}
-                  className="block w-full rounded-xl border bg-transparent px-3 py-1.5 text-xs font-medium outline-none transition-all focus:ring-2"
-                  style={{ borderColor: 'var(--color-border)', color: 'var(--color-text-primary)', focusRingColor: 'var(--color-brand)' }}
-                >
-                  <option value="all">All Notices</option>
-                  <option value="teacher">Teachers Only</option>
-                  <option value="accountant">Accountants Only</option>
-                  <option value="myself">My Notices</option>
-                </select>
-              </div>
-              <div className="space-y-1">
-                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Show</span>
-                <select
-                  value={limit}
-                  onChange={(e) => setLimit(Number(e.target.value))}
-                  className="block w-full rounded-xl border bg-transparent px-3 py-1.5 text-xs font-medium outline-none transition-all focus:ring-2"
-                  style={{ borderColor: 'var(--color-border)', color: 'var(--color-text-primary)', focusRingColor: 'var(--color-brand)' }}
-                >
-                  <option value={7}>Last 7</option>
-                  <option value={15}>Last 15</option>
-                  <option value={30}>Last 30</option>
-                  <option value={50}>Last 50</option>
-                  <option value={100}>Last 100</option>
-                </select>
-              </div>
-              <Button
-                variant="secondary"
-                size="sm"
-                className="h-[34px] !rounded-xl"
-                onClick={() => {
-                  setStartDate('')
-                  setEndDate('')
-                  setFilter('all')
-                  setLimit(7)
-                }}
+              <select
+                value={filters.audience}
+                onChange={e => setFilters(p => ({ ...p, audience: e.target.value, page: 1 }))}
+                className="rounded-lg border bg-transparent px-3 py-1.5 text-sm outline-none"
+                style={{ borderColor: 'var(--color-border)' }}
+              >
+                <option value="">All Audiences</option>
+                <option value="school_wide">School Wide</option>
+                <option value="class">Class Wise</option>
+                <option value="section">Section Wise</option>
+                <option value="student">Student Wise</option>
+              </select>
+              <select
+                value={filters.priority}
+                onChange={e => setFilters(p => ({ ...p, priority: e.target.value, page: 1 }))}
+                className="rounded-lg border bg-transparent px-3 py-1.5 text-sm outline-none"
+                style={{ borderColor: 'var(--color-border)' }}
+              >
+                <option value="">All Priorities</option>
+                <option value="normal">Normal</option>
+                <option value="urgent">Urgent</option>
+                <option value="info">Info</option>
+              </select>
+              <Button 
+                variant="secondary" 
+                size="sm" 
+                onClick={() => setFilters({ audience: '', priority: '', page: 1, perPage: 10 })}
               >
                 Reset
               </Button>
             </div>
           </div>
-          {loading ? (
-            <div className="space-y-2">
-              {[1, 2, 3].map((i) => (
-                <div key={i} className="h-24 animate-pulse rounded-[22px]" style={{ backgroundColor: 'var(--color-surface-raised)' }} />
-              ))}
-            </div>
-          ) : !notices.length ? (
-            <EmptyState icon={Bell} title="No notices" description="Notices sent by admin and teachers will appear here." />
-          ) : (
-            <div className="space-y-3 max-h-[600px] overflow-y-auto pr-2 custom-scrollbar lg:max-h-[calc(100vh-350px)]">
-              {notices.map((item) => (
-                <NoticeListItem key={item.id} item={item} />
-              ))}
-            </div>
-          )}
 
-          {notices.length > 0 && (
-            <div className="mt-4 flex justify-center border-t pt-4" style={{ borderColor: 'var(--color-border)' }}>
-              <Button
-                variant="secondary"
-                size="sm"
-                className="w-full !rounded-xl"
-                onClick={() => setIsViewAllOpen(true)}
-              >
-                View All History
+          {/* List */}
+          <div className="rounded-2xl border overflow-hidden shadow-sm" style={{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface)' }}>
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-sm">
+                <thead className="bg-slate-50 dark:bg-slate-900/50">
+                  <tr className="border-b" style={{ borderColor: 'var(--color-border)' }}>
+                    <th className="px-4 py-3 font-semibold">Title</th>
+                    <th className="px-4 py-3 font-semibold">Audience</th>
+                    <th className="px-4 py-3 font-semibold">Priority</th>
+                    <th className="px-4 py-3 font-semibold">Posted By</th>
+                    <th className="px-4 py-3 font-semibold text-center">Reads</th>
+                    <th className="px-4 py-3 font-semibold text-center">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y" style={{ borderColor: 'var(--color-border)' }}>
+                  {loading ? (
+                    [1, 2, 3].map(i => (
+                      <tr key={i} className="animate-pulse">
+                        <td colSpan={6} className="px-4 py-8"><div className="h-4 bg-slate-100 dark:bg-slate-800 rounded w-3/4"></div></td>
+                      </tr>
+                    ))
+                  ) : notices.length === 0 ? (
+                    <tr>
+                      <td colSpan={6} className="px-4 py-12">
+                        <EmptyState icon={Bell} title="No notices found" description="Try adjusting your filters or post a new notice." />
+                      </td>
+                    </tr>
+                  ) : (
+                    notices.map(notice => (
+                      <tr key={notice.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-900/20 transition-colors">
+                        <td className="px-4 py-3">
+                          <div className="font-medium text-slate-900 dark:text-slate-100">{notice.title}</div>
+                          <div className="text-[11px] text-slate-400 mt-0.5">{format(new Date(notice.created_at), 'dd MMM yyyy, hh:mm a')}</div>
+                        </td>
+                        <td className="px-4 py-3">
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-slate-400">{getAudienceIcon(notice.audience)}</span>
+                            <span className="capitalize">{notice.audience.replace('_', ' ')}</span>
+                          </div>
+                          {notice.audience === 'class' && <div className="text-[10px] font-bold text-brand mt-0.5">{notice.class_name}</div>}
+                          {notice.audience === 'section' && <div className="text-[10px] font-bold text-brand mt-0.5">{notice.class_name} - {notice.section_name}</div>}
+                          {notice.audience === 'student' && <div className="text-[10px] font-bold text-brand mt-0.5">{notice.student_name}</div>}
+                        </td>
+                        <td className="px-4 py-3">{getPriorityBadge(notice.priority)}</td>
+                        <td className="px-4 py-3">
+                          <div className="font-medium">{notice.posted_by_name}</div>
+                          <div className="text-[10px] uppercase text-slate-400">{notice.posted_by_role}</div>
+                        </td>
+                        <td className="px-4 py-3 text-center">
+                          <Badge variant="blue">{notice.read_count}</Badge>
+                        </td>
+                        <td className="px-4 py-3">
+                          <div className="flex items-center justify-center gap-2">
+                            <button onClick={() => setViewingNotice(notice)} className="p-1.5 text-slate-400 hover:text-brand transition-colors"><Eye size={16} /></button>
+                            <button onClick={() => startEdit(notice)} className="p-1.5 text-slate-400 hover:text-blue-500 transition-colors"><Edit3 size={16} /></button>
+                            <button onClick={() => setIsDeleteConfirmOpen(notice.id)} className="p-1.5 text-slate-400 hover:text-red-500 transition-colors"><Trash2 size={16} /></button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+            
+            {/* Pagination */}
+            {pagination.totalPages > 1 && (
+              <div className="flex items-center justify-between border-t p-4" style={{ borderColor: 'var(--color-border)' }}>
+                <span className="text-xs text-slate-500">Page {pagination.page} of {pagination.totalPages}</span>
+                <div className="flex gap-2">
+                  <Button 
+                    variant="secondary" 
+                    size="sm" 
+                    disabled={pagination.page === 1}
+                    onClick={() => setFilters(p => ({ ...p, page: p.page - 1 }))}
+                  >
+                    Previous
+                  </Button>
+                  <Button 
+                    variant="secondary" 
+                    size="sm" 
+                    disabled={pagination.page === pagination.totalPages}
+                    onClick={() => setFilters(p => ({ ...p, page: p.page + 1 }))}
+                  >
+                    Next
+                  </Button>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      ) : (
+        /* Create / Edit Form */
+        <div className="max-w-2xl mx-auto w-full rounded-[24px] border p-6 shadow-md" style={{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface)' }}>
+          <div className="flex items-center gap-3 mb-6">
+            <div className="p-2 rounded-xl bg-brand/10 text-brand">
+              <Send size={20} />
+            </div>
+            <h2 className="text-xl font-bold">{editingNotice ? 'Edit Notice' : 'Post New Notice'}</h2>
+          </div>
+          
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <Input 
+              label="Notice Title" 
+              placeholder="e.g. Annual Sports Meet 2024"
+              value={form.title} 
+              onChange={e => setNoticeForm(p => ({ ...p, title: e.target.value }))}
+              required 
+            />
+            
+            <div className="grid gap-4 sm:grid-cols-2">
+              <Select
+                label="Target Audience"
+                value={form.audience}
+                onChange={e => setNoticeForm(p => ({ ...p, audience: e.target.value, target_class_id: '', target_section_id: '', target_student_id: '' }))}
+                options={[
+                  { value: 'school_wide', label: 'School Wide' },
+                  { value: 'class', label: 'Specific Class' },
+                  { value: 'section', label: 'Specific Section' },
+                  { value: 'student', label: 'Specific Student' },
+                ]}
+                required
+              />
+              <Select
+                label="Priority"
+                value={form.priority}
+                onChange={e => setNoticeForm(p => ({ ...p, priority: e.target.value }))}
+                options={[
+                  { value: 'normal', label: 'Normal' },
+                  { value: 'urgent', label: 'Urgent (Red Alert)' },
+                  { value: 'info', label: 'Info (Blue)' },
+                ]}
+                required
+              />
+            </div>
+
+            {['class', 'section', 'student'].includes(form.audience) && (
+              <div className="grid gap-4 sm:grid-cols-2">
+                <Select
+                  label="Select Class"
+                  value={form.target_class_id}
+                  onChange={e => setNoticeForm(p => ({ ...p, target_class_id: e.target.value, target_section_id: '', target_student_id: '' }))}
+                  options={classes}
+                  required
+                />
+                {['section', 'student'].includes(form.audience) && (
+                  <Select
+                    label="Select Section"
+                    value={form.target_section_id}
+                    onChange={e => setNoticeForm(p => ({ ...p, target_section_id: e.target.value, target_student_id: '' }))}
+                    options={sections}
+                    disabled={!form.target_class_id}
+                    required={form.audience === 'section'}
+                  />
+                )}
+              </div>
+            )}
+
+            {form.audience === 'student' && (
+              <Select
+                label="Search Student"
+                value={form.target_student_id}
+                onChange={e => setNoticeForm(p => ({ ...p, target_student_id: e.target.value }))}
+                options={students}
+                disabled={!form.target_class_id}
+                required
+              />
+            )}
+
+            <div className="space-y-1">
+              <span className="text-xs font-semibold text-slate-500">Notice Body</span>
+              <textarea
+                className="w-full min-h-[150px] rounded-2xl border p-4 text-sm outline-none focus:ring-2 focus:ring-brand/20 transition-all"
+                style={{ backgroundColor: 'var(--color-surface-raised)', borderColor: 'var(--color-border)' }}
+                placeholder="Write your announcement here..."
+                value={form.body}
+                onChange={e => setNoticeForm(p => ({ ...p, body: e.target.value }))}
+                required
+              />
+            </div>
+
+            <Input 
+              type="date"
+              label="Expiration Date (Optional)"
+              value={form.expires_at}
+              onChange={e => setNoticeForm(p => ({ ...p, expires_at: e.target.value }))}
+            />
+
+            <div className="flex gap-3 pt-4 border-t" style={{ borderColor: 'var(--color-border)' }}>
+              <Button type="submit" variant="primary" loading={saving} className="flex-1">
+                {editingNotice ? 'Update Notice' : 'Broadcast Notice'}
+              </Button>
+              <Button type="button" variant="secondary" onClick={() => { setActiveTab('list'); resetForm(); }}>
+                Cancel
               </Button>
             </div>
-          )}
-        </section>
-      </div>
+          </form>
+        </div>
+      )}
 
-      <Modal
-        open={isViewAllOpen}
-        onClose={() => setIsViewAllOpen(false)}
-        title="Notice History"
-        size="xl"
-      >
-        <div className="space-y-4 max-h-[70vh] overflow-y-auto pr-2 custom-scrollbar">
-          {notices.map((item) => (
-            <NoticeListItem key={item.id} item={item} />
-          ))}
+      {/* Delete Confirmation */}
+      <Modal open={!!isDeleteConfirmOpen} onClose={() => setIsDeleteConfirmOpen(null)} title="Delete Notice" size="sm">
+        <div className="space-y-4">
+          <p className="text-sm text-slate-500">Are you sure you want to delete this notice? This action cannot be undone.</p>
+          <div className="flex gap-3">
+            <Button variant="danger" onClick={handleDelete} className="flex-1">Delete</Button>
+            <Button variant="secondary" onClick={() => setIsDeleteConfirmOpen(null)} className="flex-1">Cancel</Button>
+          </div>
         </div>
       </Modal>
 
-      <Modal
-        open={!!selectedNotice}
-        onClose={() => setSelectedNotice(null)}
-        title="Notice Details"
-        size="lg"
-      >
-        {selectedNotice && (
-          <div className="space-y-4">
-            <div>
-              <div className="flex flex-wrap items-center gap-2 mb-2">
-                <Badge variant={selectedNotice.is_active ? 'green' : 'grey'}>{selectedNotice.is_active ? 'Active' : 'Inactive'}</Badge>
-                <Badge variant="blue">{formatNoticeAudience(selectedNotice)}</Badge>
-                <Badge variant="purple">{selectedNotice.category}</Badge>
+      {/* View Notice */}
+      <Modal open={!!viewingNotice} onClose={() => setViewingNotice(null)} title="Notice Detail" size="lg">
+        {viewingNotice && (
+          <div className="space-y-6">
+            <div className="flex flex-col gap-2">
+              <div className="flex items-center gap-2">
+                {getPriorityBadge(viewingNotice.priority)}
+                <Badge variant="blue" className="capitalize">{viewingNotice.audience.replace('_', ' ')}</Badge>
               </div>
-              <h3 className="text-lg font-bold" style={{ color: 'var(--color-text-primary)' }}>{selectedNotice.title}</h3>
-              <p className="text-[11px] mt-1" style={{ color: 'var(--color-text-muted)' }}>
-                Published on {formatDateTime(selectedNotice.publish_date)} by {selectedNotice.teacher_name} ({selectedNotice.teacher_role})
-              </p>
+              <h2 className="text-2xl font-bold">{viewingNotice.title}</h2>
+              <div className="flex items-center gap-4 text-xs text-slate-400">
+                <span className="flex items-center gap-1"><User size={12} /> Posted by: {viewingNotice.posted_by_name} ({viewingNotice.posted_by_role})</span>
+                <span>Date: {format(new Date(viewingNotice.created_at), 'dd MMM yyyy, hh:mm a')}</span>
+              </div>
             </div>
             
-            <div className="rounded-2xl p-4 bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-slate-800">
-              <p className="text-sm whitespace-pre-wrap leading-relaxed" style={{ color: 'var(--color-text-primary)' }}>
-                {selectedNotice.content}
-              </p>
+            <div className="p-5 rounded-2xl bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-slate-800">
+              <p className="text-sm whitespace-pre-wrap leading-relaxed text-slate-700 dark:text-slate-300">{viewingNotice.body}</p>
             </div>
 
-            <div className="flex items-center gap-4 text-xs" style={{ color: 'var(--color-text-secondary)' }}>
-              <span>Teacher Views: <strong>{selectedNotice.teacher_read_count || 0}</strong></span>
-              <span>Student Views: <strong>{selectedNotice.student_read_count || 0}</strong></span>
-            </div>
+            {viewingNotice.expires_at && (
+              <div className="text-xs text-red-500 font-medium">Expires on: {format(new Date(viewingNotice.expires_at), 'dd MMM yyyy')}</div>
+            )}
             
-            <div className="flex justify-end pt-2">
-              <Button variant="secondary" onClick={() => setSelectedNotice(null)}>Close</Button>
+            <div className="flex justify-end">
+              <Button variant="secondary" onClick={() => setViewingNotice(null)}>Close</Button>
             </div>
           </div>
         )}
       </Modal>
     </div>
   )
-}
-
-const formatNoticeAudience = (item) => {
-  const scope = item.target_scope
-  const className = [item.class_name, item.class_stream].filter(Boolean).join(' - ')
-  
-  if (scope === 'whole_school') return 'Whole School (Students & Teachers)'
-  if (scope === 'teachers') return 'All Teachers'
-  if (scope === 'specific_teacher') return `Teacher: ${item.target_teacher_name || 'Selected Teacher'}`
-  if (scope === 'all_students') return 'All Students'
-  if (scope === 'specific_student') return `Student: ${item.target_student_name || 'Selected Student'}`
-  if (scope === 'specific_subject') return `Subject: ${item.subject_name || 'Subject'} (${className} ${item.section_name || ''})`.trim()
-  if (scope === 'specific_section') return `Section: ${className} ${item.section_name || ''}`.trim()
-  if (scope === 'whole_class' || scope === 'my_class_only') return `Class: ${className} ${item.section_name || ''}`.trim()
-  return 'General Notice'
-}
-
-const formatDateTime = (value) => {
-  if (!value) return '--'
-  const date = new Date(value)
-  if (Number.isNaN(date.getTime())) return '--'
-  return date.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })
 }
 
 export default AdminNoticePage

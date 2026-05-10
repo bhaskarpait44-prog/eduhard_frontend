@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import * as teacherApi from '@/api/teacherApi'
+import { noticesApi } from '@/api'
 
 const useTeacherNotices = () => {
   const [assignments, setAssignments] = useState([])
@@ -18,8 +19,8 @@ const useTeacherNotices = () => {
   const loadNotices = useCallback(async (params = {}) => {
     setLoadingNotices(true)
     try {
-      const res = await teacherApi.getTeacherNotices(params)
-      const rows = res?.data?.notices || []
+      const res = await noticesApi.teacherListNotices(params)
+      const rows = res?.data || []
       setNotices(rows)
       return rows
     } finally {
@@ -89,24 +90,12 @@ const useTeacherNotices = () => {
     return [...map.values()]
   }, [assignments])
 
-  const subjectTeacherSections = useMemo(() => {
-    return assignments
-      .filter((assignment) => !assignment.is_class_teacher && assignment.subject_id)
-      .map((assignment) => ({
-        value: `${assignment.class_id}:${assignment.section_id}:${assignment.subject_id}`,
-        label: `${assignment.class_name} ${assignment.section_name} - ${assignment.subject_name}`,
-        class_id: assignment.class_id,
-        section_id: assignment.section_id,
-        subject_id: assignment.subject_id,
-      }))
-  }, [assignments])
-
   const saveNotice = useCallback(async (payload, noticeId = null) => {
     setSaving(true)
     try {
       const res = noticeId
-        ? await teacherApi.updateTeacherNotice(noticeId, payload)
-        : await teacherApi.createTeacherNotice(payload)
+        ? await noticesApi.teacherUpdateNotice(noticeId, payload)
+        : await noticesApi.teacherCreateNotice(payload)
       await loadNotices()
       return res?.data
     } finally {
@@ -114,15 +103,10 @@ const useTeacherNotices = () => {
     }
   }, [loadNotices])
 
-  const markAsRead = useCallback(async (noticeId) => {
-    const res = await teacherApi.markTeacherNoticeRead(noticeId)
-    setNotices((prev) => prev.map((notice) => (
-      Number(notice.id) === Number(noticeId)
-        ? { ...notice, is_read: true, read_count: Number(notice.read_count || 0) + 1 }
-        : notice
-    )))
-    return res?.data
-  }, [])
+  const deleteNotice = useCallback(async (noticeId) => {
+    await noticesApi.teacherDeleteNotice(noticeId)
+    await loadNotices()
+  }, [loadNotices])
 
   return {
     assignments,
@@ -132,10 +116,9 @@ const useTeacherNotices = () => {
     saving,
     classTeacherSections,
     assignedSections,
-    subjectTeacherSections,
     loadNotices,
     saveNotice,
-    markAsRead,
+    deleteNotice,
   }
 }
 

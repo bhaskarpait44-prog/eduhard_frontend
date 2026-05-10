@@ -4,7 +4,7 @@ import Input from '../ui/Input';
 import Select from '../ui/Select';
 import Button from '../ui/Button';
 import libraryApi from '../../api/libraryApi';
-import { getStudents } from '../../api/students';
+import { getStudents } from "../../api/studentsApi";
 import { getUsers } from '../../api/userManagementApi';
 import useToast from '../../hooks/useToast';
 
@@ -23,22 +23,6 @@ const IssueBookModal = ({ isOpen, onClose, onSubmit, preSelectedBook = null, loa
   const [searchingBorrowers, setSearchingBorrowers] = useState(false);
   const [searchingBooks, setSearchingBooks] = useState(false);
 
-  useEffect(() => {
-    if (isOpen) {
-      fetchSettings();
-      if (preSelectedBook) {
-        setSelectedBookId(preSelectedBook.id);
-        setBookSearch(preSelectedBook.title);
-      } else {
-        setSelectedBookId('');
-        setBookSearch('');
-      }
-      setSelectedBorrowerId('');
-      setBorrowerSearch('');
-      setBorrowers([]);
-    }
-  }, [isOpen, preSelectedBook]);
-
   const fetchSettings = async () => {
     try {
       const { data } = await libraryApi.getSettings();
@@ -54,6 +38,22 @@ const IssueBookModal = ({ isOpen, onClose, onSubmit, preSelectedBook = null, loa
       setDueDate(d.toISOString().split('T')[0]);
     }
   };
+
+  useEffect(() => {
+    if (isOpen) {
+      fetchSettings();
+      if (preSelectedBook) {
+        setSelectedBookId(preSelectedBook.id);
+        setBookSearch(preSelectedBook.title);
+      } else {
+        setSelectedBookId('');
+        setBookSearch('');
+      }
+      setSelectedBorrowerId('');
+      setBorrowerSearch('');
+      setBorrowers([]);
+    }
+  }, [isOpen, preSelectedBook]);
 
   useEffect(() => {
     const delayDebounceFn = setTimeout(() => {

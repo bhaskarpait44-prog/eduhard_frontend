@@ -8,13 +8,12 @@ import usePageTitle from '@/hooks/usePageTitle'
 import useStudentNotices from '@/hooks/useStudentNotices'
 import useToast from '@/hooks/useToast'
 import { formatDate } from '@/utils/helpers'
-
-const categories = ['all', 'general', 'exam', 'fee', 'holiday', 'event']
+import Badge from '@/components/ui/Badge'
 
 const StudentNotices = () => {
   usePageTitle('Notice Board')
 
-  const { toastError, toastInfo, toastSuccess } = useToast()
+  const { toastError, toastSuccess } = useToast()
   const {
     notices,
     unreadCount,
@@ -23,12 +22,10 @@ const StudentNotices = () => {
     actionId,
     error,
     refresh,
-    loadCategory,
     markRead,
     togglePin,
   } = useStudentNotices()
 
-  const [category, setCategory] = useState('all')
   const [selectedNotice, setSelectedNotice] = useState(null)
 
   useEffect(() => {
@@ -37,10 +34,12 @@ const StudentNotices = () => {
 
   const sortedNotices = useMemo(
     () => [...notices].sort((a, b) => {
-      if (Boolean(a.is_important) !== Boolean(b.is_important)) return a.is_important ? -1 : 1
       if (Boolean(a.is_pinned) !== Boolean(b.is_pinned)) return a.is_pinned ? -1 : 1
-      if (Boolean(a.is_read) !== Boolean(b.is_read)) return a.is_read ? 1 : -1
-      return String(b.publish_date || '').localeCompare(String(a.publish_date || ''))
+      if (a.priority !== b.priority) {
+        if (a.priority === 'urgent') return -1
+        if (b.priority === 'urgent') return 1
+      }
+      return String(b.created_at || '').localeCompare(String(a.created_at || ''))
     }),
     [notices]
   )
@@ -66,73 +65,38 @@ const StudentNotices = () => {
     }
   }
 
-  const handleCategory = async (value) => {
-    setCategory(value)
-    try {
-      await loadCategory(value)
-    } catch {}
-  }
-
   return (
     <div className="space-y-5">
       <section
         className="rounded-[28px] border p-5 sm:p-6"
         style={{
           borderColor: 'var(--color-border)',
-          background: 'linear-gradient(135deg, rgba(109,40,217,0.16), rgba(37,99,235,0.05) 52%, var(--color-surface) 100%)',
+          background: 'linear-gradient(135deg, rgba(59,130,246,0.16), rgba(37,99,235,0.05) 52%, var(--color-surface) 100%)',
         }}
       >
         <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
           <div className="min-w-0">
-            <p className="text-sm font-semibold uppercase tracking-[0.18em]" style={{ color: 'var(--student-accent)' }}>
-              Notices
-            </p>
-            <h1 className="mt-2 text-2xl font-bold sm:text-3xl">Notice Board</h1>
+            <h1 className="text-2xl font-bold sm:text-3xl">School Notice Board</h1>
             <p className="mt-2 max-w-2xl text-sm text-[var(--color-text-secondary)] sm:text-base">
-              Read school notices, keep important ones pinned, and stay on top of unread exam, fee, holiday, and event updates.
+              Stay updated with the latest announcements, urgent alerts, and event info from school.
             </p>
           </div>
 
           <div className="flex flex-wrap gap-2">
-            <div className="rounded-2xl border px-4 py-3" style={{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface)' }}>
-              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--color-text-muted)]">Unread Notices</p>
-              <p className="mt-1 text-xl font-bold text-red-600">{unreadCount}</p>
+            <div className="rounded-2xl border px-4 py-2" style={{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface)' }}>
+              <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Unread</p>
+              <p className="text-lg font-black text-blue-600">{unreadCount}</p>
             </div>
-            <Button variant="secondary" onClick={async () => {
-              toastInfo('Refreshing notices')
-              await refresh(category)
-            }} loading={refreshing} icon={RefreshCw}>
+            <Button variant="secondary" onClick={() => refresh()} loading={refreshing} icon={RefreshCw}>
               Refresh
             </Button>
           </div>
         </div>
       </section>
 
-      <section
-        className="rounded-[28px] border p-5"
-        style={{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface)' }}
-      >
-        <div className="flex gap-2 overflow-x-auto pb-1">
-          {categories.map((item) => (
-            <button
-              key={item}
-              type="button"
-              onClick={() => handleCategory(item)}
-              className="rounded-full px-3 py-2 text-xs font-semibold uppercase tracking-[0.14em] whitespace-nowrap"
-              style={{
-                backgroundColor: category === item ? 'var(--student-accent)' : 'var(--color-surface-raised)',
-                color: category === item ? '#fff' : 'var(--color-text-secondary)',
-              }}
-            >
-              {item}
-            </button>
-          ))}
-        </div>
-      </section>
-
       <section className="space-y-4">
         {loading ? (
-          Array.from({ length: 4 }).map((_, index) => (
+          Array.from({ length: 3 }).map((_, index) => (
             <div key={index} className="h-44 animate-pulse rounded-[28px]" style={{ backgroundColor: 'var(--color-surface)' }} />
           ))
         ) : sortedNotices.length ? (
@@ -148,8 +112,8 @@ const StudentNotices = () => {
         ) : (
           <EmptyState
             icon={BellRing}
-            title="No notices here right now"
-            description="This category is clear for the moment."
+            title="No notices right now"
+            description="All clear! We'll notify you when there's something new."
           />
         )}
       </section>
@@ -157,25 +121,19 @@ const StudentNotices = () => {
       <Modal
         open={Boolean(selectedNotice)}
         onClose={() => setSelectedNotice(null)}
-        title={selectedNotice?.title || 'Notice'}
+        title="Notice Detail"
         size="lg"
       >
         {selectedNotice && (
-          <div className="space-y-5">
-            <div className="flex flex-wrap gap-2">
-              {!selectedNotice.is_read && (
-                <span className="rounded-full bg-blue-100 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-blue-700">
-                  Unread
-                </span>
-              )}
-              <span className="rounded-full bg-purple-100 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-purple-700">
-                {selectedNotice.category}
-              </span>
-              {selectedNotice.is_important && (
-                <span className="rounded-full bg-red-100 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-red-700">
-                  Important
-                </span>
-              )}
+          <div className="space-y-6">
+            <div className="space-y-3">
+              <div className="flex flex-wrap gap-2">
+                <Badge variant={selectedNotice.priority === 'urgent' ? 'red' : selectedNotice.priority === 'info' ? 'blue' : 'green'}>
+                  {selectedNotice.priority}
+                </Badge>
+                <Badge variant="teal" className="capitalize">{selectedNotice.posted_by_role}</Badge>
+              </div>
+              <h2 className="text-2xl font-bold leading-tight">{selectedNotice.title}</h2>
             </div>
 
             <div className="grid gap-3 rounded-[24px] border p-4 sm:grid-cols-2" style={{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface-raised)' }}>
@@ -185,7 +143,7 @@ const StudentNotices = () => {
                 </div>
                 <div>
                   <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Posted By</p>
-                  <p className="text-sm font-semibold">{selectedNotice.posted_by || 'School'} ({selectedNotice.posted_by_role})</p>
+                  <p className="text-sm font-semibold">{selectedNotice.posted_by_name || 'School'}</p>
                 </div>
               </div>
               <div className="flex items-center gap-3">
@@ -194,29 +152,25 @@ const StudentNotices = () => {
                 </div>
                 <div>
                   <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Published Date</p>
-                  <p className="text-sm font-semibold">{formatDate(selectedNotice.publish_date, 'long')}</p>
+                  <p className="text-sm font-semibold">{formatDate(selectedNotice.created_at, 'long')}</p>
                 </div>
               </div>
-              {selectedNotice.expiry_date && (
-                <div className="flex items-center gap-3 sm:col-span-2">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-orange-50 dark:bg-orange-900/20 shadow-sm">
-                    <Clock size={18} className="text-orange-600" />
-                  </div>
-                  <div>
-                    <p className="text-[10px] font-bold uppercase tracking-wider text-orange-400">Expires On</p>
-                    <p className="text-sm font-semibold text-orange-700">{formatDate(selectedNotice.expiry_date, 'long')}</p>
-                  </div>
-                </div>
-              )}
             </div>
 
-            <div className="rounded-[24px] bg-slate-50 dark:bg-slate-900/40 p-5 border border-slate-100 dark:border-slate-800">
-              <p className="whitespace-pre-wrap text-sm leading-8 text-[var(--color-text-primary)]">
-                {selectedNotice.content}
+            <div className="rounded-[24px] bg-slate-50 dark:bg-slate-900/40 p-6 border border-slate-100 dark:border-slate-800">
+              <p className="whitespace-pre-wrap text-base leading-relaxed text-[var(--color-text-primary)]">
+                {selectedNotice.body}
               </p>
             </div>
+
+            {selectedNotice.expires_at && (
+              <div className="flex items-center gap-2 text-xs text-orange-600 font-bold bg-orange-50 dark:bg-orange-950/20 px-4 py-2 rounded-xl border border-orange-100 dark:border-orange-900/30">
+                <Clock size={14} />
+                <span>Expires on: {formatDate(selectedNotice.expires_at, 'long')}</span>
+              </div>
+            )}
             
-            <div className="flex justify-end">
+            <div className="flex justify-end pt-2">
               <Button variant="secondary" onClick={() => setSelectedNotice(null)}>Close</Button>
             </div>
           </div>
