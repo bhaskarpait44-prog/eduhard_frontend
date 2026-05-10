@@ -1,7 +1,7 @@
 // src/pages/fees/StudentFeePage.jsx
 import { useState, useCallback } from 'react'
 import { Search, X, AlertCircle, ArrowRightLeft } from 'lucide-react'
-import { getStudents } from '@/api/students'
+import { getStudents } from '@/api/studentsApi'
 import useFeeStore from '@/store/feeStore'
 import useToast from '@/hooks/useToast'
 import Badge from '@/components/ui/Badge'

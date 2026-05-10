@@ -2,7 +2,7 @@ import { lazy, Suspense } from 'react'
 import { createBrowserRouter, Navigate } from 'react-router-dom'
 import { ROUTES, ROLES } from '@/constants/app'
 import useAuthStore from '@/store/authStore'
-import AppLayout from '@/components/layout/AppLayout'
+import AppLayout from '@/layouts/AppLayout'
 import ProtectedRoute from '@/components/ui/ProtectedRoute'
 import StudentLayout from '@/layouts/StudentLayout'
 import AccountantLayout from '@/layouts/AccountantLayout'
@@ -41,6 +41,7 @@ const AdmitStudentPage = lazy(() => import('@/pages/students/AdmitStudentPage'))
 const StudentDetailPage = lazy(() => import('@/pages/students/StudentDetailPage'))
 const LeftStudentsPage = lazy(() => import('@/pages/students/LeftStudentsPage'))
 const GraduatedStudentsPage = lazy(() => import('@/pages/students/GraduatedStudentsPage'))
+const SubjectsPage = lazy(() => import('@/pages/subjects/SubjectsPage'))
 const EnrollmentsPage = lazy(() => import('@/pages/enrollments/EnrollmentsPage'))
 const AttendancePage = lazy(() => import('@/pages/attendance/AttendancePage'))
 const FeeStructurePage = lazy(() => import('@/pages/fees/FeeStructurePage'))
@@ -50,10 +51,10 @@ const ExamAnalyticsPage = lazy(() => import('@/pages/exams/ExamAnalyticsPage'))
 const AuditPage = lazy(() => import('@/pages/audit/AuditPage'))
 const FeedbackList = lazy(() => import('@/pages/feedback/FeedbackList'))
 const ClassListPage = lazy(() => import('@/pages/classes/ClassListPage'))
-const UserManagementHomePage = lazy(() => import('@/components/admin/users/UserManagementHomePage'))
-const UserListPage = lazy(() => import('@/components/admin/users/UserListPage'))
-const CreateUserPage = lazy(() => import('@/components/admin/users/CreateUserPage'))
-const BulkImportPage = lazy(() => import('@/components/admin/users/BulkImportPage'))
+const UserManagementHomePage = lazy(() => import('@/pages/admin/users/UserManagementHomePage'))
+const UserListPage = lazy(() => import('@/pages/admin/users/UserListPage'))
+const CreateUserPage = lazy(() => import('@/pages/admin/users/CreateUserPage'))
+const BulkImportPage = lazy(() => import('@/pages/admin/users/BulkImportPage'))
 const CreateTeacherPage = lazy(() => import('@/pages/admin/CreateTeacherPage'))
 const TeacherDetailPage = lazy(() => import('@/pages/admin/TeacherDetailPage'))
 const ClassDetailPage = lazy(() => import('@/pages/classes/ClassDetailPage'))
@@ -308,6 +309,14 @@ const router = createBrowserRouter([
         element: (
           <ProtectedRoute roles={[ROLES.ADMIN, ROLES.TEACHER]}>
             <Lazy component={ClassDetailPage} />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: ROUTES.SUBJECTS,
+        element: (
+          <ProtectedRoute roles={[ROLES.ADMIN, ROLES.TEACHER]}>
+            <Lazy component={SubjectsPage} />
           </ProtectedRoute>
         ),
       },

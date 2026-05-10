@@ -1,6 +1,6 @@
 // src/store/sessionStore.js
 import { create } from 'zustand'
-import * as api from '@/api/sessions'
+import * as api from '@/api/sessionsApi'
 
 const useSessionStore = create((set, get) => ({
   sessions       : [],

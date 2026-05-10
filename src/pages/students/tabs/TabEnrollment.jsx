@@ -1,7 +1,7 @@
 // src/pages/students/tabs/TabEnrollment.jsx
 import { useEffect } from 'react'
 import { BookOpen } from 'lucide-react'
-import useStudentStore from '@/store/studentStore'
+import useAdminStudentStore from '@/store/studentStore'
 import Badge from '@/components/ui/Badge'
 import EmptyState from '@/components/ui/EmptyState'
 import { formatDate } from '@/utils/helpers'
@@ -28,7 +28,7 @@ const formatStream = (stream) => {
 }
 
 const TabEnrollment = ({ studentId }) => {
-  const { history, isLoading, fetchHistory } = useStudentStore()
+  const { history, isLoading, fetchHistory } = useAdminStudentStore()
 
   useEffect(() => {
     fetchHistory(studentId).catch(() => {})

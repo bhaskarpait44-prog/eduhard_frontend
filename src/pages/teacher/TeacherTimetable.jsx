@@ -5,7 +5,7 @@ import usePageTitle from '@/hooks/usePageTitle'
 import useToast from '@/hooks/useToast'
 import * as teacherApi from '@/api/teacherApi'
 import TimetableGrid from '@/components/teacher/TimetableGrid'
-import TimetableToday from '@/components/teacher/TimetableToday'
+import TimetableToday from '@/components/shared/TimetableToday'
 import ExamDutyTimetable from '@/components/teacher/ExamDutyTimetable'
 
 // ─── Helpers ─────────────────────────────────────── (unchanged) ──────────────
@@ -212,6 +212,7 @@ const TeacherTimetable = () => {
               schedule={todaySchedule}
               currentPeriodId={currentPeriod?.id || null}
               onNavigate={navigate}
+              isTeacher={true}
             />
           </section>
 
@@ -236,6 +237,7 @@ const TeacherTimetable = () => {
               schedule={todaySchedule}
               currentPeriodId={currentPeriod?.id || null}
               onNavigate={navigate}
+              isTeacher={true}
             />
           </section>
         </>

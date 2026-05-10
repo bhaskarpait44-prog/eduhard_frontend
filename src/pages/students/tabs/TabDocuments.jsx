@@ -7,7 +7,7 @@ import {
 } from 'lucide-react'
 import useToast from '@/hooks/useToast'
 import Button from '@/components/ui/Button'
-import * as studentApi from '@/api/students'
+import * as studentApi from '@/api/studentsApi'
 
 const TabDocuments = ({ studentId }) => {
   const [documents, setDocuments] = useState([])

@@ -1,6 +1,6 @@
 import { useCallback } from 'react'
 import * as subjectApi from '@/api/subjectApi'
-import useClassStore from '@/store/useClassStore'
+import useClassStore from '@/store/classStore'
 import useToast from '@/hooks/useToast'
 
 const normalizeList = (payload) => (Array.isArray(payload) ? payload : [])

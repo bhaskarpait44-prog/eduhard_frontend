@@ -8,7 +8,7 @@ import {
 } from 'lucide-react'
 import useClasses from '@/hooks/useClasses'
 import usePageTitle from '@/hooks/usePageTitle'
-import ClassForm from './components/ClassForm'
+import ClassForm from '@/components/classes/ClassForm'
 import { ROUTES } from '@/constants/app'
 import { downloadClassStudentsPdf, getSections } from '@/api/classApi'
 import useToast from '@/hooks/useToast'

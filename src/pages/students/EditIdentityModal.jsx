@@ -9,7 +9,7 @@ import Input from '@/components/ui/Input'
 import Select from '@/components/ui/Select'
 import Textarea from '@/components/ui/Textarea'
 import Button from '@/components/ui/Button'
-import useStudentStore from '@/store/studentStore'
+import useAdminStudentStore from '@/store/studentStore'
 import useToast from '@/hooks/useToast'
 
 const schema = z.object({
@@ -18,7 +18,7 @@ const schema = z.object({
 })
 
 const EditIdentityModal = ({ open, onClose, field, currentValue, studentId }) => {
-  const { updateIdentity, isSaving } = useStudentStore()
+  const { updateIdentity, isSaving } = useAdminStudentStore()
   const { toastSuccess, toastError } = useToast()
 
   const { register, handleSubmit, reset, formState: { errors } } = useForm({

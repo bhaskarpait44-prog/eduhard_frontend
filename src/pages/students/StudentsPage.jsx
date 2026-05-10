@@ -7,7 +7,7 @@ import {
   MoreVertical, Eye, Pencil, Trash2,
   ExternalLink, Filter
 } from 'lucide-react'
-import useStudentStore from '@/store/studentStore'
+import useAdminStudentStore from '@/store/studentStore'
 import useSessionStore from '@/store/sessionStore'
 import useClasses from '@/hooks/useClasses'
 import usePageTitle from '@/hooks/usePageTitle'
@@ -229,7 +229,7 @@ const StudentsPage = () => {
   const navigate = useNavigate()
   const { toastError, toastSuccess } = useToast()
   const { isAdmin } = useAuth()
-  const { students, pagination, isLoading, isSaving, fetchStudents, deleteStudent, toggleStatus, fetchClassIDCardsData } = useStudentStore()
+  const { students, pagination, isLoading, isSaving, fetchStudents, deleteStudent, toggleStatus, fetchClassIDCardsData } = useAdminStudentStore()
   const { classes, fetchClasses } = useClasses()
   const { currentSession } = useSessionStore()
 

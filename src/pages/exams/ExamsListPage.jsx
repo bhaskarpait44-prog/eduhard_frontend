@@ -13,7 +13,7 @@ import EmptyState from '@/components/ui/EmptyState'
 import ConfirmDialog from '@/components/ui/ConfirmDialog'
 import CreateExamModal from './CreateExamModal'
 import ReviewExamSubjectsModal from './ReviewExamSubjectsModal'
-import { getExamSubjects, updateExamTimetable } from '@/api/exams'
+import { getExamSubjects, updateExamTimetable } from '@/api/examsApi'
 import { getUsers } from '@/api/userManagementApi'
 import { formatDate, getExamTypeLabel } from '@/utils/helpers'
 

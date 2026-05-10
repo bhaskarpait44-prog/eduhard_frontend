@@ -1,6 +1,6 @@
 // src/store/feeStore.js
 import { create } from 'zustand'
-import * as api from '@/api/fees'
+import * as api from '@/api/feesApi'
 
 const toNumber = (value) => {
   const numeric = Number(value)

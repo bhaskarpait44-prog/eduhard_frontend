@@ -1,8 +1,8 @@
 // src/store/studentStore.js
 import { create } from 'zustand'
-import * as studentsApi from '@/api/students'
+import * as studentsApi from '@/api/studentsApi'
 
-const useStudentStore = create((set, get) => ({
+const useAdminStudentStore = create((set, get) => ({
   // ── State ──────────────────────────────────────────────────────────────
   students      : [],
   selectedStudent: null,
@@ -191,4 +191,4 @@ const useStudentStore = create((set, get) => ({
   clearSelected: () => set({ selectedStudent: null, history: null, auditLogs: [] }),
 }))
 
-export default useStudentStore
+export default useAdminStudentStore

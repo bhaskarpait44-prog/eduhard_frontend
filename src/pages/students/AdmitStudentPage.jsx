@@ -1,12 +1,12 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ArrowLeft, Check } from 'lucide-react'
-import useStudentStore from '@/store/studentStore'
+import useAdminStudentStore from '@/store/studentStore'
 import useSessionStore from '@/store/sessionStore'
 import useToast from '@/hooks/useToast'
 import usePageTitle from '@/hooks/usePageTitle'
-import { createEnrollment } from '@/api/enrollments'
-import { assignSubjects } from '@/api/studentSubjects'
+import { createEnrollment } from '@/api/enrollmentsApi'
+import { assignSubjects } from '@/api/studentSubjectsApi'
 import { ROUTES } from '@/constants/app'
 import StepIdentity from './admit/StepIdentity'
 import StepProfile from './admit/StepProfile'
@@ -28,7 +28,7 @@ const AdmitStudentPage = () => {
   usePageTitle('Admit New Student')
   const navigate = useNavigate()
   const { toastError } = useToast()
-  const { createStudent, isSaving } = useStudentStore()
+  const { createStudent, isSaving } = useAdminStudentStore()
   const { currentSession } = useSessionStore()
 
   const [step, setStep] = useState(1)

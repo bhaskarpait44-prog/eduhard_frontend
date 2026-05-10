@@ -1,7 +1,7 @@
 // src/hooks/useClasses.js
 import { useCallback } from 'react'
 import * as classApi from '@/api/classApi'
-import useClassStore from '@/store/useClassStore'
+import useClassStore from '@/store/classStore'
 import useToast from '@/hooks/useToast'
 
 const useClasses = () => {

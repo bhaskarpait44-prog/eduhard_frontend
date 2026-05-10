@@ -1,6 +1,6 @@
 // src/store/auditStore.js
 import { create } from 'zustand'
-import * as api from '@/api/audit'
+import * as api from '@/api/auditApi'
 
 const useAuditStore = create((set, get) => ({
   logs          : [],

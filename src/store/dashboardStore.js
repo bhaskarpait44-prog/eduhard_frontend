@@ -1,6 +1,6 @@
 // src/store/dashboardStore.js
 import { create } from 'zustand'
-import { getAuditLogs } from '@/api/audit'
+import { getAuditLogs } from '@/api/auditApi'
 
 const useDashboardStore = create((set) => ({
   stats            : null,
@@ -18,7 +18,7 @@ const useDashboardStore = create((set) => ({
 
     try {
       const [studentsRes, auditRes, leavingRes] = await Promise.allSettled([
-        import('@/api/students').then((m) => m.getStudents({ perPage: 1 })),
+        import('@/api/studentsApi').then((m) => m.getStudents({ perPage: 1 })),
         getAuditLogs({ limit: 5, page: 1 }),
         import('@/api/studentLeavingApi').then((m) => m.getLeavingSummary({ session_id: sessionId })),
       ])
@@ -35,7 +35,7 @@ const useDashboardStore = create((set) => ({
         upcomingExams  : { count: 0, next: null },
       }
 
-      const recentStudents = await import('@/api/students')
+      const recentStudents = await import('@/api/studentsApi')
         .then((m) => m.getStudents({ perPage: 10, sort: 'created_at:desc' }))
         .then((r) => Array.isArray(r.data) ? r.data : r.data?.students || r.data?.data || [])
         .catch(() => [])

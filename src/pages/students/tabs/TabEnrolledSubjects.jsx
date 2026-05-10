@@ -1,7 +1,7 @@
 // src/pages/students/tabs/TabEnrolledSubjects.jsx
 import { useEffect, useState } from 'react'
 import { Book, ShieldCheck, ShieldAlert, Trash2, Plus } from 'lucide-react'
-import * as studentSubjectsApi from '@/api/studentSubjects'
+import * as studentSubjectsApi from '@/api/studentSubjectsApi'
 import useToast from '@/hooks/useToast'
 import Badge from '@/components/ui/Badge'
 import Button from '@/components/ui/Button'

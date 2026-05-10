@@ -2,7 +2,7 @@ import { useEffect, useState, useMemo } from 'react'
 import usePageTitle from '@/hooks/usePageTitle'
 import useToast from '@/hooks/useToast'
 import useFamilyStore from '@/store/familyStore'
-import useStudentStore from '@/store/studentStore'
+import useAdminStudentStore from '@/store/studentStore'
 import { 
   Users, 
   Plus, 
@@ -21,7 +21,7 @@ export default function FamilyManager() {
   usePageTitle('Sibling Linking & Families')
   const { toastSuccess, toastError } = useToast()
   const { families, isLoading, fetchFamilies, createFamily, updateFamily, deleteFamily } = useFamilyStore()
-  const { students, fetchStudents } = useStudentStore()
+  const { students, fetchStudents } = useAdminStudentStore()
 
   const [searchQuery, setSearchQuery] = useState('')
   const [modalOpen, setModalOpen] = useState(false)

@@ -4,12 +4,12 @@ import { ArrowLeft, Plus, Pencil, Trash2, BookOpen, FlaskConical, Layers, Users,
 import useClasses  from '@/hooks/useClasses'
 import useSubjects from '@/hooks/useSubjects'
 import usePageTitle from '@/hooks/usePageTitle'
-import { getStudents } from '@/api/students'
+import { getStudents } from '@/api/studentsApi'
 import { downloadClassStudentsPdf } from '@/api/classApi'
 import useToast from '@/hooks/useToast'
 import useSessionStore from '@/store/sessionStore'
-import SectionForm from './components/SectionForm'
-import SubjectForm from './components/SubjectForm'
+import SectionForm from '@/components/classes/SectionForm'
+import SubjectForm from '@/components/classes/SubjectForm'
 
 const Modal=({open,onClose,title,children,wide})=>{
   if(!open)return null

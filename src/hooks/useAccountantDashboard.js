@@ -1,5 +1,5 @@
 import { useEffect } from 'react'
-import useAccountantStore from '@/store/useAccountantStore'
+import useAccountantStore from '@/store/accountantStore'
 
 const useAccountantDashboard = (params = {}) => {
   const {

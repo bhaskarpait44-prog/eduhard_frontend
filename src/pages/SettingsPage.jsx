@@ -23,6 +23,7 @@ import useAuthStore from '@/store/authStore'
 import useUiStore from '@/store/uiStore'
 import useSessionStore from '@/store/sessionStore'
 import { APP_NAME, APP_VERSION, ROUTES } from '@/constants/app'
+import api from '@/api/axios'
 
 const SETTINGS_STORAGE_KEY = 'educore_settings'
 
@@ -46,19 +47,35 @@ const SettingsPage = () => {
   const { currentSession, fetchCurrentSession } = useSessionStore()
 
   const [settings, setSettings] = useState(DEFAULT_SETTINGS)
+  const [isLoading, setIsLoading] = useState(false)
 
   useEffect(() => {
     fetchCurrentSession()
-
-    try {
-      const saved = localStorage.getItem(SETTINGS_STORAGE_KEY)
-      if (saved) {
-        setSettings((prev) => ({ ...prev, ...JSON.parse(saved) }))
-      }
-    } catch {
-      // Ignore malformed saved settings and fall back to defaults.
-    }
+    fetchSettings()
   }, [fetchCurrentSession])
+
+  const fetchSettings = async () => {
+    setIsLoading(true)
+    try {
+      const res = await api.get('/settings')
+      if (res.data?.data) {
+        setSettings((prev) => ({ ...prev, ...res.data.data }))
+        localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(res.data.data))
+      }
+    } catch (err) {
+      console.error('Failed to fetch settings from API, falling back to local storage', err)
+      try {
+        const saved = localStorage.getItem(SETTINGS_STORAGE_KEY)
+        if (saved) {
+          setSettings((prev) => ({ ...prev, ...JSON.parse(saved) }))
+        }
+      } catch {
+        // Ignore malformed saved settings and fall back to defaults.
+      }
+    } finally {
+      setIsLoading(false)
+    }
+  }
 
   const completion = useMemo(() => {
     const requiredFields = [
@@ -77,9 +94,19 @@ const SettingsPage = () => {
     setSettings((prev) => ({ ...prev, [key]: value }))
   }
 
-  const handleSave = () => {
-    localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(settings))
-    toastSuccess('Settings saved successfully')
+  const handleSave = async () => {
+    setIsLoading(true)
+    try {
+      await api.put('/settings', settings)
+      localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(settings))
+      toastSuccess('Settings saved successfully')
+    } catch (err) {
+      console.error('Failed to save settings to API', err)
+      localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(settings))
+      toastSuccess('Settings saved locally (API failed)')
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   const handleThemeChange = (nextTheme) => {
@@ -149,11 +176,12 @@ const SettingsPage = () => {
             action={
               <button
                 onClick={handleSave}
-                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold text-white transition-opacity hover:opacity-90"
+                disabled={isLoading}
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold text-white transition-opacity hover:opacity-90 disabled:opacity-50"
                 style={{ backgroundColor: 'var(--color-brand)' }}
               >
                 <Save size={15} />
-                Save changes
+                {isLoading ? 'Saving...' : 'Save changes'}
               </button>
             }
           >

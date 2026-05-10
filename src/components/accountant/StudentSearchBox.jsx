@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { Search, X } from 'lucide-react'
 import * as accountantApi from '@/api/accountantApi'
-import { getStudents } from '@/api/students'
+import { getStudents } from '@/api/studentsApi'
 import { formatCurrency } from '@/utils/helpers'
 
 const normalizeStudent = (student = {}) => ({

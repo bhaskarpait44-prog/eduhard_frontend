@@ -7,7 +7,7 @@ import useSessionStore from '@/store/sessionStore'
 import useToast from '@/hooks/useToast'
 import Button from '@/components/ui/Button'
 import { getClasses, getClassOptions, getSections } from '@/api/classApi'
-import { getSessionReport } from '@/api/attendance'
+import { getSessionReport } from '@/api/attendanceApi'
 import { cn, debounce } from '@/utils/helpers'
 
 // ─── Mini Select ────────────────────────────────────────────────────────────

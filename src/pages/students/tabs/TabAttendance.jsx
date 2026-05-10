@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { CalendarCheck } from 'lucide-react'
-import * as attendanceApi from '@/api/attendance'
+import * as attendanceApi from '@/api/attendanceApi'
 import useToast from '@/hooks/useToast'
 import Badge from '@/components/ui/Badge'
 import EmptyState from '@/components/ui/EmptyState'

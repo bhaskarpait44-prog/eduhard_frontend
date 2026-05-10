@@ -2,7 +2,7 @@ import { useEffect, useState, useMemo } from 'react'
 import usePageTitle from '@/hooks/usePageTitle'
 import useToast from '@/hooks/useToast'
 import useTransportStore from '@/store/transportStore'
-import useStudentStore from '@/store/studentStore'
+import useAdminStudentStore from '@/store/studentStore'
 import { 
   Bus, 
   MapPin, 
@@ -25,7 +25,7 @@ export default function TransportManager() {
   usePageTitle('Transport Management')
   const { toastSuccess, toastError } = useToast()
   const { routes, isLoading, fetchRoutes, createRoute, updateRoute, deleteRoute, createStop, updateStop, deleteStop, assignStudent } = useTransportStore()
-  const { students, fetchStudents } = useStudentStore()
+  const { students, fetchStudents } = useAdminStudentStore()
 
   const [searchQuery, setSearchQuery] = useState('')
   const [expandedRoutes, setExpandedRoutes] = useState([])

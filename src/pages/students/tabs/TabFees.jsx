@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Wallet } from 'lucide-react'
-import * as feesApi from '@/api/fees'
+import * as feesApi from '@/api/feesApi'
 import useToast from '@/hooks/useToast'
 import Badge from '@/components/ui/Badge'
 import EmptyState from '@/components/ui/EmptyState'

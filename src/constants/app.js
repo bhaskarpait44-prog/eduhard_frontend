@@ -52,6 +52,8 @@ export const ROUTES = {
   STUDENT_ACHIEVEMENTS: '/student/achievements',
   STUDENT_MATERIALS: '/student/materials',
   
+  // Subjects
+  SUBJECTS: '/subjects',
 
   // Students
   STUDENTS: '/students',
@@ -116,6 +118,8 @@ export const ROUTES = {
   USER_MANAGE: '/users/manage',
   USER_NEW: '/users/new',
   USER_IMPORT: '/users/import',
+  ADMIN_USERS_NEW: '/users/new',
+  ADMIN_USERS_IMPORT: '/users/import',
   USER_DETAIL: '/users/:id',
   TEACHERS: '/teachers',
   TEACHER_DETAIL: '/teachers/:id',

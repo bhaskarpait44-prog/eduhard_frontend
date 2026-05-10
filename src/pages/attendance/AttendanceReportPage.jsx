@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useMemo } from 'react'
 import { AlertTriangle, Search, TrendingUp, X } from 'lucide-react'
-import { getStudents } from '@/api/students'
+import { getStudents } from '@/api/studentsApi'
 import useAttendanceStore from '@/store/attendanceStore'
 import useSessionStore from '@/store/sessionStore'
 import usePageTitle from '@/hooks/usePageTitle'

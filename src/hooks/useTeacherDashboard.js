@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react'
-import useTeacherStore from '@/store/useTeacherStore'
+import useTeacherStore from '@/store/teacherStore'
 
 const AUTO_REFRESH_MS = 5 * 60 * 1000
 

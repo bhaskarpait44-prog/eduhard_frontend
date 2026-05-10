@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import * as teacherApi from '@/api/teacherApi'
-import { getExamSubjects } from '@/api/exams'
+import { getExamSubjects } from '@/api/examsApi'
 
 const useMarksEntry = () => {
   const [assignments, setAssignments] = useState([])

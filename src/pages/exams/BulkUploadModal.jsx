@@ -6,7 +6,7 @@ import Button from '@/components/ui/Button'
 import Select from '@/components/ui/Select'
 import useExamStore from '@/store/examStore'
 import useToast from '@/hooks/useToast'
-import * as api from '@/api/exams'
+import * as api from '@/api/examsApi'
 
 const BulkUploadModal = ({ open, onClose, examId, subjects = [] }) => {
   const { toastSuccess, toastError } = useToast()

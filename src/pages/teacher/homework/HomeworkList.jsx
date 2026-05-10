@@ -8,7 +8,7 @@ import Select from '@/components/ui/Select'
 import Button from '@/components/ui/Button'
 import EmptyState from '@/components/ui/EmptyState'
 import ConfirmDialog from '@/components/ui/ConfirmDialog'
-import HomeworkCard from '@/components/teacher/HomeworkCard'
+import HomeworkCard from '@/components/shared/HomeworkCard'
 import HomeworkForm from './HomeworkForm'
 import HomeworkSubmissions from './HomeworkSubmissions'
 
@@ -234,6 +234,7 @@ const HomeworkList = () => {
               onViewSubmissions={handleOpenSubmissions}
               onRemind={handleReminder}
               onDelete={setDeleteTarget}
+              isTeacher={true}
             />
           ))
         )}

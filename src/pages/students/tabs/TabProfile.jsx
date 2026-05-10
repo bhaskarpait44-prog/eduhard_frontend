@@ -7,7 +7,7 @@ import Modal from '@/components/ui/Modal'
 import Input from '@/components/ui/Input'
 import Select from '@/components/ui/Select'
 import Textarea from '@/components/ui/Textarea'
-import useStudentStore from '@/store/studentStore'
+import useAdminStudentStore from '@/store/studentStore'
 import useToast from '@/hooks/useToast'
 import { useForm } from 'react-hook-form'
 
@@ -47,7 +47,7 @@ const InfoRow = ({ label, value }) => (
 const TabProfile = ({ student, studentId }) => {
   const [editOpen,     setEditOpen]     = useState(false)
   const [historyOpen,  setHistoryOpen]  = useState(false)
-  const { updateProfile, isSaving } = useStudentStore()
+  const { updateProfile, isSaving } = useAdminStudentStore()
   const { toastSuccess, toastError, toastWarning } = useToast()
 
   const defaultValues = useMemo(

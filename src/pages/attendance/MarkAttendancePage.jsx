@@ -1,7 +1,7 @@
 import { useMemo, useState, useEffect } from 'react'
 import { CheckCircle2, RefreshCw, Send, Users } from 'lucide-react'
 import { getClasses, getClassOptions, getSections } from '@/api/classApi'
-import { getClassAttendance } from '@/api/attendance'
+import { getClassAttendance } from '@/api/attendanceApi'
 import useAttendanceStore from '@/store/attendanceStore'
 import useSessionStore from '@/store/sessionStore'
 import usePageTitle from '@/hooks/usePageTitle'

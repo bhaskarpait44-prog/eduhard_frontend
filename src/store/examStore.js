@@ -1,6 +1,6 @@
 // src/store/examStore.js
 import { create } from 'zustand'
-import * as api from '@/api/exams'
+import * as api from '@/api/examsApi'
 
 const useExamStore = create((set, get) => ({
   exams        : [],

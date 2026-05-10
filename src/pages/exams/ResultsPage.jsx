@@ -13,7 +13,7 @@ import ConfirmDialog from '@/components/ui/ConfirmDialog'
 import OverrideResultModal from './OverrideResultModal'
 import ReportCardModal from './ReportCardModal'
 import { getClasses, getClassOptions } from '@/api/classApi'
-import { downloadClassResultSheetPdf } from '@/api/exams'
+import { downloadClassResultSheetPdf } from '@/api/examsApi'
 import { formatPercent, formatCurrency } from '@/utils/helpers'
 
 const RESULT_CFG = {

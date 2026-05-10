@@ -2,14 +2,14 @@
 // Replace the existing file with this — adds the timeline view
 import { useEffect, useState } from 'react'
 import { ScrollText, List, GitBranch } from 'lucide-react'
-import useStudentStore from '@/store/studentStore'
+import useAdminStudentStore from '@/store/studentStore'
 import EmptyState from '@/components/ui/EmptyState'
 import { OldValue, NewValue } from '@/components/ui/ValueDiff'
 import StudentHistoryTimeline from '@/pages/audit/StudentHistoryTimeline'
 import { truncate } from '@/utils/helpers'
 
 const TabAuditLog = ({ studentId }) => {
-  const { auditLogs, isLoading, fetchAuditLog } = useStudentStore()
+  const { auditLogs, isLoading, fetchAuditLog } = useAdminStudentStore()
   const [view, setView] = useState('timeline')   // 'timeline' | 'table'
 
   useEffect(() => {

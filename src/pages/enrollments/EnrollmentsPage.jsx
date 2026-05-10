@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { BookOpen, Plus, Users, ChevronDown, ChevronUp, ChevronLeft, ChevronRight } from 'lucide-react'
 import usePageTitle from '@/hooks/usePageTitle'
 import useToast from '@/hooks/useToast'
-import useStudentStore from '@/store/studentStore'
+import useAdminStudentStore from '@/store/studentStore'
 import useSessionStore from '@/store/sessionStore'
 import useClasses from '@/hooks/useClasses'
 import { getSections } from '@/api/classApi'
@@ -156,7 +156,7 @@ export default function EnrollmentsPage() {
 
   const navigate = useNavigate()
   const { toastError } = useToast()
-  const { students, pagination, isLoading, fetchStudents } = useStudentStore()
+  const { students, pagination, isLoading, fetchStudents } = useAdminStudentStore()
   const { classes, fetchClasses } = useClasses()
   const { sessions, currentSession, fetchSessions, fetchCurrentSession } = useSessionStore()
 

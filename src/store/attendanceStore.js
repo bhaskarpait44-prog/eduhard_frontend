@@ -1,6 +1,6 @@
 // src/store/attendanceStore.js
 import { create } from 'zustand'
-import * as api from '@/api/attendance'
+import * as api from '@/api/attendanceApi'
 
 const useAttendanceStore = create((set) => ({
   classAttendance   : [],

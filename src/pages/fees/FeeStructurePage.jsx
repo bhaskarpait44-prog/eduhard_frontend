@@ -12,7 +12,7 @@ import ConfirmDialog from '@/components/ui/ConfirmDialog'
 import AddFeeComponentModal from './AddFeeComponentModal'
 import { formatCurrency } from '@/utils/helpers'
 import { getClasses, getClassOptions } from '@/api/classApi'
-import * as feesApi from '@/api/fees'
+import * as feesApi from '@/api/feesApi'
 import * as accountantApi from '@/api/accountantApi'
 
 const FREQUENCY_BADGE = {

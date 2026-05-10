@@ -6,7 +6,7 @@ import {
   Phone, Heart, User, ChevronLeft, ChevronRight as ChevronRIcon,
   ChevronDown, ChevronUp, Book
 } from 'lucide-react'
-import useStudentStore from '@/store/studentStore'
+import useAdminStudentStore from '@/store/studentStore'
 import usePageTitle from '@/hooks/usePageTitle'
 import useToast from '@/hooks/useToast'
 import Button from '@/components/ui/Button'
@@ -14,7 +14,7 @@ import Input from '@/components/ui/Input'
 import Modal from '@/components/ui/Modal'
 import { getInitials, formatDate } from '@/utils/helpers'
 import { ROUTES } from '@/constants/app'
-import * as studentApi from '@/api/students'
+import * as studentApi from '@/api/studentsApi'
 import useAuth from '@/hooks/useAuth'
 import TabAuditLog from './tabs/TabAuditLog'
 import TabResults from './tabs/TabResults'
@@ -23,7 +23,7 @@ import TabIdentity from './tabs/TabIdentity'
 import TabProfile from './tabs/TabProfile'
 import TabDocuments from './tabs/TabDocuments'
 import TabEnrolledSubjects from './tabs/TabEnrolledSubjects'
-import TabHealth from '@/components/students/TabHealth'
+import TabHealth from './tabs/TabHealth'
 import useAttendanceStore from '@/store/attendanceStore'
 import StudentIDCardDownload from '@/components/pdf/StudentIDCardDownload'
 import TransferCertificateDownload from '@/components/pdf/TransferCertificateDownload'
@@ -85,7 +85,7 @@ const LeftPanel = ({
   student, palette, isAdmin, onResetPassword, onDelete, onToggleStatus, 
   isSaving, toastWarning, onShowHistory, onMarkAsLeft, onReadmit 
 }) => {
-  const { fetchIDCardData, fetchTCData } = useStudentStore()
+  const { fetchIDCardData, fetchTCData } = useAdminStudentStore()
   const [idCardData, setIdCardData] = useState(null)
   const [tcData, setTcData] = useState(null)
   const [fetchingID, setFetchingID] = useState(false)
@@ -624,7 +624,7 @@ const StudentDetailPage = () => {
     deleteStudent,
     toggleStatus,
     isSaving,
-  } = useStudentStore()
+  } = useAdminStudentStore()
 
   const initialTab = RIGHT_TABS.some(tab => tab.key === searchParams.get('tab'))
     ? searchParams.get('tab')

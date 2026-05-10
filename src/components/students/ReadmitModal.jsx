@@ -5,7 +5,7 @@ import Select from '@/components/ui/Select'
 import useToast from '@/hooks/useToast'
 import { readmitStudent } from '@/api/studentLeavingApi'
 import { getClasses, getSections, getClassList } from '@/api/classApi'
-import { getSessions } from '@/api/sessions'
+import { getSessions } from '@/api/sessionsApi'
 import { ArrowRightLeft } from 'lucide-react'
 
 export default function ReadmitModal({ open, student, onClose, onSuccess }) {

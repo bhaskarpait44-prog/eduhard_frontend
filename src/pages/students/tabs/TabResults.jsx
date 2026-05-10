@@ -1,6 +1,6 @@
 import { useEffect } from 'react'
 import { GraduationCap } from 'lucide-react'
-import useStudentStore from '@/store/studentStore'
+import useAdminStudentStore from '@/store/studentStore'
 import Badge from '@/components/ui/Badge'
 import EmptyState from '@/components/ui/EmptyState'
 import { formatPercent } from '@/utils/helpers'
@@ -12,7 +12,7 @@ const RESULT_VARIANT = {
 }
 
 const TabResults = ({ studentId }) => {
-  const { history, isLoading, fetchHistory } = useStudentStore()
+  const { history, isLoading, fetchHistory } = useAdminStudentStore()
 
   useEffect(() => {
     fetchHistory(studentId).catch(() => {})

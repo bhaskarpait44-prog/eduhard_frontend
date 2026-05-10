@@ -8,7 +8,7 @@ import Input from '@/components/ui/Input'
 import Select from '@/components/ui/Select'
 import useToast from '@/hooks/useToast'
 import { getClasses, getClassOptions } from '@/api/classApi'
-import * as feesApi from '@/api/fees'
+import * as feesApi from '@/api/feesApi'
 import * as accountantApi from '@/api/accountantApi'
 
 const schema = z.object({

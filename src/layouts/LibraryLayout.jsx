@@ -1,5 +1,5 @@
 import { useEffect } from 'react'
-import AppLayout from '@/components/layout/AppLayout'
+import AppLayout from '@/layouts/AppLayout'
 
 const LIBRARY_THEME = {
   '--color-brand': '#8b5cf6', // Violet

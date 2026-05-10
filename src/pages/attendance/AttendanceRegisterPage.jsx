@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react'
 import { ChevronLeft, ChevronRight, FileSpreadsheet, FileText, Download } from 'lucide-react'
 import { getClasses, getClassOptions, getSections } from '@/api/classApi'
-import { downloadAttendanceRegisterPdf } from '@/api/attendance'
+import { downloadAttendanceRegisterPdf } from '@/api/attendanceApi'
 import useAttendanceStore from '@/store/attendanceStore'
 import useSessionStore from '@/store/sessionStore'
 import usePageTitle from '@/hooks/usePageTitle'

@@ -157,7 +157,16 @@ const getNavGroups = (user) => {
         { label: 'Alumni & Leavers', icon: 'LogOut',        path: ROUTES.STUDENTS_LEFT, roles: [ROLES.ADMIN, ROLES.TEACHER] },
         { label: 'Graduated',     icon: 'GraduationCap', path: ROUTES.STUDENTS_GRADUATED, roles: [ROLES.ADMIN, ROLES.TEACHER] },
         { label: 'Attendance',    icon: 'CalendarCheck',  path: ROUTES.ATTENDANCE,   roles: [ROLES.ADMIN, ROLES.TEACHER] },
+        { label: 'Subjects',      icon: 'BookOpen',       path: ROUTES.SUBJECTS,     roles: [ROLES.ADMIN, ROLES.TEACHER] },
         { label: 'Exams & Results', icon: 'ClipboardList', path: ROUTES.EXAMS,       roles: [ROLES.ADMIN, ROLES.TEACHER] },
+      ],
+    },
+    {
+      label: 'Finance',
+      items: [
+        { label: 'Fees',          icon: 'Wallet',         path: ROUTES.FEES,           roles: [ROLES.ADMIN] },
+        { label: 'Fee Structure', icon: 'NotebookTabs',   path: ROUTES.FEE_STRUCTURES, roles: [ROLES.ADMIN] },
+        { label: 'Fee Report',    icon: 'BarChart3',      path: ROUTES.FEE_REPORT,     roles: [ROLES.ADMIN] },
       ],
     },
     {
