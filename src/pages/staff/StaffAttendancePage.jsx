@@ -1,0 +1,380 @@
+import { useEffect, useState, useMemo } from 'react'
+import usePageTitle from '@/hooks/usePageTitle'
+import useToast from '@/hooks/useToast'
+import useStaffAttendanceStore from '@/store/staffAttendanceStore'
+import { 
+  Calendar, 
+  CheckCircle2, 
+  Clock, 
+  XCircle, 
+  FileSpreadsheet, 
+  ChevronLeft, 
+  ChevronRight,
+  Search,
+  Save,
+  UserCheck
+} from 'lucide-react'
+import Button from '@/components/ui/Button'
+import Badge from '@/components/ui/Badge'
+import EmptyState from '@/components/ui/EmptyState'
+import { formatDate } from '@/utils/helpers'
+
+const STATUS_OPTIONS = [
+  { value: 'present', label: 'Present', color: 'green', icon: CheckCircle2 },
+  { value: 'absent',  label: 'Absent',  color: 'red',   icon: XCircle },
+  { value: 'late',    label: 'Late',    color: 'amber', icon: Clock },
+  { value: 'half_day', label: 'Half Day', color: 'blue',  icon: Clock },
+  { value: 'leave',   label: 'Leave',   color: 'purple', icon: Calendar },
+]
+
+export default function StaffAttendancePage() {
+  usePageTitle('Staff Attendance')
+  const { toastSuccess, toastError } = useToast()
+  const { 
+    dailyAttendance, 
+    fetchDailyAttendance, 
+    markBulk, 
+    registerData, 
+    fetchMonthlyRegister, 
+    isLoading 
+  } = useStaffAttendanceStore()
+
+  const [activeTab, setActiveTab] = useState('daily') // 'daily' | 'register'
+  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0])
+  const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1)
+  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear())
+  const [searchQuery, setSearchQuery] = useState('')
+  const [localRecords, setLocalRecords] = useState([])
+
+  // Load data based on tab
+  useEffect(() => {
+    if (activeTab === 'daily') {
+      fetchDailyAttendance(selectedDate)
+    } else {
+      fetchMonthlyRegister(selectedMonth, selectedYear)
+    }
+  }, [activeTab, selectedDate, selectedMonth, selectedYear, fetchDailyAttendance, fetchMonthlyRegister])
+
+  // Sync local records when daily attendance is fetched
+  useEffect(() => {
+    if (dailyAttendance) {
+      setLocalRecords(dailyAttendance.map(s => ({
+        user_id: s.user_id,
+        status: s.status || 'present',
+        remarks: s.remarks || ''
+      })))
+    }
+  }, [dailyAttendance]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  const filteredStaff = useMemo(() => {
+    const data = activeTab === 'daily' ? dailyAttendance : registerData
+    if (!searchQuery.trim()) return data
+    return data.filter(s => 
+      s.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      s.employee_id?.toLowerCase().includes(searchQuery.toLowerCase())
+    )
+  }, [dailyAttendance, registerData, searchQuery, activeTab])
+
+  const handleStatusChange = (userId, status) => {
+    setLocalRecords(prev => prev.map(r => 
+      r.user_id === userId ? { ...r, status } : r
+    ))
+  }
+
+  const handleRemarksChange = (userId, remarks) => {
+    setLocalRecords(prev => prev.map(r => 
+      r.user_id === userId ? { ...r, remarks } : r
+    ))
+  }
+
+  const handleSave = async () => {
+    try {
+      await markBulk(selectedDate, localRecords)
+      toastSuccess('Staff attendance saved successfully.')
+      fetchDailyAttendance(selectedDate)
+    } catch (err) {
+      toastError(err.message || 'Failed to save attendance.')
+    }
+  }
+
+  const handlePrevDate = () => {
+    const d = new Date(selectedDate)
+    d.setDate(d.getDate() - 1)
+    setSelectedDate(d.toISOString().split('T')[0])
+  }
+
+  const handleNextDate = () => {
+    const d = new Date(selectedDate)
+    d.setDate(d.getDate() + 1)
+    setSelectedDate(d.toISOString().split('T')[0])
+  }
+
+  return (
+    <div className="space-y-6">
+      {/* Header & Tabs */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white dark:bg-gray-900 p-4 rounded-[28px] border border-gray-100 dark:border-gray-800 shadow-sm">
+        <div className="flex p-1 bg-gray-50 dark:bg-gray-800 rounded-2xl w-fit">
+          <button
+            onClick={() => setActiveTab('daily')}
+            className={`px-6 py-2 rounded-xl text-sm font-bold transition-all ${
+              activeTab === 'daily' 
+                ? 'bg-white dark:bg-gray-700 text-indigo-600 dark:text-indigo-400 shadow-sm' 
+                : 'text-gray-500 hover:text-gray-700 dark:text-gray-400'
+            }`}
+          >
+            Daily Marking
+          </button>
+          <button
+            onClick={() => setActiveTab('register')}
+            className={`px-6 py-2 rounded-xl text-sm font-bold transition-all ${
+              activeTab === 'register' 
+                ? 'bg-white dark:bg-gray-700 text-indigo-600 dark:text-indigo-400 shadow-sm' 
+                : 'text-gray-500 hover:text-gray-700 dark:text-gray-400'
+            }`}
+          >
+            Attendance Register
+          </button>
+        </div>
+
+        <div className="flex items-center gap-3">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
+            <input
+              type="text"
+              placeholder="Search staff..."
+              value={searchQuery}
+              onChange={e => setSearchQuery(e.target.value)}
+              className="pl-10 pr-4 py-2 bg-gray-50 dark:bg-gray-800 border-none rounded-2xl text-sm focus:ring-2 focus:ring-indigo-500/20 w-full sm:w-64"
+            />
+          </div>
+          {activeTab === 'daily' && (
+            <Button 
+              icon={Save} 
+              onClick={handleSave} 
+              loading={isLoading}
+              className="rounded-2xl"
+            >
+              Save
+            </Button>
+          )}
+        </div>
+      </div>
+
+      {/* Daily Marking View */}
+      {activeTab === 'daily' && (
+        <div className="bg-white dark:bg-gray-900 rounded-[28px] border border-gray-100 dark:border-gray-800 shadow-sm overflow-hidden">
+          {/* Date Picker Header */}
+          <div className="flex items-center justify-between p-6 border-b border-gray-50 dark:border-gray-800">
+            <div className="flex items-center gap-4">
+              <div className="p-3 bg-indigo-50 dark:bg-indigo-500/10 rounded-2xl">
+                <UserCheck className="text-indigo-600 dark:text-indigo-400" size={24} />
+              </div>
+              <div>
+                <h2 className="text-lg font-bold text-gray-900 dark:text-white">Staff Attendance</h2>
+                <p className="text-sm text-gray-500">{formatDate(selectedDate, 'long')}</p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2 bg-gray-50 dark:bg-gray-800 p-1.5 rounded-2xl">
+              <button onClick={handlePrevDate} className="p-2 hover:bg-white dark:hover:bg-gray-700 rounded-xl transition-all shadow-none hover:shadow-sm">
+                <ChevronLeft size={18} />
+              </button>
+              <input
+                type="date"
+                value={selectedDate}
+                onChange={e => setSelectedDate(e.target.value)}
+                className="bg-transparent border-none text-sm font-bold focus:ring-0 cursor-pointer"
+              />
+              <button onClick={handleNextDate} className="p-2 hover:bg-white dark:hover:bg-gray-700 rounded-xl transition-all shadow-none hover:shadow-sm">
+                <ChevronRight size={18} />
+              </button>
+            </div>
+          </div>
+
+          {/* Staff List */}
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse">
+              <thead className="bg-gray-50/50 dark:bg-gray-800/50">
+                <tr>
+                  <th className="px-6 py-4 text-[11px] font-black uppercase tracking-widest text-gray-400">Staff Member</th>
+                  <th className="px-6 py-4 text-[11px] font-black uppercase tracking-widest text-gray-400">Status</th>
+                  <th className="px-6 py-4 text-[11px] font-black uppercase tracking-widest text-gray-400">Remarks</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-50 dark:divide-gray-800">
+                {filteredStaff.length > 0 ? (
+                  filteredStaff.map((s) => {
+                    const localRec = localRecords.find(r => r.user_id === s.user_id) || { status: 'present', remarks: '' }
+                    return (
+                      <tr key={s.user_id} className="hover:bg-gray-50/50 dark:hover:bg-gray-800/30 transition-colors">
+                        <td className="px-6 py-4">
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-xl bg-indigo-50 dark:bg-indigo-500/10 flex items-center justify-center text-indigo-600 dark:text-indigo-400 font-bold">
+                              {s.name?.charAt(0)}
+                            </div>
+                            <div>
+                              <p className="text-sm font-bold text-gray-900 dark:text-white">{s.name}</p>
+                              <p className="text-xs text-gray-500">{s.employee_id} • {s.designation}</p>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4">
+                          <div className="flex items-center gap-1 bg-gray-50 dark:bg-gray-800 p-1 rounded-xl w-fit">
+                            {STATUS_OPTIONS.map((opt) => (
+                              <button
+                                key={opt.value}
+                                onClick={() => handleStatusChange(s.user_id, opt.value)}
+                                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 ${
+                                  localRec.status === opt.value
+                                    ? `bg-white dark:bg-gray-700 shadow-sm text-${opt.color}-600 dark:text-${opt.color}-400`
+                                    : 'text-gray-400 hover:text-gray-600'
+                                }`}
+                              >
+                                <opt.icon size={14} strokeWidth={2.5} />
+                                <span className={localRec.status === opt.value ? 'block' : 'hidden md:block'}>
+                                  {opt.label}
+                                </span>
+                              </button>
+                            ))}
+                          </div>
+                        </td>
+                        <td className="px-6 py-4">
+                          <input
+                            type="text"
+                            placeholder="Add note..."
+                            value={localRec.remarks}
+                            onChange={e => handleRemarksChange(s.user_id, e.target.value)}
+                            className="w-full bg-transparent border-none text-sm focus:ring-0 text-gray-600 dark:text-gray-400 placeholder:text-gray-300"
+                          />
+                        </td>
+                      </tr>
+                    )
+                  })
+                ) : (
+                  <tr>
+                    <td colSpan="3" className="py-12">
+                      <EmptyState 
+                        title="No staff members found" 
+                        description="Try adjusting your search query." 
+                      />
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {/* Monthly Register View */}
+      {activeTab === 'register' && (
+        <div className="bg-white dark:bg-gray-900 rounded-[28px] border border-gray-100 dark:border-gray-800 shadow-sm overflow-hidden">
+          {/* Month/Year Picker Header */}
+          <div className="flex items-center justify-between p-6 border-b border-gray-50 dark:border-gray-800">
+            <div className="flex items-center gap-4">
+              <div className="p-3 bg-indigo-50 dark:bg-indigo-500/10 rounded-2xl">
+                <FileSpreadsheet className="text-indigo-600 dark:text-indigo-400" size={24} />
+              </div>
+              <div>
+                <h2 className="text-lg font-bold text-gray-900 dark:text-white">Attendance Register</h2>
+                <p className="text-sm text-gray-500">Monthly overview of staff attendance</p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <select
+                value={selectedMonth}
+                onChange={e => setSelectedMonth(Number(e.target.value))}
+                className="bg-gray-50 dark:bg-gray-800 border-none rounded-xl text-sm font-bold focus:ring-2 focus:ring-indigo-500/20"
+              >
+                {Array.from({ length: 12 }, (_, i) => (
+                  <option key={i + 1} value={i + 1}>
+                    {new Date(0, i).toLocaleString('default', { month: 'long' })}
+                  </option>
+                ))}
+              </select>
+              <select
+                value={selectedYear}
+                onChange={e => setSelectedYear(Number(e.target.value))}
+                className="bg-gray-50 dark:bg-gray-800 border-none rounded-xl text-sm font-bold focus:ring-2 focus:ring-indigo-500/20"
+              >
+                {[2024, 2025, 2026].map(y => (
+                  <option key={y} value={y}>{y}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          {/* Matrix View */}
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse min-w-max">
+              <thead className="bg-gray-50/50 dark:bg-gray-800/50 sticky top-0">
+                <tr>
+                  <th className="px-6 py-4 text-[11px] font-black uppercase tracking-widest text-gray-400 sticky left-0 bg-white dark:bg-gray-900 z-10">Staff</th>
+                  {Array.from({ length: new Date(selectedYear, selectedMonth, 0).getDate() }, (_, i) => (
+                    <th key={i + 1} className="px-2 py-4 text-center text-[10px] font-black text-gray-400 w-8">
+                      {i + 1}
+                    </th>
+                  ))}
+                  <th className="px-4 py-4 text-center text-[11px] font-black uppercase tracking-widest text-gray-400">Stats</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-50 dark:divide-gray-800">
+                {filteredStaff.map((s) => {
+                  const daysInMonth = new Date(selectedYear, selectedMonth, 0).getDate()
+                  const pCount = s.records.filter(r => r.status === 'present').length
+                  const aCount = s.records.filter(r => r.status === 'absent').length
+                  
+                  return (
+                    <tr key={s.user_id} className="hover:bg-gray-50/50 dark:hover:bg-gray-800/30 transition-colors">
+                      <td className="px-6 py-3 sticky left-0 bg-white dark:bg-gray-900 z-10">
+                        <div>
+                          <p className="text-sm font-bold text-gray-900 dark:text-white">{s.name}</p>
+                          <p className="text-[10px] text-gray-500 uppercase tracking-wider">{s.employee_id}</p>
+                        </div>
+                      </td>
+                      {Array.from({ length: daysInMonth }, (_, i) => {
+                        const day = i + 1
+                        const dateStr = `${selectedYear}-${String(selectedMonth).padStart(2, '0')}-${String(day).padStart(2, '0')}`
+                        const record = s.records.find(r => r.date === dateStr)
+                        
+                        let color = 'text-gray-200 dark:text-gray-700'
+                        let char = '·'
+                        
+                        if (record?.status === 'present') { color = 'text-emerald-500'; char = 'P' }
+                        if (record?.status === 'absent') { color = 'text-red-500'; char = 'A' }
+                        if (record?.status === 'late') { color = 'text-amber-500'; char = 'L' }
+                        if (record?.status === 'half_day') { color = 'text-blue-500'; char = '½' }
+                        if (record?.status === 'leave') { color = 'text-purple-500'; char = 'V' }
+
+                        return (
+                          <td key={day} className={`px-2 py-3 text-center text-[11px] font-black ${color}`}>
+                            {char}
+                          </td>
+                        )
+                      })}
+                      <td className="px-4 py-3 text-center">
+                        <div className="flex items-center gap-1 justify-center">
+                          <Badge variant="green" size="sm">{pCount}P</Badge>
+                          <Badge variant="red" size="sm">{aCount}A</Badge>
+                        </div>
+                      </td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
+          </div>
+          
+          <div className="p-4 bg-gray-50/50 dark:bg-gray-800/50 flex items-center gap-6 text-[10px] font-bold text-gray-400 uppercase tracking-widest">
+            <div className="flex items-center gap-2"><span className="text-emerald-500 font-black">P</span> Present</div>
+            <div className="flex items-center gap-2"><span className="text-red-500 font-black">A</span> Absent</div>
+            <div className="flex items-center gap-2"><span className="text-amber-500 font-black">L</span> Late</div>
+            <div className="flex items-center gap-2"><span className="text-blue-500 font-black">½</span> Half Day</div>
+            <div className="flex items-center gap-2"><span className="text-purple-500 font-black">V</span> Leave</div>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
