@@ -35,7 +35,9 @@ export default function GraduatedStudentsPage() {
   const fetchMeta = async () => {
     try {
       const [clsRes, sessRes] = await Promise.all([getClasses(), getSessions()])
-      setClasses((clsRes.data || []).map(c => ({ value: String(c.id), label: c.name })))
+      // clsRes.data is { classes: [...], stats: {...} }
+      // sessRes.data is [...]
+      setClasses((clsRes.data?.classes || []).map(c => ({ value: String(c.id), label: c.name })))
       setSessions((sessRes.data || []).map(s => ({ value: String(s.id), label: s.name })))
     } catch (err) { toastError('Failed to load filter metadata.') }
   }

@@ -28,6 +28,7 @@ import useAttendanceStore from '@/store/attendanceStore'
 import StudentIDCardDownload from '@/components/pdf/StudentIDCardDownload'
 import TransferCertificateDownload from '@/components/pdf/TransferCertificateDownload'
 import MarkAsLeftModal from '@/components/students/MarkAsLeftModal'
+import MarkAsGraduatedModal from '@/components/students/MarkAsGraduatedModal'
 import ReadmitModal from '@/components/students/ReadmitModal'
 import EnrollmentHistoryModal from '@/components/students/EnrollmentHistoryModal'
 import { LogOut, History, ArrowRightLeft } from 'lucide-react'
@@ -83,7 +84,7 @@ const SecLabel = ({ icon, title, color }) => {
 // ─── LEFT PANEL (desktop sidebar / mobile collapsible card) ───────────────────
 const LeftPanel = ({ 
   student, palette, isAdmin, onResetPassword, onDelete, onToggleStatus, 
-  isSaving, toastWarning, onShowHistory, onMarkAsLeft, onReadmit 
+  isSaving, toastWarning, onShowHistory, onMarkAsLeft, onMarkAsGraduated, onReadmit 
 }) => {
   const { fetchIDCardData, fetchTCData } = useAdminStudentStore()
   const [idCardData, setIdCardData] = useState(null)
@@ -210,12 +211,20 @@ const LeftPanel = ({
         {isAdmin && (
           <div className="space-y-2 pt-2">
             {student.status === 'active' ? (
-              <button
-                onClick={() => onMarkAsLeft()}
-                className="w-full flex items-center justify-center gap-2 py-2 px-3 rounded-xl text-xs font-bold transition-all bg-red-50 text-red-700 border border-red-200 hover:bg-red-100 dark:bg-red-500/10 dark:text-red-400 dark:border-red-500/20"
-              >
-                <LogOut size={13} /> Mark as Left
-              </button>
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  onClick={() => onMarkAsLeft()}
+                  className="w-full flex items-center justify-center gap-2 py-2 px-3 rounded-xl text-[10px] font-bold transition-all bg-red-50 text-red-700 border border-red-200 hover:bg-red-100 dark:bg-red-500/10 dark:text-red-400 dark:border-red-500/20"
+                >
+                  <LogOut size={13} /> Mark Left
+                </button>
+                <button
+                  onClick={() => onMarkAsGraduated()}
+                  className="w-full flex items-center justify-center gap-2 py-2 px-3 rounded-xl text-[10px] font-bold transition-all bg-indigo-50 text-indigo-700 border border-indigo-200 hover:bg-indigo-100 dark:bg-indigo-500/10 dark:text-indigo-400 dark:border-indigo-500/20"
+                >
+                  <GraduationCap size={13} /> Graduate
+                </button>
+              </div>
             ) : (
               <button
                 onClick={() => onReadmit()}
@@ -641,6 +650,7 @@ const StudentDetailPage = () => {
   const [isResettingPass, setIsResettingPass] = useState(false)
   const [historyOpen,      setHistoryOpen]      = useState(false)
   const [leftOpen,         setLeftOpen]         = useState(false)
+  const [graduatedOpen,    setGraduatedOpen]    = useState(false)
   const [readmitOpen,      setReadmitOpen]      = useState(false)
 
   usePageTitle(student ? `${student.first_name} ${student.last_name}` : 'Student')
@@ -770,6 +780,7 @@ const StudentDetailPage = () => {
           toastWarning={toastWarning}
           onShowHistory={() => setHistoryOpen(true)}
           onMarkAsLeft={() => setLeftOpen(true)}
+          onMarkAsGraduated={() => setGraduatedOpen(true)}
           onReadmit={() => setReadmitOpen(true)}
         />
         <RightPanel
@@ -874,35 +885,7 @@ const StudentDetailPage = () => {
       {/* ── Modals ── */}
       <EnrollmentHistoryModal open={historyOpen} student={student} onClose={() => setHistoryOpen(false)} />
       <MarkAsLeftModal open={leftOpen} student={student} onClose={() => setLeftOpen(false)} onSuccess={() => { setLeftOpen(false); fetchStudent(id) }} />
-      <ReadmitModal open={readmitOpen} student={student} onClose={() => setReadmitOpen(false)} onSuccess={() => { setReadmitOpen(false); fetchStudent(id) }} />
-    </div>
-  )
-}
-
-export default StudentDetailPagediv>
-          )}
-        </div>
-      </Modal>
-
-      {/* ── Modals ── */}
-      <EnrollmentHistoryModal open={historyOpen} student={student} onClose={() => setHistoryOpen(false)} />
-      <MarkAsLeftModal open={leftOpen} student={student} onClose={() => setLeftOpen(false)} onSuccess={() => { setLeftOpen(false); fetchStudent(id) }} />
-      <ReadmitModal open={readmitOpen} student={student} onClose={() => setReadmitOpen(false)} onSuccess={() => { setReadmitOpen(false); fetchStudent(id) }} />
-    </div>
-  )
-}
-
-export default StudentDetailPage label="Login Email"    value={resetResult.email}              onCopy={handleCopy} />
-                <CredRow icon={KeyRound} label="Temporary Pass" value={resetResult.generated_password} onCopy={handleCopy} />
-              </div>
-            </div>
-          )}
-        </div>
-      </Modal>
-
-      {/* ── Modals ── */}
-      <EnrollmentHistoryModal open={historyOpen} student={student} onClose={() => setHistoryOpen(false)} />
-      <MarkAsLeftModal open={leftOpen} student={student} onClose={() => setLeftOpen(false)} onSuccess={() => { setLeftOpen(false); fetchStudent(id) }} />
+      <MarkAsGraduatedModal open={graduatedOpen} student={student} onClose={() => setGraduatedOpen(false)} onSuccess={() => { setGraduatedOpen(false); fetchStudent(id) }} />
       <ReadmitModal open={readmitOpen} student={student} onClose={() => setReadmitOpen(false)} onSuccess={() => { setReadmitOpen(false); fetchStudent(id) }} />
     </div>
   )
