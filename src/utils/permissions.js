@@ -283,8 +283,8 @@ export const PERMISSION_TEMPLATES = {
       PERMISSION.REPORTS_EXPORT,
     ],
   },
-  accounts_head: {
-    label: 'Accounts Head',
+  accountant_default: {
+    label: 'Accountant',
     permissions: [
       PERMISSION.FEES_VIEW,
       PERMISSION.FEES_COLLECT,
@@ -298,4 +298,16 @@ export const PERMISSION_TEMPLATES = {
       PERMISSION.REPORTS_ATTENDANCE,
     ],
   },
-}
+  librarian_default: {
+    label: 'Librarian',
+    permissions: [PERMISSION.STUDENTS_VIEW, PERMISSION.NOTICES_VIEW],
+  },
+  receptionist_default: {
+    label: 'Receptionist',
+    permissions: [PERMISSION.STUDENTS_VIEW, PERMISSION.STUDENTS_CREATE, PERMISSION.STUDENTS_EDIT, PERMISSION.NOTICES_VIEW],
+  },
+  staff_default: {
+    label: 'Staff',
+    permissions: [PERMISSION.STUDENTS_VIEW, PERMISSION.ATTENDANCE_VIEW],
+  },
+  }

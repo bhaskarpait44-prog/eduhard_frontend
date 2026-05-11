@@ -127,6 +127,10 @@ export const ROUTES = {
   ADMIN_TEACHER_CONTROL: '/admin/teacher-control',
   ADMIN_NOTICES: '/admin/notices',
 
+  // Dashboards
+  STAFF_DASHBOARD: '/staff/dashboard',
+  RECEPTIONIST_DASHBOARD: '/receptionist/dashboard',
+
   // Parent Portal
   PARENT_ROOT: '/parent',
   PARENT_DASHBOARD: '/parent/dashboard',

@@ -140,6 +140,21 @@ const StudentGridCard = ({ student, onView, onEdit, onDelete }) => {
         <h3 className="text-base font-bold text-gray-900 dark:text-gray-100 line-clamp-1 mb-1">{fullName}</h3>
         <p className="text-xs text-gray-500 dark:text-gray-400 font-medium mb-4">{classLabel}</p>
 
+        {/* Status Indicator */}
+        <div className="mb-4">
+          {student.status === 'active' ? (
+            student.is_active ? (
+              <Badge variant="green" size="xs" dot>Enrolled</Badge>
+            ) : (
+              <Badge variant="amber" size="xs" dot>Suspended</Badge>
+            )
+          ) : student.status === 'left' ? (
+            <Badge variant="red" size="xs" dot>Left</Badge>
+          ) : (
+            <Badge variant="blue" size="xs" dot>Graduated</Badge>
+          )}
+        </div>
+
         {/* Stats Grid */}
         <div className="grid grid-cols-2 w-full gap-2 border-t border-gray-50 dark:border-gray-700/50 pt-4 mt-auto">
           <div className="text-left">
@@ -204,9 +219,17 @@ const StudentTableRow = ({ student, onView, onToggleStatus, isSaving }) => {
       <td className="px-6 py-4">
         <div className="flex items-center gap-3">
           <StatusToggle isActive={student.is_active} onToggle={onToggleStatus} isLoading={isSaving} />
-          <Badge variant={student.is_active ? 'green' : 'grey'} dot>
-            {student.is_active ? 'Active' : 'Inactive'}
-          </Badge>
+          {student.status === 'active' ? (
+            student.is_active ? (
+              <Badge variant="green" dot>Enrolled</Badge>
+            ) : (
+              <Badge variant="amber" dot>Suspended</Badge>
+            )
+          ) : student.status === 'left' ? (
+            <Badge variant="red" dot>Left</Badge>
+          ) : (
+            <Badge variant="blue" dot>Graduated</Badge>
+          )}
         </div>
       </td>
       <td className="px-6 py-4 text-right">

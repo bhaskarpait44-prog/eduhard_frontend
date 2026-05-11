@@ -38,7 +38,7 @@ const schema = z.object({
   internal_notes: z.string().optional(),
 })
 
-const ROLES = ['admin', 'teacher', 'accountant', 'student']
+const ROLES = ['admin', 'teacher', 'accountant', 'student', 'librarian', 'staff', 'receptionist', 'parent']
 
 const Field = ({ label, error, children, required, hint }) => (
   <div className="flex flex-col gap-1.5">

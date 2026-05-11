@@ -27,6 +27,13 @@ export const getGraduatedStudents = (params) => api.get('/student-leaving/gradua
 export const markAsLeft = (id, data) => api.patch(`/student-leaving/${id}/mark-left`, data);
 
 /**
+ * Mark a student as graduated.
+ * @param {Number} id - Student ID
+ * @param {Object} data - { graduated_date, remarks }
+ */
+export const markAsGraduated = (id, data) => api.patch(`/student-leaving/${id}/mark-graduated`, data);
+
+/**
  * Fetch full enrollment history for a student.
  * @param {Number} id - Student ID
  */

@@ -1,4 +1,4 @@
-import { ArrowRight, ShieldCheck, GraduationCap, IndianRupee } from 'lucide-react'
+import { ArrowRight, ShieldCheck, GraduationCap, IndianRupee, BookOpen, Users, Phone, Heart } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { ROUTES } from '@/constants/app'
 import usePageTitle from '@/hooks/usePageTitle'
@@ -27,6 +27,38 @@ const USER_CARDS = [
     accent: '#c2410c',
     surface: '#fff7ed',
     icon: IndianRupee,
+  },
+  {
+    role: 'librarian',
+    title: 'Librarian Users',
+    description: 'Manage librarian accounts for book cataloging, issue register, and library settings.',
+    accent: '#7c3aed',
+    surface: '#f5f3ff',
+    icon: BookOpen,
+  },
+  {
+    role: 'staff',
+    title: 'Staff Users',
+    description: 'General staff accounts for administrative tasks, attendance, and student data viewing.',
+    accent: '#0369a1',
+    surface: '#f0f9ff',
+    icon: Users,
+  },
+  {
+    role: 'receptionist',
+    title: 'Receptionist Users',
+    description: 'Manage receptionist access for student creation, notices, and general inquiries.',
+    accent: '#be185d',
+    surface: '#fdf2f8',
+    icon: Phone,
+  },
+  {
+    role: 'parent',
+    title: 'Parent Users',
+    description: 'Manage parent accounts for viewing ward performance, attendance, and fee payments.',
+    accent: '#b45309',
+    surface: '#fffbeb',
+    icon: Heart,
   },
 ]
 

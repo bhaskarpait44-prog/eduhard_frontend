@@ -97,25 +97,27 @@ const LeftPanel = ({
 
   const detailsBody = (
     <div className="p-4 pt-0 space-y-1">
-      <div className="py-3 flex items-center justify-between">
-        <div className="flex items-center gap-2.5">
-          <div className={`w-2 h-2 rounded-full shadow-sm ${student.is_active ? 'bg-emerald-500 ring-4 ring-emerald-500/10' : 'bg-gray-400'}`} />
-          <span className="text-sm font-bold text-gray-700 dark:text-gray-200">
-            {student.is_active ? 'Active' : 'Deactivated'}
-          </span>
+      {student.status === 'active' && (
+        <div className="py-3 flex items-center justify-between">
+          <div className="flex items-center gap-2.5">
+            <div className={`w-2 h-2 rounded-full shadow-sm ${student.is_active ? 'bg-emerald-500 ring-4 ring-emerald-500/10' : 'bg-amber-400 ring-4 ring-amber-500/10'}`} />
+            <span className="text-sm font-bold text-gray-700 dark:text-gray-200">
+              {student.is_active ? 'Active' : 'Suspended'}
+            </span>
+          </div>
+          {isAdmin && (
+            <button
+              onClick={(e) => { e.stopPropagation(); onToggleStatus() }}
+              disabled={isSaving}
+              className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:ring-offset-2 disabled:opacity-50 ${student.is_active ? 'bg-indigo-600' : 'bg-gray-200 dark:bg-gray-700'}`}
+            >
+              <span
+                className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${student.is_active ? 'translate-x-4' : 'translate-x-0'}`}
+              />
+            </button>
+          )}
         </div>
-        {isAdmin && (
-          <button
-            onClick={(e) => { e.stopPropagation(); onToggleStatus() }}
-            disabled={isSaving}
-            className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:ring-offset-2 disabled:opacity-50 ${student.is_active ? 'bg-indigo-600' : 'bg-gray-200 dark:bg-gray-700'}`}
-          >
-            <span
-              className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${student.is_active ? 'translate-x-4' : 'translate-x-0'}`}
-            />
-          </button>
-        )}
-      </div>
+      )}
 
       {enrollment && (
         <>
@@ -683,6 +685,13 @@ const StudentDetailPage = () => {
   }
 
   const handleToggleStatus = async () => {
+    const action = student.is_active ? 'deactivate' : 'activate'
+    const msg = student.is_active
+      ? "Deactivating will block this student's login but keeps them enrolled. Continue?"
+      : "This will restore the student's login access. Continue?"
+    
+    if (!window.confirm(msg)) return
+
     const res = await toggleStatus(id)
     if (res.success) {
       toastSuccess(`Student ${res.is_active ? 'activated' : 'deactivated'}`)
@@ -855,6 +864,35 @@ const StudentDetailPage = () => {
               <div className="grid gap-2">
                 <CredRow icon={IdCard}   label="Admission No"   value={resetResult.admission_no}       onCopy={handleCopy} />
                 <CredRow icon={Mail}     label="Login Email"    value={resetResult.email}              onCopy={handleCopy} />
+                <CredRow icon={KeyRound} label="Temporary Pass" value={resetResult.generated_password} onCopy={handleCopy} />
+              </div>
+            </div>
+          )}
+        </div>
+      </Modal>
+
+      {/* ── Modals ── */}
+      <EnrollmentHistoryModal open={historyOpen} student={student} onClose={() => setHistoryOpen(false)} />
+      <MarkAsLeftModal open={leftOpen} student={student} onClose={() => setLeftOpen(false)} onSuccess={() => { setLeftOpen(false); fetchStudent(id) }} />
+      <ReadmitModal open={readmitOpen} student={student} onClose={() => setReadmitOpen(false)} onSuccess={() => { setReadmitOpen(false); fetchStudent(id) }} />
+    </div>
+  )
+}
+
+export default StudentDetailPagediv>
+          )}
+        </div>
+      </Modal>
+
+      {/* ── Modals ── */}
+      <EnrollmentHistoryModal open={historyOpen} student={student} onClose={() => setHistoryOpen(false)} />
+      <MarkAsLeftModal open={leftOpen} student={student} onClose={() => setLeftOpen(false)} onSuccess={() => { setLeftOpen(false); fetchStudent(id) }} />
+      <ReadmitModal open={readmitOpen} student={student} onClose={() => setReadmitOpen(false)} onSuccess={() => { setReadmitOpen(false); fetchStudent(id) }} />
+    </div>
+  )
+}
+
+export default StudentDetailPage label="Login Email"    value={resetResult.email}              onCopy={handleCopy} />
                 <CredRow icon={KeyRound} label="Temporary Pass" value={resetResult.generated_password} onCopy={handleCopy} />
               </div>
             </div>

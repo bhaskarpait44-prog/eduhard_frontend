@@ -7,6 +7,7 @@ import ProtectedRoute from '@/components/ui/ProtectedRoute'
 import StudentLayout from '@/layouts/StudentLayout'
 import AccountantLayout from '@/layouts/AccountantLayout'
 import LibraryLayout from '@/layouts/LibraryLayout'
+import ParentLayout from '@/layouts/ParentLayout'
 import LoginPage from '@/pages/LoginPage'
 import NotFoundPage from '@/pages/NotFoundPage'
 
@@ -14,6 +15,9 @@ const ForgotPasswordPage = lazy(() => import('@/pages/ForgotPasswordPage'))
 const ResetPasswordPage = lazy(() => import('@/pages/ResetPasswordPage'))
 
 const DashboardPage = lazy(() => import('@/pages/DashboardPage'))
+const AdminDashboard = DashboardPage
+const StaffDashboard = lazy(() => import('@/pages/PlaceholderPage'))
+const ReceptionistDashboard = lazy(() => import('@/pages/PlaceholderPage'))
 const ParentDashboard = lazy(() => import('@/pages/parent/ParentDashboard'))
 const TeacherDashboard = lazy(() => import('@/pages/teacher/TeacherDashboard'))
 const TeacherMyClasses = lazy(() => import('@/pages/teacher/TeacherMyClasses'))
@@ -161,6 +165,14 @@ const DashboardGate = () => {
     return <Navigate to={ROUTES.PARENT_DASHBOARD} replace />
   }
 
+  if (role === ROLES.STAFF) {
+    return <Navigate to={ROUTES.STAFF_DASHBOARD} replace />
+  }
+
+  if (role === ROLES.RECEPTIONIST) {
+    return <Navigate to={ROUTES.RECEPTIONIST_DASHBOARD} replace />
+  }
+
   return <Lazy component={DashboardPage} />
 }
 
@@ -168,6 +180,9 @@ const StaffShell = () => {
   const role = useAuthStore((state) => state.user?.role)
   if (role === ROLES.STUDENT) {
     return <Navigate to={ROUTES.STUDENT_DASHBOARD} replace />
+  }
+  if (role === ROLES.STAFF || role === ROLES.RECEPTIONIST) {
+    return <Navigate to={ROUTES.DASHBOARD} replace />
   }
   return <AppLayout />
 }
@@ -286,6 +301,19 @@ const router = createBrowserRouter([
   },
 
   {
+    path: ROUTES.PARENT_ROOT,
+    element: (
+      <ProtectedRoute roles={[ROLES.PARENT]}>
+        <ParentLayout />
+      </ProtectedRoute>
+    ),
+    children: [
+      { index: true, element: <Navigate to="dashboard" replace /> },
+      { path: 'dashboard', element: <Lazy component={ParentDashboard} /> },
+    ],
+  },
+
+  {
     path: '/',
     element: (
       <ProtectedRoute>
@@ -295,6 +323,39 @@ const router = createBrowserRouter([
     children: [
       { index: true, element: <Navigate to={ROUTES.DASHBOARD} replace /> },
       { path: ROUTES.DASHBOARD, element: <DashboardGate /> },
+
+      {
+        path: '/admin/dashboard',
+        element: (
+          <ProtectedRoute roles={[ROLES.ADMIN]}>
+            <Lazy component={AdminDashboard} />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: ROUTES.STAFF_DASHBOARD,
+        element: (
+          <ProtectedRoute roles={[ROLES.STAFF]}>
+            <Lazy component={StaffDashboard} />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: ROUTES.RECEPTIONIST_DASHBOARD,
+        element: (
+          <ProtectedRoute roles={[ROLES.RECEPTIONIST]}>
+            <Lazy component={ReceptionistDashboard} />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: '/librarian/dashboard',
+        element: (
+          <ProtectedRoute roles={[ROLES.LIBRARIAN]}>
+            <Lazy component={LibraryDashboardPage} />
+          </ProtectedRoute>
+        ),
+      },
 
       {
         path: ROUTES.CLASSES,
@@ -405,14 +466,6 @@ const router = createBrowserRouter([
         element: (
           <ProtectedRoute roles={[ROLES.ADMIN]}>
             <Lazy component={SessionDetailPage} />
-          </ProtectedRoute>
-        ),
-      },
-      {
-        path: ROUTES.PARENT_DASHBOARD,
-        element: (
-          <ProtectedRoute roles={[ROLES.PARENT]}>
-            <Lazy component={ParentDashboard} />
           </ProtectedRoute>
         ),
       },
@@ -692,3 +745,4 @@ const router = createBrowserRouter([
 ])
 
 export default router
+

@@ -10,7 +10,7 @@ import useToast from '@/hooks/useToast'
 import { ROUTES } from '@/constants/app'
 
 const STEPS = ['Download Template', 'Upload File', 'Review & Validate', 'Processing', 'Summary']
-const IMPORTABLE_ROLES = ['admin', 'teacher', 'accountant', 'student']
+const IMPORTABLE_ROLES = ['admin', 'teacher', 'accountant', 'student', 'librarian', 'staff', 'receptionist']
 
 function parseCSV(text) {
   const lines = text.trim().split('\n')

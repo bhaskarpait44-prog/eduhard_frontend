@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom'
 import {
   ArrowLeft, Plus, Search, Pencil, Trash2, ShieldCheck,
   ToggleLeft, ToggleRight, KeyRound, ScrollText, X, Upload,
+  ChevronLeft, ChevronRight, ArrowRight, Mail, Copy
 } from 'lucide-react'
 import * as api from '@/api/userManagementApi'
 import { ROUTES } from '@/constants/app'
@@ -24,6 +25,41 @@ const ROLE_STYLES = {
 
 const MANAGED_ROLE_OPTIONS = ['admin', 'teacher', 'accountant', 'student', 'librarian', 'receptionist']
 const DEFAULT_PAGINATION = { page: 1, totalPages: 1, total: 0, perPage: 20 }
+
+const FIELD_LABEL_MAP = {
+  force_password_change: 'Force Password Change',
+  employee_id: 'Employee ID',
+  date_of_birth: 'Date of Birth',
+  joining_date: 'Joining Date',
+  is_active: 'Account Status',
+  internal_notes: 'Internal Notes',
+  department: 'Department',
+  designation: 'Designation',
+  name: 'Full Name',
+  phone: 'Phone',
+  address: 'Address',
+  gender: 'Gender',
+}
+
+const CredentialRow = ({ icon: Icon, label, value, onCopy }) => (
+  <div className="flex items-center justify-between gap-3 p-3 rounded-xl bg-gray-50 border border-gray-100">
+    <div className="flex items-center gap-3">
+      <div className="w-8 h-8 rounded-lg bg-indigo-50 flex items-center justify-center text-indigo-600">
+        <Icon size={14} />
+      </div>
+      <div>
+        <p className="text-[10px] font-bold uppercase tracking-widest text-gray-500 leading-none mb-1">{label}</p>
+        <p className="text-sm font-mono font-bold text-gray-900">{value}</p>
+      </div>
+    </div>
+    <button
+      onClick={() => onCopy(value)}
+      className="p-2 rounded-lg hover:bg-white hover:shadow-sm text-gray-400 hover:text-indigo-600 transition-all"
+    >
+      <Copy size={14} />
+    </button>
+  </div>
+)
 
 const EMPTY_EDIT_FORM = {
   name: '',
@@ -377,11 +413,11 @@ const UserListPage = () => {
       })
 
       const generatedPassword = response.data?.generated_password
-      toastSuccess(
-        generatedPassword
-          ? `Password reset. Temporary password: ${generatedPassword}`
-          : 'Password reset successfully'
-      )
+      if (generatedPassword) {
+        setResetResult(response.data)
+      } else {
+        toastSuccess('Password reset successfully')
+      }
       closeModal()
     } catch (e) {
       toastError(e.message || 'Failed to reset password')
