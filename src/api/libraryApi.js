@@ -1,31 +1,31 @@
-import axios from './axios';
+import api from './axios';
 
 const libraryApi = {
   // Dashboard
-  getDashboardStats: () => axios.get('/library/dashboard'),
+  getDashboardStats: () => api.get('/library/dashboard'),
 
   // Settings
-  getSettings: () => axios.get('/library/settings'),
-  updateSettings: (data) => axios.put('/library/settings', data),
+  getSettings: () => api.get('/library/settings'),
+  updateSettings: (data) => api.put('/library/settings', data),
 
   // Books
-  getBooks: (params) => axios.get('/library/books', { params }),
-  getBook: (id) => axios.get(`/library/books/${id}`),
-  createBook: (data) => axios.post('/library/books', data),
-  updateBook: (id, data) => axios.put(`/library/books/${id}`, data),
-  deleteBook: (id) => axios.delete(`/library/books/${id}`),
+  getBooks: (params) => api.get('/library/books', { params }),
+  getBook: (id) => api.get(`/library/books/${id}`),
+  createBook: (data) => api.post('/library/books', data),
+  updateBook: (id, data) => api.put(`/library/books/${id}`, data),
+  deleteBook: (id) => api.delete(`/library/books/${id}`),
 
   // Issues
-  getIssues: (params) => axios.get('/library/issues', { params }),
-  getMyIssues: () => axios.get('/library/issues/my'),
-  issueBook: (data) => axios.post('/library/issues', data),
-  returnBook: (id, data) => axios.patch(`/library/issues/${id}/return`, data),
-  markOverdue: () => axios.patch('/library/issues/mark-overdue'),
+  getIssues: (params) => api.get('/library/issues', { params }),
+  getMyIssues: () => api.get('/library/issues/my'),
+  issueBook: (data) => api.post('/library/issues', data),
+  returnBook: (id, data) => api.patch(`/library/issues/${id}/return`, data),
+  markOverdue: () => api.patch('/library/issues/mark-overdue'),
 
   // Fines
-  getFines: (params) => axios.get('/library/fines', { params }),
-  getFineSummary: () => axios.get('/library/fines/summary'),
-  updateFineStatus: (id, data) => axios.patch(`/library/fines/${id}`, data),
+  getFines: (params) => api.get('/library/fines', { params }),
+  getFineSummary: () => api.get('/library/fines/summary'),
+  updateFineStatus: (id, data) => api.patch(`/library/fines/${id}`, data),
 };
 
 export default libraryApi;

@@ -3,7 +3,7 @@ import axios from 'axios'
 import { STORAGE_KEYS } from '@/constants/app'
 import useAuthStore from '@/store/authStore'
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || (import.meta.env.DEV ? '/api' : 'http://127.0.0.1:5000/api')
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api'
 
 const api = axios.create({
   baseURL : API_BASE_URL,

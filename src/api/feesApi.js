@@ -13,3 +13,4 @@ export const getFeeDashboard     = (params)         => api.get('/fees/dashboard'
 export const getFeeInvoices      = (params)         => api.get('/fees/invoices', { params })
 export const getFeeReceipts      = (params)         => api.get('/fees/receipts', { params })
 export const getFeeDefaulters    = (params)         => api.get('/fees/defaulters', { params })
+export const downloadFeeDefaultersPdf = (params) => api.get('/fees/defaulters/download', { params, responseType: 'blob' })

@@ -19,6 +19,11 @@ const AdminDashboard = DashboardPage
 const StaffDashboard = lazy(() => import('@/pages/PlaceholderPage'))
 const ReceptionistDashboard = lazy(() => import('@/pages/PlaceholderPage'))
 const ParentDashboard = lazy(() => import('@/pages/parent/ParentDashboard'))
+const ParentWards = lazy(() => import('@/pages/parent/ParentWards'))
+const ParentAttendance = lazy(() => import('@/pages/parent/ParentAttendance'))
+const ParentFees = lazy(() => import('@/pages/parent/ParentFees'))
+const ParentResults = lazy(() => import('@/pages/parent/ParentResults'))
+const ParentNotices = lazy(() => import('@/pages/parent/ParentNotices'))
 const TeacherDashboard = lazy(() => import('@/pages/teacher/TeacherDashboard'))
 const TeacherMyClasses = lazy(() => import('@/pages/teacher/TeacherMyClasses'))
 const TeacherMarkAttendance = lazy(() => import('@/pages/teacher/attendance/MarkAttendance'))
@@ -53,6 +58,7 @@ const FeeReportPage = lazy(() => import('@/pages/fees/FeeReportPage'))
 const ExamsPage = lazy(() => import('@/pages/exams/ExamsPage'))
 const ExamAnalyticsPage = lazy(() => import('@/pages/exams/ExamAnalyticsPage'))
 const AuditPage = lazy(() => import('@/pages/audit/AuditPage'))
+const StudentFeePage = lazy(() => import('@/pages/fees/StudentFeePage'))
 const FeedbackList = lazy(() => import('@/pages/feedback/FeedbackList'))
 const ClassListPage = lazy(() => import('@/pages/classes/ClassListPage'))
 const UserManagementHomePage = lazy(() => import('@/pages/admin/users/UserManagementHomePage'))
@@ -547,6 +553,30 @@ const router = createBrowserRouter([
         element: (
           <ProtectedRoute roles={[ROLES.ADMIN]}>
             <Lazy component={AuditPage} />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: ROUTES.FEES,
+        element: (
+          <ProtectedRoute roles={[ROLES.ADMIN]}>
+            <Lazy component={StudentFeePage} />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: ROUTES.FEE_STRUCTURES,
+        element: (
+          <ProtectedRoute roles={[ROLES.ADMIN]}>
+            <Lazy component={FeeStructurePage} />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: ROUTES.FEE_REPORT,
+        element: (
+          <ProtectedRoute roles={[ROLES.ADMIN]}>
+            <Lazy component={FeeReportPage} />
           </ProtectedRoute>
         ),
       },
