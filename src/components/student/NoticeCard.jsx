@@ -1,4 +1,4 @@
-import { Pin, Eye, CalendarDays, User2, Clock, AlertCircle } from 'lucide-react'
+import { Pin, Eye, CalendarDays, User2, Clock, AlertCircle, Paperclip } from 'lucide-react'
 import { formatDate } from '@/utils/helpers'
 import Badge from '@/components/ui/Badge'
 
@@ -22,6 +22,7 @@ const NoticeCard = ({ notice, onOpen, onTogglePin, loading = false }) => {
             {notice.priority === 'info' && <Badge variant="blue">Info</Badge>}
             <Badge variant="teal" className="capitalize">{notice.posted_by_role}</Badge>
             {notice.is_pinned && <Badge variant="yellow">Pinned</Badge>}
+            {notice.attachment_path && <Paperclip size={14} className="text-slate-400 ml-1" />}
           </div>
 
           <div className="flex items-start gap-2">

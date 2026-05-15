@@ -31,29 +31,6 @@ const PermissionSelector = ({ selected = [], onChange }) => {
 
   return (
     <div className="space-y-4">
-      {/* Template quick-fill */}
-      <div>
-        <p className="text-xs font-semibold uppercase tracking-wider mb-2" style={{ color:'var(--color-text-muted)' }}>
-          Quick Templates
-        </p>
-        <div className="flex flex-wrap gap-2">
-          {Object.entries(PERMISSION_TEMPLATES).map(([key, tmpl]) => (
-            <button key={key} onClick={() => applyTemplate(key)}
-              className="px-3 py-1.5 rounded-lg text-xs font-medium transition-colors"
-              style={{ backgroundColor:'var(--color-surface-raised)', color:'var(--color-brand)', border:'1px solid var(--color-border)' }}
-              onMouseEnter={e => e.currentTarget.style.backgroundColor='#eff6ff'}
-              onMouseLeave={e => e.currentTarget.style.backgroundColor='var(--color-surface-raised)'}>
-              {tmpl.label}
-            </button>
-          ))}
-          <button onClick={() => onChange([])}
-            className="px-3 py-1.5 rounded-lg text-xs font-medium transition-colors"
-            style={{ backgroundColor:'#fef2f2', color:'#dc2626', border:'1px solid #fecaca' }}>
-            Clear All
-          </button>
-        </div>
-      </div>
-
       {/* Count */}
       <div className="flex items-center justify-between text-xs" style={{ color:'var(--color-text-muted)' }}>
         <span>{selectedCount} of {totalCount} permissions selected</span>

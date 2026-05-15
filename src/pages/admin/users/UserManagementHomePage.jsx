@@ -1,121 +1,201 @@
-import { ArrowRight, ShieldCheck, GraduationCap, IndianRupee, BookOpen, Users, Phone, Heart } from 'lucide-react'
+import { 
+  ArrowRight, ShieldCheck, GraduationCap, IndianRupee, 
+  BookOpen, Users, Phone, Heart, UserPlus, FileText, Activity
+} from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
+import { useEffect, useState } from 'react'
+import * as api from '@/api/userManagementApi'
 import { ROUTES } from '@/constants/app'
 import usePageTitle from '@/hooks/usePageTitle'
 
-const USER_CARDS = [
+const USER_GROUPS = [
   {
     role: 'admin',
-    title: 'Admin Users',
-    description: 'Create and manage administrator accounts, permissions, passwords, and access status.',
+    title: 'Administrators',
+    description: 'System-wide access and management',
     accent: '#1d4ed8',
-    surface: '#eff6ff',
     icon: ShieldCheck,
   },
   {
     role: 'teacher',
-    title: 'Teacher Users',
-    description: 'Open the teacher user list and handle account setup, permissions, resets, and profile edits.',
+    title: 'Teachers',
+    description: 'Academic and classroom management',
     accent: '#15803d',
-    surface: '#f0fdf4',
     icon: GraduationCap,
   },
   {
     role: 'accountant',
-    title: 'Accountant Users',
-    description: 'Manage accountant access for fee collection, reports, concessions, refunds, and finance workflows.',
+    title: 'Accountants',
+    description: 'Financial records and fee management',
     accent: '#c2410c',
-    surface: '#fff7ed',
     icon: IndianRupee,
   },
   {
     role: 'librarian',
-    title: 'Librarian Users',
-    description: 'Manage librarian accounts for book cataloging, issue register, and library settings.',
+    title: 'Librarians',
+    description: 'Library and resource management',
     accent: '#7c3aed',
-    surface: '#f5f3ff',
     icon: BookOpen,
   },
   {
     role: 'staff',
-    title: 'Staff Users',
-    description: 'General staff accounts for administrative tasks, attendance, and student data viewing.',
+    title: 'Support Staff',
+    description: 'Administrative and operational tasks',
     accent: '#0369a1',
-    surface: '#f0f9ff',
     icon: Users,
   },
   {
     role: 'receptionist',
-    title: 'Receptionist Users',
-    description: 'Manage receptionist access for student creation, notices, and general inquiries.',
+    title: 'Receptionists',
+    description: 'Front desk and inquiry handling',
     accent: '#be185d',
-    surface: '#fdf2f8',
     icon: Phone,
   },
   {
     role: 'parent',
-    title: 'Parent Users',
-    description: 'Manage parent accounts for viewing ward performance, attendance, and fee payments.',
+    title: 'Parents',
+    description: 'Parental access for ward tracking',
     accent: '#b45309',
-    surface: '#fffbeb',
     icon: Heart,
   },
 ]
 
+const StatCard = ({ label, value, icon: Icon, color }) => (
+  <div className="p-5 rounded-2xl bg-white border border-gray-100 shadow-sm flex items-center gap-4">
+    <div className="p-3 rounded-xl" style={{ backgroundColor: `${color}10`, color }}>
+      <Icon size={20} />
+    </div>
+    <div>
+      <p className="text-xs font-medium text-gray-500 uppercase tracking-wider">{label}</p>
+      <p className="text-xl font-bold text-gray-900">{value}</p>
+    </div>
+  </div>
+)
+
 const UserManagementHomePage = () => {
   usePageTitle('User Management')
-
   const navigate = useNavigate()
+  const [stats, setStats] = useState({ total: 0, active: 0, admin: 0 })
+  const [isLoading, setIsLoading] = useState(true)
+
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        const response = await api.getUsers({ perPage: 1 })
+        if (response.data) {
+          const { total } = response.data.pagination || { total: 0 }
+          const { admin = 0 } = response.data.roleCounts || {}
+          
+          setStats({
+            total,
+            admin,
+            active: total, // Placeholder or we could do another call with status=active
+          })
+        }
+      } catch (e) {
+        console.error('Failed to fetch user stats', e)
+      } finally {
+        setIsLoading(false)
+      }
+    }
+    fetchStats()
+  }, [])
 
   const openRoleManager = (role) => {
     navigate(`${ROUTES.USER_MANAGE}?role=${role}`)
   }
 
   return (
-    <div className="space-y-6">
-      <div className="max-w-2xl">
-        <h1 className="text-2xl font-bold" style={{ color: 'var(--color-text-primary)' }}>
-          User Management
-        </h1>
-        <p className="mt-2 text-sm" style={{ color: 'var(--color-text-secondary)' }}>
-          Choose a user group to open its full list page and manage creation, editing,
-          permissions, password reset, activation, and audit history.
-        </p>
+    <div className="max-w-6xl mx-auto space-y-8 pb-10">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">User Management</h1>
+          <p className="text-sm text-gray-500 mt-1">Configure system access and manage user roles across the organization.</p>
+        </div>
+        <button
+          onClick={() => navigate(ROUTES.USER_CREATE)}
+          className="inline-flex items-center gap-2 px-5 py-2.5 bg-indigo-600 text-white rounded-xl text-sm font-semibold hover:bg-indigo-700 transition-colors shadow-sm"
+        >
+          <UserPlus size={18} />
+          Create New User
+        </button>
       </div>
 
-      <div className="grid gap-5 lg:grid-cols-3">
-        {USER_CARDS.map((card) => {
-          const Icon = card.icon
-          return (
-            <button
-              key={card.role}
-              type="button"
-              onClick={() => openRoleManager(card.role)}
-              className="group rounded-[28px] p-6 text-left transition-transform hover:-translate-y-1"
-              style={{ backgroundColor: card.surface, border: `1px solid ${card.accent}22` }}
-            >
-              <div
-                className="flex h-14 w-14 items-center justify-center rounded-2xl"
-                style={{ backgroundColor: card.accent, color: '#fff' }}
+      {/* Stats Overview */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <StatCard label="Total Users" value={isLoading ? '...' : stats.total} icon={Users} color="#4f46e5" />
+        <StatCard label="Active Accounts" value={isLoading ? '...' : stats.active} icon={Activity} color="#10b981" />
+        <StatCard label="Administrators" value={isLoading ? '...' : stats.admin} icon={ShieldCheck} color="#3b82f6" />
+        <StatCard label="Roles" value={USER_GROUPS.length} icon={FileText} color="#f59e0b" />
+      </div>
+
+      {/* User Roles Management Section */}
+      <div className="bg-white rounded-[24px] border border-gray-100 shadow-sm overflow-hidden">
+        <div className="px-6 py-5 border-b border-gray-50 flex items-center justify-between bg-gray-50/50">
+          <h2 className="font-bold text-gray-900">Access Groups</h2>
+          <span className="text-xs font-medium px-2.5 py-1 bg-white rounded-full text-gray-500 border border-gray-100">
+            {USER_GROUPS.length} Roles Defined
+          </span>
+        </div>
+        
+        <div className="divide-y divide-gray-50">
+          {USER_GROUPS.map((group) => {
+            const Icon = group.icon
+            return (
+              <div 
+                key={group.role}
+                onClick={() => openRoleManager(group.role)}
+                className="group flex items-center justify-between p-5 hover:bg-gray-50 transition-colors cursor-pointer"
               >
-                <Icon size={24} />
+                <div className="flex items-center gap-4">
+                  <div 
+                    className="w-12 h-12 rounded-xl flex items-center justify-center transition-transform group-hover:scale-110"
+                    style={{ backgroundColor: `${group.accent}10`, color: group.accent }}
+                  >
+                    <Icon size={22} />
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-gray-900">{group.title}</h3>
+                    <p className="text-sm text-gray-500">{group.description}</p>
+                  </div>
+                </div>
+                
+                <div className="flex items-center gap-6">
+                  <div className="hidden sm:flex flex-col items-end">
+                    <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest leading-none mb-1">Status</span>
+                    <span className="text-xs font-semibold text-green-600 flex items-center gap-1">
+                      <span className="w-1.5 h-1.5 rounded-full bg-green-500" />
+                      Active
+                    </span>
+                  </div>
+                  <div className="w-10 h-10 rounded-full flex items-center justify-center bg-gray-100 text-gray-400 group-hover:bg-indigo-600 group-hover:text-white transition-all">
+                    <ArrowRight size={18} />
+                  </div>
+                </div>
               </div>
-              <h2 className="mt-6 text-lg font-semibold" style={{ color: 'var(--color-text-primary)' }}>
-                {card.title}
-              </h2>
-              <p className="mt-2 text-sm leading-6" style={{ color: 'var(--color-text-secondary)' }}>
-                {card.description}
-              </p>
-              <div
-                className="mt-6 inline-flex items-center gap-2 text-sm font-semibold"
-                style={{ color: card.accent }}
-              >
-                Open List
-                <ArrowRight size={15} className="transition-transform group-hover:translate-x-1" />
-              </div>
-            </button>
-          )
-        })}
+            )
+          })}
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="p-6 rounded-[24px] bg-indigo-50 border border-indigo-100">
+          <h3 className="font-bold text-indigo-900 mb-2">Bulk Import</h3>
+          <p className="text-sm text-indigo-700/80 mb-4">Onboard multiple users at once using our Excel template. Perfect for beginning a new session.</p>
+          <button 
+            onClick={() => navigate(`${ROUTES.USER_MANAGE}/bulk-import`)}
+            className="text-sm font-bold text-indigo-700 flex items-center gap-1.5 hover:gap-2 transition-all"
+          >
+            Import Tool <ArrowRight size={16} />
+          </button>
+        </div>
+        <div className="p-6 rounded-[24px] bg-emerald-50 border border-emerald-100">
+          <h3 className="font-bold text-emerald-900 mb-2">Permissions & Security</h3>
+          <p className="text-sm text-emerald-700/80 mb-4">Audit user activities, reset passwords, and manage global permission templates.</p>
+          <button className="text-sm font-bold text-emerald-700 flex items-center gap-1.5 hover:gap-2 transition-all">
+            Security Dashboard <ArrowRight size={16} />
+          </button>
+        </div>
       </div>
     </div>
   )

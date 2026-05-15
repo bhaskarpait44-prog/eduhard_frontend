@@ -1,8 +1,10 @@
 import { useEffect, useMemo, useState, useCallback } from 'react'
-import { Bell, Send, Filter, Eye, Trash2, Edit3, User, Users, GraduationCap, School } from 'lucide-react'
+import { Bell, Send, Filter, Eye, Trash2, Edit3, User, Users, GraduationCap, School, ShieldCheck, BookOpen, Wallet, Phone, Paperclip, FileText, X } from 'lucide-react'
 import { noticesApi } from '@/api'
 import { getClasses, getSections, getClassOptions } from '@/api/classApi'
 import { getStudents } from '@/api/studentsApi'
+import { getTeacherControlTeachers } from '@/api/adminTeacherControlApi'
+import { getSubjects } from '@/api/subjectApi'
 import usePageTitle from '@/hooks/usePageTitle'
 import useToast from '@/hooks/useToast'
 import Input from '@/components/ui/Input'
@@ -13,28 +15,37 @@ import EmptyState from '@/components/ui/EmptyState'
 import Modal from '@/components/ui/Modal'
 import { format } from 'date-fns'
 
+const AUDIENCE_OPTIONS = [
+  { value: 'school_wide', label: 'Whole School (Everyone)', icon: School },
+  { value: 'teachers', label: 'All Teachers', icon: Users },
+  { value: 'parents', label: 'All Parents', icon: Users },
+  { value: 'accountants', label: 'All Accountants', icon: Wallet },
+  { value: 'librarians', label: 'All Librarians', icon: BookOpen },
+  { value: 'receptionists', label: 'All Receptionists', icon: Phone },
+  { value: 'class', label: 'Specific Class (Students & Parents)', icon: GraduationCap },
+  { value: 'section', label: 'Specific Section (Students & Parents)', icon: Users },
+  { value: 'student', label: 'Individual Student & Parent', icon: User },
+  { value: 'specific_teacher', label: 'Specific Teacher', icon: User },
+  { value: 'subject_wise', label: 'Subject Wise', icon: BookOpen },
+]
+
 const AdminNoticePage = () => {
   usePageTitle('Admin Notices')
   const { toastSuccess, toastError } = useToast()
 
-  const [activeTab, setActiveTab] = useState('list') // 'list' or 'create'
+  const [activeTab, setActiveTab] = useState('list')
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [classes, setClasses] = useState([])
   const [sections, setSections] = useState([])
   const [students, setStudents] = useState([])
+  const [teachers, setTeachers] = useState([])
+  const [subjects, setSubjects] = useState([])
   const [notices, setNotices] = useState([])
   const [pagination, setPagination] = useState({ page: 1, totalPages: 1 })
   
-  // Filters
-  const [filters, setFilters] = useState({
-    audience: '',
-    priority: '',
-    page: 1,
-    perPage: 10
-  })
+  const [filters, setFilters] = useState({ audience: '', priority: '', page: 1, perPage: 10 })
 
-  // Form State
   const [form, setNoticeForm] = useState({
     title: '',
     body: '',
@@ -42,8 +53,11 @@ const AdminNoticePage = () => {
     target_class_id: '',
     target_section_id: '',
     target_student_id: '',
+    target_teacher_id: '',
+    target_subject_id: '',
     priority: 'normal',
     expires_at: '',
+    attachment: null,
   })
 
   const [editingNotice, setEditingNotice] = useState(null)
@@ -63,12 +77,18 @@ const AdminNoticePage = () => {
     }
   }, [filters, toastError])
 
-  useEffect(() => {
-    loadNotices()
-  }, [loadNotices])
+  useEffect(() => { loadNotices() }, [loadNotices])
 
   useEffect(() => {
     getClasses().then(res => setClasses(getClassOptions(res))).catch(console.error)
+    getTeacherControlTeachers().then(res => {
+      const data = res.data?.teachers || res.data || []
+      setTeachers(data.map(t => ({ value: String(t.id), label: `${t.first_name} ${t.last_name}` })))
+    }).catch(console.error)
+    getSubjects().then(res => {
+      const data = res.data?.subjects || res.data || []
+      setSubjects(data.map(s => ({ value: String(s.id), label: s.name })))
+    }).catch(console.error)
   }, [])
 
   useEffect(() => {
@@ -100,15 +120,39 @@ const AdminNoticePage = () => {
     }
   }, [form.audience, form.target_class_id, form.target_section_id])
 
+  const handleFileChange = (e) => {
+    const file = e.target.files[0]
+    if (file) {
+      if (file.type !== 'application/pdf') {
+        toastError('Only PDF files are allowed.')
+        e.target.value = ''
+        return
+      }
+      if (file.size > 5 * 1024 * 1024) {
+        toastError('File size must be less than 5MB.')
+        e.target.value = ''
+        return
+      }
+      setNoticeForm(p => ({ ...p, attachment: file }))
+    }
+  }
+
   const handleSubmit = async (e) => {
     e.preventDefault()
     setSaving(true)
     try {
+      const formData = new FormData()
+      Object.keys(form).forEach(key => {
+        if (form[key] !== null && form[key] !== '') {
+          formData.append(key, form[key])
+        }
+      })
+
       if (editingNotice) {
-        await noticesApi.adminUpdateNotice(editingNotice.id, form)
+        await noticesApi.adminUpdateNotice(editingNotice.id, formData)
         toastSuccess('Notice updated successfully.')
       } else {
-        await noticesApi.adminCreateNotice(form)
+        await noticesApi.adminCreateNotice(formData)
         toastSuccess('Notice posted successfully.')
       }
       resetForm()
@@ -140,8 +184,11 @@ const AdminNoticePage = () => {
       target_class_id: '',
       target_section_id: '',
       target_student_id: '',
+      target_teacher_id: '',
+      target_subject_id: '',
       priority: 'normal',
       expires_at: '',
+      attachment: null,
     })
     setEditingNotice(null)
   }
@@ -155,20 +202,23 @@ const AdminNoticePage = () => {
       target_class_id: notice.target_class_id || '',
       target_section_id: notice.target_section_id || '',
       target_student_id: notice.target_student_id || '',
+      target_teacher_id: notice.target_teacher_id || '',
+      target_subject_id: notice.target_subject_id || '',
       priority: notice.priority,
       expires_at: notice.expires_at ? format(new Date(notice.expires_at), 'yyyy-MM-dd') : '',
     })
     setActiveTab('create')
   }
 
+  const getAudienceLabel = (notice) => {
+    const opt = AUDIENCE_OPTIONS.find(o => o.value === notice.audience)
+    return opt ? opt.label : notice.audience
+  }
+
   const getAudienceIcon = (audience) => {
-    switch (audience) {
-      case 'school_wide': return <School size={14} />
-      case 'class': return <GraduationCap size={14} />
-      case 'section': return <Users size={14} />
-      case 'student': return <User size={14} />
-      default: return <Bell size={14} />
-    }
+    const opt = AUDIENCE_OPTIONS.find(o => o.value === audience)
+    const Icon = opt ? opt.icon : Bell
+    return <Icon size={14} />
   }
 
   const getPriorityBadge = (priority) => {
@@ -281,7 +331,7 @@ const AdminNoticePage = () => {
                         <td className="px-4 py-3">
                           <div className="flex items-center gap-1.5">
                             <span className="text-slate-400">{getAudienceIcon(notice.audience)}</span>
-                            <span className="capitalize">{notice.audience.replace('_', ' ')}</span>
+                            <span className="capitalize">{getAudienceLabel(notice)}</span>
                           </div>
                           {notice.audience === 'class' && <div className="text-[10px] font-bold text-brand mt-0.5">{notice.class_name}</div>}
                           {notice.audience === 'section' && <div className="text-[10px] font-bold text-brand mt-0.5">{notice.class_name} - {notice.section_name}</div>}
@@ -358,13 +408,8 @@ const AdminNoticePage = () => {
               <Select
                 label="Target Audience"
                 value={form.audience}
-                onChange={e => setNoticeForm(p => ({ ...p, audience: e.target.value, target_class_id: '', target_section_id: '', target_student_id: '' }))}
-                options={[
-                  { value: 'school_wide', label: 'School Wide' },
-                  { value: 'class', label: 'Specific Class' },
-                  { value: 'section', label: 'Specific Section' },
-                  { value: 'student', label: 'Specific Student' },
-                ]}
+                onChange={e => setNoticeForm(p => ({ ...p, audience: e.target.value, target_class_id: '', target_section_id: '', target_student_id: '', target_teacher_id: '', target_subject_id: '' }))}
+                options={AUDIENCE_OPTIONS}
                 required
               />
               <Select
@@ -380,7 +425,7 @@ const AdminNoticePage = () => {
               />
             </div>
 
-            {['class', 'section', 'student'].includes(form.audience) && (
+            {['class', 'section', 'student', 'subject_wise'].includes(form.audience) && (
               <div className="grid gap-4 sm:grid-cols-2">
                 <Select
                   label="Select Class"
@@ -413,6 +458,27 @@ const AdminNoticePage = () => {
               />
             )}
 
+            {form.audience === 'specific_teacher' && (
+              <Select
+                label="Select Teacher"
+                value={form.target_teacher_id}
+                onChange={e => setNoticeForm(p => ({ ...p, target_teacher_id: e.target.value }))}
+                options={teachers}
+                required
+              />
+            )}
+
+            {form.audience === 'subject_wise' && (
+              <Select
+                label="Select Subject"
+                value={form.target_subject_id}
+                onChange={e => setNoticeForm(p => ({ ...p, target_subject_id: e.target.value }))}
+                options={subjects}
+                required
+              />
+            )}
+
+
             <div className="space-y-1">
               <span className="text-xs font-semibold text-slate-500">Notice Body</span>
               <textarea
@@ -423,6 +489,28 @@ const AdminNoticePage = () => {
                 onChange={e => setNoticeForm(p => ({ ...p, body: e.target.value }))}
                 required
               />
+            </div>
+
+            <div className="space-y-2">
+              <span className="text-xs font-semibold text-slate-500">Attachment (PDF, Max 5MB)</span>
+              <div className="flex items-center gap-3">
+                <label className="flex flex-1 items-center justify-center gap-2 px-4 py-3 rounded-2xl border-2 border-dashed border-slate-300 dark:border-slate-700 hover:border-brand transition-colors cursor-pointer group">
+                  <Paperclip size={18} className="text-slate-400 group-hover:text-brand" />
+                  <span className="text-sm text-slate-500 group-hover:text-brand">
+                    {form.attachment ? form.attachment.name : 'Upload PDF Document'}
+                  </span>
+                  <input type="file" accept=".pdf" onChange={handleFileChange} className="hidden" />
+                </label>
+                {form.attachment && (
+                  <button 
+                    type="button" 
+                    onClick={() => setNoticeForm(p => ({ ...p, attachment: null }))}
+                    className="p-3 rounded-2xl bg-red-50 text-red-500 hover:bg-red-100 transition-colors"
+                  >
+                    <X size={18} />
+                  </button>
+                )}
+              </div>
             </div>
 
             <Input 
@@ -474,6 +562,25 @@ const AdminNoticePage = () => {
             <div className="p-5 rounded-2xl bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-slate-800">
               <p className="text-sm whitespace-pre-wrap leading-relaxed text-slate-700 dark:text-slate-300">{viewingNotice.body}</p>
             </div>
+
+            {viewingNotice.attachment_path && (
+              <div className="flex items-center gap-3 p-4 rounded-2xl bg-brand/5 border border-brand/10">
+                <div className="p-2 rounded-xl bg-brand text-white">
+                  <FileText size={20} />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="text-sm font-semibold truncate">Attachment Document</div>
+                  <div className="text-[10px] text-slate-500">PDF Document</div>
+                </div>
+                <Button 
+                  variant="primary" 
+                  size="sm" 
+                  onClick={() => window.open(`${import.meta.env.VITE_API_URL || ''}/${viewingNotice.attachment_path}`, '_blank')}
+                >
+                  View PDF
+                </Button>
+              </div>
+            )}
 
             {viewingNotice.expires_at && (
               <div className="text-xs text-red-500 font-medium">Expires on: {format(new Date(viewingNotice.expires_at), 'dd MMM yyyy')}</div>

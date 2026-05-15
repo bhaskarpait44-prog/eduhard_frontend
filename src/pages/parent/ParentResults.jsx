@@ -1,68 +1,41 @@
-import { useEffect, useState } from 'react'
+import { useEffect } from 'react'
 import usePageTitle from '@/hooks/usePageTitle'
-import { getWards, getWardResults } from '@/api/parentApi'
+import useParentStore from '@/store/parentStore'
 import { LineChart } from 'lucide-react'
 import Badge from '@/components/ui/Badge'
 import EmptyState from '@/components/ui/EmptyState'
+import WardSelector from '@/components/parent/WardSelector'
 
 export default function ParentResults() {
   usePageTitle('Academic Results')
-  const [wards, setWards] = useState([])
-  const [selectedWard, setSelectedWard] = useState(null)
-  const [results, setResults] = useState([])
-  const [isLoading, setIsLoading] = useState(true)
+  const { 
+    wards, selectedWardId, fetchWards, 
+    isDetailsLoading, results 
+  } = useParentStore()
 
   useEffect(() => {
-    getWards().then(res => {
-      setWards(res.data)
-      if (res.data.length > 0) setSelectedWard(res.data[0])
-    })
-  }, [])
-
-  useEffect(() => {
-    if (selectedWard) {
-      setIsLoading(true)
-      getWardResults(selectedWard.id)
-        .then(res => setResults(res.data))
-        .finally(() => setIsLoading(false))
-    }
-  }, [selectedWard])
+    fetchWards()
+  }, [fetchWards])
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white dark:bg-gray-900 p-4 rounded-[28px] border border-gray-100 dark:border-gray-800 shadow-sm">
+    <div className="max-w-6xl mx-auto space-y-8 pb-10">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div className="flex items-center gap-4">
-          <div className="p-3 bg-purple-50 dark:bg-purple-500/10 rounded-2xl">
-            <LineChart className="text-purple-600 dark:text-purple-400" size={24} />
+          <div className="p-3 bg-purple-50 rounded-2xl">
+            <LineChart className="text-purple-600" size={24} />
           </div>
           <div>
-            <h1 className="text-xl font-black text-gray-900 dark:text-white tracking-tight">Academic Results</h1>
-            <p className="text-sm font-medium text-gray-500">View examination results and progress</p>
+            <h1 className="text-xl font-black text-gray-900 tracking-tight">Academic Performance</h1>
+            <p className="text-sm font-medium text-gray-500">Examination results and session progress</p>
           </div>
         </div>
-
-        {wards.length > 1 && (
-          <div className="flex items-center gap-2">
-            {wards.map(w => (
-              <button
-                key={w.id}
-                onClick={() => setSelectedWard(w)}
-                className={`px-4 py-2 rounded-xl text-sm font-bold transition-all ${
-                  selectedWard?.id === w.id 
-                    ? 'bg-indigo-600 text-white shadow-sm' 
-                    : 'bg-gray-50 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'
-                }`}
-              >
-                {w.first_name}
-              </button>
-            ))}
-          </div>
-        )}
+        <WardSelector />
       </div>
 
-      {isLoading ? (
-        <div className="flex justify-center p-12">
-          <div className="w-8 h-8 rounded-full border-4 border-indigo-200 border-t-indigo-600 animate-spin" />
+      {isDetailsLoading ? (
+        <div className="flex flex-col items-center justify-center p-20">
+          <div className="w-10 h-10 rounded-full border-4 border-purple-100 border-t-purple-600 animate-spin mb-4" />
+          <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">Compiling Results...</p>
         </div>
       ) : results.length === 0 ? (
         <div className="p-12">
@@ -71,26 +44,35 @@ export default function ParentResults() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {results.map((result) => (
-            <div key={result.id} className="bg-white dark:bg-gray-900 rounded-[28px] border border-gray-100 dark:border-gray-800 p-6 shadow-sm">
-              <div className="flex items-center justify-between mb-6">
+            <div key={result.id} className="bg-white rounded-[32px] border border-gray-100 p-8 shadow-sm group hover:border-purple-200 transition-all">
+              <div className="flex items-center justify-between mb-8">
                 <div>
-                  <p className="text-xs font-black uppercase tracking-[0.2em] text-purple-600 dark:text-purple-400 mb-1">{result.session_name}</p>
-                  <h3 className="text-lg font-black">{result.exam_name || 'Final Examination'}</h3>
+                  <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-purple-400 mb-1">{result.session_name}</p>
+                  <h3 className="text-xl font-black text-gray-900">{result.exam_name || 'Final Result'}</h3>
                 </div>
-                <Badge variant={result.is_promoted ? 'green' : 'red'} className="uppercase tracking-widest text-[9px]">
+                <Badge variant={result.is_promoted ? 'green' : 'red'} className="rounded-lg py-1 uppercase tracking-widest text-[9px]">
                   {result.is_promoted ? 'Promoted' : 'Not Promoted'}
                 </Badge>
               </div>
 
               <div className="flex items-end justify-between">
                 <div>
-                  <p className="text-4xl font-black text-gray-900 dark:text-white">{result.percentage}%</p>
-                  <p className="text-sm font-bold text-gray-500 mt-1">Overall Grade: <span className="text-purple-600">{result.grade}</span></p>
+                  <div className="flex items-baseline gap-1">
+                    <p className="text-5xl font-black text-purple-900">{result.percentage}%</p>
+                    <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">Aggregate</p>
+                  </div>
+                  <p className="text-sm font-bold text-gray-500 mt-2">Overall Grade: <span className="text-purple-600 text-lg font-black">{result.grade}</span></p>
                 </div>
                 <div className="text-right">
-                  <p className="text-xs text-gray-400 mb-1">Rank in Class</p>
-                  <p className="text-lg font-black">{result.rank || 'N/A'}</p>
+                  <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Class Rank</p>
+                  <p className="text-2xl font-black text-gray-900">{result.rank || 'N/A'}</p>
                 </div>
+              </div>
+              
+              <div className="mt-8 pt-6 border-t border-gray-50 flex justify-end">
+                <button className="text-xs font-bold text-purple-600 hover:underline uppercase tracking-widest">
+                  View Detailed Report →
+                </button>
               </div>
             </div>
           ))}

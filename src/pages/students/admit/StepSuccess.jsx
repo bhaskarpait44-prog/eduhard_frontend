@@ -59,37 +59,68 @@ const StepSuccess = ({ student, onViewStudent, onAdmitAnother }) => {
         {student?.first_name} {student?.last_name} has been successfully admitted.
       </p>
 
-      <div className="grid gap-3 max-w-xl mx-auto mb-6">
-        {student?.admission_no && (
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto mb-8">
+        {/* Student Credentials */}
+        <div className="space-y-3">
+          <h3 className="text-sm font-bold uppercase tracking-wider text-left mb-2 px-1" style={{ color: 'var(--color-text-secondary)' }}>
+            Student Credentials
+          </h3>
+          {student?.admission_no && (
+            <CredentialRow
+              label="Admission Number"
+              value={student.admission_no}
+              onCopy={(value) => handleCopy(value, 'admission')}
+            />
+          )}
           <CredentialRow
-            label="Admission Number"
-            value={student.admission_no}
-            onCopy={(value) => handleCopy(value, 'admission')}
+            label="Email Login"
+            value={credentials.student?.email}
+            onCopy={(value) => handleCopy(value, 'student email')}
           />
-        )}
-        <CredentialRow
-          label="Student Email Login"
-          value={credentials.email}
-          onCopy={(value) => handleCopy(value, 'email')}
-        />
-        <CredentialRow
-          label="Auto-Generated Password"
-          value={credentials.password}
-          onCopy={(value) => handleCopy(value, 'password')}
-        />
+          <CredentialRow
+            label="Auto-Generated Password"
+            value={credentials.student?.password}
+            onCopy={(value) => handleCopy(value, 'student password')}
+          />
+        </div>
+
+        {/* Parent Credentials */}
+        <div className="space-y-3">
+          <h3 className="text-sm font-bold uppercase tracking-wider text-left mb-2 px-1" style={{ color: 'var(--color-text-secondary)' }}>
+            Parent Portal Access
+          </h3>
+          <CredentialRow
+            label="Parent Email Login"
+            value={credentials.parent?.email}
+            onCopy={(value) => handleCopy(value, 'parent email')}
+          />
+          <CredentialRow
+            label="Parent Portal Password"
+            value={credentials.parent?.password}
+            onCopy={(value) => handleCopy(value, 'parent password')}
+          />
+          <div className="px-1 text-left">
+            <span className={`text-[11px] font-bold uppercase px-2 py-0.5 rounded-md ${credentials.parent?.is_new_account ? 'bg-green-100 text-green-700' : 'bg-blue-100 text-blue-700'}`}>
+              {credentials.parent?.is_new_account ? 'New Account Created' : 'Linked to Existing Account'}
+            </span>
+          </div>
+        </div>
       </div>
 
       <div
-        className="mx-auto mb-8 max-w-xl rounded-xl px-4 py-3 text-left"
+        className="mx-auto mb-8 max-w-4xl rounded-xl px-4 py-3 text-left flex items-start gap-3"
         style={{ backgroundColor: 'rgba(99, 102, 241, 0.12)', border: '1px solid rgba(99, 102, 241, 0.24)' }}
       >
-        <p className="text-sm font-medium" style={{ color: 'var(--color-text-primary)' }}>
-          Student can log in using email or admission number.
-        </p>
-        <p className="mt-1 text-xs" style={{ color: 'var(--color-text-secondary)' }}>
-          Share this password now. It is only shown here after admission.
-          {copiedField ? ` ${copiedField} copied.` : ''}
-        </p>
+        <div className="mt-0.5 text-indigo-600"><Plus size={16} /></div>
+        <div>
+          <p className="text-sm font-medium" style={{ color: 'var(--color-text-primary)' }}>
+            Share these credentials with the family now.
+          </p>
+          <p className="mt-1 text-xs" style={{ color: 'var(--color-text-secondary)' }}>
+            Passwords are only shown here once. Both student and parent can log in to their respective portals immediately.
+            {copiedField ? ` ${copiedField} copied.` : ''}
+          </p>
+        </div>
       </div>
 
       <div className="flex flex-col sm:flex-row items-center justify-center gap-3">

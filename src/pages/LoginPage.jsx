@@ -20,6 +20,7 @@ const loginSchema = z.object({
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 function getFallbackRouteForRole(role) {
   if (role === ROLES.STUDENT) return ROUTES.STUDENT_DASHBOARD
+  if (role === ROLES.PARENT) return ROUTES.PARENT_DASHBOARD
   return ROUTES.DASHBOARD
 }
 

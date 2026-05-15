@@ -316,6 +316,11 @@ const router = createBrowserRouter([
     children: [
       { index: true, element: <Navigate to="dashboard" replace /> },
       { path: 'dashboard', element: <Lazy component={ParentDashboard} /> },
+      { path: 'wards', element: <Lazy component={ParentWards} /> },
+      { path: 'attendance', element: <Lazy component={ParentAttendance} /> },
+      { path: 'fees', element: <Lazy component={ParentFees} /> },
+      { path: 'results', element: <Lazy component={ParentResults} /> },
+      { path: 'notices', element: <Lazy component={ParentNotices} /> },
     ],
   },
 

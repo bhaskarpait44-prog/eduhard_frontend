@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { BellRing, RefreshCw, CalendarDays, User2, Clock } from 'lucide-react'
+import { BellRing, RefreshCw, CalendarDays, User2, Clock, FileText } from 'lucide-react'
 import Button from '@/components/ui/Button'
 import EmptyState from '@/components/ui/EmptyState'
 import Modal from '@/components/ui/Modal'
@@ -162,6 +162,26 @@ const StudentNotices = () => {
                 {selectedNotice.body}
               </p>
             </div>
+
+            {selectedNotice.attachment_path && (
+              <div className="flex items-center gap-3 p-4 rounded-2xl bg-brand/5 border border-brand/10 shadow-sm">
+                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-brand text-white shadow-md">
+                  <FileText size={24} />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="text-sm font-bold truncate">Attachment Document</div>
+                  <div className="text-[10px] font-bold text-brand uppercase tracking-wider">PDF File</div>
+                </div>
+                <Button 
+                  variant="primary" 
+                  size="sm" 
+                  className="shadow-sm"
+                  onClick={() => window.open(`${import.meta.env.VITE_API_URL || ''}/${selectedNotice.attachment_path}`, '_blank')}
+                >
+                  View PDF
+                </Button>
+              </div>
+            )}
 
             {selectedNotice.expires_at && (
               <div className="flex items-center gap-2 text-xs text-orange-600 font-bold bg-orange-50 dark:bg-orange-950/20 px-4 py-2 rounded-xl border border-orange-100 dark:border-orange-900/30">

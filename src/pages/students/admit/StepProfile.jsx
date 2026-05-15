@@ -20,11 +20,16 @@ const schema = z.object({
   email: z.string().email('A valid student email is required'),
   father_name: z.string().optional(),
   father_phone: z.string().optional(),
+  father_email: z.string().email('A valid parent email is required for login access').optional().or(z.literal('')),
   mother_name: z.string().optional(),
   mother_phone: z.string().optional(),
+  mother_email: z.string().email('A valid parent email is required').optional().or(z.literal('')),
   emergency_contact: z.string().optional(),
   blood_group: z.string().optional(),
   medical_notes: z.string().optional(),
+}).refine(data => data.father_email || data.mother_email, {
+  message: "At least one parent email is required for portal access",
+  path: ["father_email"]
 })
 
 const StepProfile = ({ defaultValues, onNext, onBack }) => {
@@ -64,11 +69,27 @@ const StepProfile = ({ defaultValues, onNext, onBack }) => {
         </div>
 
         {/* Parents */}
-        <SectionHeading title="Parents / Guardians" />
+        <SectionHeading title="Parents / Guardians" subtitle="One email is required for parent portal login" />
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <Input label="Father's Name"  placeholder="Rajesh Sharma" {...register('father_name')} />
+          <Input 
+            label="Father's Email (Login)" 
+            type="email" 
+            placeholder="father@email.com" 
+            error={errors.father_email?.message}
+            {...register('father_email')} 
+          />
           <Input label="Father's Phone" type="tel" placeholder="+91-9876543211" {...register('father_phone')} />
+          <div className="hidden sm:block" />
+
           <Input label="Mother's Name"  placeholder="Sunita Sharma" {...register('mother_name')} />
+          <Input 
+            label="Mother's Email" 
+            type="email" 
+            placeholder="mother@email.com" 
+            error={errors.mother_email?.message}
+            {...register('mother_email')} 
+          />
           <Input label="Mother's Phone" type="tel" placeholder="+91-9876543212" {...register('mother_phone')} />
         </div>
 

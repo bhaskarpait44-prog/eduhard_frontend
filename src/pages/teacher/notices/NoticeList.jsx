@@ -11,6 +11,8 @@ import {
   Users,
   Clock,
   Trash2,
+  Paperclip,
+  FileText
 } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import useAuthStore from '@/store/authStore'
@@ -191,6 +193,7 @@ const NoticeCard = ({ notice, onOpen, onEdit, onDelete }) => {
           <div className="flex items-center gap-2 mb-2">
             <Badge variant={notice.priority === 'urgent' ? 'red' : notice.priority === 'info' ? 'blue' : 'green'}>{notice.priority}</Badge>
             <Badge variant="blue" className="capitalize">{notice.audience}</Badge>
+            {notice.attachment_path && <Paperclip size={14} className="text-slate-400" />}
           </div>
           <h3 className="text-base font-bold text-slate-900 dark:text-slate-100 truncate">{notice.title}</h3>
           <p className="mt-1 text-sm text-slate-500 line-clamp-2">{notice.body}</p>
@@ -227,6 +230,24 @@ const NoticeDetail = ({ notice }) => (
     <div className="p-5 rounded-2xl bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-slate-800">
       <p className="text-sm whitespace-pre-wrap leading-relaxed">{notice.body}</p>
     </div>
+    {notice.attachment_path && (
+      <div className="flex items-center gap-3 p-4 rounded-2xl bg-brand/5 border border-brand/10">
+        <div className="p-2 rounded-xl bg-brand text-white">
+          <FileText size={20} />
+        </div>
+        <div className="flex-1 min-w-0">
+          <div className="text-sm font-semibold truncate">Attachment Document</div>
+          <div className="text-[10px] text-slate-500">PDF Document</div>
+        </div>
+        <Button 
+          variant="primary" 
+          size="sm" 
+          onClick={() => window.open(`${import.meta.env.VITE_API_URL || ''}/${notice.attachment_path}`, '_blank')}
+        >
+          View PDF
+        </Button>
+      </div>
+    )}
   </div>
 )
 

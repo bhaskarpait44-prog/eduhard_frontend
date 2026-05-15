@@ -134,6 +134,11 @@ export const ROUTES = {
   // Parent Portal
   PARENT_ROOT: '/parent',
   PARENT_DASHBOARD: '/parent/dashboard',
+  PARENT_WARDS: '/parent/wards',
+  PARENT_ATTENDANCE: '/parent/attendance',
+  PARENT_FEES: '/parent/fees',
+  PARENT_RESULTS: '/parent/results',
+  PARENT_NOTICES: '/parent/notices',
 
   // Teacher Portal
   TEACHER_CLASSES: '/teacher/classes',

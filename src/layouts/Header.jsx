@@ -14,6 +14,7 @@ import { cn, getInitials } from '@/utils/helpers'
 import * as adminTeacherControlApi from '@/api/adminTeacherControlApi'
 import * as teacherApi from '@/api/teacherApi'
 import * as studentApi from '@/api/studentApi'
+import * as accountantApi from '@/api/accountantApi'
 import Breadcrumb from './Breadcrumb'
 
 const Header = ({ onMenuClick }) => {
@@ -96,21 +97,29 @@ const Header = ({ onMenuClick }) => {
         }
 
         if (isTeacherUser) {
-          const [homeworkRes, noticeRes] = await Promise.all([
-            teacherApi.getTeacherHomework(),
-            teacherApi.getTeacherNotices(),
-          ])
+          let homework = [];
+          let notices = [];
+          
+          try {
+            const res = await teacherApi.getTeacherHomework();
+            homework = Array.isArray(res?.data?.homework) ? res.data.homework : [];
+          } catch (e) { console.error('Failed to load teacher homework for header', e); }
+
+          try {
+            const res = await teacherApi.getTeacherNotices();
+            notices = Array.isArray(res?.data?.notices) ? res.data.notices : [];
+          } catch (e) { console.error('Failed to load teacher notices for header', e); }
+
           if (!active) return
-          const homework = Array.isArray(homeworkRes?.data?.homework) ? homeworkRes.data.homework : []
-          const notices = Array.isArray(noticeRes?.data?.notices) ? noticeRes.data.notices : []
+          
           const noticeItems = notices
             .filter(item => !item?.is_read)
-            .sort((a, b) => new Date(b.publish_date || 0) - new Date(a.publish_date || 0))
+            .sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0))
             .slice(0, 5)
             .map(item => ({
               id          : `teacher-notice-${item.id}`,
               title       : item.title || 'New notice',
-              description : [item.category, item.teacher_name].filter(Boolean).join(' | ') || 'A notice is waiting in your notice board.',
+              description : [item.priority, item.posted_by_name].filter(Boolean).join(' | ') || 'A notice is waiting in your notice board.',
               count       : 1,
               route       : ROUTES.TEACHER_NOTICES,
             }))
@@ -130,7 +139,27 @@ const Header = ({ onMenuClick }) => {
         }
 
         if (isAccountantUser) {
-          setNotifications([
+          let notices = [];
+          try {
+            const res = await accountantApi.getAccountantPortalNotices();
+            notices = Array.isArray(res?.data?.notices) ? res.data.notices : [];
+          } catch (e) { console.error('Failed to load accountant notices for header', e); }
+
+          if (!active) return
+
+          const noticeItems = notices
+            .filter(item => !item?.is_read)
+            .sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0))
+            .slice(0, 5)
+            .map(item => ({
+              id          : `accountant-notice-${item.id}`,
+              title       : item.title || 'New notice',
+              description : [item.priority, item.posted_by_name].filter(Boolean).join(' | ') || 'A notice is waiting in your notice board.',
+              count       : 1,
+              route       : ROUTES.ACCOUNTANT_ROOT + '/notices', // Adjust if needed
+            }))
+
+          const staticItems = [
             {
               id: 'accountant-collections',
               title: 'Fee collection queue',
@@ -138,25 +167,35 @@ const Header = ({ onMenuClick }) => {
               count: 1,
               route: ROUTES.ACCOUNTANT_DASHBOARD,
             },
-          ])
+          ]
+          setNotifications([...noticeItems, ...staticItems].slice(0, 8))
           return
         }
 
-        const [homeworkRes, noticeRes] = await Promise.all([
-          studentApi.getStudentHomework(),
-          studentApi.getStudentNotices(),
-        ])
+        // Student User
+        let homework = [];
+        let notices = [];
+
+        try {
+          const res = await studentApi.getStudentHomework();
+          homework = Array.isArray(res?.data?.homework) ? res.data.homework : [];
+        } catch (e) { console.error('Failed to load student homework for header', e); }
+
+        try {
+          const res = await studentApi.getStudentNotices();
+          notices = Array.isArray(res?.data?.notices) ? res.data.notices : [];
+        } catch (e) { console.error('Failed to load student notices for header', e); }
+
         if (!active) return
-        const homework = Array.isArray(homeworkRes?.data?.homework) ? homeworkRes.data.homework : []
-        const notices = Array.isArray(noticeRes?.data?.notices) ? noticeRes.data.notices : []
+        
         const noticeItems = notices
           .filter(item => !item?.is_read)
-          .sort((a, b) => new Date(b.publish_date || 0) - new Date(a.publish_date || 0))
+          .sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0))
           .slice(0, 5)
           .map(item => ({
             id          : `student-notice-${item.id}`,
             title       : item.title || 'New notice',
-            description : [item.category, item.posted_by].filter(Boolean).join(' | ') || 'A notice is waiting in your notice board.',
+            description : [item.priority, item.posted_by_name].filter(Boolean).join(' | ') || 'A notice is waiting in your notice board.',
             count       : 1,
             route       : ROUTES.STUDENT_NOTICES,
           }))
@@ -172,7 +211,8 @@ const Header = ({ onMenuClick }) => {
             route       : ROUTES.STUDENT_HOMEWORK,
           }))
         setNotifications([...noticeItems, ...homeworkItems].slice(0, 8))
-      } catch {
+      } catch (err) {
+        console.error('Error in header notification loading', err)
         if (active) setNotifications([])
       } finally {
         if (active) setNotifLoading(false)
@@ -420,7 +460,7 @@ const Header = ({ onMenuClick }) => {
 /* ─────────────────────────── helpers ────────────────────────────── */
 
 function buildStudentHomeworkDescription(item) {
-  const details = [item?.subject_name, item?.teacher_name].filter(Boolean)
+  const details = [item?.subject_name, item?.posted_by_name || item?.teacher_name].filter(Boolean)
   const dueDate = formatNotificationDate(item?.due_date)
   const status  = formatHomeworkStatus(item?.submission_status)
   if (dueDate) details.push(`Due ${dueDate}`)

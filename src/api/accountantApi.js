@@ -40,8 +40,11 @@ export const getDefaulters = (params) => api.get('/accountant/defaulters', { par
 export const downloadDefaultersPdf = (params) => api.get('/fees/defaulters/download', { params, responseType: 'blob' })
 export const sendReminder = (data) => api.post('/accountant/defaulters/remind', data)
 export const sendReminderBulk = (data) => api.post('/accountant/defaulters/remind-bulk', data)
-export const getAccountantNotices = () => api.get('/notices/accountant')
+
+export const getAccountantNotices = (params) => api.get('/notices/accountant', { params })
+export const getAccountantPortalNotices = (params) => api.get('/notices/accountant-portal', { params })
 export const createAccountantNotice = (data) => api.post('/notices/accountant', data)
+export const markAccountantPortalNoticeRead = (id) => api.post(`/notices/accountant-portal/${id}/read`)
 
 export const getConcessions = (params) => api.get('/accountant/concessions', { params })
 export const applyConcession = (data) => api.post('/accountant/concessions/apply', data)

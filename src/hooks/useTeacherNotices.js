@@ -20,7 +20,7 @@ const useTeacherNotices = () => {
     setLoadingNotices(true)
     try {
       const res = await noticesApi.teacherListNotices(params)
-      const rows = res?.data || []
+      const rows = res?.data?.notices || res?.data || []
       setNotices(rows)
       return rows
     } finally {
@@ -108,6 +108,22 @@ const useTeacherNotices = () => {
     await loadNotices()
   }, [loadNotices])
 
+  const assignedSubjects = useMemo(() => {
+    const map = new Map()
+    assignments
+      .filter((a) => a.subject_id)
+      .forEach((a) => {
+        if (!map.has(a.subject_id)) {
+          map.set(a.subject_id, {
+            value: String(a.subject_id),
+            label: `${a.subject_name} (${a.class_name} ${a.section_name})`,
+            class_id: a.class_id,
+          })
+        }
+      })
+    return [...map.values()]
+  }, [assignments])
+
   return {
     assignments,
     notices,
@@ -116,6 +132,7 @@ const useTeacherNotices = () => {
     saving,
     classTeacherSections,
     assignedSections,
+    assignedSubjects,
     loadNotices,
     saveNotice,
     deleteNotice,

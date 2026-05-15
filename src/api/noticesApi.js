@@ -21,6 +21,12 @@ export const teacherDeleteNotice = (id) =>
   api.delete(`/notices/teacher/${id}`)
 
 // Accountant
+export const accountantListNotices = (params) => 
+  api.get('/notices/accountant', { params })
+export const getAccountantPortalNotices = (params) => 
+  api.get('/notices/accountant-portal', { params })
+export const markAccountantNoticeRead = (id) => 
+  api.post(`/notices/accountant-portal/${id}/read`)
 export const accountantCreateNotice = (data) => 
   api.post('/notices/accountant', data)
 
@@ -33,6 +39,12 @@ export const pinNotice = (id) =>
   api.post(`/notices/student/${id}/pin`)
 export const unpinNotice = (id) => 
   api.delete(`/notices/student/${id}/pin`)
+
+// Parent portal
+export const getParentNotices = (params) => 
+  api.get('/notices/parent', { params })
+export const markParentNoticeRead = (id) => 
+  api.post(`/notices/parent/${id}/read`)
 
 // Shared
 export const getNoticeById = (id) => 

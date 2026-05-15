@@ -13,21 +13,22 @@ import {
 import useAuthStore from '@/store/authStore'
 import { ROUTES } from '@/constants/app'
 import { getInitials } from '@/utils/helpers'
+import { getParentNotices } from '@/api/noticesApi'
 
 const PARENT_MENU = [
-  { label: 'Dashboard', icon: LayoutDashboard, path: '/parent/dashboard' },
-  { label: 'My Wards', icon: Users, path: '/parent/wards' },
-  { label: 'Attendance', icon: CalendarDays, path: '/parent/attendance' },
-  { label: 'Fees & Dues', icon: Wallet, path: '/parent/fees' },
-  { label: 'Results', icon: ClipboardList, path: '/parent/results' },
-  { label: 'Notices', icon: Bell, path: '/parent/notices' },
+  { label: 'Dashboard', icon: LayoutDashboard, path: ROUTES.PARENT_DASHBOARD },
+  { label: 'My Wards', icon: Users, path: ROUTES.PARENT_WARDS },
+  { label: 'Attendance', icon: CalendarDays, path: ROUTES.PARENT_ATTENDANCE },
+  { label: 'Fees & Dues', icon: Wallet, path: ROUTES.PARENT_FEES },
+  { label: 'Results', icon: ClipboardList, path: ROUTES.PARENT_RESULTS },
+  { label: 'Notices', icon: Bell, path: ROUTES.PARENT_NOTICES },
 ]
 
 const MOBILE_TABS = [
-  { label: 'Home', icon: LayoutDashboard, path: '/parent/dashboard' },
-  { label: 'Wards', icon: Users, path: '/parent/wards' },
-  { label: 'Fees', icon: Wallet, path: '/parent/fees' },
-  { label: 'Notices', icon: Bell, path: '/parent/notices' },
+  { label: 'Home', icon: LayoutDashboard, path: ROUTES.PARENT_DASHBOARD },
+  { label: 'Wards', icon: Users, path: ROUTES.PARENT_WARDS },
+  { label: 'Fees', icon: Wallet, path: ROUTES.PARENT_FEES },
+  { label: 'Notices', icon: Bell, path: ROUTES.PARENT_NOTICES },
 ]
 
 export default function ParentLayout() {
@@ -35,6 +36,20 @@ export default function ParentLayout() {
   const navigate = useNavigate()
   const location = useLocation()
   const [unreadNotices, setUnreadNotices] = useState(0)
+
+  useEffect(() => {
+    const loadUnread = async () => {
+      try {
+        const res = await getParentNotices()
+        setUnreadNotices(Number(res?.data?.unread_count || 0))
+      } catch (err) {
+        console.error('Failed to fetch parent unread count', err)
+      }
+    }
+    loadUnread()
+    window.addEventListener('focus', loadUnread)
+    return () => window.removeEventListener('focus', loadUnread)
+  }, [location.pathname])
 
   const initials = useMemo(() => getInitials(user?.name || 'Parent'), [user?.name])
 

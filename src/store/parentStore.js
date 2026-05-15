@@ -4,25 +4,40 @@ import * as api from '@/api/parentApi'
 
 const useParentStore = create((set, get) => ({
   wards: [],
+  selectedWardId: null,
   attendance: [],
   fees: [],
   results: [],
   homework: [],
   isLoading: false,
+  isDetailsLoading: false,
   error: null,
 
   fetchWards: async () => {
     set({ isLoading: true, error: null })
     try {
       const res = await api.getWards()
-      set({ wards: res.data, isLoading: false })
+      const wards = res.data || []
+      set({ wards, isLoading: false })
+      
+      // Auto-select first ward if none selected
+      if (wards.length > 0 && !get().selectedWardId) {
+        get().selectWard(wards[0].id)
+      }
     } catch (err) {
       set({ error: err.message, isLoading: false })
     }
   },
 
+  selectWard: (id) => {
+    if (get().selectedWardId === id) return
+    set({ selectedWardId: id })
+    get().fetchWardDetails(id)
+  },
+
   fetchWardDetails: async (studentId) => {
-    set({ isLoading: true, error: null, attendance: [], fees: [], results: [], homework: [] })
+    if (!studentId) return
+    set({ isDetailsLoading: true, error: null })
     try {
       const [attRes, feeRes, resRes, hwRes] = await Promise.all([
         api.getWardAttendance(studentId),
@@ -31,14 +46,14 @@ const useParentStore = create((set, get) => ({
         api.getWardHomework(studentId)
       ])
       set({ 
-        attendance: attRes.data,
-        fees: feeRes.data,
-        results: resRes.data,
-        homework: hwRes.data,
-        isLoading: false 
+        attendance: attRes.data || [],
+        fees: feeRes.data || [],
+        results: resRes.data || [],
+        homework: hwRes.data || [],
+        isDetailsLoading: false 
       })
     } catch (err) {
-      set({ error: err.message, isLoading: false })
+      set({ error: err.message, isDetailsLoading: false })
     }
   }
 }))

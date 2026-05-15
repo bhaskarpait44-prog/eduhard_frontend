@@ -16,9 +16,9 @@ const useStudentNotices = () => {
 
     try {
       const res = await noticesApi.getStudentNotices(category && category !== 'all' ? { category } : {})
-      const rows = res?.data || []
+      const rows = res?.data?.notices || []
       setNotices(rows)
-      setUnreadCount(rows.filter(n => !n.is_read).length)
+      setUnreadCount(res?.data?.unread_count ?? rows.filter(n => !n.is_read).length)
       setLoading(false)
       setRefreshing(false)
       return rows
