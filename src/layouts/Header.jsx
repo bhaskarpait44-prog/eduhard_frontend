@@ -15,6 +15,7 @@ import * as adminTeacherControlApi from '@/api/adminTeacherControlApi'
 import * as teacherApi from '@/api/teacherApi'
 import * as studentApi from '@/api/studentApi'
 import * as accountantApi from '@/api/accountantApi'
+import * as noticesApi from '@/api/noticesApi'
 import Breadcrumb from './Breadcrumb'
 
 const Header = ({ onMenuClick }) => {
@@ -37,6 +38,7 @@ const Header = ({ onMenuClick }) => {
   const isAdminUser    = user?.role === ROLES.ADMIN
   const isTeacherUser  = user?.role === ROLES.TEACHER
   const isAccountantUser = user?.role === ROLES.ACCOUNTANT
+  const isReceptionistUser = user?.role === ROLES.RECEPTIONIST
   const isStudentUser  = user?.role === ROLES.STUDENT
   const unreadCount    = notifications.reduce((sum, item) => sum + Number(item.count || 0), 0)
 
@@ -44,7 +46,9 @@ const Header = ({ onMenuClick }) => {
     ? ROUTES.TEACHER_PROFILE
     : user?.role === ROLES.ACCOUNTANT
       ? ROUTES.ACCOUNTANT_PROFILE
-      : ROUTES.SETTINGS
+      : user?.role === ROLES.RECEPTIONIST
+        ? ROUTES.RECEPTIONIST_PROFILE
+        : ROUTES.SETTINGS
   const secondaryRoute  = ROUTES.SETTINGS
   const secondaryLabel  = 'Settings'
 
@@ -60,7 +64,7 @@ const Header = ({ onMenuClick }) => {
 
   /* ── Notification polling ── */
   useEffect(() => {
-    if (!isAdminUser && !isStudentUser && !isTeacherUser && !isAccountantUser) {
+    if (!isAdminUser && !isStudentUser && !isTeacherUser && !isAccountantUser && !isReceptionistUser) {
       setNotifications([])
       setNotifLoading(false)
       return undefined
@@ -172,6 +176,40 @@ const Header = ({ onMenuClick }) => {
           return
         }
 
+        if (isReceptionistUser) {
+          let notices = [];
+          try {
+            const res = await noticesApi.getReceptionistNotices();
+            notices = Array.isArray(res?.data?.notices) ? res.data.notices : [];
+          } catch (e) { console.error('Failed to load receptionist notices for header', e); }
+
+          if (!active) return
+
+          const noticeItems = notices
+            .filter(item => !item?.is_read)
+            .sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0))
+            .slice(0, 5)
+            .map(item => ({
+              id          : `receptionist-notice-${item.id}`,
+              title       : item.title || 'New notice',
+              description : [item.priority, item.posted_by_name].filter(Boolean).join(' | ') || 'A notice is waiting in your notice board.',
+              count       : 1,
+              route       : ROUTES.RECEPTIONIST_NOTICES,
+            }))
+
+          const staticItems = [
+            {
+              id: 'receptionist-visitors',
+              title: 'Visitor management',
+              description: 'Monitor current visitors and manage front-desk entries.',
+              count: 1,
+              route: ROUTES.RECEPTIONIST_VISITORS,
+            },
+          ]
+          setNotifications([...noticeItems, ...staticItems].slice(0, 8))
+          return
+        }
+
         // Student User
         let homework = [];
         let notices = [];
@@ -222,7 +260,7 @@ const Header = ({ onMenuClick }) => {
     loadNotifications()
     const timer = window.setInterval(loadNotifications, 30_000)
     return () => { active = false; window.clearInterval(timer) }
-  }, [isAdminUser, isStudentUser, isTeacherUser, isAccountantUser])
+  }, [isAdminUser, isStudentUser, isTeacherUser, isAccountantUser, isReceptionistUser])
 
   const handleNotificationClick = (route) => { setNotifOpen(false); navigate(route) }
   const handleLogout = () => { logout(); toastSuccess('Signed out successfully'); navigate(ROUTES.LOGIN) }

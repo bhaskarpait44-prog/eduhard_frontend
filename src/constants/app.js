@@ -129,7 +129,12 @@ export const ROUTES = {
 
   // Dashboards
   STAFF_DASHBOARD: '/staff/dashboard',
+  RECEPTIONIST_ROOT: '/receptionist',
   RECEPTIONIST_DASHBOARD: '/receptionist/dashboard',
+  RECEPTIONIST_VISITORS: '/receptionist/visitors',
+  RECEPTIONIST_STUDENTS: '/receptionist/students',
+  RECEPTIONIST_NOTICES: '/receptionist/notices',
+  RECEPTIONIST_PROFILE: '/receptionist/profile',
 
   // Parent Portal
   PARENT_ROOT: '/parent',

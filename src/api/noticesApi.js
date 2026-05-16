@@ -30,6 +30,12 @@ export const markAccountantNoticeRead = (id) =>
 export const accountantCreateNotice = (data) => 
   api.post('/notices/accountant', data)
 
+// Receptionist
+export const getReceptionistNotices = (params) => 
+  api.get('/notices/receptionist', { params })
+export const markReceptionistNoticeRead = (id) => 
+  api.post(`/notices/receptionist/${id}/read`)
+
 // Student portal
 export const getStudentNotices = (params) => 
   api.get('/notices/student', { params })

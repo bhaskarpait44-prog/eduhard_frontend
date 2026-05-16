@@ -8,6 +8,7 @@ import StudentLayout from '@/layouts/StudentLayout'
 import AccountantLayout from '@/layouts/AccountantLayout'
 import LibraryLayout from '@/layouts/LibraryLayout'
 import ParentLayout from '@/layouts/ParentLayout'
+import ReceptionistLayout from '@/layouts/ReceptionistLayout'
 import LoginPage from '@/pages/LoginPage'
 import NotFoundPage from '@/pages/NotFoundPage'
 
@@ -17,7 +18,10 @@ const ResetPasswordPage = lazy(() => import('@/pages/ResetPasswordPage'))
 const DashboardPage = lazy(() => import('@/pages/DashboardPage'))
 const AdminDashboard = DashboardPage
 const StaffDashboard = lazy(() => import('@/pages/PlaceholderPage'))
-const ReceptionistDashboard = lazy(() => import('@/pages/PlaceholderPage'))
+const ReceptionistDashboard = lazy(() => import('@/pages/receptionist/ReceptionistDashboard'))
+const ReceptionistVisitorLog = lazy(() => import('@/pages/receptionist/VisitorLog'))
+const ReceptionistStudentSearch = lazy(() => import('@/pages/receptionist/StudentSearch'))
+const ReceptionistNotices = lazy(() => import('@/pages/receptionist/ReceptionistNotices'))
 const ParentDashboard = lazy(() => import('@/pages/parent/ParentDashboard'))
 const ParentWards = lazy(() => import('@/pages/parent/ParentWards'))
 const ParentAttendance = lazy(() => import('@/pages/parent/ParentAttendance'))
@@ -176,7 +180,7 @@ const DashboardGate = () => {
   }
 
   if (role === ROLES.RECEPTIONIST) {
-    return <Navigate to={ROUTES.RECEPTIONIST_DASHBOARD} replace />
+    return <Navigate to="/receptionist/dashboard" replace />
   }
 
   return <Lazy component={DashboardPage} />
@@ -188,7 +192,7 @@ const StaffShell = () => {
     return <Navigate to={ROUTES.STUDENT_DASHBOARD} replace />
   }
   if (role === ROLES.STAFF || role === ROLES.RECEPTIONIST) {
-    return <Navigate to={ROUTES.DASHBOARD} replace />
+    return <Navigate to={role === ROLES.RECEPTIONIST ? "/receptionist/dashboard" : ROUTES.DASHBOARD} replace />
   }
   return <AppLayout />
 }
@@ -268,6 +272,23 @@ const router = createBrowserRouter([
       { path: 'refunds/process', element: <Lazy component={ProcessRefund} /> },
       { path: 'cheques', element: <Lazy component={ChequeManagement} /> },
       { path: 'profile', element: <Lazy component={AccountantProfile} /> },
+    ],
+  },
+
+  {
+    path: '/receptionist',
+    element: (
+      <ProtectedRoute roles={[ROLES.RECEPTIONIST]}>
+        <ReceptionistLayout />
+      </ProtectedRoute>
+    ),
+    children: [
+      { index: true, element: <Navigate to="dashboard" replace /> },
+      { path: 'dashboard', element: <Lazy component={ReceptionistDashboard} /> },
+      { path: 'visitors', element: <Lazy component={ReceptionistVisitorLog} /> },
+      { path: 'students', element: <Lazy component={ReceptionistStudentSearch} /> },
+      { path: 'notices', element: <Lazy component={ReceptionistNotices} /> },
+      { path: 'profile', element: <Lazy component={PlaceholderPage} /> },
     ],
   },
 

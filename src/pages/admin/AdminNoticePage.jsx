@@ -16,17 +16,15 @@ import Modal from '@/components/ui/Modal'
 import { format } from 'date-fns'
 
 const AUDIENCE_OPTIONS = [
-  { value: 'school_wide', label: 'Whole School (Everyone)', icon: School },
+  { value: 'school_wide', label: 'Whole School (Students, Parents & Staff)', icon: School },
   { value: 'teachers', label: 'All Teachers', icon: Users },
   { value: 'parents', label: 'All Parents', icon: Users },
   { value: 'accountants', label: 'All Accountants', icon: Wallet },
-  { value: 'librarians', label: 'All Librarians', icon: BookOpen },
   { value: 'receptionists', label: 'All Receptionists', icon: Phone },
   { value: 'class', label: 'Specific Class (Students & Parents)', icon: GraduationCap },
   { value: 'section', label: 'Specific Section (Students & Parents)', icon: Users },
   { value: 'student', label: 'Individual Student & Parent', icon: User },
   { value: 'specific_teacher', label: 'Specific Teacher', icon: User },
-  { value: 'subject_wise', label: 'Subject Wise', icon: BookOpen },
 ]
 
 const AdminNoticePage = () => {

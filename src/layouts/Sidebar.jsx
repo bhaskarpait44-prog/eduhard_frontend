@@ -141,6 +141,31 @@ const getNavGroups = (user) => {
     ]
   }
 
+  if (user?.role === ROLES.RECEPTIONIST) {
+    return [
+      {
+        label: 'Main',
+        items: [
+          { label: 'Dashboard', icon: 'LayoutDashboard', path: ROUTES.RECEPTIONIST_DASHBOARD },
+          { label: 'Visitor Log', icon: 'Contact', path: ROUTES.RECEPTIONIST_VISITORS },
+        ],
+      },
+      {
+        label: 'Academic',
+        items: [
+          { label: 'Student Search', icon: 'Search', path: ROUTES.RECEPTIONIST_STUDENTS },
+          { label: 'Notices', icon: 'BellRing', path: ROUTES.RECEPTIONIST_NOTICES },
+        ],
+      },
+      {
+        label: 'Account',
+        items: [
+          { label: 'My Profile', icon: 'UserRound', path: ROUTES.RECEPTIONIST_PROFILE },
+        ],
+      },
+    ]
+  }
+
   return [
     {
       label: null,
