@@ -85,10 +85,6 @@ const AdminNoticePage = () => {
       const data = res.data?.teachers || res.data || []
       setTeachers(data.map(t => ({ value: String(t.id), label: `${t.first_name} ${t.last_name}` })))
     }).catch(console.error)
-    getSubjects().then(res => {
-      const data = res.data?.subjects || res.data || []
-      setSubjects(data.map(s => ({ value: String(s.id), label: s.name })))
-    }).catch(console.error)
   }, [])
 
   useEffect(() => {
@@ -97,8 +93,14 @@ const AdminNoticePage = () => {
         const data = res.data?.sections || res.data || []
         setSections(data.map(s => ({ value: String(s.id), label: s.name })))
       }).catch(console.error)
+      
+      getSubjects(form.target_class_id).then(res => {
+        const data = res.data?.subjects || res.data || []
+        setSubjects(data.map(s => ({ value: String(s.id), label: s.name })))
+      }).catch(console.error)
     } else {
       setSections([])
+      setSubjects([])
     }
   }, [form.target_class_id])
 
