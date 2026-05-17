@@ -22,11 +22,13 @@ const AUDIENCE_OPTIONS = [
   { value: 'parents', label: 'All Parents', icon: Users },
   { value: 'accountants', label: 'All Accountants', icon: Wallet },
   { value: 'receptionists', label: 'All Receptionists', icon: Phone },
+  {value: 'librarians', label: 'All Librarians', icon: BookOpen },
   { value: 'class', label: 'Specific Class (Students & Parents)', icon: GraduationCap },
   { value: 'section', label: 'Specific Section (Students & Parents)', icon: Users },
   { value: 'student', label: 'Individual Student & Parent', icon: User },
   { value: 'specific_teacher', label: 'Specific Teacher', icon: User },
-]
+  { value: 'subject_wise', label: 'By Subject', icon: BookOpen },
+  ]
 
 const AdminNoticePage = () => {
   usePageTitle('Admin Notices')
@@ -274,9 +276,16 @@ const AdminNoticePage = () => {
               >
                 <option value="">All Audiences</option>
                 <option value="school_wide">School Wide</option>
+                <option value="teachers">Teachers</option>
+                <option value="parents">Parents</option>
+                <option value="accountants">Accountants</option>
+                <option value="receptionists">Receptionists</option>
+                <option value="librarians">Librarians</option>
                 <option value="class">Class Wise</option>
                 <option value="section">Section Wise</option>
                 <option value="student">Student Wise</option>
+                <option value="specific_teacher">Specific Teacher</option>
+                <option value="subject_wise">Subject Wise</option>
               </select>
               <select
                 value={filters.priority}

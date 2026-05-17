@@ -5,7 +5,7 @@ import Button from '@/components/ui/Button'
 import Modal from '@/components/ui/Modal'
 import Badge from '@/components/ui/Badge'
 import { format } from 'date-fns'
-import { cn } from '@/utils/helpers'
+import { cn, getFileUrl } from '@/utils/helpers'
 
 const ReceptionistNotices = () => {
   const [notices, setNotices] = useState([])
@@ -172,13 +172,11 @@ const ReceptionistNotices = () => {
                       <p className="text-[10px]" style={{ color: 'var(--color-text-muted)' }}>Notice Annexure.pdf</p>
                     </div>
                  </div>
-                 <a 
-                   href={`/api/${selectedNotice.attachment_path}`} 
-                   target="_blank" 
-                   rel="noreferrer"
+                 <button 
+                   onClick={() => window.open(getFileUrl(selectedNotice.attachment_path), '_blank')}
                  >
                    <Button variant="ghost" size="sm">Download</Button>
-                 </a>
+                 </button>
                </div>
             )}
 
