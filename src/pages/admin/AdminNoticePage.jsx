@@ -14,6 +14,7 @@ import Badge from '@/components/ui/Badge'
 import EmptyState from '@/components/ui/EmptyState'
 import Modal from '@/components/ui/Modal'
 import { format } from 'date-fns'
+import { getFileUrl } from '@/utils/helpers'
 
 const AUDIENCE_OPTIONS = [
   { value: 'school_wide', label: 'Whole School (Students, Parents & Staff)', icon: School },
@@ -575,10 +576,12 @@ const AdminNoticePage = () => {
                 <Button 
                   variant="primary" 
                   size="sm" 
-                  onClick={() => window.open(`${import.meta.env.VITE_API_URL || ''}/${viewingNotice.attachment_path}`, '_blank')}
+                  className="shadow-sm"
+                  onClick={() => window.open(getFileUrl(viewingNotice.attachment_path), '_blank')}
                 >
                   View PDF
                 </Button>
+
               </div>
             )}
 

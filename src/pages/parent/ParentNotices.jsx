@@ -3,7 +3,7 @@ import usePageTitle from '@/hooks/usePageTitle'
 import { getParentNotices, markParentNoticeRead } from '@/api/noticesApi'
 import { Bell, Calendar, User, ShieldCheck, ChevronRight, FileText, Paperclip } from 'lucide-react'
 import EmptyState from '@/components/ui/EmptyState'
-import { formatDate } from '@/utils/helpers'
+import { formatDate, getFileUrl } from '@/utils/helpers'
 import Button from '@/components/ui/Button'
 
 export default function ParentNotices() {
@@ -123,7 +123,7 @@ export default function ParentNotices() {
                 />
 
                 {notice.attachment_path && (
-                  <div className="mt-6 flex items-center gap-4 p-4 bg-indigo-50/50 rounded-2xl border border-indigo-100/50 group hover:bg-indigo-50 transition-all cursor-pointer" onClick={(e) => { e.stopPropagation(); window.open(`${import.meta.env.VITE_API_URL || ''}/${notice.attachment_path}`, '_blank'); }}>
+                  <div className="mt-6 flex items-center gap-4 p-4 bg-indigo-50/50 rounded-2xl border border-indigo-100/50 group hover:bg-indigo-50 transition-all cursor-pointer" onClick={(e) => { e.stopPropagation(); window.open(getFileUrl(notice.attachment_path), '_blank'); }}>
                     <div className="p-3 bg-indigo-600 text-white rounded-xl shadow-lg shadow-indigo-200 group-hover:scale-110 transition-transform">
                       <FileText size={20} />
                     </div>

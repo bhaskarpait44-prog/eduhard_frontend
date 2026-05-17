@@ -25,7 +25,7 @@ import Button from '@/components/ui/Button'
 import Modal from '@/components/ui/Modal'
 import EmptyState from '@/components/ui/EmptyState'
 import { ROUTES } from '@/constants/app'
-import { formatDate } from '@/utils/helpers'
+import { formatDate, getFileUrl } from '@/utils/helpers'
 
 const CATEGORY_OPTIONS = [
   { value: 'general', label: 'General' },
@@ -106,8 +106,8 @@ const NoticeList = () => {
           </div>
 
           <div className="min-w-0 flex-1">
-            <h1 className="text-base font-semibold leading-tight" style={{ color: 'var(--color-text-primary)' }}>My Notices</h1>
-            <p className="truncate text-xs" style={{ color: 'var(--color-text-secondary)' }}>View and manage notices you have posted</p>
+            <h1 className="text-base font-semibold leading-tight" style={{ color: 'var(--color-text-primary)' }}>Notices</h1>
+            <p className="truncate text-xs" style={{ color: 'var(--color-text-secondary)' }}>View school announcements and manage notices you posted</p>
           </div>
 
           <div className="flex shrink-0 items-center gap-2">
@@ -137,7 +137,7 @@ const NoticeList = () => {
             <input
               value={filters.search}
               onChange={(e) => setFilters((prev) => ({ ...prev, search: e.target.value }))}
-              placeholder="Search my notices…"
+              placeholder="Search notices..."
               className="w-full rounded-[10px] border py-1.5 pl-7 pr-3 text-xs outline-none transition-colors"
               style={{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface-raised)', color: 'var(--color-text-primary)' }}
             />
@@ -152,11 +152,11 @@ const NoticeList = () => {
             <div key={i} className="h-40 animate-pulse rounded-[22px]" style={{ backgroundColor: 'var(--color-surface-raised)' }} />
           ))
         ) : filteredNotices.length === 0 ? (
-          <EmptyState icon={BellRing} title="No notices found" description="You haven't posted any notices yet." />
+          <EmptyState icon={BellRing} title="No notices found" description="Announcements and notices you post will appear here." />
         ) : (
           filteredNotices.map((notice) => (
             <NoticeCard
-              key={notice.id}
+              key={`${notice.source || 'unified'}-${notice.id}`}
               notice={notice}
               onOpen={() => setSelectedNotice(notice)}
               onEdit={() => navigate(ROUTES.TEACHER_NOTICE_NEW, { state: { notice } })}
@@ -186,6 +186,8 @@ const NoticeList = () => {
 }
 
 const NoticeCard = ({ notice, onOpen, onEdit, onDelete }) => {
+  const canManage = notice.can_manage === true
+
   return (
     <article className="rounded-[22px] border p-5 transition-all hover:shadow-sm" style={{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface)' }}>
       <div className="flex items-start justify-between gap-4">
@@ -205,10 +207,12 @@ const NoticeCard = ({ notice, onOpen, onEdit, onDelete }) => {
           </div>
         </div>
         
-        <div className="flex flex-col gap-2">
-          <Button variant="secondary" size="sm" icon={Edit3} onClick={onEdit}>Edit</Button>
-          <Button variant="outline" size="sm" icon={Trash2} className="!text-red-500 hover:!bg-red-50" onClick={onDelete}>Delete</Button>
-        </div>
+        {canManage && (
+          <div className="flex flex-col gap-2">
+            <Button variant="secondary" size="sm" icon={Edit3} onClick={onEdit}>Edit</Button>
+            <Button variant="outline" size="sm" icon={Trash2} className="!text-red-500 hover:!bg-red-50" onClick={onDelete}>Delete</Button>
+          </div>
+        )}
       </div>
       <button onClick={onOpen} className="mt-3 w-full text-center text-[10px] font-bold text-brand uppercase tracking-wider py-2 rounded-lg bg-slate-50 dark:bg-slate-900/50 hover:opacity-70 transition-all">
         View Full Notice
@@ -241,11 +245,12 @@ const NoticeDetail = ({ notice }) => (
         </div>
         <Button 
           variant="primary" 
-          size="sm" 
-          onClick={() => window.open(`${import.meta.env.VITE_API_URL || ''}/${notice.attachment_path}`, '_blank')}
+          size="sm"
+          onClick={() => window.open(getFileUrl(notice.attachment_path), '_blank')}
         >
           View PDF
         </Button>
+
       </div>
     )}
   </div>

@@ -22,6 +22,18 @@ export const cn = (...args) => {
 }
 
 /**
+ * Resolve a full URL for an uploaded file
+ * @param {string} path 
+ */
+export const getFileUrl = (path) => {
+  if (!path) return ''
+  if (path.startsWith('http')) return path
+  // Derive server root from API base URL (removes /api)
+  const baseUrl = (import.meta.env.VITE_API_BASE_URL || '').replace(/\/api\/?$/, '')
+  return `${baseUrl}/${path}`
+}
+
+/**
  * Format a date string to a readable format
  * @param {string|Date} date
  * @param {'short'|'long'|'numeric'} style

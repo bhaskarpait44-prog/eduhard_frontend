@@ -10,6 +10,7 @@ import Input from '@/components/ui/Input'
 import Select from '@/components/ui/Select'
 import Badge from '@/components/ui/Badge'
 import Modal from '@/components/ui/Modal'
+import { getFileUrl } from '@/utils/helpers'
 
 const initialForm = {
   audience: 'school_wide',
@@ -279,10 +280,12 @@ const AccountantNotices = () => {
                 <Button 
                   variant="primary" 
                   size="sm" 
-                  onClick={() => window.open(`${import.meta.env.VITE_API_URL || ''}/${selectedNotice.attachment_path}`, '_blank')}
+                  className="shadow-sm"
+                  onClick={() => window.open(getFileUrl(selectedNotice.attachment_path), '_blank')}
                 >
                   View PDF
                 </Button>
+
               </div>
             )}
 

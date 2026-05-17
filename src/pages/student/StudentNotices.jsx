@@ -7,7 +7,7 @@ import NoticeCard from '@/components/student/NoticeCard'
 import usePageTitle from '@/hooks/usePageTitle'
 import useStudentNotices from '@/hooks/useStudentNotices'
 import useToast from '@/hooks/useToast'
-import { formatDate } from '@/utils/helpers'
+import { formatDate, getFileUrl } from '@/utils/helpers'
 import Badge from '@/components/ui/Badge'
 
 const StudentNotices = () => {
@@ -176,7 +176,7 @@ const StudentNotices = () => {
                   variant="primary" 
                   size="sm" 
                   className="shadow-sm"
-                  onClick={() => window.open(`${import.meta.env.VITE_API_URL || ''}/${selectedNotice.attachment_path}`, '_blank')}
+                  onClick={() => window.open(getFileUrl(selectedNotice.attachment_path), '_blank')}
                 >
                   View PDF
                 </Button>

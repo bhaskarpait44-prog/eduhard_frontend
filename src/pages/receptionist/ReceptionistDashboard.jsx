@@ -8,6 +8,7 @@ import Button from '@/components/ui/Button'
 import Modal from '@/components/ui/Modal'
 import Input from '@/components/ui/Input'
 import Badge from '@/components/ui/Badge'
+import { cn } from '@/utils/helpers'
 import useToast from '@/hooks/useToast'
 import { ROUTES } from '@/constants/app'
 
