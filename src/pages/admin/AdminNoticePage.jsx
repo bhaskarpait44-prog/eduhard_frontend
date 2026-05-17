@@ -68,7 +68,11 @@ const AdminNoticePage = () => {
     try {
       const res = await noticesApi.adminListNotices(filters)
       setNotices(res.data.notices)
-      setPagination(res.data.pagination)
+      const pg = res.data.pagination || {}
+      setPagination({
+        ...pg,
+        totalPages: pg.totalPages ?? Math.ceil((pg.total || 0) / (pg.perPage || 10))
+      })
     } catch (err) {
       toastError('Failed to load notices.')
     } finally {
