@@ -74,25 +74,27 @@ const ExamRow = ({ exam, isLast, onReview, onMarks, onTimetable, onToggleStatus,
 
   return (
     <div
-      className="flex flex-col gap-3 px-4 py-3.5 sm:flex-row sm:items-center sm:gap-4"
+      className="flex flex-col gap-4 px-4 py-4 sm:flex-row sm:items-center sm:gap-4 transition-colors"
       style={{ borderBottom: isLast ? 'none' : '1px solid var(--color-border)' }}
       onMouseEnter={e => e.currentTarget.style.background = 'var(--color-surface-raised)'}
       onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
     >
       {/* left: name + meta */}
       <div className="flex-1 min-w-0">
-        <div className="flex flex-wrap items-center gap-2 mb-1">
-          <p className="text-sm font-semibold truncate" style={{ color: 'var(--color-text-primary)' }}>
+        <div className="flex flex-wrap items-center gap-2 mb-1.5">
+          <p className="text-sm font-bold truncate" style={{ color: 'var(--color-text-primary)' }}>
             {exam.name}
           </p>
-          <TypePill examType={exam.exam_type} examName={exam.name} />
-          <Badge variant={statusCfg.variant} dot>{statusCfg.label}</Badge>
+          <div className="flex items-center gap-2">
+            <TypePill examType={exam.exam_type} examName={exam.name} />
+            <Badge variant={statusCfg.variant} dot className="text-[10px] uppercase tracking-wider">{statusCfg.label}</Badge>
+          </div>
         </div>
-        <div className="flex flex-wrap items-center gap-3">
-          <span className="text-xs" style={{ color: 'var(--color-text-muted)' }}>
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
+          <span className="text-[11px] font-medium" style={{ color: 'var(--color-text-muted)' }}>
             {formatDate(exam.start_date)} → {formatDate(exam.end_date)}
           </span>
-          <span className="text-xs" style={{ color: 'var(--color-text-muted)' }}>
+          <span className="text-[11px] font-medium" style={{ color: 'var(--color-text-muted)' }}>
             {exam.subject_count || 0} subjects
             <span style={{ color: '#15803d' }}> · {exam.approved_subject_count || 0} approved</span>
             {pending > 0 && <span style={{ color: '#d97706' }}> · {pending} pending</span>}
@@ -101,7 +103,7 @@ const ExamRow = ({ exam, isLast, onReview, onMarks, onTimetable, onToggleStatus,
       </div>
 
       {/* right: actions */}
-      <div className="flex items-center gap-1 shrink-0">
+      <div className="flex flex-wrap items-center gap-1.5 shrink-0 sm:justify-end">
         <ActionBtn icon={BarChart3} onClick={() => navigate(`/exams/${exam.id}/analytics`)} title="View Analytics">Stats</ActionBtn>
         <ActionBtn icon={CalendarDays} onClick={() => onTimetable(exam)} title="Add timetable">Timetable</ActionBtn>
         <ActionBtn icon={ShieldCheck} onClick={() => onReview(exam)} title="Review subjects">Review</ActionBtn>
@@ -120,6 +122,7 @@ const ExamRow = ({ exam, isLast, onReview, onMarks, onTimetable, onToggleStatus,
     </div>
   )
 }
+
 
 /* ─── Class card ─────────────────────────────────────────── */
 const ClassCard = ({ className, exams, onReview, onMarks, onTimetable, onToggleStatus, onDelete, onCreateForClass }) => {

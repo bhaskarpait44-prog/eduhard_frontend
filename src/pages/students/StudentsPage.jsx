@@ -253,11 +253,15 @@ const StudentsPage = () => {
   const { toastError, toastSuccess } = useToast()
   const { isAdmin } = useAuth()
   const { students, pagination, isLoading, isSaving, fetchStudents, deleteStudent, toggleStatus, fetchClassIDCardsData } = useAdminStudentStore()
-  const { classes, fetchClasses } = useClasses()
+  const { classes, sections, fetchClasses, fetchSections } = useClasses()
   const { currentSession } = useSessionStore()
 
   const [search, setSearch] = useState('')
-  const [filters, setFilters] = useState({ class_id: '', section_id: '' })
+  const [isFilterPanelOpen, setIsFilterPanelOpen] = useState(false)
+  const [filters, setFilters] = useState({ 
+    class_id: '', 
+    section_id: ''
+  })
   const [page, setPage] = useState(1)
   const [view, setView] = useState('grid')
   const [confirmDelete, setConfirmDelete] = useState(null)
@@ -281,13 +285,22 @@ const StudentsPage = () => {
     fetchClasses().catch(() => toastError('Failed to load classes'))
   }, [fetchClasses, toastError])
 
+  useEffect(() => {
+    if (filters.class_id) {
+      fetchSections(filters.class_id).catch(() => {})
+    }
+  }, [filters.class_id, fetchSections])
+
   const clearFilters = () => {
     setSearch('')
-    setFilters({ class_id: '', section_id: '' })
+    setFilters({ 
+      class_id: '', 
+      section_id: ''
+    })
     setPage(1)
   }
 
-  const hasActiveFilters = search || filters.class_id || filters.section_id
+  const hasActiveFilters = search || Object.values(filters).some(v => v !== '')
 
   const goToDetail = (id) => navigate(`${ROUTES.STUDENTS}/${id}`)
   const goToEdit   = (id) => navigate(`${ROUTES.STUDENTS}/${id}?tab=profile`)
@@ -385,43 +398,84 @@ const StudentsPage = () => {
         </div>
       </div>
 
-      {/* Filters Bar */}
-      <div className="bg-white dark:bg-gray-800 p-4 rounded-2xl border border-gray-200 dark:border-gray-700 flex flex-col md:flex-row gap-4">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
-          <input
-            type="text"
-            placeholder="Search by name or admission number…"
-            value={search}
-            onChange={e => { setSearch(e.target.value); setPage(1) }}
-            className="w-full pl-10 pr-4 py-2.5 bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-700 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-sm"
-          />
-        </div>
-
-        <div className="flex items-center gap-3">
-          <div className="relative flex-1 md:w-48">
-            <Filter className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={14} />
-            <select
-              value={filters.class_id}
-              onChange={e => { setFilters(f => ({ ...f, class_id: e.target.value })); setPage(1) }}
-              className="w-full pl-9 pr-8 py-2.5 bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-700 rounded-xl outline-none appearance-none focus:ring-2 focus:ring-indigo-500/20 text-sm"
-            >
-              <option value="">All Classes</option>
-              {classes.map(cls => (
-                <option key={cls.id} value={cls.id}>{cls.display_name || cls.name}</option>
-              ))}
-            </select>
+      {/* Search and Filters Upgrade */}
+      <div className="space-y-4">
+        <div className="flex flex-col md:flex-row gap-3">
+          <div className="relative flex-1">
+            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+            <input
+              type="text"
+              placeholder="Search by name, admission no, or phone..."
+              value={search}
+              onChange={e => { setSearch(e.target.value); setPage(1) }}
+              className="w-full pl-11 pr-4 py-2.5 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-sm font-medium shadow-sm"
+            />
           </div>
-
-          {hasActiveFilters && (
+          
+          <div className="flex items-center gap-2">
             <button
-              onClick={clearFilters}
-              className="flex items-center gap-1.5 px-3 py-2 text-xs font-bold text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+              onClick={() => setIsFilterPanelOpen(!isFilterPanelOpen)}
+              className={`flex items-center gap-2 px-4 py-2.5 rounded-2xl border transition-all text-sm font-bold shadow-sm ${isFilterPanelOpen ? 'bg-indigo-50 border-indigo-200 text-indigo-600 dark:bg-indigo-900/20 dark:border-indigo-800' : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-50'}`}
             >
-              <X size={14} /> Reset
+              <Filter size={16} className={isFilterPanelOpen ? 'text-indigo-600' : 'text-gray-400'} />
+              Filters
+              {Object.values(filters).filter(v => v !== '').length > 0 && (
+                <span className="flex items-center justify-center w-5 h-5 rounded-full bg-indigo-600 text-white text-[10px] ml-1">
+                  {Object.values(filters).filter(v => v !== '').length}
+                </span>
+              )}
             </button>
-          )}
+
+            {hasActiveFilters && (
+              <button
+                onClick={clearFilters}
+                className="flex items-center gap-2 px-4 py-2.5 text-sm font-bold text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-2xl transition-colors"
+              >
+                <X size={16} /> <span className="hidden sm:inline">Clear</span>
+              </button>
+            )}
+          </div>
         </div>
+
+        {/* Expanded Filters Panel */}
+        {isFilterPanelOpen && (
+          <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-3xl p-5 shadow-lg animate-in fade-in slide-in-from-top-4 duration-300">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+              {/* Class Filter */}
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 ml-1">Class</label>
+                <select
+                  value={filters.class_id}
+                  onChange={e => { setFilters(f => ({ ...f, class_id: e.target.value, section_id: '' })); setPage(1) }}
+                  className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl outline-none text-sm font-semibold text-gray-700 dark:text-gray-200 focus:border-indigo-500 transition-colors cursor-pointer"
+                >
+                  <option value="">All Classes</option>
+                  {classes.map(cls => (
+                    <option key={cls.id} value={cls.id}>
+                      {cls.name} {cls.stream && cls.stream !== 'regular' ? `(${cls.stream.charAt(0).toUpperCase() + cls.stream.slice(1)})` : ''}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Section Filter */}
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 ml-1">Section</label>
+                <select
+                  value={filters.section_id}
+                  onChange={e => { setFilters(f => ({ ...f, section_id: e.target.value })); setPage(1) }}
+                  disabled={!filters.class_id}
+                  className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl outline-none text-sm font-semibold text-gray-700 dark:text-gray-200 focus:border-indigo-500 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <option value="">{filters.class_id ? 'All Sections' : 'Select Class First'}</option>
+                  {sections.map(sec => (
+                    <option key={sec.id} value={sec.id}>{sec.name}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Main Content */}

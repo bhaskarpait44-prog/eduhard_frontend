@@ -28,6 +28,12 @@ api.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem(STORAGE_KEYS.TOKEN)
     if (token) config.headers.Authorization = `Bearer ${token}`
+
+    // Let axios set Content-Type automatically for FormData (multipart/form-data + boundary)
+    if (config.data instanceof FormData) {
+      delete config.headers['Content-Type']
+    }
+
     return config
   },
   (error) => Promise.reject(error)

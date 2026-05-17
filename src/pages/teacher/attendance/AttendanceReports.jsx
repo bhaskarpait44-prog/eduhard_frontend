@@ -27,191 +27,10 @@ const STYLES = `
     100% { background-position: -200% 0; }
   }
 
-  /* stat card */
-  .ar-stat {
-    background: var(--color-surface);
-    border: 1px solid var(--color-border);
-    border-radius: 20px;
-    padding: 20px 24px;
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    position: relative;
-    overflow: hidden;
-    transition: border-color 0.18s;
-  }
-  .ar-stat:hover { border-color: var(--color-text-muted); }
-
-  /* filter bar */
-  .ar-filters {
-    background: var(--color-surface);
-    border: 1px solid var(--color-border);
-    border-radius: 20px;
-    padding: 18px 22px;
-    margin-bottom: 20px;
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(155px, 1fr));
-    gap: 16px;
-    align-items: end;
-  }
-
-  /* report card */
-  .ar-card {
-    background: var(--color-surface);
-    border: 1px solid var(--color-border);
-    border-radius: 24px;
-    overflow: hidden;
-    display: flex;
-    flex-direction: column;
-  }
-  .ar-card-head {
-    padding: 22px 24px 18px;
-    border-bottom: 1px solid var(--color-border);
-    display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
-    gap: 12px;
-  }
-  .ar-card-body { padding: 20px 24px; flex: 1; }
-
-  /* field label */
-  .ar-label {
-    font-size: 10px;
-    letter-spacing: 0.16em;
-    text-transform: uppercase;
-    color: var(--color-text-muted);
-    display: block;
-    margin-bottom: 6px;
-  }
-
-  /* native select & date */
-  .ar-select, .ar-date {
-    background: var(--color-surface);
-    border: 1.5px solid var(--color-border);
-    border-radius: 12px;
-    padding: 10px 32px 10px 14px;
-    font-size: 13px;
-    color: var(--color-text-primary);
-    outline: none;
-    cursor: pointer;
-    font-family: inherit;
-    width: 100%;
-    transition: border-color 0.15s;
-    min-height: 44px;
-  }
-  .ar-select {
-    appearance: none;
-    -webkit-appearance: none;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23888899' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
-    background-repeat: no-repeat;
-    background-position: right 12px center;
-    background-color: var(--color-surface);
-  }
-  .ar-select:focus, .ar-date:focus { border-color: #7b6ef6; }
-
-  /* export button */
-  .ar-export {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    padding: 7px 14px;
-    border-radius: 10px;
-    border: 1.5px solid var(--color-border);
-    background: var(--color-surface-raised);
-    color: var(--color-text-secondary);
-    font-size: 12px;
-    cursor: pointer;
-    white-space: nowrap;
-    font-family: inherit;
-    transition: all 0.15s;
-    flex-shrink: 0;
-  }
-  .ar-export:hover {
-    border-color: #7b6ef6;
-    background: rgba(123,110,246,0.08);
-    color: #7b6ef6;
-  }
-
-  /* icon action button */
-  .ar-icon-btn {
-    width: 36px; height: 36px; border-radius: 10px;
-    display: flex; align-items: center; justify-content: center;
-    cursor: pointer; transition: all 0.15s; flex-shrink: 0;
-    border: none;
-  }
-
-  /* skeleton */
-  .ar-skel {
-    height: 44px; border-radius: 12px;
+  .ar-shimmer {
     background: linear-gradient(90deg, var(--color-surface-raised) 25%, var(--color-surface) 50%, var(--color-surface-raised) 75%);
     background-size: 200% 100%;
     animation: ar-shimmer 1.4s infinite;
-  }
-
-  /* summary table */
-  .ar-table { width: 100%; border-collapse: collapse; }
-  .ar-table th {
-    padding: 8px 12px;
-    text-align: left;
-    font-size: 10px;
-    letter-spacing: 0.16em;
-    text-transform: uppercase;
-    color: var(--color-text-muted);
-    font-weight: 600;
-    white-space: nowrap;
-  }
-  .ar-table td { padding: 11px 12px; }
-  .ar-table tbody tr { border-top: 1px solid var(--color-border); }
-  .ar-table tbody tr:first-child { border-top: none; }
-
-  /* below-threshold card */
-  .ar-thr-card {
-    background: var(--color-surface-raised);
-    border: 1px solid var(--color-border);
-    border-radius: 16px;
-    padding: 14px 16px;
-    position: relative;
-    overflow: hidden;
-  }
-
-  /* chronic card */
-  .ar-chr-card {
-    background: var(--color-surface-raised);
-    border: 1px solid var(--color-border);
-    border-radius: 16px;
-    padding: 14px 16px;
-  }
-
-  /* empty state */
-  .ar-empty {
-    border: 1px dashed var(--color-border);
-    border-radius: 14px;
-    padding: 32px 24px;
-    text-align: center;
-  }
-
-  /* progress tracks */
-  .ar-bar-track {
-    height: 3px; border-radius: 2px;
-    background: var(--color-surface-raised);
-    width: 56px; margin-top: 5px;
-  }
-  .ar-daily-track {
-    height: 6px; border-radius: 3px;
-    background: var(--color-surface-raised);
-    overflow: hidden;
-  }
-
-  /* badges */
-  .ar-badge {
-    font-size: 11px; font-weight: 600;
-    letter-spacing: 0.06em;
-    padding: 3px 9px; border-radius: 6px;
-  }
-  .ar-absent-tag {
-    font-size: 10px; padding: 2px 8px; border-radius: 5px;
-    background: rgba(239,68,68,0.12); color: #ef4444;
-    letter-spacing: 0.08em; font-weight: 600;
   }
 `
 
@@ -220,66 +39,84 @@ const STYLES = `
 // ─────────────────────────────────────────────────────────────────────────────
 
 const StatCard = ({ label, value, sub, color, icon: Icon }) => (
-  <div className="ar-stat">
+  <div className="bg-surface border border-border rounded-[20px] p-5 sm:p-6 flex flex-col gap-2 relative overflow-hidden transition-colors hover:border-text-muted">
     <div style={{ position: 'absolute', top: -20, right: -20, width: 80, height: 80, borderRadius: '50%', background: color, opacity: 0.08, filter: 'blur(20px)', pointerEvents: 'none' }} />
-    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-      <span style={{ fontSize: 10, letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--color-text-muted)' }}>{label}</span>
-      <div style={{ width: 32, height: 32, borderRadius: 10, background: `${color}1c`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+    <div className="flex items-center justify-between">
+      <span className="text-[10px] tracking-[0.18em] uppercase text-text-muted font-medium">{label}</span>
+      <div className="w-8 h-8 rounded-xl flex items-center justify-center" style={{ background: `${color}1c` }}>
         <Icon size={14} style={{ color }} />
       </div>
     </div>
-    <span style={{ fontSize: 30, fontWeight: 700, color: 'var(--color-text-primary)', lineHeight: 1 }}>{value}</span>
-    {sub && <span style={{ fontSize: 11, color: 'var(--color-text-muted)' }}>{sub}</span>}
+    <span className="text-2xl sm:text-3xl font-bold text-text-primary leading-none">{value}</span>
+    {sub && <span className="text-[11px] text-text-muted">{sub}</span>}
   </div>
 )
 
 const ReportCard = ({ title, subtitle, onExport, accent = '#7b6ef6', children }) => (
-  <div className="ar-card">
-    <div className="ar-card-head">
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 4 }}>
-          <div style={{ width: 3, height: 18, borderRadius: 2, background: accent, flexShrink: 0 }} />
-          <h2 style={{ fontSize: 15, fontWeight: 600, color: 'var(--color-text-primary)', margin: 0 }}>{title}</h2>
+  <div className="bg-surface border border-border rounded-[24px] overflow-hidden flex flex-col shadow-sm">
+    <div className="p-5 sm:px-6 sm:py-5 border-b border-border flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-2.5 mb-1">
+          <div className="w-0.5 h-4 rounded-full flex-shrink-0" style={{ background: accent }} />
+          <h2 className="text-sm sm:text-base font-bold text-text-primary truncate">{title}</h2>
         </div>
-        <p style={{ fontSize: 12, color: 'var(--color-text-muted)', margin: 0, paddingLeft: 13 }}>{subtitle}</p>
+        <p className="text-xs text-text-muted truncate ml-3">{subtitle}</p>
       </div>
-      <button className="ar-export" onClick={onExport}>
-        <Download size={12} /> Export
+      <button 
+        className="flex items-center gap-2 px-3 py-1.5 rounded-xl border-[1.5px] border-border bg-surface-raised text-text-secondary text-xs font-semibold hover:border-brand hover:bg-brand/5 hover:text-brand transition-all flex-shrink-0" 
+        onClick={onExport}
+      >
+        <Download size={13} /> Export
       </button>
     </div>
-    <div className="ar-card-body">{children}</div>
+    <div className="p-4 sm:p-6 flex-1">{children}</div>
   </div>
 )
 
 const FieldSelect = ({ label, value, onChange, options, placeholder }) => (
-  <div>
-    <label className="ar-label">{label}</label>
-    <select className="ar-select" value={value} onChange={onChange}>
-      {placeholder && <option value="">{placeholder}</option>}
-      {options.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
-    </select>
+  <div className="w-full">
+    <label className="text-[10px] tracking-[0.16em] uppercase text-text-muted block mb-1.5 font-semibold ml-1">{label}</label>
+    <div className="relative">
+      <select 
+        className="w-full appearance-none bg-surface border-[1.5px] border-border rounded-xl px-4 py-2.5 text-sm text-text-primary outline-none cursor-pointer font-inherit transition-all focus:border-brand min-h-11 pr-10" 
+        value={value} 
+        onChange={onChange}
+      >
+        {placeholder && <option value="">{placeholder}</option>}
+        {options.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+      </select>
+      <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none opacity-50">
+        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 12 12"><path fill="currentColor" d="M6 8L1 3h10z"/></svg>
+      </div>
+    </div>
   </div>
 )
 
 const DateField = ({ label, value, onChange }) => (
-  <div>
-    <label className="ar-label">{label}</label>
-    <input type="date" className="ar-date" value={value} onChange={(e) => onChange(e.target.value)} />
+  <div className="w-full">
+    <label className="text-[10px] tracking-[0.16em] uppercase text-text-muted block mb-1.5 font-semibold ml-1">{label}</label>
+    <input 
+      type="date" 
+      className="w-full bg-surface border-[1.5px] border-border rounded-xl px-4 py-2.5 text-sm text-text-primary outline-none cursor-pointer font-inherit transition-all focus:border-brand min-h-11" 
+      value={value} 
+      onChange={(e) => onChange(e.target.value)} 
+    />
   </div>
 )
 
 const PanelSkeleton = () => (
-  <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-    {[...Array(5)].map((_, i) => <div key={i} className="ar-skel" />)}
+  <div className="flex flex-col gap-3">
+    {[...Array(5)].map((_, i) => <div key={i} className="h-11 rounded-xl ar-shimmer" />)}
   </div>
 )
 
 const EmptyPanel = ({ text }) => (
-  <div className="ar-empty">
-    <TriangleAlert size={18} style={{ color: 'var(--color-text-muted)', display: 'block', margin: '0 auto 10px' }} />
-    <p style={{ margin: 0, fontSize: 12, color: 'var(--color-text-secondary)' }}>{text}</p>
+  <div className="border border-dashed border-border rounded-2xl p-8 text-center flex flex-col items-center gap-2">
+    <TriangleAlert size={20} className="text-text-muted opacity-40" />
+    <p className="text-xs sm:text-sm text-text-secondary italic">{text}</p>
   </div>
 )
+
 
 // ─────────────────────────────────────────────────────────────────────────────
 //  REPORT PANELS — logic identical to original
@@ -288,37 +125,39 @@ const EmptyPanel = ({ text }) => (
 const SummaryTable = ({ rows, threshold }) => {
   if (!rows.length) return <EmptyPanel text="No attendance records found for this range." />
   return (
-    <div style={{ overflowX: 'auto' }}>
-      <table className="ar-table">
+    <div className="overflow-x-auto -mx-4 sm:mx-0">
+      <table className="w-full text-left border-collapse min-w-[600px] sm:min-w-0">
         <thead>
-          <tr>
-            {['Roll', 'Name', 'Days', 'Present', 'Absent', 'Late', '%', 'Status'].map((head) => (
-              <th key={head}>{head}</th>
+          <tr className="border-b border-border">
+            {['Roll', 'Name', 'Days', 'Pres', 'Abs', 'Late', '%', 'Status'].map((head) => (
+              <th key={head} className="px-3 py-3 text-[10px] tracking-[0.12em] uppercase text-text-muted font-bold">{head}</th>
             ))}
           </tr>
         </thead>
-        <tbody>
+        <tbody className="divide-y divide-border">
           {rows.map((row) => {
             const pct = Number(row.percentage || 0)
             const sColor = pct >= threshold ? '#10b981' : pct >= threshold - 10 ? '#f59e0b' : '#ef4444'
             const sBg    = pct >= threshold ? 'rgba(16,185,129,0.12)' : pct >= threshold - 10 ? 'rgba(245,158,11,0.12)' : 'rgba(239,68,68,0.12)'
             const sLabel = pct >= threshold ? 'Good' : pct >= threshold - 10 ? 'Warning' : 'Critical'
             return (
-              <tr key={row.enrollment_id}>
-                <td style={{ fontSize: 12, color: 'var(--color-text-secondary)' }}>{row.roll_number || '--'}</td>
-                <td style={{ fontSize: 13, fontWeight: 600, color: 'var(--color-text-primary)', whiteSpace: 'nowrap' }}>{row.first_name} {row.last_name}</td>
-                <td style={{ fontSize: 12, color: 'var(--color-text-secondary)' }}>{row.total_days || 0}</td>
-                <td style={{ fontSize: 12, color: '#10b981', fontWeight: 600 }}>{row.present || 0}</td>
-                <td style={{ fontSize: 12, color: '#ef4444', fontWeight: 600 }}>{row.absent || 0}</td>
-                <td style={{ fontSize: 12, color: '#f59e0b' }}>{row.late || 0}</td>
-                <td>
-                  <span style={{ fontSize: 13, fontWeight: 700, color: sColor }}>{pct.toFixed(0)}%</span>
-                  <div className="ar-bar-track">
-                    <div style={{ height: '100%', borderRadius: 2, width: `${Math.min(pct, 100)}%`, background: sColor, transition: 'width 0.6s ease' }} />
+              <tr key={row.enrollment_id} className="hover:bg-surface-raised transition-colors">
+                <td className="px-3 py-3 text-xs text-text-secondary">{row.roll_number || '--'}</td>
+                <td className="px-3 py-3 text-sm font-semibold text-text-primary whitespace-nowrap">{row.first_name} {row.last_name}</td>
+                <td className="px-3 py-3 text-xs text-text-secondary">{row.total_days || 0}</td>
+                <td className="px-3 py-3 text-xs font-bold text-emerald-600">{row.present || 0}</td>
+                <td className="px-3 py-3 text-xs font-bold text-red-500">{row.absent || 0}</td>
+                <td className="px-3 py-3 text-xs text-amber-600">{row.late || 0}</td>
+                <td className="px-3 py-3">
+                  <div className="flex flex-col gap-1">
+                    <span className="text-xs font-bold" style={{ color: sColor }}>{pct.toFixed(0)}%</span>
+                    <div className="h-1 w-12 rounded-full bg-surface-raised overflow-hidden">
+                      <div className="h-full rounded-full transition-all duration-700" style={{ width: `${Math.min(pct, 100)}%`, background: sColor }} />
+                    </div>
                   </div>
                 </td>
-                <td>
-                  <span className="ar-badge" style={{ background: sBg, color: sColor }}>{sLabel}</span>
+                <td className="px-3 py-3">
+                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-md uppercase tracking-wide" style={{ background: sBg, color: sColor }}>{sLabel}</span>
                 </td>
               </tr>
             )
@@ -333,21 +172,21 @@ const DailySummaryPanel = ({ rows }) => {
   if (!rows.length) return <EmptyPanel text="No daily summary available for the selected month." />
   const max = Math.max(...rows.map((row) => row.percentage), 1)
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+    <div className="flex flex-col gap-3">
       {rows.map((row) => {
         const color = row.percentage >= 90 ? '#10b981' : row.percentage >= 75 ? '#7b6ef6' : row.percentage >= 60 ? '#f59e0b' : '#ef4444'
         return (
-          <div key={row.date}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 5 }}>
-              <span style={{ fontSize: 12, color: 'var(--color-text-secondary)', fontFamily: 'monospace' }}>{row.date}</span>
-              <span style={{ fontSize: 12, fontWeight: 600, color }}>
+          <div key={row.date} className="group">
+            <div className="flex justify-between items-end mb-1.5">
+              <span className="text-[11px] text-text-secondary font-mono bg-surface-raised px-1.5 py-0.5 rounded uppercase">{row.date}</span>
+              <span className="text-xs font-bold" style={{ color }}>
                 {row.present}/{row.total}
-                <span style={{ color: 'var(--color-text-muted)', fontWeight: 400 }}> · </span>
+                <span className="text-text-muted font-normal mx-1">·</span>
                 {row.percentage.toFixed(0)}%
               </span>
             </div>
-            <div className="ar-daily-track">
-              <div style={{ height: '100%', borderRadius: 3, width: `${(row.percentage / max) * 100}%`, background: `linear-gradient(90deg, ${color}88, ${color})`, transition: 'width 0.7s cubic-bezier(.4,0,.2,1)' }} />
+            <div className="h-1.5 rounded-full bg-surface-raised overflow-hidden">
+              <div className="h-full rounded-full transition-all duration-1000 cubic-bezier(.4,0,.2,1)" style={{ width: `${(row.percentage / max) * 100}%`, background: `linear-gradient(90deg, ${color}44, ${color})` }} />
             </div>
           </div>
         )
@@ -356,29 +195,31 @@ const DailySummaryPanel = ({ rows }) => {
   )
 }
 
+
 const BelowThresholdTable = ({ rows, threshold }) => {
   if (!rows.length) return <EmptyPanel text={`No students are below ${threshold}% in this date range.`} />
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+    <div className="flex flex-col gap-3">
       {rows.map((row) => {
         const percentage = Number(row.percentage || 0)
         const totalDays = Number(row.total_days || 0)
         const effectivePresentDays = percentage * totalDays / 100
         const daysShort = percentage >= threshold ? 0 : Math.ceil((threshold * totalDays / 100) - effectivePresentDays)
         return (
-          <div key={row.enrollment_id} className="ar-thr-card">
-            <div style={{ position: 'absolute', top: 0, left: 0, bottom: 0, width: `${percentage}%`, background: 'linear-gradient(90deg, rgba(239,68,68,0.06), transparent)', borderRadius: 16, pointerEvents: 'none' }} />
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', position: 'relative' }}>
-              <div>
-                <p style={{ margin: 0, fontSize: 13, fontWeight: 600, color: 'var(--color-text-primary)' }}>{row.first_name} {row.last_name}</p>
-                <p style={{ margin: '3px 0 0', fontSize: 11, color: 'var(--color-text-secondary)' }}>Roll {row.roll_number || '--'} · {totalDays} school days</p>
-                <p style={{ margin: '6px 0 0', fontSize: 12, color: '#ef4444' }}>
-                  Days short to reach {threshold}%: {Math.max(0, daysShort)}
-                </p>
+          <div key={row.enrollment_id} className="bg-surface-raised border border-border rounded-2xl p-4 relative overflow-hidden group hover:border-red-200 transition-colors">
+            <div className="absolute top-0 left-0 bottom-0 pointer-events-none" style={{ width: `${percentage}%`, background: 'linear-gradient(90deg, rgba(239,68,68,0.04), transparent)' }} />
+            <div className="flex items-center justify-between gap-4 relative">
+              <div className="min-w-0">
+                <p className="text-sm font-bold text-text-primary truncate">{row.first_name} {row.last_name}</p>
+                <p className="text-[10px] text-text-secondary mt-0.5 uppercase tracking-wide">Roll {row.roll_number || '--'} · {totalDays} school days</p>
+                <div className="mt-2 flex items-center gap-1.5 text-xs text-red-500 font-medium">
+                  <TriangleAlert size={12} />
+                  <span>{Math.max(0, daysShort)} days short of {threshold}%</span>
+                </div>
               </div>
-              <p style={{ margin: 0, fontSize: 24, fontWeight: 700, color: '#ef4444', lineHeight: 1 }}>
-                {percentage.toFixed(0)}%
-              </p>
+              <div className="text-2xl sm:text-3xl font-black text-red-500 leading-none">
+                {percentage.toFixed(0)}<span className="text-sm ml-0.5">%</span>
+              </div>
             </div>
           </div>
         )
@@ -390,40 +231,42 @@ const BelowThresholdTable = ({ rows, threshold }) => {
 const ChronicAbsentees = ({ rows, onAlert }) => {
   if (!rows.length) return <EmptyPanel text="No chronic absentees found in this date range." />
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+    <div className="flex flex-col gap-3">
       {rows.map((row) => (
-        <div key={row.enrollment_id} className="ar-chr-card">
-          <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 5, flexWrap: 'wrap' }}>
-                <p style={{ margin: 0, fontSize: 13, fontWeight: 600, color: 'var(--color-text-primary)' }}>{row.first_name} {row.last_name}</p>
-                <span className="ar-absent-tag">{row.consecutive_absent_days} consecutive days absent</span>
+        <div key={row.enrollment_id} className="bg-surface-raised border border-border rounded-2xl p-4 transition-colors hover:border-amber-200">
+          <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
+            <div className="min-w-0 flex-1">
+              <div className="flex flex-wrap items-center gap-2 mb-2">
+                <p className="text-sm font-bold text-text-primary truncate">{row.first_name} {row.last_name}</p>
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-red-500/10 text-red-500 uppercase tracking-wide">
+                  {row.consecutive_absent_days} Days Consecutive
+                </span>
               </div>
-              <p style={{ margin: 0, fontSize: 11, color: 'var(--color-text-secondary)', wordBreak: 'break-all' }}>
-                Dates: {Array.isArray(row.dates) ? row.dates.join(', ') : '--'}
-              </p>
-              <p style={{ margin: '6px 0 0', fontSize: 11, color: 'var(--color-text-secondary)' }}>
-                Parent contact: {row.father_phone || row.mother_phone || 'Not available'}
-              </p>
+              
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-1.5">
+                <div className="flex items-center gap-2 text-xs text-text-secondary">
+                  <PhoneCall size={12} className="shrink-0" />
+                  <span className="truncate">Call: {row.father_phone || row.mother_phone || 'N/A'}</span>
+                </div>
+                <div className="sm:col-span-2 flex items-start gap-2 text-[10px] text-text-muted mt-1">
+                  <BellRing size={12} className="shrink-0 mt-0.5" />
+                  <p className="line-clamp-1">{Array.isArray(row.dates) ? row.dates.join(', ') : 'No dates'}</p>
+                </div>
+              </div>
             </div>
-            <div style={{ display: 'flex', gap: 8, marginLeft: 12, flexShrink: 0 }}>
-              <button
-                type="button"
-                className="ar-icon-btn"
-                onClick={() => row.father_phone && window.open(`tel:${row.father_phone}`, '_self')}
-                style={{ background: 'rgba(16,185,129,0.14)', color: '#10b981' }}
-                title="Call parent"
+            
+            <div className="flex gap-2 mt-2 sm:mt-0">
+               <button 
+                onClick={() => (row.father_phone || row.mother_phone) && window.open(`tel:${row.father_phone || row.mother_phone}`, '_self')}
+                className="flex-1 sm:flex-none px-3 py-2 rounded-xl bg-emerald-500 text-white text-xs font-bold hover:bg-emerald-600 active:scale-95 transition-all flex items-center justify-center gap-2 shadow-sm shadow-emerald-500/20"
               >
-                <PhoneCall size={16} />
+                <PhoneCall size={13} /> Call
               </button>
-              <button
-                type="button"
-                className="ar-icon-btn"
+              <button 
                 onClick={onAlert}
-                style={{ background: 'rgba(245,158,11,0.14)', color: '#f59e0b' }}
-                title="Send alert"
+                className="flex-1 sm:flex-none px-3 py-2 rounded-xl bg-amber-500 text-white text-xs font-bold hover:bg-amber-600 active:scale-95 transition-all flex items-center justify-center gap-2 shadow-sm shadow-amber-500/20"
               >
-                <BellRing size={16} />
+                <BellRing size={13} /> Alert
               </button>
             </div>
           </div>
@@ -432,6 +275,7 @@ const ChronicAbsentees = ({ rows, onAlert }) => {
     </div>
   )
 }
+
 
 // ─────────────────────────────────────────────────────────────────────────────
 //  HELPERS — identical to original

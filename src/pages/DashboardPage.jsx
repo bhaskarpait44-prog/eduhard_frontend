@@ -416,11 +416,11 @@ const KpiCard = ({ icon: Icon, label, value, trend, trendUp, description, color,
       variants={variants}
       onClick={onClick}
       disabled={!onClick}
-      className="group w-full bg-surface border border-border-base rounded-[32px] p-6 text-left transition-all hover:border-brand/30 hover:shadow-xl hover:shadow-brand/5 hover:-translate-y-1 active:translate-y-0 disabled:cursor-default"
+      className="group w-full bg-surface border border-border-base rounded-[32px] p-5 sm:p-6 text-left transition-all hover:border-brand/30 hover:shadow-xl hover:shadow-brand/5 hover:-translate-y-1 active:translate-y-0 disabled:cursor-default"
     >
-      <div className="flex items-center justify-between mb-5">
-        <div className={cn("h-12 w-12 rounded-2xl bg-opacity-10 flex items-center justify-center", colorMap[color].split(' ')[0])}>
-           <Icon size={22} className={colorMap[color].split(' ')[1]} />
+      <div className="flex items-center justify-between mb-4 sm:mb-5">
+        <div className={cn("h-10 w-10 sm:h-12 sm:w-12 rounded-2xl bg-opacity-10 flex items-center justify-center", colorMap[color].split(' ')[0])}>
+           <Icon size={20} className={colorMap[color].split(' ')[1]} />
         </div>
         {trend && (
           <div className={cn(
@@ -434,13 +434,14 @@ const KpiCard = ({ icon: Icon, label, value, trend, trendUp, description, color,
       </div>
       
       <div className="space-y-1">
-        <h4 className="text-[11px] font-black text-text-muted uppercase tracking-widest leading-none">{label}</h4>
-        <p className="text-3xl font-black text-text-primary tracking-tight">{value}</p>
-        <p className="text-xs text-text-secondary font-medium truncate">{description}</p>
+        <h4 className="text-[10px] sm:text-[11px] font-black text-text-muted uppercase tracking-widest leading-none">{label}</h4>
+        <p className="text-2xl sm:text-3xl font-black text-text-primary tracking-tight">{value}</p>
+        <p className="text-[11px] sm:text-xs text-text-secondary font-medium truncate">{description}</p>
       </div>
     </motion.button>
   )
 }
+
 
 const ActionButton = ({ icon: Icon, label, description, onClick, color = "blue" }) => {
   const accentColor = color === 'blue' ? 'bg-brand' : 'bg-amber-600'

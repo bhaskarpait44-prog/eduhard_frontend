@@ -262,8 +262,48 @@ const Header = ({ onMenuClick }) => {
     return () => { active = false; window.clearInterval(timer) }
   }, [isAdminUser, isStudentUser, isTeacherUser, isAccountantUser, isReceptionistUser])
 
-  const handleNotificationClick = (route) => { setNotifOpen(false); navigate(route) }
+  const handleNotificationClick = async (item) => {
+    setNotifOpen(false)
+    
+    if (item.id.includes('notice')) {
+      const id = item.id.split('-').pop()
+      try {
+        if (isTeacherUser)          await teacherApi.markTeacherNoticeRead(id)
+        else if (isStudentUser)     await studentApi.markStudentNoticeRead(id)
+        else if (isAccountantUser)   await noticesApi.markAccountantNoticeRead(id)
+        else if (isReceptionistUser) await noticesApi.markReceptionistNoticeRead(id)
+      } catch (err) {
+        console.error('Failed to mark notice as read on click', err)
+      }
+    }
+    
+    setNotifications(prev => prev.filter(n => n.id !== item.id))
+    navigate(item.route)
+  }
+
   const handleLogout = () => { logout(); toastSuccess('Signed out successfully'); navigate(ROUTES.LOGIN) }
+
+  const handleClearNotifications = async () => {
+    if (!notifications.length) return
+    const noticeIds = notifications
+      .filter(n => n.id.includes('notice'))
+      .map(n => n.id.split('-').pop())
+
+    try {
+      setNotifLoading(true)
+      if (noticeIds.length > 0) {
+        await Promise.all(noticeIds.map(id => {
+          if (isTeacherUser)     return teacherApi.markTeacherNoticeRead(id)
+          if (isStudentUser)     return studentApi.markStudentNoticeRead(id)
+          if (isAccountantUser)   return noticesApi.markAccountantNoticeRead(id)
+          if (isReceptionistUser) return noticesApi.markReceptionistNoticeRead(id)
+          return Promise.resolve()
+        }))
+      }
+      setNotifications([])
+    } catch (err) { console.error('Failed to clear notifications', err) }
+    finally { setNotifLoading(false) }
+  }
 
   return (
     <header
@@ -278,13 +318,13 @@ const Header = ({ onMenuClick }) => {
         {/* ── Hamburger (mobile) ── */}
         <button
           onClick={onMenuClick}
-          className="lg:hidden flex items-center justify-center w-9 h-9 rounded-xl shrink-0 transition-all duration-150"
+          className="lg:hidden flex items-center justify-center w-9 h-9 sm:w-10 sm:h-10 rounded-xl shrink-0 transition-all duration-150"
           style={{ color: 'var(--color-text-secondary)' }}
           onMouseEnter={e => { e.currentTarget.style.backgroundColor = 'var(--color-surface-raised)'; e.currentTarget.style.color = 'var(--color-text-primary)' }}
           onMouseLeave={e => { e.currentTarget.style.backgroundColor = 'transparent'; e.currentTarget.style.color = 'var(--color-text-secondary)' }}
           aria-label="Open menu"
         >
-          <Menu size={19} />
+          <Menu size={20} />
         </button>
 
         {/* ── Breadcrumb ── */}
@@ -293,7 +333,7 @@ const Header = ({ onMenuClick }) => {
         </div>
 
         {/* ── Right actions ── */}
-        <div className="flex shrink-0 items-center gap-1">
+        <div className="flex shrink-0 items-center gap-1.5 sm:gap-2.5">
 
           {/* Session badge */}
           {currentSession && (
@@ -312,27 +352,28 @@ const Header = ({ onMenuClick }) => {
 
           {/* Theme toggle */}
           <IconBtn onClick={toggleTheme} title={isDark ? 'Light mode' : 'Dark mode'} aria-label="Toggle theme">
-            {isDark ? <Sun size={17} /> : <Moon size={17} />}
+            {isDark ? <Sun size={18} /> : <Moon size={18} />}
           </IconBtn>
 
           {/* Notification bell */}
           <div ref={notifRef} className="relative">
             <button
               onClick={() => setNotifOpen(!notifOpen)}
-              className="relative flex items-center justify-center w-9 h-9 rounded-xl transition-all duration-150"
+              className="relative flex items-center justify-center w-9 h-9 sm:w-10 sm:h-10 rounded-xl transition-all duration-150"
               style={{ color: 'var(--color-text-secondary)' }}
               onMouseEnter={e => { e.currentTarget.style.backgroundColor = 'var(--color-surface-raised)'; e.currentTarget.style.color = 'var(--color-text-primary)' }}
               onMouseLeave={e => { e.currentTarget.style.backgroundColor = 'transparent'; e.currentTarget.style.color = 'var(--color-text-secondary)' }}
               aria-label="Notifications"
             >
-              <Bell size={17} />
+              <Bell size={19} />
               {unreadCount > 0 && (
                 <span
-                  className="absolute -right-0.5 -top-0.5 min-w-[17px] rounded-full px-1 text-[9px] font-bold leading-[17px] text-center"
+                  className="absolute right-1.5 top-1.5 min-w-[16px] h-[16px] rounded-full text-[9px] font-bold flex items-center justify-center shadow-sm"
                   style={{
                     backgroundColor : '#ef4444',
                     color           : '#fff',
-                    border          : '2px solid var(--color-surface)',
+                    border          : '1.5px solid var(--color-surface)',
+                    transform       : 'translate(25%, -25%)'
                   }}
                 >
                   {unreadCount > 9 ? '9+' : unreadCount}
@@ -340,9 +381,10 @@ const Header = ({ onMenuClick }) => {
               )}
             </button>
 
+
             {/* Notification dropdown */}
             {notifOpen && (
-              <Dropdown className="right-0 w-[calc(100vw-2rem)] sm:w-80">
+              <Dropdown className="fixed top-[calc(var(--header-height)+8px)] left-4 right-4 sm:absolute sm:top-full sm:mt-2 sm:left-auto sm:right-0 sm:w-80">
                 <div
                   className="flex items-center justify-between px-4 py-3"
                   style={{ borderBottom: '1px solid var(--color-border)' }}
@@ -350,15 +392,25 @@ const Header = ({ onMenuClick }) => {
                   <p className="text-sm font-semibold" style={{ color: 'var(--color-text-primary)' }}>
                     Notifications
                   </p>
-                  <button
-                    onClick={() => setNotifOpen(false)}
-                    className="p-1 rounded-lg transition-colors"
-                    style={{ color: 'var(--color-text-muted)' }}
-                    onMouseEnter={e => { e.currentTarget.style.backgroundColor = 'var(--color-surface-raised)' }}
-                    onMouseLeave={e => { e.currentTarget.style.backgroundColor = 'transparent' }}
-                  >
-                    <X size={13} />
-                  </button>
+                  <div className="flex items-center gap-3">
+                    {notifications.length > 0 && (
+                      <button 
+                        onClick={handleClearNotifications}
+                        className="text-[10px] font-black uppercase tracking-wider text-brand hover:opacity-80 transition-opacity"
+                      >
+                        Clear All
+                      </button>
+                    )}
+                    <button
+                      onClick={() => setNotifOpen(false)}
+                      className="p-1 rounded-lg transition-colors"
+                      style={{ color: 'var(--color-text-muted)' }}
+                      onMouseEnter={e => { e.currentTarget.style.backgroundColor = 'var(--color-surface-raised)' }}
+                      onMouseLeave={e => { e.currentTarget.style.backgroundColor = 'transparent' }}
+                    >
+                      <X size={13} />
+                    </button>
+                  </div>
                 </div>
 
                 {notifLoading ? (
@@ -377,7 +429,7 @@ const Header = ({ onMenuClick }) => {
                       <button
                         key={item.id}
                         type="button"
-                        onClick={() => handleNotificationClick(item.route)}
+                        onClick={() => handleNotificationClick(item)}
                         className="w-full rounded-xl px-3 py-3 text-left transition-all duration-150 group"
                         style={{ color: 'var(--color-text-primary)' }}
                         onMouseEnter={e => e.currentTarget.style.backgroundColor = 'var(--color-surface-raised)'}
@@ -450,9 +502,10 @@ const Header = ({ onMenuClick }) => {
 
             {/* User dropdown */}
             {userMenuOpen && (
-              <Dropdown className="right-0 w-56">
+              <Dropdown className="absolute top-full mt-2 right-0 w-56">
                 {/* User info */}
                 <div className="px-4 py-3" style={{ borderBottom: '1px solid var(--color-border)' }}>
+
                   <p className="text-sm font-semibold truncate" style={{ color: 'var(--color-text-primary)' }}>
                     {user?.name}
                   </p>
@@ -536,7 +589,7 @@ const IconBtn = ({ children, onClick, title, ...props }) => (
   <button
     onClick={onClick}
     title={title}
-    className="flex items-center justify-center w-9 h-9 rounded-xl transition-all duration-150"
+    className="flex items-center justify-center w-9 h-9 sm:w-10 sm:h-10 rounded-xl transition-all duration-150"
     style={{ color: 'var(--color-text-secondary)' }}
     onMouseEnter={e => { e.currentTarget.style.backgroundColor = 'var(--color-surface-raised)'; e.currentTarget.style.color = 'var(--color-text-primary)' }}
     onMouseLeave={e => { e.currentTarget.style.backgroundColor = 'transparent'; e.currentTarget.style.color = 'var(--color-text-secondary)' }}
@@ -548,7 +601,7 @@ const IconBtn = ({ children, onClick, title, ...props }) => (
 
 const Dropdown = ({ children, className }) => (
   <div
-    className={cn('absolute top-full mt-2 rounded-2xl shadow-xl z-50 overflow-hidden', className)}
+    className={cn('z-50 rounded-2xl shadow-xl overflow-hidden', className)}
     style={{
       backgroundColor : 'var(--color-surface)',
       border          : '1px solid var(--color-border)',

@@ -141,6 +141,7 @@ const AccountantNotices = () => {
                 { value: 'school_wide', label: 'School Wide' },
                 { value: 'class', label: 'Class (Students & Parents)' },
                 { value: 'student', label: 'Student & Parent' },
+                { value: 'parents', label: 'All Parents' },
               ]}
               required
             />

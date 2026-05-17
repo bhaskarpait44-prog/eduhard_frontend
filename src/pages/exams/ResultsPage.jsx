@@ -235,105 +235,181 @@ const ResultsPage = () => {
             className="border-0 rounded-none py-12"
           />
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr style={{ borderBottom: '1px solid var(--color-border)' }}>
-                  {['Roll','Student','Total Marks','Percentage','Grade','Result',''].map(h => (
-                    <th key={h} className="px-4 py-3.5 text-left text-xs font-semibold uppercase tracking-wider"
-                      style={{ color: 'var(--color-text-muted)' }}>
-                      {h}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {classResults.map((row, i) => {
-                  const resultCfg = RESULT_CFG[row.result] || { label: row.result, variant: 'grey' }
-                  const gradeColor = GRADE_COLOR[row.grade] || 'var(--color-text-secondary)'
+          <div className="space-y-4">
+            {/* Mobile: Card View */}
+            <div className="grid grid-cols-1 gap-4 sm:hidden">
+              {classResults.map((row, i) => {
+                const resultCfg = RESULT_CFG[row.result] || { label: row.result || 'Not Calc', variant: 'grey' }
+                const gradeColor = GRADE_COLOR[row.grade] || 'var(--color-text-secondary)'
+                const hasFeeDue = parseFloat(row.pending_balance) > 0
 
-                  return (
-                    <tr
-                      key={row.enrollment_id || i}
-                      style={{ borderBottom: i < classResults.length - 1 ? '1px solid var(--color-border)' : 'none' }}
-                    >
-                      <td className="px-4 py-3.5 text-sm font-mono" style={{ color: 'var(--color-text-muted)' }}>
-                        {row.roll_number || '—'}
-                      </td>
-                      <td className="px-4 py-3.5">
-                        <p className="text-sm font-medium" style={{ color: 'var(--color-text-primary)' }}>
-                          {row.student_name || row.name}
-                        </p>
-                        <p className="text-xs font-mono" style={{ color: 'var(--color-text-muted)' }}>
-                          {row.admission_no}
-                        </p>
-                      </td>
-                      <td className="px-4 py-3.5 text-sm" style={{ color: 'var(--color-text-secondary)' }}>
-                        {row.marks_obtained}/{row.total_marks}
-                      </td>
-                      <td className="px-4 py-3.5">
-                        <span
-                          className="text-sm font-bold"
-                          style={{ color: parseFloat(row.percentage) >= 40 ? '#16a34a' : '#dc2626' }}
-                        >
-                          {formatPercent(row.percentage)}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3.5">
-                        <span className="text-sm font-bold" style={{ color: gradeColor }}>
-                          {row.grade || '—'}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3.5">
-                        {parseFloat(row.pending_balance) > 0 ? (
-                          <div className="flex flex-col gap-1">
-                            <Badge variant={row.release_result ? 'green' : 'grey'} dot>
-                              {row.release_result ? 'Released' : 'Withheld'}
-                            </Badge>
-                            <span className="text-[10px] text-red-600 font-semibold uppercase tracking-wider">
-                              Fee Due: {formatCurrency(row.pending_balance)}
-                            </span>
-                          </div>
-                        ) : row.result ? (
-                          <Badge variant={resultCfg.variant} dot>{resultCfg.label}</Badge>
-                        ) : (
-                          <span className="text-xs" style={{ color: 'var(--color-text-muted)' }}>Not calculated</span>
-                        )}
-                      </td>
-                      <td className="px-4 py-3.5">
-                        <div className="flex items-center gap-2">
-                          <Button
-                            variant="ghost" size="xs"
-                            onClick={() => row.result && setReportTarget(row)}
-                            disabled={!row.result || row.is_withheld}
+                return (
+                  <div key={row.enrollment_id || i} className="bg-surface border border-border rounded-2xl p-4 flex flex-col gap-3 shadow-sm">
+                    <div className="flex justify-between items-start">
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-2 mb-0.5">
+                           <span className="text-[10px] font-mono bg-surface-raised px-1.5 py-0.5 rounded text-text-muted">#{row.roll_number || '--'}</span>
+                           <h3 className="font-bold text-text-primary truncate">{row.student_name || row.name}</h3>
+                        </div>
+                        <p className="text-[10px] font-mono text-text-muted uppercase tracking-wider">{row.admission_no}</p>
+                      </div>
+                      <Badge variant={resultCfg.variant} dot className="uppercase text-[10px]">{resultCfg.label}</Badge>
+                    </div>
+
+                    <div className="grid grid-cols-3 gap-2 py-2 border-y border-border/50">
+                       <div className="flex flex-col gap-0.5">
+                          <span className="text-[9px] uppercase font-bold text-text-muted tracking-tight">Marks</span>
+                          <span className="text-xs font-semibold text-text-primary">{row.marks_obtained || 0}/{row.total_marks || 0}</span>
+                       </div>
+                       <div className="flex flex-col gap-0.5">
+                          <span className="text-[9px] uppercase font-bold text-text-muted tracking-tight">Percent</span>
+                          <span className="text-xs font-bold" style={{ color: parseFloat(row.percentage) >= 40 ? '#16a34a' : '#dc2626' }}>{formatPercent(row.percentage)}</span>
+                       </div>
+                       <div className="flex flex-col gap-0.5">
+                          <span className="text-[9px] uppercase font-bold text-text-muted tracking-tight">Grade</span>
+                          <span className="text-xs font-black" style={{ color: gradeColor }}>{row.grade || '—'}</span>
+                       </div>
+                    </div>
+
+                    {hasFeeDue && (
+                      <div className="flex items-center justify-between bg-red-500/5 p-2 rounded-xl border border-red-500/10">
+                        <span className="text-[10px] text-red-600 font-bold uppercase tracking-wider">Fee Due: {formatCurrency(row.pending_balance)}</span>
+                        <Badge variant={row.release_result ? 'green' : 'grey'} className="text-[9px]">{row.release_result ? 'Result Released' : 'Result Withheld'}</Badge>
+                      </div>
+                    )}
+
+                    <div className="flex gap-2">
+                       <Button 
+                         variant="secondary" size="sm" className="flex-1"
+                         onClick={() => row.result && setReportTarget(row)}
+                         disabled={!row.result || row.is_withheld}
+                       >
+                         Report
+                       </Button>
+                       <Button 
+                         variant="secondary" size="sm" className="flex-1"
+                         onClick={() => setOverrideTarget(row)}
+                       >
+                         Override
+                       </Button>
+                       {hasFeeDue && (
+                          <Button 
+                            variant="ghost" size="sm" className="px-3"
+                            onClick={() => handleRelease(row)}
+                            style={{ color: row.release_result ? '#d97706' : '#2563eb' }}
+                            loading={isSaving}
                           >
-                            Report
+                            {row.release_result ? 'Lock' : 'Push'}
                           </Button>
-                          <Button
-                            variant="ghost" size="xs"
-                            onClick={() => setOverrideTarget(row)}
+                       )}
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+
+            {/* Desktop: Table View */}
+            <div className="hidden sm:block overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr style={{ borderBottom: '1px solid var(--color-border)' }}>
+                    {['Roll','Student','Total Marks','Percentage','Grade','Result',''].map(h => (
+                      <th key={h} className="px-4 py-3.5 text-left text-xs font-semibold uppercase tracking-wider"
+                        style={{ color: 'var(--color-text-muted)' }}>
+                        {h}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {classResults.map((row, i) => {
+                    const resultCfg = RESULT_CFG[row.result] || { label: row.result, variant: 'grey' }
+                    const gradeColor = GRADE_COLOR[row.grade] || 'var(--color-text-secondary)'
+
+                    return (
+                      <tr
+                        key={row.enrollment_id || i}
+                        style={{ borderBottom: i < classResults.length - 1 ? '1px solid var(--color-border)' : 'none' }}
+                      >
+                        <td className="px-4 py-3.5 text-sm font-mono" style={{ color: 'var(--color-text-muted)' }}>
+                          {row.roll_number || '—'}
+                        </td>
+                        <td className="px-4 py-3.5">
+                          <p className="text-sm font-medium" style={{ color: 'var(--color-text-primary)' }}>
+                            {row.student_name || row.name}
+                          </p>
+                          <p className="text-xs font-mono" style={{ color: 'var(--color-text-muted)' }}>
+                            {row.admission_no}
+                          </p>
+                        </td>
+                        <td className="px-4 py-3.5 text-sm" style={{ color: 'var(--color-text-secondary)' }}>
+                          {row.marks_obtained}/{row.total_marks}
+                        </td>
+                        <td className="px-4 py-3.5">
+                          <span
+                            className="text-sm font-bold"
+                            style={{ color: parseFloat(row.percentage) >= 40 ? '#16a34a' : '#dc2626' }}
                           >
-                            Override
-                          </Button>
-                          {parseFloat(row.pending_balance) > 0 && (
+                            {formatPercent(row.percentage)}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3.5">
+                          <span className="text-sm font-bold" style={{ color: gradeColor }}>
+                            {row.grade || '—'}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3.5">
+                          {parseFloat(row.pending_balance) > 0 ? (
+                            <div className="flex flex-col gap-1">
+                              <Badge variant={row.release_result ? 'green' : 'grey'} dot>
+                                {row.release_result ? 'Released' : 'Withheld'}
+                              </Badge>
+                              <span className="text-[10px] text-red-600 font-semibold uppercase tracking-wider">
+                                Fee Due: {formatCurrency(row.pending_balance)}
+                              </span>
+                            </div>
+                          ) : row.result ? (
+                            <Badge variant={resultCfg.variant} dot>{resultCfg.label}</Badge>
+                          ) : (
+                            <span className="text-xs" style={{ color: 'var(--color-text-muted)' }}>Not calculated</span>
+                          )}
+                        </td>
+                        <td className="px-4 py-3.5">
+                          <div className="flex items-center gap-2">
                             <Button
                               variant="ghost" size="xs"
-                              onClick={() => handleRelease(row)}
-                              style={{ color: row.release_result ? '#d97706' : '#2563eb' }}
-                              loading={isSaving}
+                              onClick={() => row.result && setReportTarget(row)}
+                              disabled={!row.result || row.is_withheld}
                             >
-                              {row.release_result ? 'Lock' : 'Push'}
+                              Report
                             </Button>
-                          )}
-                        </div>
-                      </td>
-                    </tr>
-                  )
-                })}
-              </tbody>
-            </table>
+                            <Button
+                              variant="ghost" size="xs"
+                              onClick={() => setOverrideTarget(row)}
+                            >
+                              Override
+                            </Button>
+                            {parseFloat(row.pending_balance) > 0 && (
+                              <Button
+                                variant="ghost" size="xs"
+                                onClick={() => handleRelease(row)}
+                                style={{ color: row.release_result ? '#d97706' : '#2563eb' }}
+                                loading={isSaving}
+                              >
+                                {row.release_result ? 'Lock' : 'Push'}
+                              </Button>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    )
+                  })}
+                </tbody>
+              </table>
+            </div>
           </div>
         )}
+
       </div>
 
       {/* Calculate confirm */}

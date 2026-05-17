@@ -166,78 +166,147 @@ const BookCatalogPage = () => {
         {loading ? (
           <TableSkeleton rows={5} cols={6} />
         ) : books.length > 0 ? (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse">
-              <thead>
-                <tr className="border-b border-border">
-                  <th className="py-4 px-2 text-sm font-semibold text-text-secondary">Book Details</th>
-                  <th className="py-4 px-2 text-sm font-semibold text-text-secondary">Category</th>
-                  <th className="py-4 px-2 text-sm font-semibold text-text-secondary">Location</th>
-                  <th className="py-4 px-2 text-sm font-semibold text-text-secondary">Availability</th>
-                  <th className="py-4 px-2 text-sm font-semibold text-text-secondary">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {books.map((book) => (
-                  <tr key={book.id} className="border-b border-border hover:bg-surface-raised transition-colors">
-                    <td className="py-4 px-2">
-                      <div className="flex flex-col">
-                        <span className="font-medium text-text-primary">{book.title}</span>
-                        <span className="text-xs text-text-muted">{book.author} | ISBN: {book.isbn || 'N/A'}</span>
-                      </div>
-                    </td>
-                    <td className="py-4 px-2">
-                      <Badge variant="ghost" className="capitalize">{book.category.replace('_', ' ')}</Badge>
-                    </td>
-                    <td className="py-4 px-2 text-sm">
-                      {book.shelf_location || 'Not set'}
-                    </td>
-                    <td className="py-4 px-2 min-w-[150px]">
-                      <div className="flex flex-col gap-1">
-                        <div className="flex justify-between text-[10px] text-text-muted">
-                          <span>{book.available_copies} of {book.total_copies} available</span>
-                        </div>
-                        <ProgressBar 
-                          value={book.available_copies} 
-                          max={book.total_copies} 
-                          color={book.available_copies === 0 ? 'red' : book.available_copies < 3 ? 'orange' : 'green'}
-                        />
-                      </div>
-                    </td>
-                    <td className="py-4 px-2">
+          <div className="space-y-4">
+            {/* Mobile: Card View */}
+            <div className="grid grid-cols-1 gap-4 md:hidden">
+              {books.map((book) => (
+                <div key={book.id} className="bg-surface-raised border border-border rounded-2xl p-4 flex flex-col gap-4">
+                  <div className="flex justify-between items-start">
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-bold text-text-primary truncate">{book.title}</h3>
+                      <p className="text-xs text-text-muted truncate">{book.author} | ISBN: {book.isbn || 'N/A'}</p>
+                    </div>
+                    <Badge variant="ghost" className="capitalize shrink-0">{book.category.replace('_', ' ')}</Badge>
+                  </div>
+                  
+                  <div className="flex items-center justify-between text-xs py-2 border-y border-border/50">
+                    <div className="flex flex-col gap-1">
+                      <span className="text-text-muted uppercase tracking-wider font-semibold text-[10px]">Location</span>
+                      <span className="text-text-primary font-medium">{book.shelf_location || 'Not set'}</span>
+                    </div>
+                    <div className="text-right">
+                      <span className="text-text-muted uppercase tracking-wider font-semibold text-[10px] block mb-1">Stock</span>
                       <div className="flex items-center gap-2">
-                        <Button 
-                          variant="ghost" 
-                          size="sm" 
-                          className="text-primary-600"
-                          onClick={() => { setBookToIssue(book); setIsIssueModalOpen(true); }}
-                          disabled={book.available_copies === 0}
-                        >
-                          Issue
-                        </Button>
-                        <Button 
-                          variant="ghost" 
-                          size="sm" 
-                          onClick={() => { setSelectedBook(book); setIsFormModalOpen(true); }}
-                        >
-                          Edit
-                        </Button>
-                        <Button 
-                          variant="ghost" 
-                          size="sm" 
-                          className="text-red-500"
-                          onClick={() => { setBookToDelete(book); setIsDeleteDialogOpen(true); }}
-                        >
-                          Delete
-                        </Button>
+                        <span className="font-bold text-text-primary">{book.available_copies} / {book.total_copies}</span>
+                        <div className="w-12 h-1.5 rounded-full bg-surface overflow-hidden">
+                          <div 
+                            className="h-full rounded-full transition-all" 
+                            style={{ 
+                              width: `${(book.available_copies / book.total_copies) * 100}%`,
+                              backgroundColor: book.available_copies === 0 ? '#ef4444' : book.available_copies < 3 ? '#f59e0b' : '#22c55e'
+                            }} 
+                          />
+                        </div>
                       </div>
-                    </td>
+                    </div>
+                  </div>
+
+                  <div className="flex gap-2">
+                    <Button 
+                      variant="primary" 
+                      size="sm" 
+                      className="flex-1"
+                      onClick={() => { setBookToIssue(book); setIsIssueModalOpen(true); }}
+                      disabled={book.available_copies === 0}
+                    >
+                      Issue
+                    </Button>
+                    <Button 
+                      variant="secondary" 
+                      size="sm" 
+                      className="px-3"
+                      onClick={() => { setSelectedBook(book); setIsFormModalOpen(true); }}
+                    >
+                      Edit
+                    </Button>
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      className="text-red-500 px-3 hover:bg-red-50"
+                      onClick={() => { setBookToDelete(book); setIsDeleteDialogOpen(true); }}
+                    >
+                      Delete
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Desktop: Table View */}
+            <div className="hidden md:block overflow-x-auto">
+              <table className="w-full text-left border-collapse">
+                <thead>
+                  <tr className="border-b border-border">
+                    <th className="py-4 px-2 text-sm font-semibold text-text-secondary">Book Details</th>
+                    <th className="py-4 px-2 text-sm font-semibold text-text-secondary">Category</th>
+                    <th className="py-4 px-2 text-sm font-semibold text-text-secondary">Location</th>
+                    <th className="py-4 px-2 text-sm font-semibold text-text-secondary">Availability</th>
+                    <th className="py-4 px-2 text-sm font-semibold text-text-secondary text-right">Actions</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {books.map((book) => (
+                    <tr key={book.id} className="border-b border-border hover:bg-surface-raised transition-colors">
+                      <td className="py-4 px-2">
+                        <div className="flex flex-col">
+                          <span className="font-medium text-text-primary">{book.title}</span>
+                          <span className="text-xs text-text-muted">{book.author} | ISBN: {book.isbn || 'N/A'}</span>
+                        </div>
+                      </td>
+                      <td className="py-4 px-2">
+                        <Badge variant="ghost" className="capitalize">{book.category.replace('_', ' ')}</Badge>
+                      </td>
+                      <td className="py-4 px-2 text-sm">
+                        {book.shelf_location || 'Not set'}
+                      </td>
+                      <td className="py-4 px-2 min-w-[150px]">
+                        <div className="flex flex-col gap-1">
+                          <div className="flex justify-between text-[10px] text-text-muted">
+                            <span>{book.available_copies} of {book.total_copies} available</span>
+                          </div>
+                          <ProgressBar 
+                            value={book.available_copies} 
+                            max={book.total_copies} 
+                            color={book.available_copies === 0 ? 'red' : book.available_copies < 3 ? 'orange' : 'green'}
+                          />
+                        </div>
+                      </td>
+                      <td className="py-4 px-2 text-right">
+                        <div className="flex items-center justify-end gap-2">
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            className="text-primary-600"
+                            onClick={() => { setBookToIssue(book); setIsIssueModalOpen(true); }}
+                            disabled={book.available_copies === 0}
+                          >
+                            Issue
+                          </Button>
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            onClick={() => { setSelectedBook(book); setIsFormModalOpen(true); }}
+                          >
+                            Edit
+                          </Button>
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            className="text-red-500"
+                            onClick={() => { setBookToDelete(book); setIsDeleteDialogOpen(true); }}
+                          >
+                            Delete
+                          </Button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
         ) : (
+
           <EmptyState
             title="No books found"
             description="Add books to your library catalog to get started."

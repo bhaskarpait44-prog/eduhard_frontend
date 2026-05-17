@@ -118,69 +118,135 @@ const VisitorLog = () => {
         </div>
       </div>
 
-      {/* Visitors Table */}
-      <div className="rounded-2xl overflow-hidden" 
-        style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)' }}>
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="text-left border-b" style={{ backgroundColor: 'var(--color-surface-raised)', borderColor: 'var(--color-border)' }}>
-                <th className="px-6 py-4 font-semibold" style={{ color: 'var(--color-text-primary)' }}>Visitor</th>
-                <th className="px-6 py-4 font-semibold" style={{ color: 'var(--color-text-primary)' }}>Purpose</th>
-                <th className="px-6 py-4 font-semibold" style={{ color: 'var(--color-text-primary)' }}>To Meet</th>
-                <th className="px-6 py-4 font-semibold" style={{ color: 'var(--color-text-primary)' }}>Check-in</th>
-                <th className="px-6 py-4 font-semibold" style={{ color: 'var(--color-text-primary)' }}>Check-out</th>
-                <th className="px-6 py-4 font-semibold text-center" style={{ color: 'var(--color-text-primary)' }}>Status</th>
-                <th className="px-6 py-4 font-semibold text-right" style={{ color: 'var(--color-text-primary)' }}>Action</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y" style={{ borderColor: 'var(--color-border)' }}>
-              {visitors.length > 0 ? (
-                visitors.map((v) => (
-                  <tr key={v.id} className="hover:bg-black/5 transition-colors">
-                    <td className="px-6 py-4">
-                      <div className="font-medium" style={{ color: 'var(--color-text-primary)' }}>{v.visitor_name}</div>
-                      <div className="text-xs" style={{ color: 'var(--color-text-muted)' }}>{v.visitor_phone}</div>
-                    </td>
-                    <td className="px-6 py-4" style={{ color: 'var(--color-text-secondary)' }}>{v.purpose}</td>
-                    <td className="px-6 py-4" style={{ color: 'var(--color-text-secondary)' }}>{v.whom_to_meet}</td>
-                    <td className="px-6 py-4" style={{ color: 'var(--color-text-secondary)' }}>
+      {/* Visitors Content */}
+      <div className="space-y-4">
+        {/* Mobile View: Cards */}
+        <div className="grid grid-cols-1 gap-4 sm:hidden">
+          {visitors.length > 0 ? (
+            visitors.map((v) => (
+              <div 
+                key={v.id} 
+                className="p-4 rounded-2xl border border-border bg-surface shadow-sm flex flex-col gap-3"
+              >
+                <div className="flex justify-between items-start">
+                  <div>
+                    <h3 className="font-bold text-text-primary">{v.visitor_name}</h3>
+                    <p className="text-xs text-text-muted">{v.visitor_phone || 'No phone'}</p>
+                  </div>
+                  <Badge variant={v.check_out_time ? 'neutral' : 'success'}>
+                    {v.check_out_time ? 'Checked Out' : 'Inside'}
+                  </Badge>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4 py-2 border-y border-border/50">
+                  <div>
+                    <span className="text-[10px] uppercase tracking-wider text-text-muted font-bold block mb-1">Purpose</span>
+                    <span className="text-xs text-text-secondary font-medium">{v.purpose}</span>
+                  </div>
+                  <div>
+                    <span className="text-[10px] uppercase tracking-wider text-text-muted font-bold block mb-1">To Meet</span>
+                    <span className="text-xs text-text-secondary font-medium">{v.whom_to_meet}</span>
+                  </div>
+                  <div>
+                    <span className="text-[10px] uppercase tracking-wider text-text-muted font-bold block mb-1">Check-in</span>
+                    <span className="text-xs text-text-secondary">
                       {v.check_in_time ? format(new Date(v.check_in_time), 'hh:mm a') : '-'}
-                    </td>
-                    <td className="px-6 py-4" style={{ color: 'var(--color-text-secondary)' }}>
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-[10px] uppercase tracking-wider text-text-muted font-bold block mb-1">Check-out</span>
+                    <span className="text-xs text-text-secondary">
                       {v.check_out_time ? format(new Date(v.check_out_time), 'hh:mm a') : '-'}
-                    </td>
-                    <td className="px-6 py-4 text-center">
-                      <Badge variant={v.check_out_time ? 'neutral' : 'success'}>
-                        {v.check_out_time ? 'Checked Out' : 'Inside'}
-                      </Badge>
-                    </td>
-                    <td className="px-6 py-4 text-right">
-                      {!v.check_out_time && (
-                        <Button 
-                          variant="ghost" 
-                          size="sm" 
-                          icon={LogOut} 
-                          onClick={() => handleCheckout(v.id)}
-                          className="text-red-500 hover:text-red-600 hover:bg-red-50"
-                        >
-                          Check Out
-                        </Button>
-                      )}
+                    </span>
+                  </div>
+                </div>
+
+                {!v.check_out_time && (
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    icon={LogOut} 
+                    onClick={() => handleCheckout(v.id)}
+                    className="w-full text-red-500 hover:text-red-600 hover:bg-red-50"
+                  >
+                    Check Out
+                  </Button>
+                )}
+              </div>
+            ))
+          ) : (
+            <div className="p-12 text-center border border-dashed border-border rounded-2xl bg-surface">
+              <p className="text-sm text-text-muted">
+                {loading ? 'Loading visitors...' : 'No visitors found for the selected date.'}
+              </p>
+            </div>
+          )}
+        </div>
+
+        {/* Desktop View: Table */}
+        <div className="hidden sm:block rounded-2xl overflow-hidden border border-border bg-surface shadow-sm">
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="text-left border-b bg-surface-raised border-border">
+                  <th className="px-6 py-4 font-semibold text-text-primary">Visitor</th>
+                  <th className="px-6 py-4 font-semibold text-text-primary">Purpose</th>
+                  <th className="px-6 py-4 font-semibold text-text-primary">To Meet</th>
+                  <th className="px-6 py-4 font-semibold text-text-primary">Check-in</th>
+                  <th className="px-6 py-4 font-semibold text-text-primary">Check-out</th>
+                  <th className="px-6 py-4 font-semibold text-center text-text-primary">Status</th>
+                  <th className="px-6 py-4 font-semibold text-right text-text-primary">Action</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border">
+                {visitors.length > 0 ? (
+                  visitors.map((v) => (
+                    <tr key={v.id} className="hover:bg-black/5 transition-colors">
+                      <td className="px-6 py-4">
+                        <div className="font-medium text-text-primary">{v.visitor_name}</div>
+                        <div className="text-xs text-text-muted">{v.visitor_phone}</div>
+                      </td>
+                      <td className="px-6 py-4 text-text-secondary">{v.purpose}</td>
+                      <td className="px-6 py-4 text-text-secondary">{v.whom_to_meet}</td>
+                      <td className="px-6 py-4 text-text-secondary">
+                        {v.check_in_time ? format(new Date(v.check_in_time), 'hh:mm a') : '-'}
+                      </td>
+                      <td className="px-6 py-4 text-text-secondary">
+                        {v.check_out_time ? format(new Date(v.check_out_time), 'hh:mm a') : '-'}
+                      </td>
+                      <td className="px-6 py-4 text-center">
+                        <Badge variant={v.check_out_time ? 'neutral' : 'success'}>
+                          {v.check_out_time ? 'Checked Out' : 'Inside'}
+                        </Badge>
+                      </td>
+                      <td className="px-6 py-4 text-right">
+                        {!v.check_out_time && (
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            icon={LogOut} 
+                            onClick={() => handleCheckout(v.id)}
+                            className="text-red-500 hover:text-red-600 hover:bg-red-50"
+                          >
+                            Check Out
+                          </Button>
+                        )}
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan="7" className="px-6 py-12 text-center text-text-muted">
+                      {loading ? 'Loading visitors...' : 'No visitors found for the selected date.'}
                     </td>
                   </tr>
-                ))
-              ) : (
-                <tr>
-                  <td colSpan="7" className="px-6 py-12 text-center" style={{ color: 'var(--color-text-muted)' }}>
-                    {loading ? 'Loading visitors...' : 'No visitors found for the selected date.'}
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
+
 
       {/* Log Visitor Modal */}
       <Modal
