@@ -1,6 +1,9 @@
 // src/store/dashboardStore.js
 import { create } from 'zustand'
+import api from '@/api/axios'
 import { getAuditLogs } from '@/api/auditApi'
+import * as studentsApi from '@/api/studentsApi'
+import * as studentLeavingApi from '@/api/studentLeavingApi'
 
 const useDashboardStore = create((set) => ({
   stats            : null,
@@ -14,35 +17,53 @@ const useDashboardStore = create((set) => ({
   error            : null,
 
   fetchAll: async (sessionId) => {
+    // Sanitize sessionId for API call
+    const cleanSessionId = (sessionId === 'null' || sessionId === 'undefined') ? undefined : sessionId
+    
     set({ isLoading: true, error: null })
 
     try {
       const [statsRes, auditRes, leavingRes] = await Promise.allSettled([
-        import('@/api/axios').then((m) => m.default.get('/dashboard/admin/stats', { params: { session_id: sessionId } })),
+        api.get('/dashboard/admin/stats', { params: { session_id: cleanSessionId } }),
         getAuditLogs({ limit: 5, page: 1 }),
-        import('@/api/studentLeavingApi').then((m) => m.getLeavingSummary({ session_id: sessionId })),
+        studentLeavingApi.getLeavingSummary({ session_id: cleanSessionId }),
       ])
 
-      const statsData = statsRes.status === 'fulfilled' ? statsRes.value?.data : null
-      const auditData = auditRes.status === 'fulfilled' ? auditRes.value?.data : null
-      const leavingData = leavingRes.status === 'fulfilled' ? leavingRes.value?.data : null
+      // statsRes.value is the body { success, data, message }
+      const statsBody = statsRes.status === 'fulfilled' ? statsRes.value : null
+      const auditBody = auditRes.status === 'fulfilled' ? auditRes.value : null
+      const leavingBody = leavingRes.status === 'fulfilled' ? leavingRes.value : null
 
-      const recentStudents = await import('@/api/studentsApi')
-        .then((m) => m.getStudents({ perPage: 10, sort: 'created_at:desc' }))
-        .then((r) => Array.isArray(r.data) ? r.data : r.data?.students || r.data?.data || [])
-        .catch(() => [])
+      if (statsRes.status === 'rejected') {
+        const reason = statsRes.reason?.message || statsRes.reason
+        if (reason === 'No active session found.') {
+          // This is a configuration state, not a system failure
+          console.warn('Dashboard stats: No active session found.')
+        } else {
+          set({ error: reason })
+          console.error('Stats fetch failed:', reason)
+        }
+      }
+
+      const recentStudents = await studentsApi.getStudents({ perPage: 10, sort: 'created_at:desc' })
+        .then((r) => r.data?.students || [])
+        .catch((err) => {
+          console.error('Recent students fetch failed:', err)
+          return []
+        })
 
       set({
-        stats           : statsData?.data || null,
+        stats           : statsBody?.data || null,
         attendanceChart : [],
         recentAdmissions: recentStudents,
         feeDefaulters   : [],
-        recentAudit     : auditData?.logs || (Array.isArray(auditData) ? auditData : []),
-        leavingStats    : leavingData,
+        recentAudit     : auditBody?.logs || (Array.isArray(auditBody) ? auditBody : []),
+        leavingStats    : leavingBody?.data || null,
         isLoading       : false,
         lastRefreshed   : new Date(),
       })
     } catch (err) {
+      console.error('Dashboard fetchAll error:', err)
       set({ error: err.message, isLoading: false })
     }
   },

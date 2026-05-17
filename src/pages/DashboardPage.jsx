@@ -26,34 +26,50 @@ const DashboardPage = () => {
   const { toastInfo } = useToast()
   
   const { user } = useAuthStore()
-  const { currentSession } = useSessionStore()
+  const { currentSession, sessions, fetchSessions, isLoading: sessionLoading } = useSessionStore()
   const {
     stats, recentAdmissions, leavingStats,
-    isLoading, fetchAll, clearDashboard,
+    isLoading, fetchAll, clearDashboard, error
   } = useDashboardStore()
 
   const [isRefreshing, setIsRefreshing] = useState(false)
 
+  // Ensure sessions are loaded to distinguish between "No Sessions" and "No Active Session"
+  useEffect(() => {
+    if (sessions.length === 0) fetchSessions().catch(console.error)
+  }, [sessions.length, fetchSessions])
+
+  const loadData = useCallback(async () => {
+    try {
+      await fetchAll(currentSession?.id)
+    } catch (err) {
+      console.error('Refresh error:', err)
+    }
+  }, [currentSession?.id, fetchAll])
+
   const handleRefresh = useCallback(async () => {
     setIsRefreshing(true)
     try {
-      await fetchAll(currentSession?.id)
-      toastInfo('Dashboard data updated')
+      await Promise.all([
+        fetchAll(currentSession?.id),
+        fetchSessions()
+      ])
+      toastInfo('📊 Dashboard data updated')
     } catch (err) {
       console.error('Refresh error:', err)
     } finally {
       setIsRefreshing(false)
     }
-  }, [currentSession?.id, fetchAll, toastInfo])
+  }, [currentSession?.id, fetchAll, fetchSessions, toastInfo])
 
   useEffect(() => {
-    handleRefresh()
-    const timer = setInterval(handleRefresh, AUTO_REFRESH_MS)
+    loadData()
+    const timer = setInterval(loadData, AUTO_REFRESH_MS)
     return () => {
       clearInterval(timer)
       clearDashboard()
     }
-  }, [handleRefresh, clearDashboard])
+  }, [loadData, clearDashboard])
 
   const greeting = () => {
     const h = new Date().getHours()
@@ -62,8 +78,51 @@ const DashboardPage = () => {
     return 'Good Evening'
   }
 
+  if (error) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[400px] text-center p-6">
+        <div className="h-16 w-16 bg-red-50 text-red-500 rounded-full flex items-center justify-center mb-4">
+          <Clock size={32} />
+        </div>
+        <h2 className="text-xl font-bold text-text-primary mb-2">Something went wrong</h2>
+        <p className="text-text-secondary max-w-md mb-6">{error}</p>
+        <Button variant="primary" onClick={handleRefresh}>Retry Loading</Button>
+      </div>
+    )
+  }
+
+  const hasSessions = sessions.length > 0
+  const noStats = !stats && !isLoading && !sessionLoading
+  const showWarning = noStats || !currentSession
+
   return (
     <div className="max-w-[1400px] mx-auto space-y-6">
+      {showWarning && !isLoading && !sessionLoading && (
+        <div className="bg-amber-50 border border-amber-200 text-amber-800 p-5 rounded-2xl text-sm font-medium flex items-center gap-4 shadow-sm">
+          <div className="h-10 w-10 bg-amber-100 rounded-xl flex items-center justify-center text-amber-600 shrink-0">
+            <Clock size={20} />
+          </div>
+          <div className="flex-1">
+            <p className="text-base font-bold">
+              {!hasSessions ? "No academic sessions found." : "Academic session not activated."}
+            </p>
+            <p className="text-sm opacity-90 mt-0.5">
+              {!hasSessions 
+                ? "You need to create your first academic session to start managing the school." 
+                : "You have sessions created, but none are marked as 'Current'. Activate a session to view live dashboard statistics."}
+            </p>
+          </div>
+          <div className="flex items-center gap-3">
+             <Button 
+                variant="primary" 
+                size="sm"
+                onClick={() => navigate(hasSessions ? ROUTES.SESSIONS : ROUTES.SESSION_NEW)}
+             >
+                {hasSessions ? "Go to Sessions" : "Create Session"}
+             </Button>
+          </div>
+        </div>
+      )}
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
@@ -113,7 +172,7 @@ const DashboardPage = () => {
         <StatCard
           label="Revenue (Month)"
           value={formatCurrency(stats?.feeCollection?.collected || 0)}
-          sub={`${formatPercent(stats?.feeCollection?.percentage || 0)} target met`}
+          sub={`${formatPercent(stats?.feeCollection?.percentage || 0)} of session target`}
           icon={IndianRupee}
           color="#f59e0b"
         />
@@ -156,8 +215,8 @@ const DashboardPage = () => {
                       <td className="py-3 text-emerald-600 font-bold">{cls.present}</td>
                       <td className="py-3 text-red-600 font-bold">{cls.absent}</td>
                       <td className="py-3 text-right">
-                        <Badge variant={cls.present > 0 ? 'green' : 'grey'}>
-                          {cls.present > 0 ? 'Marked' : 'Pending'}
+                        <Badge variant={cls.total_marked > 0 ? 'green' : 'grey'}>
+                          {cls.total_marked > 0 ? 'Marked' : 'Pending'}
                         </Badge>
                       </td>
                     </tr>
