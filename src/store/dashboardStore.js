@@ -17,23 +17,15 @@ const useDashboardStore = create((set) => ({
     set({ isLoading: true, error: null })
 
     try {
-      const [studentsRes, auditRes, leavingRes] = await Promise.allSettled([
-        import('@/api/studentsApi').then((m) => m.getStudents({ perPage: 1 })),
+      const [statsRes, auditRes, leavingRes] = await Promise.allSettled([
+        import('@/api/axios').then((m) => m.default.get('/dashboard/admin/stats', { params: { session_id: sessionId } })),
         getAuditLogs({ limit: 5, page: 1 }),
         import('@/api/studentLeavingApi').then((m) => m.getLeavingSummary({ session_id: sessionId })),
       ])
 
-      const studentsData = studentsRes.status === 'fulfilled' ? studentsRes.value?.data : null
+      const statsData = statsRes.status === 'fulfilled' ? statsRes.value?.data : null
       const auditData = auditRes.status === 'fulfilled' ? auditRes.value?.data : null
       const leavingData = leavingRes.status === 'fulfilled' ? leavingRes.value?.data : null
-
-      const syntheticStats = {
-        totalStudents  : studentsData?.pagination?.total || studentsData?.meta?.total || 0,
-        studentTrend   : null,
-        attendanceToday: { percentage: null, present: 0, absent: 0 },
-        feeCollection  : { collected: 0, pending: 0, percentage: 0 },
-        upcomingExams  : { count: 0, next: null },
-      }
 
       const recentStudents = await import('@/api/studentsApi')
         .then((m) => m.getStudents({ perPage: 10, sort: 'created_at:desc' }))
@@ -41,7 +33,7 @@ const useDashboardStore = create((set) => ({
         .catch(() => [])
 
       set({
-        stats           : syntheticStats,
+        stats           : statsData?.data || null,
         attendanceChart : [],
         recentAdmissions: recentStudents,
         feeDefaulters   : [],
