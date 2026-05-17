@@ -188,6 +188,31 @@ const useAdminStudentStore = create((set, get) => ({
     }
   },
 
+  // ── Password Resets ───────────────────────────────────────────────────
+  resetPassword: async (id, data) => {
+    set({ isSaving: true })
+    try {
+      const res = await studentsApi.resetPassword(id, data)
+      set({ isSaving: false })
+      return { success: true, data: res.data }
+    } catch (err) {
+      set({ isSaving: false })
+      return { success: false, message: err.message }
+    }
+  },
+
+  resetParentPassword: async (id, data) => {
+    set({ isSaving: true })
+    try {
+      const res = await studentsApi.resetParentPassword(id, data)
+      set({ isSaving: false })
+      return { success: true, data: res.data }
+    } catch (err) {
+      set({ isSaving: false })
+      return { success: false, message: err.message }
+    }
+  },
+
   clearSelected: () => set({ selectedStudent: null, history: null, auditLogs: [] }),
 }))
 

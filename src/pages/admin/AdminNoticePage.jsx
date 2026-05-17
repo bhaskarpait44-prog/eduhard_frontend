@@ -86,7 +86,7 @@ const AdminNoticePage = () => {
     getClasses().then(res => setClasses(getClassOptions(res))).catch(console.error)
     getTeacherControlTeachers().then(res => {
       const data = res.data?.teachers || res.data || []
-      setTeachers(data.map(t => ({ value: String(t.id), label: `${t.first_name} ${t.last_name}` })))
+      setTeachers(data.map(t => ({ value: String(t.id), label: t.name || `${t.first_name} ${t.last_name}` })))
     }).catch(console.error)
   }, [])
 
@@ -117,7 +117,7 @@ const AdminNoticePage = () => {
         const data = res.data?.students || res.data?.data || []
         setStudents(data.map(s => ({ 
           value: String(s.id), 
-          label: `${s.first_name} ${s.last_name} (${s.admission_no})` 
+          label: s.name || `${s.first_name} ${s.last_name} (${s.admission_no})` 
         })))
       }).catch(console.error)
     } else {
@@ -341,6 +341,7 @@ const AdminNoticePage = () => {
                           {notice.audience === 'class' && <div className="text-[10px] font-bold text-brand mt-0.5">{notice.class_name}</div>}
                           {notice.audience === 'section' && <div className="text-[10px] font-bold text-brand mt-0.5">{notice.class_name} - {notice.section_name}</div>}
                           {notice.audience === 'student' && <div className="text-[10px] font-bold text-brand mt-0.5">{notice.student_name}</div>}
+                          {notice.audience === 'specific_teacher' && <div className="text-[10px] font-bold text-brand mt-0.5">{notice.target_teacher_name}</div>}
                         </td>
                         <td className="px-4 py-3">{getPriorityBadge(notice.priority)}</td>
                         <td className="px-4 py-3">

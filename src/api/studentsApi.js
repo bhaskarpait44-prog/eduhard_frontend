@@ -9,6 +9,7 @@ export const updateIdentity = (id, data)   => api.patch(`/students/${id}/identit
 export const updateProfile  = (id, data) => api.patch(`/students/${id}/profile`, data)
 export const toggleStudentStatus = (id) => api.patch(`/students/${id}/toggle-status`)
 export const resetPassword  = (id, data)   => api.post(`/students/${id}/reset-password`, data)
+export const resetParentPassword = (id, data) => api.post(`/students/${id}/reset-parent-password`, data)
 export const getHistory     = (id)         => api.get(`/students/${id}/history`)
 export const getAuditLog    = (table, id)  => api.get(`/audit/${table}/${id}`)
 export const getIDCardData  = (id)         => api.get(`/students/${id}/id-card/data`)

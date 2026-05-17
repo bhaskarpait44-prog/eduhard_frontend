@@ -1,6 +1,6 @@
 // src/pages/students/tabs/TabProfile.jsx
 import { useEffect, useMemo, useState } from 'react'
-import { Pencil, Clock } from 'lucide-react'
+import { Pencil, Clock, KeyRound, ShieldCheck } from 'lucide-react'
 import { formatDate } from '@/utils/helpers'
 import Button from '@/components/ui/Button'
 import Modal from '@/components/ui/Modal'
@@ -26,6 +26,7 @@ const PROFILE_FIELDS = [
   'pincode',
   'phone',
   'email',
+  'parent_email',
   'father_name',
   'father_phone',
   'mother_name',
@@ -47,7 +48,9 @@ const InfoRow = ({ label, value }) => (
 const TabProfile = ({ student, studentId }) => {
   const [editOpen,     setEditOpen]     = useState(false)
   const [historyOpen,  setHistoryOpen]  = useState(false)
-  const { updateProfile, isSaving } = useAdminStudentStore()
+  const [resetModal,   setResetModal]   = useState(null) // 'student' or 'parent'
+  const [newPass,      setNewPass]      = useState('')
+  const { updateProfile, resetPassword, resetParentPassword, isSaving } = useAdminStudentStore()
   const { toastSuccess, toastError, toastWarning } = useToast()
 
   const defaultValues = useMemo(
@@ -77,6 +80,29 @@ const TabProfile = ({ student, studentId }) => {
       setEditOpen(false)
     } else {
       toastError(result.message || 'Failed to update profile')
+    }
+  }
+
+  const handleResetPassword = async () => {
+    const data = newPass ? { new_password: newPass } : {}
+    let result;
+    
+    if (resetModal === 'student') {
+      result = await resetPassword(studentId, data)
+    } else {
+      result = await resetParentPassword(studentId, data)
+    }
+
+    if (result.success) {
+      toastSuccess(`${resetModal === 'student' ? 'Student' : 'Parent'} portal password reset successfully`)
+      if (result.data?.generated_password) {
+        // In a real app, maybe show a temporary success modal with the password
+        console.log('Generated Password:', result.data.generated_password)
+      }
+      setResetModal(null)
+      setNewPass('')
+    } else {
+      toastError(result.message || 'Reset failed')
     }
   }
 
@@ -129,14 +155,53 @@ const TabProfile = ({ student, studentId }) => {
         <InfoRow label="Stream"           value={formatStream(student.current_enrollment?.stream)} />
         <InfoRow label="Address"          value={[student.address, student.city, student.state, student.pincode].filter(Boolean).join(', ')} />
         <InfoRow label="Phone"            value={student.phone} />
-        <InfoRow label="Email"            value={student.email} />
+        <InfoRow label="Student Email"    value={student.email} />
         <InfoRow label="Emergency Contact"value={student.emergency_contact} />
         <InfoRow label="Father's Name"    value={student.father_name} />
         <InfoRow label="Father's Phone"   value={student.father_phone} />
         <InfoRow label="Mother's Name"    value={student.mother_name} />
         <InfoRow label="Mother's Phone"   value={student.mother_phone} />
+        <InfoRow label="Parent Login Email" value={student.parent_email} />
         <InfoRow label="Blood Group"      value={student.blood_group} />
         <InfoRow label="Medical Notes"    value={student.medical_notes} />
+      </div>
+
+      <div className="pt-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div className="p-4 rounded-2xl bg-indigo-50 border border-indigo-100">
+          <div className="flex items-center gap-3 mb-2">
+            <div className="p-2 rounded-xl bg-white shadow-sm">
+              <KeyRound size={16} className="text-indigo-600" />
+            </div>
+            <h4 className="text-xs font-bold uppercase tracking-widest text-indigo-900">Student Portal</h4>
+          </div>
+          <p className="text-[11px] text-indigo-600 mb-4 leading-relaxed font-medium">Reset password for student's personal account and mobile app access.</p>
+          <Button 
+            variant="primary" 
+            size="sm" 
+            className="w-full shadow-md shadow-indigo-200/50"
+            onClick={() => setResetModal('student')}
+          >
+            Reset Student Password
+          </Button>
+        </div>
+
+        <div className="p-4 rounded-2xl bg-amber-50 border border-amber-100">
+          <div className="flex items-center gap-3 mb-2">
+            <div className="p-2 rounded-xl bg-white shadow-sm">
+              <ShieldCheck size={16} className="text-amber-600" />
+            </div>
+            <h4 className="text-xs font-bold uppercase tracking-widest text-amber-900">Parent Portal</h4>
+          </div>
+          <p className="text-[11px] text-amber-600 mb-4 leading-relaxed font-medium">Reset password for the parent portal login (shared by all siblings).</p>
+          <Button 
+            variant="warning" 
+            size="sm" 
+            className="w-full shadow-md shadow-amber-200/50"
+            onClick={() => setResetModal('parent')}
+          >
+            Reset Parent Password
+          </Button>
+        </div>
       </div>
 
       {/* Edit profile modal */}
@@ -160,7 +225,10 @@ const TabProfile = ({ student, studentId }) => {
             <Input label="Pincode" {...register('pincode')} />
             <Input label="Phone"   {...register('phone')} />
           </div>
-          <Input label="Email" type="email" {...register('email')} />
+          <div className="grid grid-cols-2 gap-4">
+            <Input label="Student Email" type="email" {...register('email')} />
+            <Input label="Parent Login Email" type="email" {...register('parent_email')} />
+          </div>
           <div className="grid grid-cols-2 gap-4">
             <Input label="Father Name"  {...register('father_name')} />
             <Input label="Father Phone" {...register('father_phone')} />
@@ -182,6 +250,37 @@ const TabProfile = ({ student, studentId }) => {
             />
           </div>
         </form>
+      </Modal>
+
+      {/* Reset password modal */}
+      <Modal
+        open={!!resetModal}
+        onClose={() => setResetModal(null)}
+        title={`Reset ${resetModal === 'student' ? 'Student' : 'Parent'} Password`}
+        size="sm"
+        footer={
+          <>
+            <Button variant="secondary" onClick={() => setResetModal(null)}>Cancel</Button>
+            <Button variant={resetModal === 'student' ? 'primary' : 'warning'} onClick={handleResetPassword} loading={isSaving}>
+              Confirm Reset
+            </Button>
+          </>
+        }
+      >
+        <div className="space-y-4">
+          <p className="text-sm text-gray-500">
+            {resetModal === 'student' 
+              ? 'Resetting the student portal password. They can change it after logging in.'
+              : 'Resetting the parent portal password. This affects all students linked to this parent email.'}
+          </p>
+          <Input 
+            label="New Password (optional)" 
+            type="password" 
+            placeholder="Leave blank to auto-generate" 
+            value={newPass}
+            onChange={e => setNewPass(e.target.value)}
+          />
+        </div>
       </Modal>
 
       {/* Version history modal — simplified */}
