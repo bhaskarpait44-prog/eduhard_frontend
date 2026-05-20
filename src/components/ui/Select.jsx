@@ -18,15 +18,25 @@ const Select = forwardRef(({
     <div className="relative">
       <select
         ref={ref}
-        className="w-full pl-4 pr-9 py-2.5 rounded-xl text-sm outline-none appearance-none cursor-pointer"
+        {...props}
+        className={cn(
+          "w-full pl-4 pr-9 py-2.5 rounded-xl text-sm outline-none appearance-none cursor-pointer transition-all",
+          props.className
+        )}
         style={{
           backgroundColor: 'var(--color-surface)',
           border  : `1.5px solid ${error ? '#dc2626' : 'var(--color-border)'}`,
           color   : 'var(--color-text-primary)',
+          ...props.style
         }}
-        onFocus={e => { if (!error) e.target.style.borderColor = 'var(--color-brand)' }}
-        onBlur={e  => { if (!error) e.target.style.borderColor = 'var(--color-border)' }}
-        {...props}
+        onFocus={e => { 
+          if (!error) e.target.style.borderColor = 'var(--color-brand)'
+          props.onFocus?.(e)
+        }}
+        onBlur={e  => { 
+          if (!error) e.target.style.borderColor = 'var(--color-border)'
+          props.onBlur?.(e)
+        }}
       >
         <option value="">{placeholder}</option>
         {options.map(opt => (

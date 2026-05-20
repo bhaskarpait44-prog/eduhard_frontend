@@ -28,8 +28,10 @@ const useMarksEntry = () => {
 
         if (!active) return
 
+        const myClass = classesRes?.data?.my_class || []
         const subjectClasses = classesRes?.data?.subject_classes || []
-        const subjectOnlyAssignments = subjectClasses.filter((assignment) => assignment.subject_id)
+        const allAssignments = [...myClass, ...subjectClasses]
+        const subjectOnlyAssignments = allAssignments.filter((assignment) => assignment.subject_id)
         setAssignments(subjectOnlyAssignments)
         setExams(examsRes?.data?.exams || [])
       } catch (error) {
@@ -65,7 +67,7 @@ const useMarksEntry = () => {
   }, [assignments])
 
   const subjectAssignments = useMemo(() => (
-    assignments.filter((assignment) => !assignment.is_class_teacher && assignment.subject_id)
+    assignments.filter((assignment) => assignment.subject_id)
   ), [assignments])
 
   const getExamConfiguredSubjects = useCallback(async (examId) => {

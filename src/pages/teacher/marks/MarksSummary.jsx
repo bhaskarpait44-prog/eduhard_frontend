@@ -1,11 +1,12 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useLocation } from 'react-router-dom'
-import { AlertTriangle, BookOpen, GraduationCap, Layout, Info, BarChart3, TrendingUp, TrendingDown, Users, Download, Star, CheckCircle2 } from 'lucide-react'
+import { AlertTriangle, BookOpen, GraduationCap, Layout, Info, BarChart3, TrendingUp, TrendingDown, Users, Download, Star, CheckCircle2, RefreshCw, FilterX, Search, ChevronRight } from 'lucide-react'
 import usePageTitle from '@/hooks/usePageTitle'
 import useToast from '@/hooks/useToast'
 import useMarksEntry from '@/hooks/useMarksEntry'
 import Select from '@/components/ui/Select'
 import Button from '@/components/ui/Button'
+import { cn } from '@/utils/helpers'
 
 const normalizeMarksError = (error) => {
   const message = error?.message || ''
@@ -78,7 +79,9 @@ const MarksSummary = () => {
       )
     )
     const first = matched || uniqueSections[0]
-    setSectionKey(`${first.class_id}:${first.section_id}:${first.is_class_teacher ? 'class_teacher' : 'subject_teacher'}`)
+    if (first) {
+      setSectionKey(`${first.class_id}:${first.section_id}:${first.is_class_teacher ? 'class_teacher' : 'subject_teacher'}`)
+    }
   }, [preferredAssignment.assignment_role, preferredAssignment.class_id, preferredAssignment.section_id, uniqueSections, sectionKey])
 
   useEffect(() => {
@@ -159,225 +162,291 @@ const MarksSummary = () => {
   const gradeDistribution = useMemo(() => buildGradeDistribution(summaryPayload?.students || []), [summaryPayload])
 
   return (
-    <div className="mx-auto max-w-7xl space-y-5 pb-10">
-      <header
-        className="rounded-2xl border bg-surface p-6 shadow-sm"
-        style={{ borderColor: 'var(--color-border)' }}
-      >
-        <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary">
-            <BarChart3 size={20} />
-          </div>
-          <div>
-            <h1 className="text-xl font-bold text-text-primary">
+    <div className="space-y-6">
+      {/* ── Header ── */}
+      <section className="rounded-2xl border p-5 sm:p-6" style={{ borderColor: 'var(--color-border)' }}>
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+          <div className="min-w-0">
+            <p className="text-[11px] font-semibold uppercase tracking-widest" style={{ color: '#0f766e' }}>
+              Academic Performance
+            </p>
+            <h1 className="mt-1.5 text-2xl font-bold sm:text-3xl" style={{ color: 'var(--color-text-primary)' }}>
               Marks Summary
             </h1>
-            <p className="text-xs text-text-secondary">
-              Performance analytics
+            <p className="mt-1.5 max-w-xl text-sm leading-relaxed" style={{ color: 'var(--color-text-secondary)' }}>
+              View performance analytics, grade distributions, and student-wise result summaries.
             </p>
           </div>
         </div>
 
-        <div className="mt-6 grid grid-cols-1 gap-4 md:grid-cols-3">
-          <div className="space-y-1.5">
-            <label className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-text-muted">
-              <GraduationCap size={12} className="text-primary" />
-              Exam
-            </label>
+        {/* ── Filters ── */}
+        <div className="mt-5 grid grid-cols-1 gap-4 xl:grid-cols-6">
+          <div className="space-y-1.5 xl:col-span-2">
+            <label className="text-sm font-medium" style={{ color: 'var(--color-text-primary)' }}>Examination</label>
             <Select
               value={examId}
-              onChange={(event) => setExamId(event.target.value)}
-              options={exams.map((exam) => ({ value: String(exam.id), label: `${exam.name} | ${exam.class_name}` }))}
-              placeholder="Choose exam"
-              className="h-10 rounded-lg bg-surface-raised"
+              onChange={(e) => setExamId(e.target.value)}
+              options={exams.map((ex) => ({ value: String(ex.id), label: ex.name }))}
+              placeholder="Choose Exam"
+              className="h-9 px-3 py-1 rounded-xl bg-surface-raised border border-border/50 text-xs font-semibold focus:border-primary"
             />
           </div>
-          <div className="space-y-1.5">
-            <label className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-text-muted">
-              <Layout size={12} className="text-primary" />
-              Section
-            </label>
+          <div className="space-y-1.5 xl:col-span-2">
+            <label className="text-sm font-medium" style={{ color: 'var(--color-text-primary)' }}>Class & Section</label>
             <Select
               value={sectionKey}
-              onChange={(event) => setSectionKey(event.target.value)}
-              options={visibleSections.map((section) => ({
-                value: `${section.class_id}:${section.section_id}:${section.is_class_teacher ? 'class_teacher' : 'subject_teacher'}`,
-                label: `${section.class_name} ${section.section_name}`,
+              onChange={(e) => setSectionKey(e.target.value)}
+              options={visibleSections.map((s) => ({
+                value: `${s.class_id}:${s.section_id}:${s.is_class_teacher ? 'class_teacher' : 'subject_teacher'}`,
+                label: `${s.class_name} ${s.section_name}`,
               }))}
-              placeholder="Choose section"
-              className="h-10 rounded-lg bg-surface-raised"
+              placeholder="Choose Section"
+              className="h-9 px-3 py-1 rounded-xl bg-surface-raised border border-border/50 text-xs font-semibold focus:border-primary"
             />
           </div>
-          <div className="space-y-1.5">
-            <label className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-text-muted">
-              <BookOpen size={12} className="text-primary" />
-              Subject
-            </label>
+          <div className="space-y-1.5 xl:col-span-2">
+            <label className="text-sm font-medium" style={{ color: 'var(--color-text-primary)' }}>Subject</label>
             <Select
               value={subjectId}
-              onChange={(event) => setSubjectId(event.target.value)}
-              options={subjectOptions.map((subject) => ({ value: String(subject.id), label: `${subject.name}` }))}
-              placeholder="Choose subject"
-              className="h-10 rounded-lg bg-surface-raised"
+              onChange={(e) => setSubjectId(e.target.value)}
+              options={subjectOptions.map((s) => ({ value: String(s.id), label: s.name }))}
+              placeholder="Choose Subject"
+              className="h-9 px-3 py-1 rounded-xl bg-surface-raised border border-border/50 text-xs font-semibold focus:border-primary"
             />
           </div>
         </div>
-      </header>
+      </section>
 
-      {!loadingBase && baseError ? (
-        <section className="rounded-2xl border border-red-100 bg-red-50 p-6 text-center">
-          <p className="text-sm font-bold text-red-900">Error: {baseError}</p>
-        </section>
-      ) : !loadingBase && !uniqueSections.length ? (
-        <section className="rounded-2xl border border-orange-100 bg-orange-50 p-6 text-center">
-          <p className="text-sm font-bold text-orange-900">No Assignments Found</p>
-        </section>
-      ) : !examId || !sectionKey || !subjectId ? (
-        <section className="flex flex-col items-center justify-center rounded-2xl border border-dashed bg-surface-raised/20 py-16 text-center">
-          <p className="text-sm text-text-secondary">Select details for summary</p>
-        </section>
-      ) : selectionMismatch ? (
-        <section className="rounded-2xl border border-amber-100 bg-amber-50 p-6 text-center">
-          <p className="text-sm font-bold text-amber-900">Mismatch</p>
-        </section>
-      ) : loadingBase || summaryLoading ? (
-        <div className="flex justify-center py-10">
-          <div className="h-6 w-6 animate-spin rounded-full border-2 border-primary/20 border-t-primary" />
-        </div>
-      ) : (
-        <div className="space-y-5">
-          <section
-            className="rounded-2xl border bg-surface p-4 flex items-center justify-between shadow-sm"
-            style={{ borderColor: 'var(--color-border)' }}
-          >
-            <div className="flex items-center gap-3">
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-surface-raised text-primary">
-                <Star size={16} />
-              </div>
-              <div>
-                <h4 className="text-[10px] font-bold uppercase tracking-wider text-text-muted">Review Status</h4>
-                <p className={`text-sm font-bold ${summaryPayload?.review_status?.status === 'completed' ? 'text-success' : 'text-warning'}`}>
-                  {summaryPayload?.review_status?.label || 'Pending'}
-                </p>
+      {/* ── Main Content ── */}
+      <main className="min-h-[400px]">
+        {baseError && !loadingBase ? (
+          <div className="flex flex-col items-center justify-center rounded-2xl border border-red-100 bg-red-50/50 py-20 text-center">
+            <AlertTriangle size={48} className="text-red-500 mb-4" />
+            <h3 className="text-lg font-bold text-red-900">Configuration Error</h3>
+            <p className="mt-1 text-sm text-red-700 max-w-md">{baseError}</p>
+          </div>
+        ) : !loadingBase && !uniqueSections.length ? (
+          <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed py-20 text-center">
+            <FilterX size={48} className="text-text-muted mb-4" />
+            <h3 className="text-lg font-bold text-text-primary">No Assignments Found</h3>
+            <p className="mt-1 text-sm text-text-muted">You are not assigned to any subjects for marks review.</p>
+          </div>
+        ) : !examId || !sectionKey || !subjectId ? (
+          <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed bg-surface-raised/20 py-24 text-center">
+            <Search size={48} className="text-primary/30 mb-4" />
+            <h3 className="text-xl font-bold text-text-primary">Select Configuration</h3>
+            <p className="mt-2 text-sm text-text-muted max-w-xs mx-auto">
+              Choose an exam, section, and subject from the filters above to view the performance summary.
+            </p>
+          </div>
+        ) : selectionMismatch ? (
+          <div className="flex flex-col items-center justify-center rounded-2xl border border-amber-100 bg-amber-50/50 py-20 text-center">
+            <AlertTriangle size={48} className="text-amber-500 mb-4" />
+            <h3 className="text-lg font-bold text-amber-900">Mismatched Selection</h3>
+            <p className="mt-1 text-sm text-amber-700">The selected exam and section classes do not match.</p>
+          </div>
+        ) : loadingBase || summaryLoading ? (
+          <div className="flex flex-col items-center justify-center py-32">
+            <RefreshCw size={32} className="animate-spin text-primary mb-4" />
+            <p className="text-xs font-bold uppercase tracking-widest text-text-muted">Fetching Records...</p>
+          </div>
+        ) : (
+          <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+            {/* ── Status Banner ── */}
+            <div
+              className="rounded-2xl border bg-surface p-4 flex items-center justify-between shadow-sm"
+              style={{ borderColor: 'var(--color-border)' }}
+            >
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                  <Star size={20} />
+                </div>
+                <div>
+                  <h4 className="text-[10px] font-bold uppercase tracking-widest text-text-muted">Current Review Status</h4>
+                  <p className={cn(
+                    "text-sm font-bold mt-0.5",
+                    summaryPayload?.review_status?.status === 'completed' ? 'text-success' : 'text-orange-600'
+                  )}>
+                    {summaryPayload?.review_status?.label || 'Draft / In Progress'}
+                  </p>
+                </div>
               </div>
             </div>
-          </section>
 
-          <section className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6">
-            <Stat icon={TrendingUp} title="Highest" value={summaryPayload?.summary?.highest ?? '--'} sub={summaryPayload?.summary?.highest_student || '—'} tone="var(--color-primary)" />
-            <Stat icon={TrendingDown} title="Lowest" value={summaryPayload?.summary?.lowest ?? '--'} sub={summaryPayload?.summary?.lowest_student || '—'} tone="var(--color-error)" />
-            <Stat icon={Star} title="Average" value={summaryPayload?.summary?.average ?? '--'} sub="Class Performance" tone="var(--color-text-primary)" />
-            <Stat icon={Users} title="Passed" value={summaryPayload?.summary?.pass_count ?? 0} sub="Students" tone="var(--color-success)" />
-            <Stat icon={Users} title="Failed" value={summaryPayload?.summary?.fail_count ?? 0} sub="Students" tone="var(--color-error)" />
-            <Stat icon={Info} title="Absent" value={summaryPayload?.summary?.absent_count ?? 0} sub="Students" tone="var(--color-text-muted)" />
-          </section>
+            {/* ── Analytics Grid ── */}
+            <section className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6">
+              <Stat icon={TrendingUp} title="Highest" value={summaryPayload?.summary?.highest ?? '--'} sub={summaryPayload?.summary?.highest_student || '—'} tone="var(--color-primary)" />
+              <Stat icon={TrendingDown} title="Lowest" value={summaryPayload?.summary?.lowest ?? '--'} sub={summaryPayload?.summary?.lowest_student || '—'} tone="var(--color-error)" />
+              <Stat icon={Star} title="Average" value={summaryPayload?.summary?.average ?? '--'} sub="Class Performance" tone="var(--color-text-primary)" />
+              <Stat icon={Users} title="Passed" value={summaryPayload?.summary?.pass_count ?? 0} sub="Students" tone="var(--color-success)" />
+              <Stat icon={Users} title="Failed" value={summaryPayload?.summary?.fail_count ?? 0} sub="Students" tone="var(--color-error)" />
+              <Stat icon={Info} title="Absent" value={summaryPayload?.summary?.absent_count ?? 0} sub="Students" tone="var(--color-text-muted)" />
+            </section>
 
-          <section className="grid grid-cols-1 gap-5 xl:grid-cols-2">
-            <ChartCard title="Marks Dist." icon={BarChart3} onExport={() => exportStudents(summaryPayload?.students || [])}>
-              <div className="space-y-3">
-                {distribution.map((item) => (
-                  <BarRow key={item.label} label={item.label} value={item.count} max={Math.max(...distribution.map((row) => row.count), 1)} tone="var(--color-primary)" />
-                ))}
-              </div>
-            </ChartCard>
-            <ChartCard title="Grade Dist." icon={GraduationCap} onExport={() => exportStudents(summaryPayload?.students || [])}>
-              <div className="space-y-3">
-                {gradeDistribution.map((item) => (
-                  <BarRow key={item.label} label={item.label} value={item.count} max={Math.max(...gradeDistribution.map((row) => row.count), 1)} tone="var(--color-success)" />
-                ))}
-              </div>
-            </ChartCard>
-          </section>
-
-          <section
-            className="overflow-hidden rounded-2xl border bg-surface shadow-sm"
-            style={{ borderColor: 'var(--color-border)' }}
-          >
-            <div className="flex items-center justify-between border-b bg-surface-raised/30 p-4" style={{ borderColor: 'var(--color-border)' }}>
-              <div>
-                <h2 className="text-sm font-bold text-text-primary">Detailed Performance</h2>
-              </div>
-              <Button 
-                variant="secondary" 
-                icon={Download}
-                onClick={() => exportStudents(summaryPayload?.students || [])}
-                className="h-8 rounded-lg px-3 text-[10px]"
-              >
-                Export
-              </Button>
-            </div>
-
-            <div className="overflow-x-auto">
-              <table className="w-full border-collapse">
-                <thead>
-                  <tr className="bg-surface-raised/10">
-                    {['Roll', 'Name', 'Marks', 'Grade', 'Status'].map((head) => (
-                      <th key={head} className="px-4 py-3 text-left text-[10px] font-bold uppercase tracking-widest text-text-muted">
-                        {head}
-                      </th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-border/50">
-                  {(summaryPayload?.students || []).map((student) => (
-                    <tr key={`${student.roll_number}-${student.first_name}`} className="hover:bg-surface-raised/20">
-                      <td className="px-4 py-3 text-xs font-mono text-text-muted">{student.roll_number || '--'}</td>
-                      <td className="px-4 py-3 text-sm font-semibold text-text-primary">{student.first_name} {student.last_name}</td>
-                      <td className="px-4 py-3 text-sm font-bold">{student.is_absent ? 'AB' : (student.marks_obtained ?? '--')}</td>
-                      <td className="px-4 py-3 text-sm">{student.grade || '--'}</td>
-                      <td className={`px-4 py-3 text-[10px] font-bold uppercase tracking-wider ${student.is_absent ? 'text-text-muted' : student.is_pass ? 'text-success' : 'text-error'}`}>
-                        {student.is_absent ? 'Absent' : student.is_pass ? 'Pass' : 'Fail'}
-                      </td>
-                    </tr>
+            {/* ── Visual Distributions ── */}
+            <section className="grid grid-cols-1 gap-6 xl:grid-cols-2">
+              <ChartCard title="Marks Distribution" icon={BarChart3} onExport={() => exportStudents(summaryPayload?.students || [])}>
+                <div className="space-y-4">
+                  {distribution.map((item) => (
+                    <BarRow key={item.label} label={item.label} value={item.count} max={Math.max(...distribution.map((row) => row.count), 1)} tone="var(--color-primary)" />
                   ))}
-                </tbody>
-              </table>
-            </div>
-          </section>
-        </div>
-      )}
+                </div>
+              </ChartCard>
+              <ChartCard title="Grade Distribution" icon={GraduationCap} onExport={() => exportStudents(summaryPayload?.students || [])}>
+                <div className="space-y-4">
+                  {gradeDistribution.map((item) => (
+                    <BarRow key={item.label} label={item.label} value={item.count} max={Math.max(...gradeDistribution.map((row) => row.count), 1)} tone="var(--color-success)" />
+                  ))}
+                </div>
+              </ChartCard>
+            </section>
+
+            {/* ── Detailed Table ── */}
+            <section
+              className="overflow-hidden rounded-2xl border bg-surface shadow-sm"
+              style={{ borderColor: 'var(--color-border)' }}
+            >
+              <div className="flex items-center justify-between border-b bg-surface-raised/30 p-4 sm:px-6" style={{ borderColor: 'var(--color-border)' }}>
+                <div className="flex items-center gap-3">
+                  <div className="h-8 w-8 rounded-lg bg-primary/10 text-primary flex items-center justify-center">
+                    <Layout size={16} />
+                  </div>
+                  <h2 className="text-sm font-bold text-text-primary">Student-wise Performance</h2>
+                </div>
+                <Button 
+                  variant="outline" 
+                  icon={Download}
+                  onClick={() => exportStudents(summaryPayload?.students || [])}
+                  className="h-9 rounded-xl px-4 text-xs font-bold"
+                >
+                  Export CSV
+                </Button>
+              </div>
+
+              <div className="overflow-x-auto">
+                <table className="w-full border-collapse">
+                  <thead>
+                    <tr className="border-b bg-surface-raised/10" style={{ borderColor: 'var(--color-border)' }}>
+                      {[
+                        { label: 'Roll', width: '70px', align: 'center' },
+                        { label: 'Student Information', width: 'auto', align: 'left' },
+                        { label: 'Marks', width: '100px', align: 'center' },
+                        { label: 'Grade', width: '80px', align: 'center' },
+                        { label: 'Status', width: '100px', align: 'center' }
+                      ].map((col) => (
+                        <th 
+                          key={col.label} 
+                          className={cn(
+                            "px-4 py-4 text-[10px] font-bold uppercase tracking-widest text-text-muted",
+                            col.align === 'center' ? 'text-center' : 'text-left'
+                          )}
+                          style={{ width: col.width }}
+                        >
+                          {col.label}
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-border/30">
+                    {(summaryPayload?.students || []).map((student) => (
+                      <tr key={`${student.roll_number}-${student.first_name}`} className="hover:bg-surface-raised/40 transition-colors group">
+                        <td className="px-4 py-3 text-center text-xs font-mono font-bold text-text-muted">{student.roll_number || '--'}</td>
+                        <td className="px-4 py-3">
+                          <div className="flex flex-col min-w-0">
+                            <span className="text-sm font-bold text-text-primary group-hover:text-primary transition-colors truncate">
+                              {student.first_name} {student.last_name}
+                            </span>
+                            <div className="flex items-center gap-2 mt-0.5">
+                              <span className="text-[9px] font-bold text-text-muted uppercase tracking-widest">ID: {student.student_id}</span>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-4 py-3 text-center text-sm font-black">
+                          {student.is_absent ? (
+                            <span className="text-text-muted/50">AB</span>
+                          ) : (
+                            <span className={cn(student.is_pass ? 'text-success' : 'text-error')}>
+                              {student.marks_obtained ?? '--'}
+                            </span>
+                          )}
+                        </td>
+                        <td className="px-4 py-3 text-center">
+                          <span className="inline-flex items-center rounded-md bg-surface-raised px-2 py-0.5 text-xs font-bold text-text-primary">
+                            {student.grade || '--'}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3 text-center">
+                          <span className={cn(
+                            "inline-flex items-center rounded-full px-2.5 py-0.5 text-[9px] font-black uppercase tracking-wider",
+                            student.is_absent 
+                              ? 'bg-slate-100 text-slate-500' 
+                              : student.is_pass 
+                                ? 'bg-green-100 text-green-700' 
+                                : 'bg-red-100 text-red-700'
+                          )}>
+                            {student.is_absent ? 'Absent' : student.is_pass ? 'Pass' : 'Fail'}
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </section>
+          </div>
+        )}
+      </main>
     </div>
   )
 }
 
 const Stat = ({ icon: Icon, title, value, sub, tone }) => (
   <div
-    className="rounded-xl border bg-surface p-4 shadow-sm"
+    className="rounded-2xl border bg-surface p-4 sm:p-5 shadow-sm transition-all hover:shadow-md"
     style={{ borderColor: 'var(--color-border)' }}
   >
-    <div className="flex items-center justify-between opacity-70">
-      <p className="text-[9px] font-bold uppercase tracking-wider text-text-muted">{title}</p>
-      <Icon size={12} style={{ color: tone }} />
+    <div className="flex items-center justify-between">
+      <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-surface-raised" style={{ color: tone }}>
+        <Icon size={16} />
+      </div>
+      <p className="text-[9px] font-black uppercase tracking-widest text-text-muted">{title}</p>
     </div>
-    <p className="mt-1 text-xl font-bold tracking-tight" style={{ color: tone }}>{value}</p>
-    <p className="mt-0.5 truncate text-[9px] font-semibold text-text-secondary">{sub}</p>
+    <div className="mt-4">
+      <p className="text-2xl font-black tracking-tight leading-none" style={{ color: tone }}>{value}</p>
+      <p className="mt-1.5 truncate text-[10px] font-bold text-text-muted uppercase tracking-tighter">{sub}</p>
+    </div>
   </div>
 )
 
 const ChartCard = ({ title, icon: Icon, children, onExport }) => (
   <section
-    className="rounded-2xl border bg-surface p-5 shadow-sm"
+    className="rounded-2xl border bg-surface p-5 sm:p-6 shadow-sm"
     style={{ borderColor: 'var(--color-border)' }}
   >
-    <div className="flex items-center justify-between border-b border-dashed pb-4" style={{ borderColor: 'var(--color-border)' }}>
-      <div className="flex items-center gap-2">
-        <Icon size={16} className="text-primary" />
-        <h2 className="text-sm font-bold text-text-primary">{title}</h2>
+    <div className="flex items-center justify-between border-b border-dashed pb-4 mb-5" style={{ borderColor: 'var(--color-border)' }}>
+      <div className="flex items-center gap-3">
+        <div className="h-9 w-9 rounded-xl bg-primary/10 text-primary flex items-center justify-center">
+          <Icon size={18} />
+        </div>
+        <h2 className="text-sm font-bold text-text-primary tracking-tight">{title}</h2>
       </div>
-      <Button variant="ghost" size="sm" onClick={onExport} className="text-[9px] font-bold uppercase">Export</Button>
+      <Button variant="ghost" onClick={onExport} className="h-8 text-[10px] font-black uppercase tracking-widest text-primary hover:bg-primary/5">Export</Button>
     </div>
-    <div className="mt-4">{children}</div>
+    <div>{children}</div>
   </section>
 )
 
 const BarRow = ({ label, value, max, tone }) => (
   <div>
-    <div className="mb-1 flex items-center justify-between text-[10px] font-bold uppercase tracking-wider">
+    <div className="mb-2 flex items-center justify-between text-[10px] font-black uppercase tracking-widest">
       <span className="text-text-primary">{label}</span>
-      <span className="text-text-secondary">{value}</span>
+      <span className="text-text-muted">{value} Students</span>
     </div>
-    <div className="h-1.5 w-full rounded-full bg-surface-raised">
-      <div className="h-full rounded-full" style={{ width: `${max ? (value / max) * 100 : 0}%`, backgroundColor: tone }} />
+    <div className="h-2 w-full rounded-full bg-surface-raised overflow-hidden">
+      <div 
+        className="h-full rounded-full transition-all duration-1000 ease-out" 
+        style={{ width: `${max ? (value / max) * 100 : 0}%`, backgroundColor: tone }} 
+      />
     </div>
   </div>
 )
@@ -432,3 +501,4 @@ const exportStudents = (students) => {
 }
 
 export default MarksSummary
+

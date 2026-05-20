@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import {
-  AlertTriangle, CalendarDays, CheckCircle2, Clock3, Loader2, Search, Send, Users,
+  AlertTriangle, CalendarDays, CheckCircle2, Clock3, Loader2, Search, Send, Users, ChevronDown, Activity, RefreshCw, ClipboardCheck, Info, BookOpen
 } from 'lucide-react'
 import Button from '@/components/ui/Button'
 import Select from '@/components/ui/Select'
@@ -80,33 +80,10 @@ const AttendanceMarker = ({
       : `${assignment.class_name} ${assignment.section_name} | ${assignment.subject_name}`,
   }))
 
-  const subjectChoices = assignments
-    .filter((assignment) =>
-      String(assignment.class_id) === String(context.class_id) &&
-      String(assignment.section_id) === String(context.section_id) &&
-      !assignment.is_class_teacher
-    )
-    .map((assignment) => ({
-      value: String(assignment.subject_id),
-      label: assignment.subject_name,
-    }))
-
   const hasStudents = (payload?.students || []).length > 0
   const hasLoadedPayload = !!payload
   const needsReason = !!payload?.requires_reason
   const canSubmit = hasStudents && (!needsReason || reason.trim())
-
-  const handleConfirmSubmit = async () => {
-    if (!canSubmit || submittingConfirm || savingAttendance) return
-
-    setSubmittingConfirm(true)
-    try {
-      await onSubmit(submitPayload())
-      setConfirmOpen(false)
-    } finally {
-      setSubmittingConfirm(false)
-    }
-  }
 
   const handleAssignmentChange = (value) => {
     const [role, classId, sectionId, subjectId] = value.split(':')
@@ -163,89 +140,66 @@ const AttendanceMarker = ({
     })),
   })
 
-  const absentStudents = Object.entries(records)
-    .filter(([, record]) => record.status === 'absent')
-    .map(([, record]) => record.name)
-  const lateStudents = Object.entries(records)
-    .filter(([, record]) => record.status === 'late')
-    .map(([, record]) => record.name)
-
   return (
-    <div className="space-y-5">
-      <section
-        className="rounded-[28px] border p-5 sm:p-6"
-        style={{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface)' }}
-      >
-        <div className="grid grid-cols-1 gap-4 lg:grid-cols-4">
-          <Select
-            label="Assigned Class"
-            value={`${context.assignment_role}:${context.class_id}:${context.section_id}:${context.subject_id || ''}`}
-            onChange={(e) => handleAssignmentChange(e.target.value)}
-            options={assignmentChoices}
-            placeholder="Select assigned class"
-          />
+    <div className="space-y-6">
+      {/* ── Selection Panel ── */}
+      <section className="rounded-2xl border bg-surface p-5 sm:p-6 shadow-sm" style={{ borderColor: 'var(--color-border)' }}>
+        <div className="mt-5 grid grid-cols-1 gap-4 xl:grid-cols-6 items-end">
+          <div className="space-y-1.5 xl:col-span-2">
+            <label className="text-sm font-medium ml-1" style={{ color: 'var(--color-text-primary)' }}>Assigned Class</label>
+            <Select
+              value={`${context.assignment_role}:${context.class_id}:${context.section_id}:${context.subject_id || ''}`}
+              onChange={(e) => handleAssignmentChange(e.target.value)}
+              options={assignmentChoices}
+              className="h-9 px-3 py-1 rounded-xl bg-surface-raised border border-border/50 text-xs font-semibold focus:border-primary"
+            />
+          </div>
 
-          <div className="flex flex-col gap-1.5">
-            <label className="text-sm font-medium" style={{ color: 'var(--color-text-primary)' }}>
-              Date
-            </label>
+          <div className="space-y-1.5 xl:col-span-2">
+            <label className="text-sm font-medium ml-1" style={{ color: 'var(--color-text-primary)' }}>Date</label>
             <input
               type="date"
               value={context.date}
               onChange={(e) => setContext((prev) => ({ ...prev, date: e.target.value }))}
-              className="min-h-11 rounded-xl px-4 text-sm outline-none"
-              style={{
-                backgroundColor: 'var(--color-surface)',
-                border: '1.5px solid var(--color-border)',
-                color: 'var(--color-text-primary)',
-              }}
+              className="w-full bg-surface-raised border border-border/50 rounded-xl px-3 py-1.5 text-xs text-text-primary outline-none focus:border-primary h-9 font-semibold"
             />
           </div>
 
-          {context.assignment_role !== 'class_teacher' ? (
-            <Select
-              label="Subject"
-              value={context.subject_id}
-              onChange={(e) => setContext((prev) => ({ ...prev, subject_id: e.target.value }))}
-              options={subjectChoices}
-              placeholder="Select subject"
-            />
-          ) : (
-            <div className="rounded-2xl border px-4 py-3" style={{ borderColor: 'var(--color-border)' }}>
-              <p className="text-xs font-semibold uppercase tracking-[0.14em]" style={{ color: 'var(--color-text-muted)' }}>
-                Attendance Mode
-              </p>
-              <p className="mt-1 text-sm font-semibold" style={{ color: 'var(--color-text-primary)' }}>
-                Full Day Attendance
-              </p>
-              <p className="mt-1 text-xs" style={{ color: 'var(--color-text-secondary)' }}>
-                Class teacher access is active for this section.
-              </p>
-            </div>
-          )}
-
-          <div className="flex items-end">
+          <div className="xl:col-span-2">
             <Button
               fullWidth
-              icon={Users}
+              icon={RefreshCw}
               loading={loadingStudents}
               disabled={!context.class_id || !context.section_id || (context.assignment_role !== 'class_teacher' && !context.subject_id)}
               onClick={handleLoad}
+              className="h-9 rounded-xl font-black uppercase tracking-widest text-[11px]"
             >
-              Load Students
+              Fetch Students
             </Button>
           </div>
         </div>
 
         {selectedAssignment && (
-          <div className="mt-4 flex flex-wrap gap-2">
-            <InfoPill
-              icon={selectedAssignment.is_class_teacher ? CalendarDays : Clock3}
-              text={selectedAssignment.is_class_teacher ? 'Class teacher flow' : 'Subject teacher flow'}
-            />
-            <InfoPill text={`${selectedAssignment.student_count || 0} students`} />
+          <div className="mt-6 flex flex-wrap gap-2 pt-5 border-t border-dashed border-border">
+            <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/5 border border-primary/20 text-primary">
+              <div className="h-2 w-2 rounded-full bg-primary animate-pulse" />
+              <span className="text-[10px] font-black uppercase tracking-wider">
+                {selectedAssignment.is_class_teacher ? 'Full Day Attendance' : 'Subject Attendance'}
+              </span>
+            </div>
+            <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-surface-raised border border-border text-text-secondary">
+              <Users size={12} />
+              <span className="text-[10px] font-black uppercase tracking-wider">
+                {selectedAssignment.student_count || 0} Students
+              </span>
+            </div>
             {selectedAssignment.subject_name && !selectedAssignment.is_class_teacher && (
-              <InfoPill text={selectedAssignment.subject_name} />
+              <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-surface-raised border border-border text-text-secondary">
+                <BookOpen size={12} />
+                <span className="text-[10px] font-black uppercase tracking-wider">
+                  {selectedAssignment.subject_name}
+                </span>
+              </div>
             )}
           </div>
         )}
@@ -253,41 +207,34 @@ const AttendanceMarker = ({
 
       {payload?.already_marked && (
         <Banner
-          tone="#f59e0b"
+          tone="warning"
           icon={AlertTriangle}
-          title="Attendance already marked for this class and date"
-          message="You are editing existing records. Any changes will be logged in the audit trail."
+          title="Records Found"
+          message="Attendance has already been marked for this selection. Updating will log an audit trail entry."
         />
       )}
 
       {payload?.is_holiday && (
         <Banner
-          tone="#ef4444"
+          tone="error"
           icon={CalendarDays}
-          title={`Holiday detected: ${payload?.holiday?.name || 'Holiday'}`}
-          message="Please double-check before submitting attendance for a holiday date."
+          title={`Holiday: ${payload?.holiday?.name || 'School Holiday'}`}
+          message="Submission is allowed but please verify if mandatory reporting is required today."
         />
       )}
 
       {needsReason && (
-        <section
-          className="rounded-[28px] border p-4"
-          style={{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface)' }}
-        >
-          <label className="text-sm font-semibold" style={{ color: 'var(--color-text-primary)' }}>
-            Edit reason
-          </label>
+        <section className="rounded-2xl border p-5 shadow-sm border-orange-200 bg-orange-50/20">
+          <div className="flex items-center gap-2 mb-3 text-orange-700">
+            <Info size={16} />
+            <label className="text-[10px] font-black uppercase tracking-widest">Modification Reason Required</label>
+          </div>
           <textarea
             value={reason}
             onChange={(e) => setReason(e.target.value)}
-            rows={3}
-            placeholder="Reason is required for past-date marking or attendance edits."
-            className="mt-2 w-full rounded-2xl px-4 py-3 text-sm outline-none"
-            style={{
-              backgroundColor: 'var(--color-surface)',
-              border: '1.5px solid var(--color-border)',
-              color: 'var(--color-text-primary)',
-            }}
+            rows={2}
+            placeholder="Explain why you are editing or marking attendance for a past date..."
+            className="w-full rounded-xl px-4 py-3 text-sm outline-none border border-orange-200 focus:ring-2 focus:ring-orange-200 transition-all bg-white"
           />
         </section>
       )}
@@ -295,95 +242,109 @@ const AttendanceMarker = ({
       {!loadingStudents && hasLoadedPayload && !hasStudents && (
         <EmptyState
           icon={Users}
-          title="No students found for this class"
-          description="No active enrolled students were found for the selected assigned class and section on the current session."
+          title="No Students Enrolled"
+          description="We couldn't find any active students for the selected section and date."
         />
       )}
 
       {hasStudents && (
         <>
+          {/* ── Summary Counters ── */}
           <section className="grid grid-cols-2 gap-3 sm:grid-cols-4">
             {STATUS_OPTIONS.map((option) => (
               <div
                 key={option.key}
-                className="rounded-[24px] border p-4"
-                style={{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface)' }}
+                className="rounded-2xl border bg-surface p-4 sm:p-5 shadow-sm flex flex-col items-center text-center transition-all hover:shadow-md"
+                style={{ borderColor: 'var(--color-border)' }}
               >
-                <p className="text-xs font-semibold uppercase tracking-[0.14em]" style={{ color: 'var(--color-text-muted)' }}>
+                <p className="text-[9px] font-black uppercase tracking-widest text-text-muted mb-2">
                   {option.full}
                 </p>
-                <p className="mt-2 text-2xl font-bold" style={{ color: option.tone }}>
+                <p className="text-3xl font-black tracking-tight" style={{ color: option.tone }}>
                   {counts[option.key] || 0}
                 </p>
               </div>
             ))}
           </section>
 
-          <section
-            className="rounded-[28px] border p-5 sm:p-6"
-            style={{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface)' }}
-          >
-            <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+          <section className="rounded-2xl border bg-surface p-5 sm:p-6 shadow-sm" style={{ borderColor: 'var(--color-border)' }}>
+            {/* ── Toolbar ── */}
+            <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between pb-6 border-b border-dashed border-border mb-6">
               <div className="flex flex-wrap gap-2">
-                <BulkButton label="Mark All Present" tone="#10b981" onClick={() => bulkSet('present')} />
-                <BulkButton label="Mark All Absent" tone="#ef4444" onClick={() => bulkSet('absent')} />
-                <BulkButton label="Reset All" tone="#0f766e" onClick={() => bulkSet('present')} />
+                <button
+                  onClick={() => bulkSet('present')}
+                  className="px-4 py-2 rounded-xl bg-emerald-500 text-white text-[10px] font-black uppercase tracking-widest flex items-center gap-2 shadow-lg shadow-emerald-500/20 active:scale-95 transition-all"
+                >
+                  <CheckCircle2 size={14} /> Mark All Present
+                </button>
+                <button
+                  onClick={() => bulkSet('absent')}
+                  className="px-4 py-2 rounded-xl bg-red-500 text-white text-[10px] font-black uppercase tracking-widest flex items-center gap-2 shadow-lg shadow-red-500/20 active:scale-95 transition-all"
+                >
+                  <AlertTriangle size={14} /> Mark All Absent
+                </button>
+                <button 
+                  onClick={() => bulkSet('present')}
+                  className="px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest text-text-muted hover:bg-surface-raised transition-colors border border-transparent hover:border-border"
+                >
+                  Reset Defaults
+                </button>
               </div>
 
-              <div className="relative w-full lg:max-w-sm">
-                <Search
-                  size={16}
-                  className="absolute left-3 top-1/2 -translate-y-1/2"
-                  style={{ color: 'var(--color-text-muted)' }}
-                />
+              <div className="relative w-full lg:max-w-xs">
+                <Search size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-text-muted" />
                 <input
                   type="text"
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
-                  placeholder="Search by name or roll number"
-                  className="min-h-11 w-full rounded-2xl pl-9 pr-4 text-sm outline-none"
-                  style={{
-                    backgroundColor: 'var(--color-surface)',
-                    border: '1.5px solid var(--color-border)',
-                    color: 'var(--color-text-primary)',
-                  }}
+                  placeholder="Search students..."
+                  className="min-h-11 w-full rounded-xl pl-10 pr-4 text-xs font-bold bg-surface-raised border border-border/50 outline-none focus:border-primary transition-all shadow-inner"
                 />
               </div>
             </div>
 
-            <div className="mt-5 space-y-3">
+            {/* ── Student Grid ── */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {filteredStudents.map((student) => {
-                const studentName = `${student.first_name} ${student.last_name}`
                 const currentStatus = records[student.enrollment_id]?.status || 'present'
                 const config = STATUS_OPTIONS.find((option) => option.key === currentStatus) || STATUS_OPTIONS[0]
 
                 return (
                   <div
                     key={student.enrollment_id}
-                    className="rounded-[24px] border p-4"
+                    className="rounded-2xl border bg-surface p-4 transition-all hover:shadow-md"
                     style={{
-                      borderColor: currentStatus === 'present' ? 'var(--color-border)' : `${config.tone}55`,
-                      backgroundColor: 'var(--color-surface)',
+                      borderColor: currentStatus === 'present' ? 'var(--color-border)' : `${config.tone}66`,
+                      backgroundColor: currentStatus === 'present' ? 'var(--color-surface)' : `${config.tone}05`
                     }}
                   >
-                    <div className="flex items-start gap-3">
+                    <div className="flex items-center gap-4">
                       <div
-                        className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl text-sm font-bold"
+                        className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl text-xs font-black font-mono shadow-inner border border-border"
                         style={{ backgroundColor: 'var(--color-surface-raised)', color: 'var(--color-text-primary)' }}
                       >
                         {student.roll_number || '--'}
                       </div>
                       <div className="min-w-0 flex-1">
-                        <p className="text-sm font-semibold" style={{ color: 'var(--color-text-primary)' }}>
-                          {studentName}
+                        <p className="text-sm font-black text-text-primary truncate uppercase tracking-tight">
+                          {student.first_name} {student.last_name}
                         </p>
-                        <p className="mt-1 text-xs" style={{ color: 'var(--color-text-muted)' }}>
-                          {student.attendance_id ? 'Existing attendance loaded' : 'Defaulted to present'}
-                        </p>
+                        <div className="flex items-center gap-2 mt-0.5">
+                           <span className="text-[9px] font-bold text-text-muted uppercase tracking-widest">
+                            ID: {student.student_id}
+                          </span>
+                          <span className="h-1 w-1 rounded-full bg-border" />
+                          <span className={cn(
+                            "text-[9px] font-black uppercase tracking-widest",
+                            student.attendance_id ? 'text-primary' : 'text-text-muted/40'
+                          )}>
+                            {student.attendance_id ? 'Modified' : 'New'}
+                          </span>
+                        </div>
                       </div>
                     </div>
 
-                    <div className="mt-4 grid grid-cols-4 gap-2">
+                    <div className="mt-5 grid grid-cols-4 gap-2">
                       {STATUS_OPTIONS.map((option) => {
                         const selected = currentStatus === option.key
                         return (
@@ -392,13 +353,14 @@ const AttendanceMarker = ({
                             type="button"
                             onClick={() => setStatusForStudent(student.enrollment_id, option.key)}
                             className={cn(
-                              'min-h-11 rounded-2xl border text-sm font-bold transition',
-                              selected && 'scale-[1.02]'
+                              'h-10 rounded-xl border text-[11px] font-black transition-all active:scale-95 flex items-center justify-center',
+                              selected ? 'shadow-lg text-white' : 'opacity-60 hover:opacity-100 hover:bg-surface-raised'
                             )}
                             style={{
                               borderColor: selected ? option.tone : 'var(--color-border)',
                               backgroundColor: selected ? option.tone : 'transparent',
                               color: selected ? '#fff' : option.tone,
+                              boxShadow: selected ? `0 6px 16px ${option.tone}44` : 'none'
                             }}
                           >
                             {option.label}
@@ -409,209 +371,131 @@ const AttendanceMarker = ({
                   </div>
                 )
               })}
-
-              {!filteredStudents.length && (
-                <div className="rounded-3xl border border-dashed p-8 text-center" style={{ borderColor: 'var(--color-border)' }}>
-                  <p className="text-sm font-semibold" style={{ color: 'var(--color-text-primary)' }}>
-                    No students matched your search
-                  </p>
-                  <p className="mt-1 text-sm" style={{ color: 'var(--color-text-secondary)' }}>
-                    Try a different name or roll number.
-                  </p>
-                </div>
-              )}
             </div>
+
+            {!filteredStudents.length && (
+              <div className="rounded-2xl border border-dashed p-12 text-center flex flex-col items-center gap-4 bg-surface-raised/10" style={{ borderColor: 'var(--color-border)' }}>
+                <div className="h-12 w-12 rounded-full bg-surface-raised flex items-center justify-center text-text-muted/40">
+                  <Search size={24} />
+                </div>
+                <div>
+                  <p className="text-sm font-black text-text-primary tracking-tight">No match found</p>
+                  <p className="mt-1 text-xs font-medium text-text-muted uppercase tracking-widest">Refine your search parameters</p>
+                </div>
+              </div>
+            )}
           </section>
         </>
       )}
 
-      <div className="sticky bottom-3 z-20">
-        <div
-          className="rounded-[28px] border p-4 shadow-xl backdrop-blur"
-          style={{
-            borderColor: 'var(--color-border)',
-            backgroundColor: 'color-mix(in srgb, var(--color-surface) 92%, transparent)',
-          }}
-        >
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <div className="flex flex-wrap gap-3 text-sm font-semibold" style={{ color: 'var(--color-text-primary)' }}>
-              <span>{counts.present || 0} Present</span>
-              <span>{counts.absent || 0} Absent</span>
-              <span>{counts.late || 0} Late</span>
-              <span>{counts.half_day || 0} Half Day</span>
-            </div>
+      {/* ── Sticky Submission Bar ── */}
+      {hasStudents && (
+        <div className="sticky bottom-4 z-20">
+          <div
+            className="rounded-2xl border bg-surface/90 p-4 shadow-2xl backdrop-blur-md"
+            style={{ borderColor: 'var(--color-border)' }}
+          >
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between max-w-7xl mx-auto">
+              <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
+                <div className="flex items-center gap-2">
+                  <div className="h-2 w-2 rounded-full bg-emerald-500 shadow-sm shadow-emerald-500/50" />
+                  <span className="text-[11px] font-black uppercase tracking-widest text-emerald-600">{counts.present || 0} Present</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="h-2 w-2 rounded-full bg-red-500 shadow-sm shadow-red-500/50" />
+                  <span className="text-[11px] font-black uppercase tracking-widest text-red-600">{counts.absent || 0} Absent</span>
+                </div>
+                <div className="hidden sm:flex items-center gap-2">
+                  <div className="h-2 w-2 rounded-full bg-orange-500 shadow-sm shadow-orange-500/50" />
+                  <span className="text-[11px] font-black uppercase tracking-widest text-orange-600">{counts.late || 0} Late</span>
+                </div>
+                <div className="hidden sm:flex items-center gap-2">
+                  <div className="h-2 w-2 rounded-full bg-blue-500 shadow-sm shadow-blue-500/50" />
+                  <span className="text-[11px] font-black uppercase tracking-widest text-blue-600">{counts.half_day || 0} Half Day</span>
+                </div>
+              </div>
 
-            <Button
-              icon={savingAttendance ? Loader2 : Send}
-              loading={savingAttendance}
-              disabled={!canSubmit}
-              onClick={() => setConfirmOpen(true)}
-            >
-              Submit Attendance
-            </Button>
+              <Button
+                icon={savingAttendance ? Loader2 : Send}
+                loading={savingAttendance}
+                disabled={!canSubmit}
+                onClick={() => setConfirmOpen(true)}
+                className="h-11 px-10 text-sm font-black uppercase tracking-widest shadow-xl shadow-primary/20 transition-all hover:scale-[1.02] active:scale-95"
+              >
+                File Attendance
+              </Button>
+            </div>
           </div>
         </div>
-      </div>
+      )}
 
+      {/* ── Confirmation Overlay ── */}
       {confirmOpen && (
-        <section
-          className="rounded-[28px] border p-5 shadow-xl"
-          style={{
-            borderColor: 'var(--color-border)',
-            backgroundColor: 'var(--color-surface)',
-          }}
-        >
-          <div className="flex flex-col gap-4">
-            <div className="flex flex-col gap-1">
-              <h3 className="text-base font-semibold" style={{ color: 'var(--color-text-primary)' }}>
-                Confirm Attendance Submission
-              </h3>
-              <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>
-                Review the class, date, and counts below before saving attendance.
-              </p>
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4 animate-in fade-in duration-300">
+          <div className="w-full max-w-md rounded-3xl bg-surface p-6 sm:p-8 shadow-2xl animate-in zoom-in-95 duration-200 border border-border/50">
+            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10 text-primary mb-6 shadow-inner">
+              <Activity size={28} />
             </div>
-
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-              <div
-                className="rounded-2xl border p-4"
-                style={{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface-raised)' }}
+            <h3 className="text-2xl font-black text-text-primary tracking-tight leading-tight">Ready to File?</h3>
+            <p className="mt-3 text-sm font-medium text-text-muted leading-relaxed">
+              You are submitting attendance for <span className="font-bold text-text-primary whitespace-nowrap">{selectedAssignment?.class_name} {selectedAssignment?.section_name}</span>. This will trigger automated reporting and parent notifications for absent students.
+            </p>
+            
+            <div className="mt-8 grid grid-cols-2 gap-3">
+              <button
+                type="button"
+                onClick={() => setConfirmOpen(false)}
+                className="h-12 rounded-2xl bg-surface-raised text-[11px] font-black uppercase tracking-widest text-text-primary border border-border hover:bg-border/20 transition-colors"
               >
-                <p className="text-xs font-semibold uppercase tracking-[0.14em]" style={{ color: 'var(--color-text-muted)' }}>
-                  Class
-                </p>
-                <p className="mt-2 text-sm font-semibold" style={{ color: 'var(--color-text-primary)' }}>
-                  {selectedAssignment ? `${selectedAssignment.class_name} ${selectedAssignment.section_name}` : '--'}
-                </p>
-              </div>
-
-              <div
-                className="rounded-2xl border p-4"
-                style={{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface-raised)' }}
-              >
-                <p className="text-xs font-semibold uppercase tracking-[0.14em]" style={{ color: 'var(--color-text-muted)' }}>
-                  Date
-                </p>
-                <p className="mt-2 text-sm font-semibold" style={{ color: 'var(--color-text-primary)' }}>
-                  {context.date}
-                </p>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-              {STATUS_OPTIONS.map((option) => (
-                <div
-                  key={option.key}
-                  className="rounded-2xl border p-3"
-                  style={{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface-raised)' }}
-                >
-                  <p className="text-xs uppercase tracking-[0.14em]" style={{ color: 'var(--color-text-muted)' }}>
-                    {option.full}
-                  </p>
-                  <p className="mt-1 text-lg font-bold" style={{ color: option.tone }}>
-                    {counts[option.key] || 0}
-                  </p>
-                </div>
-              ))}
-            </div>
-
-            {absentStudents.length > 0 && (
-              <div
-                className="rounded-2xl border p-4"
-                style={{ borderColor: '#ef444455', backgroundColor: 'rgba(239, 68, 68, 0.06)' }}
-              >
-                <p className="font-semibold" style={{ color: 'var(--color-text-primary)' }}>
-                  Absent Students ({absentStudents.length})
-                </p>
-                <div className="mt-3 flex max-h-32 flex-wrap gap-2 overflow-y-auto pr-1">
-                  {absentStudents.map((name) => (
-                    <span
-                      key={`absent-${name}`}
-                      className="rounded-full px-3 py-1.5 text-xs font-medium"
-                      style={{ backgroundColor: 'rgba(239, 68, 68, 0.12)', color: '#b91c1c' }}
-                    >
-                      {name}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {lateStudents.length > 0 && (
-              <div
-                className="rounded-2xl border p-4"
-                style={{ borderColor: '#f59e0b55', backgroundColor: 'rgba(245, 158, 11, 0.06)' }}
-              >
-                <p className="font-semibold" style={{ color: 'var(--color-text-primary)' }}>
-                  Late Students ({lateStudents.length})
-                </p>
-                <div className="mt-3 flex max-h-32 flex-wrap gap-2 overflow-y-auto pr-1">
-                  {lateStudents.map((name) => (
-                    <span
-                      key={`late-${name}`}
-                      className="rounded-full px-3 py-1.5 text-xs font-medium"
-                      style={{ backgroundColor: 'rgba(245, 158, 11, 0.14)', color: '#b45309' }}
-                    >
-                      {name}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-              <Button variant="secondary" onClick={() => setConfirmOpen(false)}>
                 Go Back
-              </Button>
-              <Button
-                icon={CheckCircle2}
-                loading={submittingConfirm || savingAttendance}
-                disabled={!canSubmit || submittingConfirm || savingAttendance}
-                onClick={handleConfirmSubmit}
+              </button>
+              <button
+                type="button"
+                onClick={async () => {
+                  setSubmittingConfirm(true)
+                  try {
+                    await onSubmit(submitPayload())
+                    setConfirmOpen(false)
+                  } catch (error) {
+                    setSubmittingConfirm(false)
+                  }
+                }}
+                disabled={submittingConfirm}
+                className="h-12 rounded-2xl bg-primary text-[11px] font-black uppercase tracking-widest text-white shadow-xl shadow-primary/30 hover:opacity-95 transition-all flex items-center justify-center gap-2 active:scale-95"
               >
-                Confirm and Submit
-              </Button>
+                {submittingConfirm ? <Loader2 size={16} className="animate-spin" /> : 'Confirm & File'}
+              </button>
             </div>
           </div>
-        </section>
+        </div>
       )}
     </div>
   )
 }
 
-const BulkButton = ({ label, tone, onClick }) => (
-  <button
-    type="button"
-    onClick={onClick}
-    className="min-h-11 rounded-2xl px-4 text-sm font-semibold transition hover:-translate-y-0.5"
-    style={{ backgroundColor: `${tone}16`, color: tone }}
-  >
-    {label}
-  </button>
-)
-
-const Banner = ({ tone, icon: Icon, title, message }) => (
-  <div
-    className="rounded-[28px] border px-4 py-3"
-    style={{ borderColor: `${tone}45`, backgroundColor: `${tone}12` }}
-  >
-    <div className="flex items-start gap-3">
-      <Icon size={18} style={{ color: tone }} />
-      <div>
-        <p className="text-sm font-semibold" style={{ color: 'var(--color-text-primary)' }}>{title}</p>
-        <p className="mt-1 text-xs" style={{ color: 'var(--color-text-secondary)' }}>{message}</p>
+const Banner = ({ tone, icon: Icon, title, message }) => {
+  const styles = {
+    warning: 'bg-orange-50 border-orange-200 text-orange-800',
+    error: 'bg-red-50 border-red-200 text-red-800',
+    success: 'bg-emerald-50 border-emerald-200 text-emerald-800'
+  }
+  const iconStyles = {
+    warning: 'bg-orange-100 text-orange-600',
+    error: 'bg-red-100 text-red-600',
+    success: 'bg-emerald-100 text-emerald-600'
+  }
+  
+  return (
+    <div className={cn("rounded-2xl border p-4 flex items-start gap-4 shadow-sm", styles[tone])}>
+      <div className={cn("h-10 w-10 shrink-0 rounded-xl flex items-center justify-center shadow-inner", iconStyles[tone])}>
+        <Icon size={20} />
+      </div>
+      <div className="min-w-0 flex-1">
+        <p className="text-sm font-black tracking-tight">{title}</p>
+        <p className="text-xs font-medium opacity-80 mt-0.5 leading-relaxed">{message}</p>
       </div>
     </div>
-  </div>
-)
-
-const InfoPill = ({ icon: Icon, text }) => (
-  <span
-    className="inline-flex min-h-9 items-center gap-2 rounded-full px-3 text-xs font-semibold"
-    style={{ backgroundColor: 'var(--color-surface-raised)', color: 'var(--color-text-primary)' }}
-  >
-    {Icon ? <Icon size={14} /> : null}
-    {text}
-  </span>
-)
+  )
+}
 
 export default AttendanceMarker

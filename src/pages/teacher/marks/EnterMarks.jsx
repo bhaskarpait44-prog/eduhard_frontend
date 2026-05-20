@@ -1,11 +1,12 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useLocation } from 'react-router-dom'
-import { AlertTriangle, BookOpen, GraduationCap, Layout, Lock, Info, CheckCircle2 } from 'lucide-react'
+import { AlertTriangle, BookOpen, GraduationCap, Layout, Lock, Info, Search, FilterX, Users, ChevronRight, RefreshCw } from 'lucide-react'
 import usePageTitle from '@/hooks/usePageTitle'
 import useToast from '@/hooks/useToast'
 import useMarksEntry from '@/hooks/useMarksEntry'
 import Select from '@/components/ui/Select'
 import MarksEntryTable from '@/components/teacher/MarksEntryTable'
+import { cn } from '@/utils/helpers'
 
 const normalizeMarksError = (error) => {
   const message = error?.message || ''
@@ -85,7 +86,9 @@ const EnterMarks = () => {
       )
     )
     const first = matched || uniqueSections[0]
-    setSectionKey(`${first.class_id}:${first.section_id}:${first.is_class_teacher ? 'class_teacher' : 'subject_teacher'}`)
+    if (first) {
+      setSectionKey(`${first.class_id}:${first.section_id}:${first.is_class_teacher ? 'class_teacher' : 'subject_teacher'}`)
+    }
   }, [preferredAssignment.assignment_role, preferredAssignment.class_id, preferredAssignment.section_id, uniqueSections, sectionKey])
 
   useEffect(() => {
@@ -159,7 +162,7 @@ const EnterMarks = () => {
       subject_id: subjectId,
     }).then((data) => {
       const next = {}
-      ;(data?.rows || []).forEach((row) => {
+      ;(data?.students || []).forEach((row) => {
         next[row.enrollment_id] = {
           marks_obtained: row.marks_obtained ?? '',
           theory_marks_obtained: row.theory_marks_obtained ?? '',
@@ -174,8 +177,8 @@ const EnterMarks = () => {
   }, [examId, selectedSection, subjectId, loadEntry, toastError, selectionMismatch])
 
   const currentSubject = useMemo(() => {
-    if (!entryPayload?.rows?.length) return subjectOptions.find((subject) => String(subject.id) === String(subjectId)) || null
-    const row = entryPayload.rows[0]
+    if (!entryPayload?.students?.length) return subjectOptions.find((subject) => String(subject.id) === String(subjectId)) || null
+    const row = entryPayload.students[0]
     return {
       id: Number(subjectId),
       name: row.subject_name,
@@ -191,9 +194,9 @@ const EnterMarks = () => {
   }, [entryPayload, subjectId, subjectOptions])
 
   const persistAll = async () => {
-    if (!selectedSection || !subjectId || !examId || !entryPayload?.rows?.length) return
+    if (!selectedSection || !subjectId || !examId || !entryPayload?.students?.length) return
 
-    const entries = entryPayload.rows.map((row) => {
+    const entries = entryPayload.students.map((row) => {
       const record = state[row.enrollment_id] || {}
       return {
         exam_id: Number(examId),
@@ -219,7 +222,7 @@ const EnterMarks = () => {
   }
 
   useEffect(() => {
-    if (entryPayload?.rows?.length) {
+    if (entryPayload?.students?.length && !entryPayload.locked) {
       if (autoSaveRef.current) window.clearInterval(autoSaveRef.current)
       autoSaveRef.current = window.setInterval(() => {
         persistAll().catch(() => {})
@@ -232,184 +235,207 @@ const EnterMarks = () => {
   }, [entryPayload, state, currentSubject, examId, selectedSection, subjectId])
 
   return (
-    <div className="mx-auto max-w-7xl space-y-5 pb-10">
-      <header
-        className="rounded-2xl border bg-surface p-6 shadow-sm"
-        style={{ borderColor: 'var(--color-border)' }}
-      >
-        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary">
-              <Layout size={20} />
-            </div>
-            <div>
-              <h1 className="text-xl font-bold text-text-primary">
-                Enter Marks
-              </h1>
-              <p className="text-xs text-text-secondary">
-                Submit performance records
-              </p>
-            </div>
+    <div className="space-y-6">
+      {/* ── Header ── */}
+      <section className="rounded-2xl border p-5 sm:p-6" style={{ borderColor: 'var(--color-border)' }}>
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+          <div className="min-w-0">
+            <p className="text-[11px] font-semibold uppercase tracking-widest" style={{ color: '#0f766e' }}>
+              Academic Performance
+            </p>
+            <h1 className="mt-1.5 text-2xl font-bold sm:text-3xl" style={{ color: 'var(--color-text-primary)' }}>
+              Enter Marks
+            </h1>
+            <p className="mt-1.5 max-w-xl text-sm leading-relaxed" style={{ color: 'var(--color-text-secondary)' }}>
+              Record and manage student examination marks for your assigned classes and subjects.
+            </p>
           </div>
+          {entryPayload?.locked && (
+            <div className="flex items-center gap-2 rounded-xl bg-amber-50 px-4 py-2 text-amber-700 ring-1 ring-amber-200">
+              <Lock size={16} />
+              <span className="text-xs font-bold uppercase tracking-wider">Locked</span>
+            </div>
+          )}
         </div>
 
-        <div className="mt-6 grid grid-cols-1 gap-4 md:grid-cols-3">
-          <div className="space-y-1.5">
-            <label className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-text-muted">
-              <GraduationCap size={12} className="text-primary" />
-              Exam
-            </label>
+        {/* ── Filters ── */}
+        <div className="mt-5 grid grid-cols-1 gap-4 xl:grid-cols-6">
+          <div className="space-y-1.5 xl:col-span-2">
+            <label className="text-sm font-medium" style={{ color: 'var(--color-text-primary)' }}>Examination</label>
             <Select
               value={examId}
-              onChange={(event) => setExamId(event.target.value)}
-              options={exams.map((exam) => ({ value: String(exam.id), label: `${exam.name} | ${exam.class_name}` }))}
-              placeholder="Choose exam"
-              className="h-10 rounded-lg bg-surface-raised"
+              onChange={(e) => setExamId(e.target.value)}
+              options={exams.map((ex) => ({ value: String(ex.id), label: ex.name }))}
+              placeholder="Choose Exam"
+              className="h-9 px-3 py-1 rounded-xl bg-surface-raised border border-border/50 text-xs font-semibold focus:border-primary"
             />
           </div>
-          <div className="space-y-1.5">
-            <label className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-text-muted">
-              <Layout size={12} className="text-primary" />
-              Section
-            </label>
+          <div className="space-y-1.5 xl:col-span-2">
+            <label className="text-sm font-medium" style={{ color: 'var(--color-text-primary)' }}>Class & Section</label>
             <Select
               value={sectionKey}
-              onChange={(event) => setSectionKey(event.target.value)}
-              options={visibleSections.map((section) => ({
-                value: `${section.class_id}:${section.section_id}:${section.is_class_teacher ? 'class_teacher' : 'subject_teacher'}`,
-                label: `${section.class_name} ${section.section_name}`,
+              onChange={(e) => setSectionKey(e.target.value)}
+              options={visibleSections.map((s) => ({
+                value: `${s.class_id}:${s.section_id}:${s.is_class_teacher ? 'class_teacher' : 'subject_teacher'}`,
+                label: `${s.class_name} ${s.section_name}`,
               }))}
-              placeholder="Choose section"
-              className="h-10 rounded-lg bg-surface-raised"
+              placeholder="Choose Section"
+              className="h-9 px-3 py-1 rounded-xl bg-surface-raised border border-border/50 text-xs font-semibold focus:border-primary"
             />
           </div>
-          <div className="space-y-1.5">
-            <label className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-text-muted">
-              <BookOpen size={12} className="text-primary" />
-              Subject
-            </label>
+          <div className="space-y-1.5 xl:col-span-2">
+            <label className="text-sm font-medium" style={{ color: 'var(--color-text-primary)' }}>Subject</label>
             <Select
               value={subjectId}
-              onChange={(event) => setSubjectId(event.target.value)}
-              options={subjectOptions.map((subject) => ({ value: String(subject.id), label: `${subject.name}` }))}
-              placeholder="Choose subject"
-              className="h-10 rounded-lg bg-surface-raised"
+              onChange={(e) => setSubjectId(e.target.value)}
+              options={subjectOptions.map((s) => ({ value: String(s.id), label: s.name }))}
+              placeholder="Choose Subject"
+              className="h-9 px-3 py-1 rounded-xl bg-surface-raised border border-border/50 text-xs font-semibold focus:border-primary"
             />
           </div>
         </div>
-      </header>
+      </section>
 
-      {baseError && !loadingBase ? (
-        <section className="rounded-2xl border border-red-100 bg-red-50 p-6 text-center">
-          <p className="text-sm font-bold text-red-900">Error: {baseError}</p>
-        </section>
-      ) : !loadingBase && !uniqueSections.length ? (
-        <section className="rounded-2xl border border-orange-100 bg-orange-50 p-6 text-center">
-          <p className="text-sm font-bold text-orange-900">No Assignments Found</p>
-        </section>
-      ) : entryPayload?.locked && (
-        <div className="flex items-center gap-3 rounded-xl border border-teal-100 bg-teal-50 p-3 shadow-sm">
-          <Lock size={16} className="text-teal-600" />
-          <p className="text-xs font-semibold text-teal-900">Marks are locked (Submitted for review)</p>
-        </div>
-      )}
+      {/* ── Main Content ── */}
+      <main className="min-h-[400px]">
+        {baseError && !loadingBase ? (
+          <div className="flex flex-col items-center justify-center rounded-2xl border border-red-100 bg-red-50/50 py-20 text-center">
+            <AlertTriangle size={48} className="text-red-500 mb-4" />
+            <h3 className="text-lg font-bold text-red-900">Configuration Error</h3>
+            <p className="mt-1 text-sm text-red-700 max-w-md">{baseError}</p>
+          </div>
+        ) : !loadingBase && !uniqueSections.length ? (
+          <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed py-20 text-center">
+            <FilterX size={48} className="text-text-muted mb-4" />
+            <h3 className="text-lg font-bold text-text-primary">No Assignments Found</h3>
+            <p className="mt-1 text-sm text-text-muted">You are not assigned to any subjects for marks entry.</p>
+          </div>
+        ) : !examId || !sectionKey || !subjectId ? (
+          <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed bg-surface-raised/20 py-24 text-center">
+            <Search size={48} className="text-primary/30 mb-4" />
+            <h3 className="text-xl font-bold text-text-primary">Select Configuration</h3>
+            <p className="mt-2 text-sm text-text-muted max-w-xs mx-auto">
+              Choose an exam, section, and subject from the filters above to start entering marks.
+            </p>
+          </div>
+        ) : selectionMismatch ? (
+          <div className="flex flex-col items-center justify-center rounded-2xl border border-amber-100 bg-amber-50/50 py-20 text-center">
+            <AlertTriangle size={48} className="text-amber-500 mb-4" />
+            <h3 className="text-lg font-bold text-amber-900">Mismatched Selection</h3>
+            <p className="mt-1 text-sm text-amber-700">The selected exam and section classes do not match.</p>
+          </div>
+        ) : loadingBase || loadingEntry ? (
+          <div className="flex flex-col items-center justify-center py-32">
+            <RefreshCw size={32} className="animate-spin text-primary mb-4" />
+            <p className="text-xs font-bold uppercase tracking-widest text-text-muted">Fetching Records...</p>
+          </div>
+        ) : entryPayload?.students?.length ? (
+          <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <MarksEntryTable
+              rows={entryPayload.students}
+              subject={currentSubject}
+              state={state}
+              locked={entryPayload.locked}
+              reviewStatus={entryPayload.review_status}
+              saving={saving}
+              lastSavedAt={lastSavedAt}
+              onChange={(enrollmentId, field, value) => {
+                setState((prev) => ({
+                  ...prev,
+                  [enrollmentId]: {
+                    ...prev[enrollmentId],
+                    ...(field === 'is_absent'
+                      ? value
+                        ? { is_absent: true, marks_obtained: '', theory_marks_obtained: '', practical_marks_obtained: '' }
+                        : { ...prev[enrollmentId], is_absent: false }
+                      : { [field]: value }),
+                  },
+                }))
+              }}
+              onSaveAll={async () => {
+                try {
+                  await persistAll()
+                  toastSuccess('Draft saved.')
+                } catch (error) {
+                  toastError(error?.message || 'Failed to save.')
+                }
+              }}
+              onSubmit={async () => {
+                try {
+                  await persistAll()
+                  await submitForReview({
+                    exam_id: Number(examId),
+                    class_id: Number(selectedSection.class_id),
+                    section_id: Number(selectedSection.section_id),
+                    subject_id: Number(subjectId),
+                  })
+                  toastSuccess('Marks submitted.')
+                  const refreshed = await loadEntry({
+                    exam_id: examId,
+                    class_id: selectedSection.class_id,
+                    section_id: selectedSection.section_id,
+                    subject_id: subjectId,
+                  })
+                  setState(Object.fromEntries((refreshed?.students || []).map((row) => [row.enrollment_id, {
+                    marks_obtained: row.marks_obtained ?? '',
+                    theory_marks_obtained: row.theory_marks_obtained ?? '',
+                    practical_marks_obtained: row.practical_marks_obtained ?? '',
+                    is_absent: !!row.is_absent,
+                  }])))
+                } catch (error) {
+                  toastError(error?.message || 'Failed to submit.')
+                }
+              }}
+            />
+          </div>
+        ) : (
+          <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed py-20 text-center">
+            <Users size={48} className="text-text-muted mb-4" />
+            <h3 className="text-lg font-bold text-text-primary">No Students Found</h3>
+            <p className="mt-1 text-sm text-text-muted">No enrolled students found in this section.</p>
+          </div>
+        )}
+      </main>
 
-      {!examId || !sectionKey || !subjectId ? (
-        <section className="flex flex-col items-center justify-center rounded-2xl border border-dashed bg-surface-raised/20 py-16 text-center">
-          <p className="text-sm text-text-secondary">Select details to begin</p>
-        </section>
-      ) : selectionMismatch ? (
-        <section className="rounded-2xl border border-amber-100 bg-amber-50 p-6 text-center">
-          <p className="text-sm font-bold text-amber-900">Exam/Section Mismatch</p>
-        </section>
-      ) : loadingBase || loadingEntry ? (
-        <div className="flex justify-center py-10">
-          <div className="h-6 w-6 animate-spin rounded-full border-2 border-primary/20 border-t-primary" />
-        </div>
-      ) : entryPayload?.rows?.length ? (
-        <MarksEntryTable
-          rows={entryPayload.rows}
-          subject={currentSubject}
-          state={state}
-          locked={entryPayload.locked}
-          reviewStatus={entryPayload.review_status}
-          saving={saving}
-          lastSavedAt={lastSavedAt}
-          onChange={(enrollmentId, field, value) => {
-            setState((prev) => ({
-              ...prev,
-              [enrollmentId]: {
-                ...prev[enrollmentId],
-                ...(field === 'is_absent'
-                  ? value
-                    ? { is_absent: true, marks_obtained: '', theory_marks_obtained: '', practical_marks_obtained: '' }
-                    : { ...prev[enrollmentId], is_absent: false }
-                  : { [field]: value }),
-              },
-            }))
-          }}
-          onSaveAll={async () => {
-            try {
-              await persistAll()
-              toastSuccess('Saved.')
-            } catch (error) {
-              toastError(error?.message || 'Failed to save.')
-            }
-          }}
-          onSubmit={async () => {
-            try {
-              await persistAll()
-              await submitForReview({
-                exam_id: Number(examId),
-                class_id: Number(selectedSection.class_id),
-                section_id: Number(selectedSection.section_id),
-                subject_id: Number(subjectId),
-              })
-              toastSuccess('Submitted.')
-              const refreshed = await loadEntry({
-                exam_id: examId,
-                class_id: selectedSection.class_id,
-                section_id: selectedSection.section_id,
-                subject_id: subjectId,
-              })
-              setState(Object.fromEntries((refreshed?.rows || []).map((row) => [row.enrollment_id, {
-                marks_obtained: row.marks_obtained ?? '',
-                theory_marks_obtained: row.theory_marks_obtained ?? '',
-                practical_marks_obtained: row.practical_marks_obtained ?? '',
-                is_absent: !!row.is_absent,
-              }])))
-            } catch (error) {
-              toastError(error?.message || 'Failed to submit.')
-            }
-          }}
-        />
-      ) : (
-        <section className="flex flex-col items-center justify-center rounded-2xl border border-dashed bg-surface-raised/20 py-16 text-center">
-          <p className="text-sm text-text-secondary">No students found</p>
-        </section>
-      )}
-
+      {/* ── Footer ── */}
       {currentSubject && (
         <section
           className="rounded-2xl border bg-surface p-5 shadow-sm"
           style={{ borderColor: 'var(--color-border)' }}
         >
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-surface-raised text-text-secondary">
-                <Info size={16} />
+          <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
+            <div className="flex items-center gap-4">
+              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-surface-raised text-text-secondary">
+                <Info size={24} />
               </div>
               <div>
-                <h4 className="text-sm font-bold text-text-primary">Subject Info</h4>
-                <div className="mt-0.5 flex gap-3 text-[10px] font-bold uppercase tracking-wider text-text-secondary">
-                  <span>Type: <span className="text-primary">{currentSubject.subject_type || 'theory'}</span></span>
-                  <span>Total: {currentSubject.combined_total_marks || '--'}</span>
-                  <span>Pass: {currentSubject.combined_passing_marks || '--'}</span>
-                </div>
+                <h4 className="text-sm font-bold text-text-primary">Subject Scheme</h4>
+                <p className="text-xs text-text-secondary">Criteria for {currentSubject.name}</p>
               </div>
             </div>
-            <div className={`rounded-full px-3 py-1 text-[10px] font-bold uppercase tracking-widest ${entryPayload?.review_status?.status === 'completed' ? 'bg-green-50 text-green-600' : 'bg-orange-50 text-orange-600'}`}>
-              {entryPayload?.review_status?.label || 'Pending'}
+            
+            <div className="grid grid-cols-3 gap-4 md:gap-8">
+              <div className="space-y-1">
+                <p className="text-[10px] font-bold uppercase tracking-wider text-text-muted">Type</p>
+                <p className="text-xs font-bold text-primary uppercase">{currentSubject.subject_type || 'Theory'}</p>
+              </div>
+              <div className="space-y-1">
+                <p className="text-[10px] font-bold uppercase tracking-wider text-text-muted">Total</p>
+                <p className="text-xs font-bold text-text-primary">{currentSubject.combined_total_marks || '--'}</p>
+              </div>
+              <div className="space-y-1">
+                <p className="text-[10px] font-bold uppercase tracking-wider text-text-muted">Pass</p>
+                <p className="text-xs font-bold text-red-600">{currentSubject.combined_passing_marks || '--'}</p>
+              </div>
+            </div>
+
+            <div className={cn(
+              "rounded-full px-4 py-1 text-[10px] font-bold uppercase tracking-widest",
+              entryPayload?.review_status?.status === 'completed' 
+                ? 'bg-green-100 text-green-700' 
+                : 'bg-orange-100 text-orange-700'
+            )}>
+              {entryPayload?.review_status?.label || 'Draft'}
             </div>
           </div>
         </section>

@@ -1,119 +1,75 @@
 import { useEffect, useMemo, useState } from 'react'
-import { BellRing, Download, PhoneCall, TriangleAlert, TrendingUp, Users, AlertCircle, Activity } from 'lucide-react'
+import { BellRing, Download, PhoneCall, TriangleAlert, TrendingUp, Users, AlertCircle, Activity, ChevronRight, RefreshCw, CalendarDays, FilterX, Search, CheckCircle2, Layout } from 'lucide-react'
 import usePageTitle from '@/hooks/usePageTitle'
 import useToast from '@/hooks/useToast'
 import useAttendance from '@/hooks/useAttendance'
 import Select from '@/components/ui/Select'
 import Button from '@/components/ui/Button'
-
-// ─────────────────────────────────────────────────────────────────────────────
-//  All colours use the same CSS variables your original file used:
-//    var(--color-border)         var(--color-surface)
-//    var(--color-surface-raised) var(--color-text-primary)
-//    var(--color-text-secondary) var(--color-text-muted)
-//  Your app's existing dark/light theme switching handles everything.
-//  No theme tokens, no toggle button added here.
-// ─────────────────────────────────────────────────────────────────────────────
-
-const STYLES = `
-  .ar * { box-sizing: border-box; }
-  .ar ::-webkit-scrollbar { width: 4px; height: 4px; }
-  .ar ::-webkit-scrollbar-track { background: transparent; }
-  .ar ::-webkit-scrollbar-thumb { background: var(--color-border); border-radius: 4px; }
-  .ar input[type="date"]::-webkit-calendar-picker-indicator { cursor: pointer; opacity: 0.5; }
-
-  @keyframes ar-shimmer {
-    0%   { background-position: 200% 0; }
-    100% { background-position: -200% 0; }
-  }
-
-  .ar-shimmer {
-    background: linear-gradient(90deg, var(--color-surface-raised) 25%, var(--color-surface) 50%, var(--color-surface-raised) 75%);
-    background-size: 200% 100%;
-    animation: ar-shimmer 1.4s infinite;
-  }
-`
+import { cn } from '@/utils/helpers'
 
 // ─────────────────────────────────────────────────────────────────────────────
 //  STRUCTURAL COMPONENTS
 // ─────────────────────────────────────────────────────────────────────────────
 
 const StatCard = ({ label, value, sub, color, icon: Icon }) => (
-  <div className="bg-surface border border-border rounded-[20px] p-5 sm:p-6 flex flex-col gap-2 relative overflow-hidden transition-colors hover:border-text-muted">
-    <div style={{ position: 'absolute', top: -20, right: -20, width: 80, height: 80, borderRadius: '50%', background: color, opacity: 0.08, filter: 'blur(20px)', pointerEvents: 'none' }} />
-    <div className="flex items-center justify-between">
-      <span className="text-[10px] tracking-[0.18em] uppercase text-text-muted font-medium">{label}</span>
-      <div className="w-8 h-8 rounded-xl flex items-center justify-center" style={{ background: `${color}1c` }}>
-        <Icon size={14} style={{ color }} />
+  <div 
+    className="bg-surface border rounded-2xl p-4 sm:p-5 flex flex-col shadow-sm transition-all hover:shadow-md"
+    style={{ borderColor: 'var(--color-border)' }}
+  >
+    <div className="flex items-center justify-between mb-4">
+      <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-surface-raised" style={{ color }}>
+        <Icon size={16} />
       </div>
+      <span className="text-[10px] font-black tracking-widest uppercase text-text-muted">{label}</span>
     </div>
-    <span className="text-2xl sm:text-3xl font-bold text-text-primary leading-none">{value}</span>
-    {sub && <span className="text-[11px] text-text-muted">{sub}</span>}
+    <div>
+      <span className="text-2xl font-black text-text-primary leading-none tracking-tight">{value}</span>
+      {sub && <p className="text-[10px] font-bold text-text-muted uppercase mt-1.5 tracking-tighter">{sub}</p>}
+    </div>
   </div>
 )
 
-const ReportCard = ({ title, subtitle, onExport, accent = '#7b6ef6', children }) => (
-  <div className="bg-surface border border-border rounded-[24px] overflow-hidden flex flex-col shadow-sm">
-    <div className="p-5 sm:px-6 sm:py-5 border-b border-border flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+const ReportCard = ({ title, subtitle, onExport, accent = 'var(--color-primary)', children }) => (
+  <div 
+    className="bg-surface border rounded-2xl overflow-hidden flex flex-col shadow-sm"
+    style={{ borderColor: 'var(--color-border)' }}
+  >
+    <div className="p-4 sm:px-6 sm:py-5 border-b bg-surface-raised/30 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4" style={{ borderColor: 'var(--color-border)' }}>
       <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2.5 mb-1">
-          <div className="w-0.5 h-4 rounded-full flex-shrink-0" style={{ background: accent }} />
-          <h2 className="text-sm sm:text-base font-bold text-text-primary truncate">{title}</h2>
+        <div className="flex items-center gap-3">
+          <div className="w-1 h-6 rounded-full shrink-0" style={{ background: accent }} />
+          <h2 className="text-sm sm:text-base font-black text-text-primary tracking-tight truncate">{title}</h2>
         </div>
-        <p className="text-xs text-text-muted truncate ml-3">{subtitle}</p>
+        <p className="text-xs font-medium text-text-muted mt-1 ml-4 truncate">{subtitle}</p>
       </div>
-      <button 
-        className="flex items-center gap-2 px-3 py-1.5 rounded-xl border-[1.5px] border-border bg-surface-raised text-text-secondary text-xs font-semibold hover:border-brand hover:bg-brand/5 hover:text-brand transition-all flex-shrink-0" 
+      <Button 
+        variant="outline"
+        size="sm"
+        icon={Download}
         onClick={onExport}
+        className="h-8 rounded-xl px-4 text-[10px] font-black uppercase tracking-widest"
       >
-        <Download size={13} /> Export
-      </button>
+        Export CSV
+      </Button>
     </div>
     <div className="p-4 sm:p-6 flex-1">{children}</div>
   </div>
 )
 
-const FieldSelect = ({ label, value, onChange, options, placeholder }) => (
-  <div className="w-full">
-    <label className="text-[10px] tracking-[0.16em] uppercase text-text-muted block mb-1.5 font-semibold ml-1">{label}</label>
-    <div className="relative">
-      <select 
-        className="w-full appearance-none bg-surface border-[1.5px] border-border rounded-xl px-4 py-2.5 text-sm text-text-primary outline-none cursor-pointer font-inherit transition-all focus:border-brand min-h-11 pr-10" 
-        value={value} 
-        onChange={onChange}
-      >
-        {placeholder && <option value="">{placeholder}</option>}
-        {options.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
-      </select>
-      <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none opacity-50">
-        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 12 12"><path fill="currentColor" d="M6 8L1 3h10z"/></svg>
-      </div>
-    </div>
-  </div>
-)
-
-const DateField = ({ label, value, onChange }) => (
-  <div className="w-full">
-    <label className="text-[10px] tracking-[0.16em] uppercase text-text-muted block mb-1.5 font-semibold ml-1">{label}</label>
-    <input 
-      type="date" 
-      className="w-full bg-surface border-[1.5px] border-border rounded-xl px-4 py-2.5 text-sm text-text-primary outline-none cursor-pointer font-inherit transition-all focus:border-brand min-h-11" 
-      value={value} 
-      onChange={(e) => onChange(e.target.value)} 
-    />
-  </div>
-)
-
 const PanelSkeleton = () => (
-  <div className="flex flex-col gap-3">
-    {[...Array(5)].map((_, i) => <div key={i} className="h-11 rounded-xl ar-shimmer" />)}
+  <div className="flex flex-col gap-4">
+    {[...Array(5)].map((_, i) => (
+      <div key={i} className="h-12 rounded-xl bg-surface-raised animate-pulse" />
+    ))}
   </div>
 )
 
-const EmptyPanel = ({ text }) => (
-  <div className="border border-dashed border-border rounded-2xl p-8 text-center flex flex-col items-center gap-2">
-    <TriangleAlert size={20} className="text-text-muted opacity-40" />
-    <p className="text-xs sm:text-sm text-text-secondary italic">{text}</p>
+const EmptyPanel = ({ text, icon: Icon = TriangleAlert }) => (
+  <div className="border border-dashed rounded-2xl p-12 text-center flex flex-col items-center gap-4 bg-surface-raised/10" style={{ borderColor: 'var(--color-border)' }}>
+    <div className="h-12 w-12 rounded-full bg-surface-raised flex items-center justify-center text-text-muted/40">
+      <Icon size={24} />
+    </div>
+    <p className="text-sm font-bold text-text-secondary italic">{text}</p>
   </div>
 )
 
@@ -126,38 +82,61 @@ const SummaryTable = ({ rows, threshold }) => {
   if (!rows.length) return <EmptyPanel text="No attendance records found for this range." />
   return (
     <div className="overflow-x-auto -mx-4 sm:mx-0">
-      <table className="w-full text-left border-collapse min-w-[600px] sm:min-w-0">
+      <table className="w-full text-left border-collapse">
         <thead>
-          <tr className="border-b border-border">
-            {['Roll', 'Name', 'Days', 'Pres', 'Abs', 'Late', '%', 'Status'].map((head) => (
-              <th key={head} className="px-3 py-3 text-[10px] tracking-[0.12em] uppercase text-text-muted font-bold">{head}</th>
+          <tr className="border-b bg-surface-raised/10" style={{ borderColor: 'var(--color-border)' }}>
+            {[
+              { label: 'Roll', width: '60px', align: 'center' },
+              { label: 'Student Information', width: 'auto', align: 'left' },
+              { label: 'Days', width: '60px', align: 'center' },
+              { label: 'Pres', width: '60px', align: 'center' },
+              { label: 'Abs', width: '60px', align: 'center' },
+              { label: '%', width: '80px', align: 'center' },
+              { label: 'Status', width: '90px', align: 'center' }
+            ].map((col) => (
+              <th 
+                key={col.label} 
+                className={cn(
+                  "px-3 py-3 text-[9px] font-black uppercase tracking-widest text-text-muted",
+                  col.align === 'center' ? 'text-center' : 'text-left'
+                )}
+                style={{ width: col.width }}
+              >
+                {col.label}
+              </th>
             ))}
           </tr>
         </thead>
-        <tbody className="divide-y divide-border">
+        <tbody className="divide-y divide-border/30">
           {rows.map((row) => {
             const pct = Number(row.percentage || 0)
-            const sColor = pct >= threshold ? '#10b981' : pct >= threshold - 10 ? '#f59e0b' : '#ef4444'
-            const sBg    = pct >= threshold ? 'rgba(16,185,129,0.12)' : pct >= threshold - 10 ? 'rgba(245,158,11,0.12)' : 'rgba(239,68,68,0.12)'
+            const sColor = pct >= threshold ? 'text-success' : pct >= threshold - 10 ? 'text-warning' : 'text-error'
+            const sBg    = pct >= threshold ? 'bg-green-100 text-green-700' : pct >= threshold - 10 ? 'bg-orange-100 text-orange-700' : 'bg-red-100 text-red-700'
             const sLabel = pct >= threshold ? 'Good' : pct >= threshold - 10 ? 'Warning' : 'Critical'
             return (
-              <tr key={row.enrollment_id} className="hover:bg-surface-raised transition-colors">
-                <td className="px-3 py-3 text-xs text-text-secondary">{row.roll_number || '--'}</td>
-                <td className="px-3 py-3 text-sm font-semibold text-text-primary whitespace-nowrap">{row.first_name} {row.last_name}</td>
-                <td className="px-3 py-3 text-xs text-text-secondary">{row.total_days || 0}</td>
-                <td className="px-3 py-3 text-xs font-bold text-emerald-600">{row.present || 0}</td>
-                <td className="px-3 py-3 text-xs font-bold text-red-500">{row.absent || 0}</td>
-                <td className="px-3 py-3 text-xs text-amber-600">{row.late || 0}</td>
+              <tr key={row.enrollment_id} className="hover:bg-surface-raised/40 transition-colors group">
+                <td className="px-3 py-3 text-center text-xs font-mono font-bold text-text-muted">{row.roll_number || '--'}</td>
                 <td className="px-3 py-3">
-                  <div className="flex flex-col gap-1">
-                    <span className="text-xs font-bold" style={{ color: sColor }}>{pct.toFixed(0)}%</span>
+                  <div className="flex flex-col min-w-0">
+                    <span className="text-sm font-bold text-text-primary group-hover:text-primary transition-colors truncate">
+                      {row.first_name} {row.last_name}
+                    </span>
+                    <span className="text-[10px] text-text-muted uppercase tracking-widest mt-0.5">ID: {row.student_id}</span>
+                  </div>
+                </td>
+                <td className="px-3 py-3 text-center text-xs font-bold text-text-secondary">{row.total_days || 0}</td>
+                <td className="px-3 py-3 text-center text-xs font-black text-green-600">{row.present || 0}</td>
+                <td className="px-3 py-3 text-center text-xs font-black text-red-500">{row.absent || 0}</td>
+                <td className="px-3 py-3 text-center">
+                  <div className="flex flex-col items-center gap-1">
+                    <span className={cn("text-xs font-black", sColor)}>{pct.toFixed(0)}%</span>
                     <div className="h-1 w-12 rounded-full bg-surface-raised overflow-hidden">
-                      <div className="h-full rounded-full transition-all duration-700" style={{ width: `${Math.min(pct, 100)}%`, background: sColor }} />
+                      <div className="h-full rounded-full transition-all duration-700" style={{ width: `${Math.min(pct, 100)}%`, background: 'currentColor' }} className={sColor} />
                     </div>
                   </div>
                 </td>
-                <td className="px-3 py-3">
-                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-md uppercase tracking-wide" style={{ background: sBg, color: sColor }}>{sLabel}</span>
+                <td className="px-3 py-3 text-center">
+                  <span className={cn("text-[9px] font-black px-2 py-0.5 rounded-full uppercase tracking-wider", sBg)}>{sLabel}</span>
                 </td>
               </tr>
             )
@@ -169,24 +148,28 @@ const SummaryTable = ({ rows, threshold }) => {
 }
 
 const DailySummaryPanel = ({ rows }) => {
-  if (!rows.length) return <EmptyPanel text="No daily summary available for the selected month." />
+  if (!rows.length) return <EmptyPanel text="No daily summary available for the selected range." icon={Activity} />
   const max = Math.max(...rows.map((row) => row.percentage), 1)
   return (
-    <div className="flex flex-col gap-3">
+    <div className="flex flex-col gap-4">
       {rows.map((row) => {
-        const color = row.percentage >= 90 ? '#10b981' : row.percentage >= 75 ? '#7b6ef6' : row.percentage >= 60 ? '#f59e0b' : '#ef4444'
+        const color = row.percentage >= 90 ? 'bg-green-500' : row.percentage >= 75 ? 'bg-primary' : row.percentage >= 60 ? 'bg-orange-500' : 'bg-red-500'
+        const textColor = row.percentage >= 90 ? 'text-green-600' : row.percentage >= 75 ? 'text-primary' : row.percentage >= 60 ? 'text-orange-600' : 'text-red-600'
         return (
           <div key={row.date} className="group">
-            <div className="flex justify-between items-end mb-1.5">
-              <span className="text-[11px] text-text-secondary font-mono bg-surface-raised px-1.5 py-0.5 rounded uppercase">{row.date}</span>
-              <span className="text-xs font-bold" style={{ color }}>
+            <div className="flex justify-between items-end mb-1.5 px-1">
+              <span className="text-[10px] font-black text-text-muted uppercase tracking-widest bg-surface-raised px-2 py-0.5 rounded-md">{row.date}</span>
+              <span className={cn("text-xs font-black", textColor)}>
                 {row.present}/{row.total}
-                <span className="text-text-muted font-normal mx-1">·</span>
+                <span className="text-text-muted/30 font-normal mx-2">|</span>
                 {row.percentage.toFixed(0)}%
               </span>
             </div>
-            <div className="h-1.5 rounded-full bg-surface-raised overflow-hidden">
-              <div className="h-full rounded-full transition-all duration-1000 cubic-bezier(.4,0,.2,1)" style={{ width: `${(row.percentage / max) * 100}%`, background: `linear-gradient(90deg, ${color}44, ${color})` }} />
+            <div className="h-2 rounded-full bg-surface-raised overflow-hidden">
+              <div 
+                className={cn("h-full rounded-full transition-all duration-1000 ease-out", color)} 
+                style={{ width: `${(row.percentage / max) * 100}%` }} 
+              />
             </div>
           </div>
         )
@@ -197,7 +180,7 @@ const DailySummaryPanel = ({ rows }) => {
 
 
 const BelowThresholdTable = ({ rows, threshold }) => {
-  if (!rows.length) return <EmptyPanel text={`No students are below ${threshold}% in this date range.`} />
+  if (!rows.length) return <EmptyPanel text={`All students meet the ${threshold}% target.`} icon={CheckCircle2} />
   return (
     <div className="flex flex-col gap-3">
       {rows.map((row) => {
@@ -206,19 +189,19 @@ const BelowThresholdTable = ({ rows, threshold }) => {
         const effectivePresentDays = percentage * totalDays / 100
         const daysShort = percentage >= threshold ? 0 : Math.ceil((threshold * totalDays / 100) - effectivePresentDays)
         return (
-          <div key={row.enrollment_id} className="bg-surface-raised border border-border rounded-2xl p-4 relative overflow-hidden group hover:border-red-200 transition-colors">
-            <div className="absolute top-0 left-0 bottom-0 pointer-events-none" style={{ width: `${percentage}%`, background: 'linear-gradient(90deg, rgba(239,68,68,0.04), transparent)' }} />
-            <div className="flex items-center justify-between gap-4 relative">
+          <div key={row.enrollment_id} className="bg-surface-raised/30 border rounded-2xl p-4 relative overflow-hidden group hover:border-red-200 transition-all shadow-sm" style={{ borderColor: 'var(--color-border)' }}>
+            <div className="absolute top-0 left-0 bottom-0 pointer-events-none opacity-[0.03] bg-red-600" style={{ width: `${percentage}%` }} />
+            <div className="flex items-center justify-between gap-4 relative z-10">
               <div className="min-w-0">
-                <p className="text-sm font-bold text-text-primary truncate">{row.first_name} {row.last_name}</p>
-                <p className="text-[10px] text-text-secondary mt-0.5 uppercase tracking-wide">Roll {row.roll_number || '--'} · {totalDays} school days</p>
-                <div className="mt-2 flex items-center gap-1.5 text-xs text-red-500 font-medium">
-                  <TriangleAlert size={12} />
+                <p className="text-sm font-black text-text-primary truncate">{row.first_name} {row.last_name}</p>
+                <p className="text-[10px] font-bold text-text-muted mt-1 uppercase tracking-widest">Roll {row.roll_number || '--'} · {totalDays} Working Days</p>
+                <div className="mt-3 flex items-center gap-2 text-[10px] text-red-600 font-black uppercase tracking-widest">
+                  <TriangleAlert size={14} />
                   <span>{Math.max(0, daysShort)} days short of {threshold}%</span>
                 </div>
               </div>
-              <div className="text-2xl sm:text-3xl font-black text-red-500 leading-none">
-                {percentage.toFixed(0)}<span className="text-sm ml-0.5">%</span>
+              <div className="text-3xl font-black text-red-600 leading-none tracking-tighter">
+                {percentage.toFixed(0)}<span className="text-sm ml-0.5 font-bold">%</span>
               </div>
             </div>
           </div>
@@ -229,44 +212,48 @@ const BelowThresholdTable = ({ rows, threshold }) => {
 }
 
 const ChronicAbsentees = ({ rows, onAlert }) => {
-  if (!rows.length) return <EmptyPanel text="No chronic absentees found in this date range." />
+  if (!rows.length) return <EmptyPanel text="Excellent! No chronic absentees detected." icon={Users} />
   return (
     <div className="flex flex-col gap-3">
       {rows.map((row) => (
-        <div key={row.enrollment_id} className="bg-surface-raised border border-border rounded-2xl p-4 transition-colors hover:border-amber-200">
-          <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
+        <div key={row.enrollment_id} className="bg-surface-raised/30 border rounded-2xl p-4 transition-all hover:border-orange-200 shadow-sm" style={{ borderColor: 'var(--color-border)' }}>
+          <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
             <div className="min-w-0 flex-1">
-              <div className="flex flex-wrap items-center gap-2 mb-2">
-                <p className="text-sm font-bold text-text-primary truncate">{row.first_name} {row.last_name}</p>
-                <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-red-500/10 text-red-500 uppercase tracking-wide">
+              <div className="flex flex-wrap items-center gap-2 mb-3">
+                <p className="text-sm font-black text-text-primary truncate">{row.first_name} {row.last_name}</p>
+                <span className="text-[9px] font-black px-2 py-0.5 rounded-full bg-red-100 text-red-700 uppercase tracking-widest shadow-sm">
                   {row.consecutive_absent_days} Days Consecutive
                 </span>
               </div>
               
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-1.5">
-                <div className="flex items-center gap-2 text-xs text-text-secondary">
-                  <PhoneCall size={12} className="shrink-0" />
-                  <span className="truncate">Call: {row.father_phone || row.mother_phone || 'N/A'}</span>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-2">
+                <div className="flex items-center gap-2.5 text-xs font-bold text-text-secondary">
+                  <div className="h-6 w-6 rounded-lg bg-surface-raised flex items-center justify-center text-emerald-600 shrink-0">
+                    <PhoneCall size={12} />
+                  </div>
+                  <span className="truncate">{row.father_phone || row.mother_phone || 'No Phone Number'}</span>
                 </div>
-                <div className="sm:col-span-2 flex items-start gap-2 text-[10px] text-text-muted mt-1">
-                  <BellRing size={12} className="shrink-0 mt-0.5" />
-                  <p className="line-clamp-1">{Array.isArray(row.dates) ? row.dates.join(', ') : 'No dates'}</p>
+                <div className="sm:col-span-2 flex items-start gap-2.5 text-[10px] font-medium text-text-muted mt-1">
+                  <div className="h-6 w-6 rounded-lg bg-surface-raised flex items-center justify-center text-orange-500 shrink-0 mt-0.5">
+                    <BellRing size={12} />
+                  </div>
+                  <p className="line-clamp-2 leading-relaxed">{Array.isArray(row.dates) ? row.dates.join(', ') : 'No date records'}</p>
                 </div>
               </div>
             </div>
             
-            <div className="flex gap-2 mt-2 sm:mt-0">
+            <div className="flex gap-2 shrink-0">
                <button 
                 onClick={() => (row.father_phone || row.mother_phone) && window.open(`tel:${row.father_phone || row.mother_phone}`, '_self')}
-                className="flex-1 sm:flex-none px-3 py-2 rounded-xl bg-emerald-500 text-white text-xs font-bold hover:bg-emerald-600 active:scale-95 transition-all flex items-center justify-center gap-2 shadow-sm shadow-emerald-500/20"
+                className="flex-1 sm:flex-none px-4 py-2 rounded-xl bg-emerald-500 text-white text-[11px] font-black uppercase tracking-widest hover:bg-emerald-600 active:scale-95 transition-all flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/20"
               >
-                <PhoneCall size={13} /> Call
+                <PhoneCall size={14} /> Call
               </button>
               <button 
                 onClick={onAlert}
-                className="flex-1 sm:flex-none px-3 py-2 rounded-xl bg-amber-500 text-white text-xs font-bold hover:bg-amber-600 active:scale-95 transition-all flex items-center justify-center gap-2 shadow-sm shadow-amber-500/20"
+                className="flex-1 sm:flex-none px-4 py-2 rounded-xl bg-orange-500 text-white text-[11px] font-black uppercase tracking-widest hover:bg-orange-600 active:scale-95 transition-all flex items-center justify-center gap-2 shadow-lg shadow-orange-500/20"
               >
-                <BellRing size={13} /> Alert
+                <BellRing size={14} /> Alert
               </button>
             </div>
           </div>
@@ -478,55 +465,79 @@ const AttendanceReports = () => {
     : '—'
 
   return (
-    <div className="ar" style={{ fontFamily: 'inherit' }}>
-      <style>{STYLES}</style>
-
-      {/* ── PAGE HEADER — identical text to original ── */}
-      <section
-        className="ar-filters"
-        style={{ marginBottom: 20, borderRadius: 28 }}
-      >
-        <div style={{ gridColumn: '1 / -1', marginBottom: 4 }}>
-          <h1 className="text-2xl font-bold" style={{ color: 'var(--color-text-primary)', margin: 0 }}>
-            Attendance Reports
-          </h1>
-          <p className="mt-2 text-sm" style={{ color: 'var(--color-text-secondary)', margin: '6px 0 0' }}>
-            Summary, daily class trends, below-threshold tracking, and chronic absentee alerts for your assigned sections only.
-          </p>
+    <div className="space-y-6">
+      {/* ── Header ── */}
+      <section className="rounded-2xl border p-5 sm:p-6" style={{ borderColor: 'var(--color-border)' }}>
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+          <div className="min-w-0">
+            <p className="text-[11px] font-semibold uppercase tracking-widest" style={{ color: '#0f766e' }}>
+              Attendance Management
+            </p>
+            <h1 className="mt-1.5 text-2xl font-bold sm:text-3xl" style={{ color: 'var(--color-text-primary)' }}>
+              Attendance Reports
+            </h1>
+            <p className="mt-1.5 max-w-xl text-sm leading-relaxed" style={{ color: 'var(--color-text-secondary)' }}>
+              Summary, daily trends, below-threshold tracking, and chronic absentee alerts for your assigned sections.
+            </p>
+          </div>
         </div>
 
         {/* filters — same fields, same logic as original */}
-        <FieldSelect
-          label="Assigned Section"
-          value={assignmentKey}
-          onChange={(e) => setAssignmentKey(e.target.value)}
-          options={reportAssignments}
-          placeholder={loadingAssignments ? 'Loading…' : 'Select section'}
-        />
-        <DateField label="From Date" value={fromDate} onChange={setFromDate} />
-        <DateField label="To Date"   value={toDate}   onChange={setToDate}   />
-        <FieldSelect
-          label="Threshold"
-          value={threshold}
-          onChange={(e) => setThreshold(e.target.value)}
-          options={[
-            { value: '75', label: '75%' },
-            { value: '80', label: '80%' },
-            { value: '85', label: '85%' },
-          ]}
-        />
+        <div className="mt-5 grid grid-cols-1 gap-4 xl:grid-cols-6">
+          <div className="space-y-1.5 xl:col-span-2">
+            <label className="text-sm font-medium" style={{ color: 'var(--color-text-primary)' }}>Assigned Section</label>
+            <Select
+              value={assignmentKey}
+              onChange={(e) => setAssignmentKey(e.target.value)}
+              options={reportAssignments}
+              placeholder={loadingAssignments ? 'Loading…' : 'Select section'}
+              className="h-9 px-3 py-1 rounded-xl bg-surface-raised border border-border/50 text-xs font-semibold focus:border-primary"
+            />
+          </div>
+          <div className="space-y-1.5 xl:col-span-1">
+            <label className="text-sm font-medium" style={{ color: 'var(--color-text-primary)' }}>From Date</label>
+            <input 
+              type="date" 
+              className="w-full bg-surface-raised border border-border/50 rounded-xl px-3 py-1.5 text-xs text-text-primary outline-none focus:border-primary h-9 font-semibold" 
+              value={fromDate} 
+              onChange={(e) => setFromDate(e.target.value)} 
+            />
+          </div>
+          <div className="space-y-1.5 xl:col-span-1">
+            <label className="text-sm font-medium" style={{ color: 'var(--color-text-primary)' }}>To Date</label>
+            <input 
+              type="date" 
+              className="w-full bg-surface-raised border border-border/50 rounded-xl px-3 py-1.5 text-xs text-text-primary outline-none focus:border-primary h-9 font-semibold" 
+              value={toDate} 
+              onChange={(e) => setToDate(e.target.value)} 
+            />
+          </div>
+          <div className="space-y-1.5 xl:col-span-2">
+            <label className="text-sm font-medium" style={{ color: 'var(--color-text-primary)' }}>Threshold</label>
+            <Select
+              value={threshold}
+              onChange={(e) => setThreshold(e.target.value)}
+              options={[
+                { value: '75', label: '75%' },
+                { value: '80', label: '80%' },
+                { value: '85', label: '85%' },
+              ]}
+              className="h-9 px-3 py-1 rounded-xl bg-surface-raised border border-border/50 text-xs font-semibold focus:border-primary"
+            />
+          </div>
+        </div>
       </section>
 
       {/* ── STAT STRIP ── */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(175px, 1fr))', gap: 12, marginBottom: 20 }}>
-        <StatCard label="Total Students"    value={reportData.summary.length}          sub="in selected section"          color="#7b6ef6" icon={Users}      />
-        <StatCard label="Avg Attendance"    value={`${avgAtt}%`}                       sub="across date range"            color="#10b981" icon={TrendingUp}  />
-        <StatCard label="Below Threshold"   value={reportData.belowThreshold.length}   sub={`under ${threshold}% target`} color="#ef4444" icon={AlertCircle} />
-        <StatCard label="Chronic Absentees" value={reportData.chronicAbsentees.length} sub="3+ consecutive days"          color="#f59e0b" icon={Activity}    />
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+        <StatCard label="Total Students"    value={reportData.summary.length}          sub="In Selected Section"          color="#7b6ef6" icon={Users}      />
+        <StatCard label="Avg Attendance"    value={`${avgAtt}%`}                       sub="Across Date Range"            color="#10b981" icon={TrendingUp}  />
+        <StatCard label="Below Target"      value={reportData.belowThreshold.length}   sub={`Under ${threshold}% Target`} color="#ef4444" icon={AlertCircle} />
+        <StatCard label="Chronic Absence"   value={reportData.chronicAbsentees.length} sub="3+ Consecutive Days"          color="#f59e0b" icon={Activity}    />
       </div>
 
       {/* ── REPORT GRID — same 4 cards as original ── */}
-      <section className="grid grid-cols-1 gap-5 xl:grid-cols-2">
+      <section className="grid grid-cols-1 gap-6 xl:grid-cols-2 pb-10">
 
         <ReportCard
           title="Student Attendance Summary"
@@ -541,7 +552,7 @@ const AttendanceReports = () => {
 
         <ReportCard
           title="Daily Class Summary"
-          subtitle="Day-wise class attendance percentage to help spot weak attendance patterns."
+          subtitle="Day-wise class attendance percentage to spot weak trends."
           accent="#10b981"
           onExport={() => exportDailyCsv(dailySummary)}
         >
@@ -552,7 +563,7 @@ const AttendanceReports = () => {
 
         <ReportCard
           title="Below Threshold Report"
-          subtitle="Students under the target attendance percentage, sorted from lowest first."
+          subtitle="Students under the target attendance percentage."
           accent="#ef4444"
           onExport={() => exportBelowThresholdCsv(reportData.belowThreshold, Number(threshold))}
         >
@@ -563,7 +574,7 @@ const AttendanceReports = () => {
 
         <ReportCard
           title="Chronic Absentees"
-          subtitle="Students absent for 3 or more consecutive days with parent contact details."
+          subtitle="Students absent for 3+ consecutive days."
           accent="#f59e0b"
           onExport={() => exportChronicCsv(reportData.chronicAbsentees)}
         >
@@ -572,7 +583,7 @@ const AttendanceReports = () => {
             : (
               <ChronicAbsentees
                 rows={reportData.chronicAbsentees}
-                onAlert={() => toastInfo('Parent alert integration comes in the student communication steps.')}
+                onAlert={() => toastInfo('Parent alert functionality will be added in communication module.')}
               />
             )}
         </ReportCard>

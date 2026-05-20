@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { ArrowRight, CheckCircle2, LayoutList, BarChart3, CalendarDays, ClipboardCheck, Info, Users, Clock } from 'lucide-react'
+import { ArrowRight, CheckCircle2, LayoutList, BarChart3, CalendarDays, ClipboardCheck, Info, Users, Clock, ChevronRight } from 'lucide-react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import usePageTitle from '@/hooks/usePageTitle'
 import useToast from '@/hooks/useToast'
@@ -7,6 +7,7 @@ import useAttendance from '@/hooks/useAttendance'
 import AttendanceMarker from '@/components/teacher/AttendanceMarker'
 import EmptyState from '@/components/ui/EmptyState'
 import { ROUTES } from '@/constants/app'
+import { cn } from '@/utils/helpers'
 
 const MarkAttendance = () => {
   usePageTitle('Mark Attendance')
@@ -107,37 +108,34 @@ const MarkAttendance = () => {
   }, [todaySchedule, assignments, markingContext.class_id, markingContext.section_id])
 
   return (
-    <div className="mx-auto max-w-7xl space-y-5 pb-10">
-      <header
-        className="rounded-2xl border bg-surface p-6 shadow-sm"
-        style={{ borderColor: 'var(--color-border)' }}
-      >
-        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary">
-              <ClipboardCheck size={20} />
-            </div>
-            <div>
-              <h1 className="text-xl font-bold text-text-primary">
-                Mark Attendance
-              </h1>
-              <p className="text-xs text-text-secondary">
-                Track daily presence
+    <div className="space-y-6">
+      {/* ── Header ── */}
+      <section className="rounded-2xl border p-5 sm:p-6" style={{ borderColor: 'var(--color-border)' }}>
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+          <div className="min-w-0">
+            <p className="text-[11px] font-semibold uppercase tracking-widest" style={{ color: '#0f766e' }}>
+              Attendance Management
+            </p>
+            <h1 className="mt-1.5 text-2xl font-bold sm:text-3xl" style={{ color: 'var(--color-text-primary)' }}>
+              Mark Attendance
+            </h1>
+            <p className="mt-1.5 max-w-xl text-sm leading-relaxed" style={{ color: 'var(--color-text-secondary)' }}>
+              Record daily student attendance for your assigned sections. Ensure accuracy for session reports and parent notifications.
+            </p>
+          </div>
+          <div className="flex items-center gap-3 bg-surface-raised/50 px-4 py-2 rounded-2xl border border-border/50">
+            <div className="text-right">
+              <p className="text-[10px] font-black uppercase tracking-widest text-text-muted">Today</p>
+              <p className="text-sm font-black text-text-primary leading-tight mt-0.5">
+                {new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}
               </p>
             </div>
-          </div>
-
-          <div className="flex items-center gap-3">
-            <div className="text-right">
-              <p className="text-[10px] font-bold uppercase tracking-wider text-text-muted">Today</p>
-              <p className="text-xs font-bold text-text-primary">{new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}</p>
-            </div>
-            <div className="h-8 w-8 flex items-center justify-center rounded-lg bg-surface-raised text-primary">
-              <CalendarDays size={16} />
+            <div className="h-9 w-9 flex items-center justify-center rounded-xl bg-primary/10 text-primary">
+              <CalendarDays size={18} />
             </div>
           </div>
         </div>
-      </header>
+      </section>
 
       {/* Empty state */}
       {!loadingAssignments && assignments.length === 0 && (
@@ -183,21 +181,24 @@ const MarkAttendance = () => {
 
       {/* Next pending prompt */}
       {showNextPrompt && nextPending && (
-        <div className="rounded-2xl border border-emerald-100 bg-emerald-50 p-4 shadow-sm animate-in fade-in">
+        <div className="rounded-2xl border border-emerald-100 bg-emerald-50 p-5 shadow-sm animate-in fade-in slide-in-from-bottom-2">
           <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-            <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-100 text-emerald-600">
-                <CheckCircle2 size={20} />
+            <div className="flex items-center gap-4">
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-emerald-100 text-emerald-600">
+                <CheckCircle2 size={24} />
               </div>
-              <p className="text-sm font-bold text-emerald-900">
-                Attendance for <span className="underline">{nextPending.class_name}</span> is pending.
-              </p>
+              <div>
+                <p className="text-sm font-black text-emerald-900 leading-tight">Great Work!</p>
+                <p className="text-xs font-bold text-emerald-700 mt-1">
+                  Attendance for <span className="underline">{nextPending.class_name}</span> is still pending.
+                </p>
+              </div>
             </div>
             <div className="flex gap-2">
               <button
                 type="button"
                 onClick={() => setShowNextPrompt(false)}
-                className="h-9 px-4 text-xs font-bold text-emerald-700"
+                className="h-10 px-5 text-xs font-black uppercase tracking-widest text-emerald-700 hover:bg-emerald-100 rounded-xl transition-colors"
               >
                 Later
               </button>
@@ -213,9 +214,9 @@ const MarkAttendance = () => {
                   }))
                   setShowNextPrompt(false)
                 }}
-                className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-emerald-600 px-4 text-xs font-bold text-white shadow-sm"
+                className="inline-flex h-10 items-center gap-2 rounded-xl bg-emerald-600 px-5 text-xs font-black uppercase tracking-widest text-white shadow-lg shadow-emerald-600/20 active:scale-95 transition-all"
               >
-                Mark Now <ArrowRight size={14} />
+                Mark Now <ArrowRight size={16} />
               </button>
             </div>
           </div>
@@ -224,38 +225,41 @@ const MarkAttendance = () => {
 
       {!showNextPrompt && studentPayload?.students?.length > 0 && (
         <section
-          className="rounded-2xl border bg-surface p-5 shadow-sm"
+          className="rounded-2xl border bg-surface p-5 sm:p-6 shadow-sm"
           style={{ borderColor: 'var(--color-border)' }}
         >
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex items-center gap-3">
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-surface-raised text-text-secondary">
-                <Info size={16} />
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-surface-raised text-text-secondary">
+                <Info size={20} />
               </div>
-              <p className="text-sm font-bold text-text-primary">Management</p>
+              <div>
+                <p className="text-sm font-black text-text-primary tracking-tight">Register & Reports</p>
+                <p className="text-xs font-medium text-text-muted mt-0.5">Quick access to management tools</p>
+              </div>
             </div>
             <div className="flex gap-2">
               <button
                 type="button"
                 onClick={() => navigate(ROUTES.TEACHER_ATTENDANCE_REGISTER)}
-                className="h-9 rounded-lg bg-surface-raised px-4 text-xs font-bold text-text-primary"
+                className="h-10 rounded-xl bg-surface-raised border border-border/50 px-5 text-[11px] font-black uppercase tracking-widest text-text-primary hover:bg-border/20 transition-colors"
               >
                 Register
               </button>
               <button
                 type="button"
                 onClick={() => navigate(ROUTES.TEACHER_ATTENDANCE_REPORTS)}
-                className="h-9 rounded-lg bg-surface-raised px-4 text-xs font-bold text-text-primary"
+                className="h-10 rounded-xl bg-surface-raised border border-border/50 px-5 text-[11px] font-black uppercase tracking-widest text-text-primary hover:bg-border/20 transition-colors"
               >
                 Reports
               </button>
             </div>
           </div>
 
-          <div className="mt-6 grid grid-cols-3 gap-3 border-t border-dashed pt-6">
-            <StatRow icon={Users} label="Total" value={studentPayload.students.length} />
-            <StatRow icon={Clock} label="Time" value={new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })} />
-            <StatRow icon={ClipboardCheck} label="Status" value={studentPayload.is_submitted ? 'Done' : 'Pending'} tone={studentPayload.is_submitted ? 'text-success' : 'text-warning'} />
+          <div className="mt-6 grid grid-cols-3 gap-4 border-t border-dashed border-border pt-6">
+            <StatRow icon={Users} label="Student Count" value={studentPayload.students.length} />
+            <StatRow icon={Clock} label="Last Updated" value={new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })} />
+            <StatRow icon={ClipboardCheck} label="Filing Status" value={studentPayload.is_submitted ? 'Completed' : 'Draft Mode'} tone={studentPayload.is_submitted ? 'text-success' : 'text-orange-600'} />
           </div>
         </section>
       )}
@@ -264,10 +268,14 @@ const MarkAttendance = () => {
 }
 
 const StatRow = ({ icon: Icon, label, value, tone = 'text-text-primary' }) => (
-  <div className="flex flex-col items-center gap-1">
-    <Icon size={14} className="text-text-muted" />
-    <span className="text-[10px] font-bold uppercase tracking-wider text-text-muted">{label}</span>
-    <span className={`text-xs font-bold ${tone}`}>{value}</span>
+  <div className="flex flex-col items-center gap-2">
+    <div className="h-8 w-8 rounded-full bg-surface-raised flex items-center justify-center text-text-muted">
+      <Icon size={14} />
+    </div>
+    <div className="text-center">
+      <p className="text-[9px] font-black uppercase tracking-widest text-text-muted">{label}</p>
+      <p className={`text-xs font-black mt-0.5 ${tone}`}>{value}</p>
+    </div>
   </div>
 )
 
