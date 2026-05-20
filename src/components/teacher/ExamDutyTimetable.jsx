@@ -2,7 +2,7 @@ import { useMemo } from 'react'
 import { Calendar, Clock, MapPin, UserCheck, ShieldCheck } from 'lucide-react'
 import { formatDate } from '@/utils/helpers'
 
-const DAYS = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday']
+const DAYS = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']
 
 const SUBJECT_COLORS = {
   'Physics':           { accent: '#7C6FCD', bg: 'rgba(124,111,205,0.08)', text: '#4A4299' },
@@ -37,12 +37,16 @@ const ExamDutyTimetable = ({ duties = [] }) => {
     const weeks = {}
     
     duties.forEach(slot => {
-      const date = new Date(slot.exam_date)
+      const dateStr = slot.exam_date ? String(slot.exam_date).slice(0, 10) : null
+      if (!dateStr) return
+
+      const date = new Date(`${dateStr}T00:00:00`)
       const dayOfWeek = date.toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase()
       
       // Find Monday of that week
-      const diff = date.getDate() - date.getDay() + (date.getDay() === 0 ? -6 : 1)
-      const monday = new Date(date.setDate(diff))
+      const day = date.getDay()
+      const diff = date.getDate() - day + (day === 0 ? -6 : 1)
+      const monday = new Date(new Date(date).setDate(diff))
       const weekKey = monday.toISOString().split('T')[0]
       
       if (!weeks[weekKey]) {
