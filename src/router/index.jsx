@@ -51,6 +51,7 @@ const CreateSessionPage = lazy(() => import('@/pages/sessions/CreateSessionPage'
 const SessionDetailPage = lazy(() => import('@/pages/sessions/SessionDetailPage'))
 const StudentsPage = lazy(() => import('@/pages/students/StudentsPage'))
 const AdmitStudentPage = lazy(() => import('@/pages/students/AdmitStudentPage'))
+const BulkAdmissionPage = lazy(() => import('@/pages/students/BulkAdmissionPage'))
 const StudentDetailPage = lazy(() => import('@/pages/students/StudentDetailPage'))
 const LeftStudentsPage = lazy(() => import('@/pages/students/LeftStudentsPage'))
 const GraduatedStudentsPage = lazy(() => import('@/pages/students/GraduatedStudentsPage'))
@@ -426,6 +427,14 @@ const router = createBrowserRouter([
         element: (
           <ProtectedRoute roles={[ROLES.ADMIN]}>
             <Lazy component={AdmitStudentPage} />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: ROUTES.STUDENT_IMPORT,
+        element: (
+          <ProtectedRoute roles={[ROLES.ADMIN]}>
+            <Lazy component={BulkAdmissionPage} />
           </ProtectedRoute>
         ),
       },

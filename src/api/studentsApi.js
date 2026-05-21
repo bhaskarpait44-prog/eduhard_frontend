@@ -16,6 +16,12 @@ export const getIDCardData  = (id)         => api.get(`/students/${id}/id-card/d
 export const getTCData      = (id)         => api.get(`/students/${id}/tc/data`)
 export const getClassIDCardsData = (params) => api.get('/students/bulk/id-cards/data', { params })
 
+// ── Bulk Import ──────────────────────────────────────────────────────────
+export const getAdmissionTemplate = ()      => api.get('/students/import/template')
+export const previewAdmission      = (data)  => api.post('/students/import/preview', data)
+export const confirmAdmission      = (data)  => api.post('/students/import/confirm', data)
+export const getAdmissionStatus    = (jobId) => api.get(`/students/import/${jobId}/status`)
+
 // ── Documents ─────────────────────────────────────────────────────────────
 export const getDocuments   = (id)         => api.get(`/students/${id}/documents`)
 export const uploadDocument = (id, data)   => api.post(`/students/${id}/documents`, data, {

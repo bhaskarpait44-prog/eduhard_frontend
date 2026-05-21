@@ -19,6 +19,8 @@ export const getStudentPayments = (id, params) => api.get(`/accountant/students/
 export const getStudentStatementPdf = (id, params) => api.get(`/accountant/students/${id}/statement/pdf`, { params, responseType: 'blob' })
 
 export const getFeeStructure = (params) => api.get('/accountant/fee-structure', { params })
+export const downloadFeeStructure = (params) => api.get('/accountant/fee-structure/download', { params, responseType: 'blob' })
+export const downloadFeeStructurePdf = (params) => api.get('/fees/structure/download', { params, responseType: 'blob' })
 export const createFeeStructure = (data) => api.post('/accountant/fee-structure', data)
 export const updateFeeStructure = (id, data) => api.patch(`/accountant/fee-structure/${id}`, data)
 export const deleteFeeStructure = (id) => api.delete(`/accountant/fee-structure/${id}`)

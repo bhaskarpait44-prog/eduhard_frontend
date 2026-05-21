@@ -25,6 +25,8 @@ const schema = z.object({
     return day >= 1 && day <= 28
   }, 'Due day must be between 1 and 28'),
   class_id: z.string().min(1, 'Class is required'),
+  is_optional: z.boolean().optional(),
+  remarks: z.string().max(255, 'Remarks too long').optional(),
 })
 
 const FREQUENCY_OPTIONS = [
@@ -69,6 +71,8 @@ const AddFeeComponentModal = ({ open, onClose, sessionId, classId: preSelectedCl
         frequency: 'monthly',
         due_day: '10',
         class_id: preSelectedClass || '',
+        is_optional: false,
+        remarks: '',
       })
     }
   }, [open, preSelectedClass, reset])
@@ -83,6 +87,8 @@ const AddFeeComponentModal = ({ open, onClose, sessionId, classId: preSelectedCl
         amount: data.amount,
         frequency: data.frequency,
         due_day: parseInt(data.due_day, 10),
+        is_optional: !!data.is_optional,
+        remarks: data.remarks || null,
       }
       const response = await (apiMode === 'accountant'
         ? accountantApi.createFeeStructure(payload)
@@ -159,6 +165,23 @@ const AddFeeComponentModal = ({ open, onClose, sessionId, classId: preSelectedCl
           hint="Day of month payment is due (1-28)."
           {...register('due_day')}
         />
+        <Input
+          label="Remarks (Optional)"
+          placeholder="e.g. For academic year 2024"
+          error={errors.remarks?.message}
+          {...register('remarks')}
+        />
+        <div className="flex items-center gap-2 px-1">
+          <input
+            type="checkbox"
+            id="is_optional"
+            className="w-4 h-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+            {...register('is_optional')}
+          />
+          <label htmlFor="is_optional" className="text-sm font-medium text-gray-700 dark:text-gray-300">
+            This is an optional fee
+          </label>
+        </div>
 
         <div
           className="rounded-xl p-3 text-xs"

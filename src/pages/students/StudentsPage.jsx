@@ -5,7 +5,7 @@ import {
   Plus, Search, Users, ChevronRight,
   ChevronLeft, X, LayoutGrid, LayoutList,
   MoreVertical, Eye, Pencil, Trash2,
-  ExternalLink, Filter
+  ExternalLink, Filter, Upload
 } from 'lucide-react'
 import useAdminStudentStore from '@/store/studentStore'
 import useSessionStore from '@/store/sessionStore'
@@ -390,6 +390,13 @@ const StudentsPage = () => {
                   )}
                 </>
               )}
+              <Button 
+                variant="secondary" 
+                icon={Upload} 
+                onClick={() => navigate(ROUTES.STUDENT_IMPORT)}
+              >
+                Import
+              </Button>
               <Button icon={Plus} onClick={() => navigate(ROUTES.STUDENT_NEW)}>
                 Admit Student
               </Button>

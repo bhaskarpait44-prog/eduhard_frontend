@@ -1,6 +1,6 @@
 // src/pages/fees/FeeStructurePage.jsx
 import { useState, useEffect } from 'react'
-import { Plus, Trash2, Settings2 } from 'lucide-react'
+import { Plus, Trash2, Settings2, Download } from 'lucide-react'
 import useSessionStore from '@/store/sessionStore'
 import useToast from '@/hooks/useToast'
 import Button from '@/components/ui/Button'
@@ -34,6 +34,7 @@ const FeeStructurePage = ({ apiMode = 'default' }) => {
   const [classId,      setClassId]      = useState('')
   const [addModal,     setAddModal]     = useState(false)
   const [deleteTarget, setDeleteTarget] = useState(null)
+  const [isDownloading, setIsDownloading] = useState(false)
 
   const apiClient = apiMode === 'accountant' ? accountantApi : feesApi
 
@@ -78,6 +79,47 @@ const FeeStructurePage = ({ apiMode = 'default' }) => {
     }
   }
 
+  const handleDownload = async () => {
+    if (!sessionId) return
+    setIsDownloading(true)
+    try {
+      const response = await apiClient.downloadFeeStructurePdf({
+        session_id: sessionId,
+        class_id: classId || undefined,
+      })
+      
+      if (!response) {
+        throw new Error('No response received from server')
+      }
+
+      // If the interceptor unwraps response.data, and responseType is blob, 
+      // 'response' here is the Blob object itself.
+      if (response.type === 'application/json') {
+        const text = await response.text()
+        const errorData = JSON.parse(text)
+        throw new Error(errorData.message || 'Failed to generate PDF')
+      }
+
+      const sessionName = sessions.find(s => String(s.id) === sessionId)?.name || 'Session'
+      const className = classId ? (classes.find(c => c.value === classId)?.label || 'Class') : 'All_Classes'
+      const fileName = `Fee_Structure_${className.replace(/\s+/g, '_')}_${sessionName.replace(/\s+/g, '_')}.pdf`
+
+      const url = window.URL.createObjectURL(response)
+      const link = document.createElement('a')
+      link.href = url
+      link.setAttribute('download', fileName)
+      document.body.appendChild(link)
+      link.click()
+      link.parentNode.removeChild(link)
+      setTimeout(() => window.URL.revokeObjectURL(url), 100)
+    } catch (error) {
+      console.error('[Download Error]', error)
+      toastError(error.message || 'Failed to download PDF')
+    } finally {
+      setIsDownloading(false)
+    }
+  }
+
   return (
     <div className="space-y-5">
       {/* Filters + actions */}
@@ -101,6 +143,15 @@ const FeeStructurePage = ({ apiMode = 'default' }) => {
           containerClassName="flex-1"
         />
         <div className="flex items-end gap-2">
+          <Button
+            variant="secondary"
+            icon={Download}
+            onClick={handleDownload}
+            loading={isDownloading}
+            disabled={!sessionId}
+          >
+            Download PDF
+          </Button>
           <Button icon={Plus} onClick={() => setAddModal(true)}>
             Add Component
           </Button>
@@ -127,7 +178,7 @@ const FeeStructurePage = ({ apiMode = 'default' }) => {
             <table className="w-full">
               <thead>
                 <tr style={{ borderBottom: '1px solid var(--color-border)' }}>
-                  {['Fee Name', 'Amount', 'Frequency', 'Due Day', 'Status', 'Actions'].map(h => (
+                  {['Fee Name', 'Amount', 'Frequency', 'Due Day', 'Optional', 'Remarks', 'Status', 'Actions'].map(h => (
                     <th key={h} className="px-5 py-3.5 text-left text-xs font-semibold uppercase tracking-wider"
                       style={{ color: 'var(--color-text-muted)' }}>
                       {h}
@@ -160,7 +211,17 @@ const FeeStructurePage = ({ apiMode = 'default' }) => {
                         {fee.due_day}
                         {fee.due_day % 100 >= 11 && fee.due_day % 100 <= 13
                           ? 'th'
-                          : ['st', 'nd', 'rd'][fee.due_day % 10 - 1] || 'th'} of month
+                          : ['st', 'nd', 'rd'][fee.due_day % 10 - 1] || 'th'}
+                      </td>
+                      <td className="px-5 py-4">
+                        {fee.is_optional ? (
+                          <Badge variant="grey" size="xs">Optional</Badge>
+                        ) : (
+                          <span className="text-xs text-gray-400">—</span>
+                        )}
+                      </td>
+                      <td className="px-5 py-4 text-xs text-gray-500 max-w-[150px] truncate" title={fee.remarks}>
+                        {fee.remarks || '—'}
                       </td>
                       <td className="px-5 py-4">
                         <Badge variant={fee.is_active ? 'green' : 'grey'} dot>

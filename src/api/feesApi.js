@@ -3,6 +3,8 @@ import api from './axios'
 
 export const createFeeStructure  = (data)          => api.post('/fees/structure', data)
 export const getFeeStructures    = (params)         => api.get('/fees/structures', { params })
+export const downloadFeeStructure = (params)         => api.get('/fees/structures/download', { params, responseType: 'blob' })
+export const downloadFeeStructurePdf = (params)      => api.get('/fees/structure/download', { params, responseType: 'blob' })
 export const deleteFeeStructure  = (id)             => api.delete(`/fees/structure/${id}`)
 export const getStudentFees      = (enrollmentId)   => api.get(`/fees/${enrollmentId}`)
 export const recordPayment       = (data)           => api.post('/fees/payment', data)
