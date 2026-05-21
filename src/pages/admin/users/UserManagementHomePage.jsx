@@ -85,11 +85,12 @@ const UserManagementHomePage = () => {
         if (response.data) {
           const { total } = response.data.pagination || { total: 0 }
           const { admin = 0 } = response.data.roleCounts || {}
+          const { active = 0 } = response.data.statusCounts || {}
           
           setStats({
             total,
             admin,
-            active: total, // Placeholder or we could do another call with status=active
+            active,
           })
         }
       } catch (e) {
@@ -113,7 +114,7 @@ const UserManagementHomePage = () => {
           <p className="text-sm text-gray-500 mt-1">Configure system access and manage user roles across the organization.</p>
         </div>
         <button
-          onClick={() => navigate(ROUTES.USER_CREATE)}
+          onClick={() => navigate(ROUTES.USER_NEW)}
           className="inline-flex items-center gap-2 px-5 py-2.5 bg-indigo-600 text-white rounded-xl text-sm font-semibold hover:bg-indigo-700 transition-colors shadow-sm"
         >
           <UserPlus size={18} />
@@ -183,7 +184,7 @@ const UserManagementHomePage = () => {
           <h3 className="font-bold text-indigo-900 mb-2">Bulk Import</h3>
           <p className="text-sm text-indigo-700/80 mb-4">Onboard multiple users at once using our Excel template. Perfect for beginning a new session.</p>
           <button 
-            onClick={() => navigate(`${ROUTES.USER_MANAGE}/bulk-import`)}
+            onClick={() => navigate(ROUTES.USER_IMPORT)}
             className="text-sm font-bold text-indigo-700 flex items-center gap-1.5 hover:gap-2 transition-all"
           >
             Import Tool <ArrowRight size={16} />

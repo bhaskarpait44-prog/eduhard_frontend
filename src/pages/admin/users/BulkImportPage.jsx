@@ -71,8 +71,8 @@ const BulkImportPage = () => {
   }
 
   const handleFile = async (file) => {
-    if (!file.name.match(/\.(csv|xlsx)$/i)) {
-      setParseError('Please upload a CSV or Excel file.')
+    if (!file.name.match(/\.csv$/i)) {
+      setParseError('Please upload a CSV file. Excel (.xlsx) support is currently unavailable.')
       return
     }
 
@@ -80,7 +80,14 @@ const BulkImportPage = () => {
     setIsLoading(true)
 
     try {
-      const rows = parseCSV(await file.text())
+      const text = await file.text()
+      // Basic check if it's binary garbage (Excel files start with PK for zip)
+      if (text.startsWith('PK\x03\x04')) {
+        setParseError('This file appears to be an Excel file. Please export it as a CSV and try again.')
+        return
+      }
+
+      const rows = parseCSV(text)
       if (rows.length === 0) {
         setParseError('No data rows found in file.')
         return

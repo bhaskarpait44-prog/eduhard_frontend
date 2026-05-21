@@ -154,7 +154,7 @@ export const ROUTES = {
   TEACHER_MARKS_SUMMARY: '/teacher/marks/summary',
   TEACHER_STUDENTS: '/teacher/students',
   TEACHER_STUDENT_DETAIL: '/teacher/students/:id',
-  TEACHER_STUDENT_REMARKS: '/teacher/students/remarks',
+  TEACHER_STUDENT_REMARKS: '/teacher/students/:id/remarks',
   TEACHER_TIMETABLE: '/teacher/timetable',
   TEACHER_HOMEWORK: '/teacher/homework',
   TEACHER_CHAT: '/teacher/chat',

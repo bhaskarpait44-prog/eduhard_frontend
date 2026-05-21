@@ -137,14 +137,17 @@ const UserListPage = () => {
   const [roleFilter, setRoleFilter] = useState(initialRoleFilter)
   const [statusFilter, setStatusFilter] = useState('')
   const [selectedUser, setSelectedUser] = useState(null)
+  const [userToDelete, setUserToDelete] = useState(null)
   const [editForm, setEditForm] = useState(EMPTY_EDIT_FORM)
   const [permissionDraft, setPermissionDraft] = useState([])
   const [auditLogs, setAuditLogs] = useState([])
   const [tempPassword, setTempPassword] = useState('')
+  const [resetResult, setResetResult] = useState(null)
   const [forcePasswordChange, setForcePasswordChange] = useState(true)
   const [activeModal, setActiveModal] = useState(null)
 
   const currentPage = pagination.page || 1
+  const totalPages = pagination.totalPages || 1
   const activeRoleStyle = roleFilter ? ROLE_STYLES[roleFilter] : null
   const activeRoleLabel = activeRoleStyle?.label || 'All'
   const pageTitle = roleFilter ? `${activeRoleLabel} Users` : 'User Management'
@@ -152,6 +155,27 @@ const UserListPage = () => {
     ? `Manage ${activeRoleLabel.toLowerCase()} accounts, permissions, passwords, and status.`
     : `${pagination.total} user(s) total`
   usePageTitle(pageTitle)
+
+  const getPageNumbers = () => {
+    const pages = []
+    const showMax = 5
+
+    if (totalPages <= showMax) {
+      for (let i = 1; i <= totalPages; i++) pages.push(i)
+    } else {
+      pages.push(1)
+      if (currentPage > 3) pages.push('...')
+
+      const start = Math.max(2, currentPage - 1)
+      const end = Math.min(totalPages - 1, currentPage + 1)
+
+      for (let i = start; i <= end; i++) pages.push(i)
+
+      if (currentPage < totalPages - 2) pages.push('...')
+      pages.push(totalPages)
+    }
+    return pages
+  }
 
   const load = async (params = {}) => {
     const nextPage = params.page || currentPage
@@ -205,9 +229,11 @@ const UserListPage = () => {
   const closeModal = () => {
     setActiveModal(null)
     setSelectedUser(null)
+    setUserToDelete(null)
     setPermissionDraft([])
     setAuditLogs([])
     setTempPassword('')
+    setResetResult(null)
     setForcePasswordChange(true)
     setEditForm(EMPTY_EDIT_FORM)
   }
@@ -310,17 +336,22 @@ const UserListPage = () => {
     }
   }
 
-  const handleDelete = async (user) => {
-    const userId = getUserRecordId(user)
+  const confirmDelete = (user) => {
     if (user.source_type === 'student_portal') {
       toastError('Manage this student from the Students module')
       return
     }
+    setUserToDelete(user)
+    setActiveModal('delete')
+  }
+
+  const handleDelete = async () => {
+    if (!userToDelete) return
+    const userId = getUserRecordId(userToDelete)
     if (!userId) {
       toastError('Unable to identify this user record')
       return
     }
-    if (!window.confirm(`Delete ${user.name}? This will deactivate their account.`)) return
 
     setIsSaving(true)
     try {
@@ -329,9 +360,10 @@ const UserListPage = () => {
       setPagination(prev => ({ ...prev, total: Math.max(0, prev.total - 1) }))
       setRoleCounts(prev => ({
         ...prev,
-        [user.role]: Math.max(0, (prev[user.role] || 0) - 1),
+        [userToDelete.role]: Math.max(0, (prev[userToDelete.role] || 0) - 1),
       }))
       toastSuccess('User deleted')
+      closeModal()
     } catch (e) {
       toastError(e.message || 'Cannot delete user')
     } finally {
@@ -397,6 +429,11 @@ const UserListPage = () => {
     }
   }
 
+  const handleCopy = (text) => {
+    navigator.clipboard.writeText(text)
+    toastSuccess('Copied to clipboard')
+  }
+
   const savePasswordReset = async () => {
     if (!selectedUser) return
     const userId = getUserRecordId(selectedUser)
@@ -415,10 +452,11 @@ const UserListPage = () => {
       const generatedPassword = response.data?.generated_password
       if (generatedPassword) {
         setResetResult(response.data)
+        toastSuccess('Temporary password generated')
       } else {
         toastSuccess('Password reset successfully')
+        closeModal()
       }
-      closeModal()
     } catch (e) {
       toastError(e.message || 'Failed to reset password')
     } finally {
@@ -627,7 +665,7 @@ const UserListPage = () => {
                         </ActionButton>
                         <ActionButton
                           title="Delete"
-                          onClick={() => handleDelete(user)}
+                          onClick={() => confirmDelete(user)}
                           disabled={isSaving}
                           danger
                         >
@@ -643,24 +681,80 @@ const UserListPage = () => {
         )}
       </div>
 
-      {pagination.totalPages > 1 && (
-        <div className="flex items-center justify-center gap-2">
-          {[...Array(pagination.totalPages)].map((_, i) => (
-            <button
-              key={i}
-              onClick={() => load({ page: i + 1 })}
-              className="w-8 h-8 rounded-lg text-sm font-medium transition-colors"
-              style={{
-                backgroundColor: i + 1 === pagination.page ? 'var(--color-brand)' : 'var(--color-surface)',
-                color: i + 1 === pagination.page ? '#fff' : 'var(--color-text-secondary)',
-                border: '1px solid var(--color-border)',
-              }}
-            >
-              {i + 1}
-            </button>
+      {totalPages > 1 && (
+        <div className="flex items-center justify-center gap-2 mt-4">
+          <button
+            onClick={() => load({ page: currentPage - 1 })}
+            disabled={currentPage === 1}
+            className="w-8 h-8 rounded-lg flex items-center justify-center transition-colors disabled:opacity-30"
+            style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)', color: 'var(--color-text-primary)' }}
+          >
+            <ChevronLeft size={16} />
+          </button>
+          
+          {getPageNumbers().map((p, i) => (
+            p === '...' ? (
+              <span key={`sep-${i}`} className="px-1 text-gray-400">...</span>
+            ) : (
+              <button
+                key={p}
+                onClick={() => load({ page: p })}
+                className="w-8 h-8 rounded-lg text-sm font-medium transition-colors"
+                style={{
+                  backgroundColor: p === currentPage ? 'var(--color-brand)' : 'var(--color-surface)',
+                  color: p === currentPage ? '#fff' : 'var(--color-text-secondary)',
+                  border: '1px solid var(--color-border)',
+                }}
+              >
+                {p}
+              </button>
+            )
           ))}
+
+          <button
+            onClick={() => load({ page: currentPage + 1 })}
+            disabled={currentPage === totalPages}
+            className="w-8 h-8 rounded-lg flex items-center justify-center transition-colors disabled:opacity-30"
+            style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)', color: 'var(--color-text-primary)' }}
+          >
+            <ChevronRight size={16} />
+          </button>
         </div>
       )}
+
+      <Modal
+        open={activeModal === 'delete'}
+        onClose={closeModal}
+        title="Confirm Deletion"
+        size="sm"
+        footer={
+          <div className="flex gap-3 w-full">
+            <button
+              onClick={closeModal}
+              className="flex-1 px-4 py-2.5 text-sm font-medium rounded-xl border"
+              style={{ color: 'var(--color-text-secondary)', borderColor: 'var(--color-border)' }}
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleDelete}
+              disabled={isSaving}
+              className="flex-1 px-4 py-2.5 text-sm font-medium rounded-xl text-white bg-red-600 hover:bg-red-700 disabled:opacity-50"
+            >
+              Delete User
+            </button>
+          </div>
+        }
+      >
+        <div className="space-y-3">
+          <p className="text-sm" style={{ color: 'var(--color-text-primary)' }}>
+            Are you sure you want to delete <strong>{userToDelete?.name}</strong>?
+          </p>
+          <p className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>
+            This action will deactivate their account and hide them from general lists. You can still find them using the 'Inactive' status filter.
+          </p>
+        </div>
+      </Modal>
 
       <Modal
         open={activeModal === 'edit'}
@@ -801,23 +895,51 @@ const UserListPage = () => {
         }
       >
         <div className="space-y-4">
-          <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>
-            Leave the password blank to auto-generate a temporary password.
-          </p>
-          <Field label="New Password">
-            <input
-              type="password"
-              className={inputClassName}
-              style={baseInputStyle}
-              value={tempPassword}
-              onChange={e => setTempPassword(e.target.value)}
-              placeholder="Leave blank for auto-generated password"
-            />
-          </Field>
-          <label className="flex items-center gap-3 text-sm" style={{ color: 'var(--color-text-secondary)' }}>
-            <input type="checkbox" checked={forcePasswordChange} onChange={e => setForcePasswordChange(e.target.checked)} />
-            Force password change on next login
-          </label>
+          {!resetResult ? (
+            <>
+              <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>
+                Leave the password blank to auto-generate a temporary password.
+              </p>
+              <Field label="New Password">
+                <input
+                  type="password"
+                  className={inputClassName}
+                  style={baseInputStyle}
+                  value={tempPassword}
+                  onChange={e => setTempPassword(e.target.value)}
+                  placeholder="Leave blank for auto-generated password"
+                />
+              </Field>
+              <label className="flex items-center gap-3 text-sm" style={{ color: 'var(--color-text-secondary)' }}>
+                <input type="checkbox" checked={forcePasswordChange} onChange={e => setForcePasswordChange(e.target.checked)} />
+                Force password change on next login
+              </label>
+            </>
+          ) : (
+            <div className="space-y-3">
+              <div className="p-3 rounded-xl bg-emerald-50 border border-emerald-100">
+                <p className="text-xs font-bold text-emerald-700">
+                  New credentials generated. Share these with the user.
+                </p>
+              </div>
+              <div className="grid gap-2">
+                {resetResult.email && (
+                  <CredentialRow
+                    icon={Mail}
+                    label="Login Email"
+                    value={resetResult.email}
+                    onCopy={handleCopy}
+                  />
+                )}
+                <CredentialRow
+                  icon={KeyRound}
+                  label="Temporary Password"
+                  value={resetResult.generated_password}
+                  onCopy={handleCopy}
+                />
+              </div>
+            </div>
+          )}
         </div>
       </Modal>
 

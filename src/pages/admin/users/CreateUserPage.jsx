@@ -35,7 +35,9 @@ const schema = z.object({
   address: z.string().optional(),
   auto_password: z.boolean().optional(),
   force_password_change: z.boolean().optional(),
-  password: z.string().optional(),
+  password: z.string().optional().refine(val => !val || val.length >= 8, {
+    message: 'Password must be at least 8 characters'
+  }),
   internal_notes: z.string().optional(),
 })
 

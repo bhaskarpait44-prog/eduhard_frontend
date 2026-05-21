@@ -40,6 +40,12 @@ export const PERMISSION = {
   CLASSES_EDIT   : 'classes.edit',
   CLASSES_DELETE : 'classes.delete',
 
+  // Exams
+  EXAMS_VIEW     : 'exams.view',
+  EXAMS_CREATE   : 'exams.create',
+  EXAMS_EDIT     : 'exams.edit',
+  EXAMS_DELETE   : 'exams.delete',
+
   // Reports
   REPORTS_FEES       : 'reports.fees',
   REPORTS_ATTENDANCE : 'reports.attendance',
@@ -115,8 +121,10 @@ export function getDefaultPermissionsForRole(role) {
     teacher    : [
       PERMISSION.STUDENTS_VIEW,
       PERMISSION.ATTENDANCE_VIEW, PERMISSION.ATTENDANCE_MARK,
+      PERMISSION.EXAMS_VIEW,
       PERMISSION.RESULTS_VIEW, PERMISSION.RESULTS_ENTER,
-      PERMISSION.NOTICES_VIEW, PERMISSION.CLASSES_VIEW,
+      PERMISSION.NOTICES_VIEW, PERMISSION.NOTICES_POST,
+      PERMISSION.CLASSES_VIEW,
     ],
     accountant : [
       PERMISSION.FEES_VIEW,
@@ -193,6 +201,16 @@ export const PERMISSION_CATEGORIES = [
     ],
   },
   {
+    key   : 'exams',
+    label : 'Exams',
+    permissions: [
+      { name: PERMISSION.EXAMS_VIEW,   label: 'View Exams',   description: 'View exam schedules and details' },
+      { name: PERMISSION.EXAMS_CREATE, label: 'Create Exams', description: 'Create new exam schedules' },
+      { name: PERMISSION.EXAMS_EDIT,   label: 'Edit Exams',   description: 'Modify exam details' },
+      { name: PERMISSION.EXAMS_DELETE, label: 'Delete Exams', description: 'Remove exam schedules' },
+    ],
+  },
+  {
     key   : 'reports',
     label : 'Reports',
     permissions: [
@@ -241,6 +259,7 @@ export const PERMISSION_TEMPLATES = {
     permissions: [
       PERMISSION.STUDENTS_VIEW,
       PERMISSION.ATTENDANCE_VIEW, PERMISSION.ATTENDANCE_MARK, PERMISSION.ATTENDANCE_EDIT,
+      PERMISSION.EXAMS_VIEW,
       PERMISSION.RESULTS_VIEW, PERMISSION.RESULTS_ENTER,
       PERMISSION.NOTICES_VIEW, PERMISSION.NOTICES_POST,
       PERMISSION.CLASSES_VIEW,
@@ -251,6 +270,7 @@ export const PERMISSION_TEMPLATES = {
     permissions: [
       PERMISSION.STUDENTS_VIEW,
       PERMISSION.ATTENDANCE_VIEW, PERMISSION.ATTENDANCE_MARK,
+      PERMISSION.EXAMS_VIEW,
       PERMISSION.RESULTS_VIEW, PERMISSION.RESULTS_ENTER,
       PERMISSION.NOTICES_VIEW, PERMISSION.CLASSES_VIEW,
     ],

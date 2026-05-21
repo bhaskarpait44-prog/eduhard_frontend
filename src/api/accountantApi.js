@@ -37,7 +37,7 @@ export const emailReceipt = (id) => api.post(`/accountant/receipts/${id}/email`)
 export const whatsappReceipt = (id) => api.post(`/accountant/receipts/${id}/whatsapp`)
 
 export const getDefaulters = (params) => api.get('/accountant/defaulters', { params })
-export const downloadDefaultersPdf = (params) => api.get('/fees/defaulters/download', { params, responseType: 'blob' })
+export const downloadDefaultersPdf = (params) => api.get('/accountant/defaulters/download', { params, responseType: 'blob' })
 export const sendReminder = (data) => api.post('/accountant/defaulters/remind', data)
 export const sendReminderBulk = (data) => api.post('/accountant/defaulters/remind-bulk', data)
 
