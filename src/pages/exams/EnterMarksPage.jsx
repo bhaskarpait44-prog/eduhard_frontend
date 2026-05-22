@@ -1,14 +1,16 @@
 // src/pages/exams/EnterMarksPage.jsx
 import { useState, useEffect, useRef, useCallback } from 'react'
-import { Save, CheckCircle, AlertCircle, ChevronDown, Users, BookOpen, FileSpreadsheet } from 'lucide-react'
+import { Save, CheckCircle, AlertCircle, ChevronDown, Users, BookOpen, FileSpreadsheet, ShieldCheck } from 'lucide-react'
 import BulkUploadModal from './BulkUploadModal'
 import useExamStore from '@/store/examStore'
 import useSessionStore from '@/store/sessionStore'
+import useAuthStore from '@/store/authStore'
 import useToast from '@/hooks/useToast'
 import Button from '@/components/ui/Button'
 import { getClasses, getClassOptions, getSections } from '@/api/classApi'
 import { getSessionReport } from '@/api/attendanceApi'
 import { cn, debounce } from '@/utils/helpers'
+import { ROLES } from '@/constants/app'
 
 // ─── Mini Select ────────────────────────────────────────────────────────────
 const FilterSelect = ({ label, value, onChange, options = [], disabled, placeholder }) => (
@@ -76,8 +78,12 @@ const StatusBadge = ({ passed, failed, absent }) => {
 // ─── Main Component ──────────────────────────────────────────────────────────
 const EnterMarksPage = () => {
   const { toastSuccess, toastError } = useToast()
-  const { exams, subjects, isSaving, fetchExams, fetchExamSubjects, enterMarks } = useExamStore()
+  const { 
+    exams, subjects, examSubjects, isSaving, 
+    fetchExams, fetchExamSubjects, enterMarks, approveAllExamSubjects 
+  } = useExamStore()
   const { sessions, currentSession, fetchSessions } = useSessionStore()
+  const { user } = useAuthStore()
 
   const [sessionId, setSessionId] = useState('')
   const [examId, setExamId] = useState('')
@@ -90,9 +96,12 @@ const EnterMarksPage = () => {
   const [saved, setSaved] = useState({})
   const [loading, setLoading] = useState(false)
   const [submitting, setSubmitting] = useState(false)
+  const [finalizing, setFinalizing] = useState(false)
   const [bulkOpen, setBulkOpen] = useState(false)
 
-  const autoSaveTimers = useRef({})
+  const isAdmin = user?.role === ROLES.ADMIN || user?.role === 'super_admin'
+
+  const currentExamSubjects = examSubjects[examId] || []
 
   useEffect(() => {
     fetchSessions().catch(() => {})
@@ -181,6 +190,28 @@ const EnterMarksPage = () => {
     }
     setSubmitting(false)
     ok > 0 ? toastSuccess(`Marks saved for ${ok} students`) : toastError('Failed to save marks')
+  }
+
+  const handleFinalize = async () => {
+    if (!window.confirm('This will save all current marks and APPROVE these subjects for final results. Continue?')) return
+    setFinalizing(true)
+    try {
+      // 1. Save everything first
+      await handleSubmitAll()
+      
+      // 2. Approve all subjects for this exam
+      const res = await approveAllExamSubjects(examId)
+      if (res.success) {
+        toastSuccess('Marks saved and subjects approved successfully.')
+        await fetchExamSubjects(examId)
+      } else {
+        toastError(res.message || 'Failed to approve subjects.')
+      }
+    } catch (err) {
+      toastError('An error occurred during finalization.')
+    } finally {
+      setFinalizing(false)
+    }
   }
 
   const handleKeyDown = (e, rowIdx, colIdx) => {
@@ -287,7 +318,7 @@ const EnterMarksPage = () => {
           gap: 10, padding: '52px 24px', borderRadius: 16,
           backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)',
         }}>
-          <div style={{ width: 18, height: 18, borderRadius: '50%', border: '2px solid var(--color-border)', borderTopColor: 'var(--color-primary)', animation: 'spin 0.7s linear infinite' }} />
+          <div style={{ width: 18, height: 18, borderRadius: '50%', border: '2px solid var(--color-border)', borderTopColor: 'var(--color-primary)', animation: 'spin 0.6s linear infinite' }} />
           <p style={{ fontSize: 13, color: 'var(--color-text-muted)', margin: 0 }}>Loading students…</p>
           <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
         </div>
@@ -334,13 +365,24 @@ const EnterMarksPage = () => {
                 variant="outline"
                 icon={FileSpreadsheet}
                 onClick={() => setBulkOpen(true)}
-                disabled={submitting || isSaving}
+                disabled={submitting || isSaving || finalizing}
               >
                 Bulk Upload
               </Button>
+              {isAdmin && (
+                <Button
+                  onClick={handleFinalize}
+                  disabled={submitting || isSaving || finalizing}
+                  loading={finalizing}
+                  variant="primary"
+                  icon={ShieldCheck}
+                >
+                  Save & Finalize
+                </Button>
+              )}
               <button
                 onClick={handleSubmitAll}
-                disabled={submitting || isSaving}
+                disabled={submitting || isSaving || finalizing}
                 style={{
                   display: 'inline-flex', alignItems: 'center', gap: 7,
                   padding: '8px 18px', borderRadius: 10, fontSize: 13, fontWeight: 600,
@@ -389,19 +431,33 @@ const EnterMarksPage = () => {
                       Student
                     </th>
                     {/* Subject cols */}
-                    {subjects.map(sub => (
-                      <th key={sub.id} style={{
-                        padding: '10px 8px', textAlign: 'center', minWidth: 110,
-                        backgroundColor: 'var(--color-surface-raised)',
-                      }}>
-                        <p style={{ margin: 0, fontSize: 11, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--color-text-secondary)' }}>
-                          {sub.code || sub.name}
-                        </p>
-                        <p style={{ margin: '3px 0 0', fontSize: 10, color: '#ef4444', fontWeight: 500 }}>
-                          Pass {sub.passing_marks}
-                        </p>
-                      </th>
-                    ))}
+                    {subjects.map(sub => {
+                      const meta = currentExamSubjects.find(s => s.subject_id === sub.id)
+                      const status = meta?.review_status || 'draft'
+                      return (
+                        <th key={sub.id} style={{
+                          padding: '10px 8px', textAlign: 'center', minWidth: 110,
+                          backgroundColor: 'var(--color-surface-raised)',
+                        }}>
+                          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
+                            <p style={{ margin: 0, fontSize: 11, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--color-text-secondary)' }}>
+                              {sub.code || sub.name}
+                            </p>
+                            <span style={{ 
+                              fontSize: 9, fontWeight: 700, padding: '1px 6px', borderRadius: 6,
+                              backgroundColor: status === 'approved' ? '#dcfce7' : status === 'submitted' ? '#fef9c3' : '#f1f5f9',
+                              color: status === 'approved' ? '#166534' : status === 'submitted' ? '#854d0e' : '#475569',
+                              textTransform: 'uppercase'
+                            }}>
+                              {status}
+                            </span>
+                          </div>
+                          <p style={{ margin: '3px 0 0', fontSize: 10, color: '#ef4444', fontWeight: 500 }}>
+                            Pass {sub.passing_marks}
+                          </p>
+                        </th>
+                      )
+                    })}
                     {/* Total */}
                     <th style={{
                       padding: '11px 14px', textAlign: 'center', minWidth: 80,

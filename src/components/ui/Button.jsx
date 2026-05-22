@@ -86,8 +86,9 @@ const Button = ({
       {...props}
     >
       {loading ? (
-        <Loader2 size={size === 'xs' || size === 'sm' ? 13 : 15} className="animate-spin shrink-0" />
+        <Loader2 size={size === 'xs' || size === 'sm' ? 13 : 15} className="animate-spin-fast shrink-0" />
       ) : Icon ? (
+
         <Icon size={size === 'xs' || size === 'sm' ? 13 : 15} className="shrink-0" />
       ) : null}
       {children}

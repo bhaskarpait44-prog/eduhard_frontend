@@ -148,7 +148,8 @@ const FeeStructurePage = ({ apiMode = 'default' }) => {
             icon={Download}
             onClick={handleDownload}
             loading={isDownloading}
-            disabled={!sessionId}
+            disabled={!sessionId || structures.length === 0}
+            title={structures.length === 0 ? "No fee components to export" : "Download Fee Structure PDF"}
           >
             Download PDF
           </Button>

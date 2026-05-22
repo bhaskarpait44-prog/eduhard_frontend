@@ -76,3 +76,15 @@ export const downloadAttendanceRegisterPdf = (params = {}) =>
     }),
     responseType: 'blob',
   })
+
+export const downloadAttendanceSummaryPdf = (params) =>
+  api.get('/attendance/report/download', {
+    params: compact({ ...params }),
+    responseType: 'blob',
+  })
+
+export const downloadStudentAttendanceCard = (params) =>
+  api.get('/attendance/student/download', {
+    params: compact({ ...params }),
+    responseType: 'blob',
+  })

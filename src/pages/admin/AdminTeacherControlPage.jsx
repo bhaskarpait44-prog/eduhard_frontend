@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import {
   BookOpenText, CalendarRange, ChevronDown, ChevronRight, Clock,
   Grid3x3, School2, ShieldCheck, UserRoundCheck, Zap,
+  Pencil, Trash2
 } from 'lucide-react'
 import * as teacherControlApi from '@/api/adminTeacherControlApi'
 import { getClasses, getClassList, getSections, getSubjects } from '@/api/classApi'
@@ -100,7 +101,7 @@ const AdminTeacherControlPage = () => {
 
   /* forms */
   const [assignmentForm, setAssignmentForm] = useState({
-    teacher_id: '', class_id: '', section_id: '', subject_id: '', is_class_teacher: false,
+    id: null, teacher_id: '', class_id: '', section_id: '', subject_id: '', is_class_teacher: false,
   })
   const [slotForm, setSlotForm] = useState({
     teacher_id: '', class_id: '', section_id: '', subject_id: '',
@@ -252,21 +253,61 @@ const AdminTeacherControlPage = () => {
   }, [filteredSlots])
 
   /* ── actions ── */
-  const handleAssignmentCreate = async (e) => {
-    e.preventDefault(); setSaving(true)
+  const handleAssignmentSave = async (e) => {
+    e.preventDefault();
+
+    // Client-side validation
+    if (!assignmentForm.teacher_id) return toastError('Please select a teacher.')
+    if (!assignmentForm.class_id)   return toastError('Please select a class.')
+    if (!assignmentForm.section_id) return toastError('Please select a section.')
+    if (!assignmentForm.is_class_teacher && !assignmentForm.subject_id) {
+      return toastError('Subject must be selected for subject teacher assignments.')
+    }
+
+    setSaving(true)
     try {
-      await teacherControlApi.createTeacherControlAssignment({
+      const data = {
         teacher_id: Number(assignmentForm.teacher_id),
         class_id:   Number(assignmentForm.class_id),
         section_id: Number(assignmentForm.section_id),
         subject_id: assignmentForm.is_class_teacher ? null : Number(assignmentForm.subject_id),
         is_class_teacher: assignmentForm.is_class_teacher,
-      })
-      toastSuccess('Assignment created.')
-      setAssignmentForm({ teacher_id: '', class_id: '', section_id: '', subject_id: '', is_class_teacher: false })
+      }
+      if (assignmentForm.id) {
+        await teacherControlApi.updateTeacherControlAssignment(assignmentForm.id, data)
+        toastSuccess('Assignment updated.')
+      } else {
+        await teacherControlApi.createTeacherControlAssignment(data)
+        toastSuccess('Assignment created.')
+      }
+      setAssignmentForm({ id: null, teacher_id: '', class_id: '', section_id: '', subject_id: '', is_class_teacher: false })
       setShowAssignForm(false)
       await load()
-    } catch (err) { toastError(err?.message || 'Unable to create.') }
+    } catch (err) { toastError(err?.message || 'Unable to save.') }
+    finally { setSaving(false) }
+  }
+
+  const editAssignment = (item) => {
+    setAssignmentForm({
+      id: item.id,
+      teacher_id: String(item.teacher_id),
+      class_id: String(item.class_id),
+      section_id: String(item.section_id),
+      subject_id: item.subject_id ? String(item.subject_id) : '',
+      is_class_teacher: item.is_class_teacher,
+    })
+    setShowAssignForm(true)
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+
+  const deleteAssignment = async (id) => {
+    if (!window.confirm('Are you sure you want to delete this assignment?')) return
+    setSaving(true)
+    try {
+      await teacherControlApi.deleteTeacherControlAssignment(id)
+      toastSuccess('Assignment deleted.')
+      await load()
+    } catch (err) { toastError(err?.message || 'Failed to delete.') }
     finally { setSaving(false) }
   }
 
@@ -419,8 +460,8 @@ const AdminTeacherControlPage = () => {
           {/* create form */}
           {showAssignForm && (
             <div className="rounded-[24px] border p-5" style={{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface)' }}>
-              <p className="mb-4 text-sm font-semibold" style={{ color: 'var(--color-text-primary)' }}>Create Assignment</p>
-              <form className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-5" onSubmit={handleAssignmentCreate}>
+              <p className="mb-4 text-sm font-semibold" style={{ color: 'var(--color-text-primary)' }}>{assignmentForm.id ? 'Edit' : 'Create'} Assignment</p>
+              <form className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-5" onSubmit={handleAssignmentSave}>
                 <Select label="Teacher" value={assignmentForm.teacher_id} onChange={(e) => setAssignmentForm((p) => ({ ...p, teacher_id: e.target.value }))} options={teacherOptions} required />
                 <Select label="Class"   value={assignmentForm.class_id}   onChange={(e) => setAssignmentForm((p) => ({ ...p, class_id: e.target.value, section_id: '', subject_id: '' }))} options={classOptions} required />
                 <Select label="Section" value={assignmentForm.section_id} onChange={(e) => setAssignmentForm((p) => ({ ...p, section_id: e.target.value }))} options={aSection} required />
@@ -434,7 +475,7 @@ const AdminTeacherControlPage = () => {
                   >
                     {assignmentForm.is_class_teacher ? 'Class Teacher' : 'Subject Teacher'}
                   </button>
-                  <Button type="submit" variant="primary" loading={saving}>Add</Button>
+                  <Button type="submit" variant="primary" loading={saving}>{assignmentForm.id ? 'Update' : 'Add'}</Button>
                 </div>
               </form>
             </div>
@@ -446,7 +487,7 @@ const AdminTeacherControlPage = () => {
           ) : (
             <div className="space-y-3">
               {filteredGroups.map((group) => (
-                <AssignmentCard key={group.key} group={group} onToggle={toggleAssignment} />
+                <AssignmentCard key={group.key} group={group} onToggle={toggleAssignment} onEdit={editAssignment} onDelete={deleteAssignment} />
               ))}
             </div>
           )}
@@ -589,20 +630,22 @@ const AdminTeacherControlPage = () => {
 /* ════════════════════════════════════════════════════════════════════════════
    Assignment Card
 ════════════════════════════════════════════════════════════════════════════ */
-const AssignmentCard = ({ group, onToggle }) => {
+const AssignmentCard = ({ group, onToggle, onEdit, onDelete }) => {
   const [open, setOpen] = useState(false)
   const active = group.subjectTeachers.filter((s) => s.is_active).length
 
   return (
     <article className="overflow-hidden rounded-[24px] border" style={{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface)' }}>
       {/* header row */}
-      <button
-        type="button"
-        onClick={() => setOpen((p) => !p)}
+      <div
         className="flex w-full items-center justify-between gap-4 px-5 py-4 text-left transition-all"
         style={{ backgroundColor: 'var(--color-surface-raised)' }}
       >
-        <div className="flex flex-wrap items-center gap-3 min-w-0">
+        <button
+          type="button"
+          onClick={() => setOpen((p) => !p)}
+          className="flex flex-wrap items-center gap-3 min-w-0 flex-1 text-left"
+        >
           {/* class pill */}
           <span className="inline-flex h-8 items-center rounded-xl px-3 text-xs font-bold" style={{ backgroundColor: '#0c4a6e', color: '#e0f2fe' }}>
             {group.class_name}{group.class_stream ? ` (${group.class_stream.toUpperCase()})` : ''} — {group.section_name}
@@ -622,9 +665,19 @@ const AssignmentCard = ({ group, onToggle }) => {
               {group.inactiveCount} inactive
             </span>
           )}
+        </button>
+        <div className="flex items-center gap-2">
+          {group.classTeacher && (
+            <div className="flex items-center gap-1 border-r pr-2 mr-1" style={{ borderColor: 'var(--color-border)' }}>
+              <button onClick={() => onEdit(group.classTeacher)} className="p-1.5 rounded-lg hover:bg-black/5" title="Edit Class Teacher"><Pencil size={14} /></button>
+              <button onClick={() => onDelete(group.classTeacher.id)} className="p-1.5 rounded-lg hover:bg-red-50 text-red-600" title="Delete Assignment"><Trash2 size={14} /></button>
+            </div>
+          )}
+          <button onClick={() => setOpen((p) => !p)} className="p-1.5">
+            {open ? <ChevronDown size={16} style={{ color: 'var(--color-text-secondary)', flexShrink: 0 }} /> : <ChevronRight size={16} style={{ color: 'var(--color-text-secondary)', flexShrink: 0 }} />}
+          </button>
         </div>
-        {open ? <ChevronDown size={16} style={{ color: 'var(--color-text-secondary)', flexShrink: 0 }} /> : <ChevronRight size={16} style={{ color: 'var(--color-text-secondary)', flexShrink: 0 }} />}
-      </button>
+      </div>
 
       {/* expanded body */}
       {open && (
@@ -632,7 +685,7 @@ const AssignmentCard = ({ group, onToggle }) => {
           {/* subject grid */}
           <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
             {group.subjectTeachers.map((item) => (
-              <SubjectChip key={item.id} item={item} onToggle={onToggle} />
+              <SubjectChip key={item.id} item={item} onToggle={onToggle} onEdit={onEdit} onDelete={onDelete} />
             ))}
             {!group.subjectTeachers.length && (
               <p className="col-span-full text-sm" style={{ color: 'var(--color-text-secondary)' }}>No subject teachers assigned.</p>
@@ -644,7 +697,7 @@ const AssignmentCard = ({ group, onToggle }) => {
   )
 }
 
-const SubjectChip = ({ item, onToggle }) => (
+const SubjectChip = ({ item, onToggle, onEdit, onDelete }) => (
   <div
     className="flex items-center justify-between gap-3 rounded-[18px] border p-3"
     style={{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface-raised)', opacity: item.is_active ? 1 : 0.55 }}
@@ -656,14 +709,18 @@ const SubjectChip = ({ item, onToggle }) => (
         <p className="truncate text-[11px]" style={{ color: 'var(--color-text-secondary)' }}>{item.teacher_name}</p>
       </div>
     </div>
-    <button
-      type="button"
-      onClick={() => onToggle(item)}
-      className="flex-shrink-0 rounded-xl px-2.5 py-1 text-[11px] font-semibold transition-all"
-      style={{ backgroundColor: item.is_active ? '#d1fae5' : '#fee2e2', color: item.is_active ? '#065f46' : '#991b1b' }}
-    >
-      {item.is_active ? 'Active' : 'Off'}
-    </button>
+    <div className="flex items-center gap-1.5">
+      <button onClick={() => onEdit(item)} className="p-1 rounded-lg hover:bg-black/5" title="Edit"><Pencil size={13} /></button>
+      <button onClick={() => onDelete(item.id)} className="p-1 rounded-lg hover:bg-red-50 text-red-600" title="Delete"><Trash2 size={13} /></button>
+      <button
+        type="button"
+        onClick={() => onToggle(item)}
+        className="flex-shrink-0 rounded-xl px-2 py-0.5 text-[10px] font-semibold transition-all ml-1"
+        style={{ backgroundColor: item.is_active ? '#d1fae5' : '#fee2e2', color: item.is_active ? '#065f46' : '#991b1b' }}
+      >
+        {item.is_active ? 'Active' : 'Off'}
+      </button>
+    </div>
   </div>
 )
 

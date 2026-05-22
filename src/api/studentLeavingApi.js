@@ -45,3 +45,15 @@ export const getEnrollmentHistory = (id) => api.get(`/student-leaving/${id}/enro
  * @param {Object} data - { session_id, class_id, section_id, joined_date, roll_number }
  */
 export const readmitStudent = (id, data) => api.post(`/student-leaving/${id}/readmit`, data);
+
+/**
+ * Download leavers list as PDF.
+ * @param {Object} params - Filters
+ */
+export const downloadLeftStudentsPdf = (params) => api.get('/student-leaving/left/download', { params, responseType: 'blob' });
+
+/**
+ * Download graduated students list as PDF.
+ * @param {Object} params - Filters
+ */
+export const downloadGraduatedStudentsPdf = (params) => api.get('/student-leaving/graduated/download', { params, responseType: 'blob' });

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Users, Search, Filter, RefreshCw, X, GraduationCap, LogOut, ArrowRightLeft, Download, FileText } from 'lucide-react'
+import { Users, Search, Filter, RefreshCw, X, GraduationCap, LogOut, ArrowRightLeft, Download, FileText, FileDown } from 'lucide-react'
 import usePageTitle from '@/hooks/usePageTitle'
 import useToast from '@/hooks/useToast'
 import * as leavingApi from '@/api/studentLeavingApi'
@@ -16,6 +16,7 @@ import TransferCertificateDownload from '@/components/pdf/TransferCertificateDow
 import { formatDate, labelFromKey } from '@/utils/helpers'
 import { ROUTES } from '@/constants/app'
 import ReadmitModal from '@/components/students/ReadmitModal'
+import { downloadBlob } from '@/utils/downloadBlob'
 
 const REASON_OPTIONS = [
   { value: 'transfer', label: 'Transfer' },
@@ -35,6 +36,7 @@ export default function LeftStudentsPage() {
   const [summary, setSummary] = useState(null)
   const [pagination, setPagination] = useState({ total: 0, page: 1, totalPages: 1 })
   const [loading, setLoading] = useState(false)
+  const [downloading, setDownloading] = useState(false)
   const [searchInput, setSearchInput] = useState('')
   const [search, setSearch] = useState('')
   const [filters, setFilters] = useState({
@@ -79,6 +81,19 @@ export default function LeftStudentsPage() {
     } finally { setLoading(false) }
   }
 
+  const handleDownload = async () => {
+    setDownloading(true)
+    try {
+      const res = await leavingApi.downloadLeftStudentsPdf({ ...filters, search })
+      // With axios responseType: 'blob' and interceptor returning response.data,
+      // 'res' is already the blob.
+      downloadBlob(res, `Leavers_List_${filters.session_id || 'All'}.pdf`)
+      toastSuccess('PDF downloaded successfully.')
+    } catch (err) {
+      toastError('Failed to download PDF.')
+    } finally { setDownloading(false) }
+  }
+
   useEffect(() => { fetchMeta(); loadSummary() }, [])
 
   useEffect(() => {
@@ -114,6 +129,7 @@ export default function LeftStudentsPage() {
           <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>View and manage students who have officially left the institution.</p>
         </div>
         <div className="flex gap-2">
+          <Button variant="secondary" icon={FileDown} onClick={handleDownload} loading={downloading}>Export PDF</Button>
           <Button variant="secondary" icon={RefreshCw} onClick={() => loadData(pagination.page)}>Refresh</Button>
         </div>
       </div>

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { GraduationCap, Search, RefreshCw, X, Users, ArrowRightLeft, ChevronLeft, ChevronRight } from 'lucide-react'
+import { GraduationCap, Search, RefreshCw, X, Users, ArrowRightLeft, ChevronLeft, ChevronRight, FileDown } from 'lucide-react'
 import usePageTitle from '@/hooks/usePageTitle'
 import useToast from '@/hooks/useToast'
 import * as leavingApi from '@/api/studentLeavingApi'
@@ -13,6 +13,7 @@ import EmptyState from '@/components/ui/EmptyState'
 import { formatPercent } from '@/utils/helpers'
 import { ROUTES } from '@/constants/app'
 import ReadmitModal from '@/components/students/ReadmitModal'
+import { downloadBlob } from '@/utils/downloadBlob'
 
 export default function GraduatedStudentsPage() {
   usePageTitle('Graduated Students')
@@ -22,6 +23,7 @@ export default function GraduatedStudentsPage() {
   const [students, setStudents] = useState([])
   const [pagination, setPagination] = useState({ total: 0, page: 1, totalPages: 1 })
   const [loading, setLoading] = useState(false)
+  const [downloading, setDownloading] = useState(false)
   const [filters, setFilters] = useState({
     search: '',
     class_id: '',
@@ -53,6 +55,19 @@ export default function GraduatedStudentsPage() {
     } finally { setLoading(false) }
   }
 
+  const handleDownload = async () => {
+    setDownloading(true)
+    try {
+      const res = await leavingApi.downloadGraduatedStudentsPdf(filters)
+      // With axios responseType: 'blob' and interceptor returning response.data,
+      // 'res' is already the blob.
+      downloadBlob(res, `Graduated_Students_${filters.session_id || 'All'}.pdf`)
+      toastSuccess('PDF downloaded successfully.')
+    } catch (err) {
+      toastError('Failed to download PDF.')
+    } finally { setDownloading(false) }
+  }
+
   useEffect(() => { fetchMeta() }, [])
   useEffect(() => { loadData(1) }, [filters.class_id, filters.session_id])
 
@@ -72,6 +87,7 @@ export default function GraduatedStudentsPage() {
           <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>View and manage students who have completed their final class.</p>
         </div>
         <div className="flex gap-2">
+          <Button variant="secondary" icon={FileDown} onClick={handleDownload} loading={downloading}>Export PDF</Button>
           <Button variant="secondary" icon={RefreshCw} onClick={() => loadData(pagination.page)}>Refresh</Button>
         </div>
       </div>
