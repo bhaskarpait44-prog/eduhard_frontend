@@ -108,6 +108,20 @@ const useTeacherNotices = () => {
     await loadNotices()
   }, [loadNotices])
 
+  const markAsRead = useCallback(async (noticeId, source = 'unified') => {
+    try {
+      await teacherApi.markTeacherNoticeRead(noticeId, source)
+      // Optimistic update
+      setNotices(prev => prev.map(n => 
+        n.id === noticeId && (n.source || 'unified') === source 
+          ? { ...n, is_read: true } 
+          : n
+      ))
+    } catch (err) {
+      console.error('Failed to mark notice as read', err)
+    }
+  }, [])
+
   const assignedSubjects = useMemo(() => {
     const map = new Map()
     assignments
@@ -136,6 +150,7 @@ const useTeacherNotices = () => {
     loadNotices,
     saveNotice,
     deleteNotice,
+    markAsRead,
   }
 }
 

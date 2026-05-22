@@ -25,22 +25,22 @@ export const accountantListNotices = (params) =>
   api.get('/notices/accountant', { params })
 export const getAccountantPortalNotices = (params) => 
   api.get('/notices/accountant-portal', { params })
-export const markAccountantNoticeRead = (id) => 
-  api.post(`/notices/accountant-portal/${id}/read`)
+export const markAccountantNoticeRead = (id, source = 'unified') => 
+  api.post(`/notices/accountant-portal/${id}/read?source=${source}`)
 export const accountantCreateNotice = (data) => 
   api.post('/notices/accountant', data)
 
 // Receptionist
 export const getReceptionistNotices = (params) => 
   api.get('/notices/receptionist', { params })
-export const markReceptionistNoticeRead = (id) => 
-  api.post(`/notices/receptionist/${id}/read`)
+export const markReceptionistNoticeRead = (id, source = 'unified') => 
+  api.post(`/notices/receptionist/${id}/read?source=${source}`)
 
 // Student portal
 export const getStudentNotices = (params) => 
   api.get('/notices/student', { params })
-export const markNoticeRead = (id) => 
-  api.post(`/notices/student/${id}/read`)
+export const markNoticeRead = (id, source = 'unified') => 
+  api.post(`/notices/student/${id}/read?source=${source}`)
 export const pinNotice = (id) => 
   api.post(`/notices/student/${id}/pin`)
 export const unpinNotice = (id) => 

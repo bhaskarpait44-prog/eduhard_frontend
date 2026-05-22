@@ -52,7 +52,7 @@ const NoticeList = () => {
   const user = useAuthStore((state) => state.user)
   const { can } = usePermissions()
   const { toastSuccess, toastError } = useToast()
-  const { notices, loadingBase, loadingNotices, deleteNotice } = useTeacherNotices()
+  const { notices, loadingBase, loadingNotices, deleteNotice, markAsRead } = useTeacherNotices()
 
   const [filters, setFilters] = useState({
     search: '',
@@ -60,6 +60,13 @@ const NoticeList = () => {
   })
   const [selectedNotice, setSelectedNotice] = useState(null)
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(null)
+
+  const handleOpenNotice = (notice) => {
+    setSelectedNotice(notice)
+    if (!notice.is_read) {
+      markAsRead(notice.id, notice.source || 'unified')
+    }
+  }
 
   const canPost = can('notices.post')
 
@@ -77,8 +84,8 @@ const NoticeList = () => {
   const stats = useMemo(
     () => ({
       total: notices.length,
+      unread: notices.filter(n => !n.is_read).length,
       urgent: notices.filter(n => n.priority === 'urgent').length,
-      info: notices.filter(n => n.priority === 'info').length
     }),
     [notices],
   )
@@ -121,8 +128,8 @@ const NoticeList = () => {
 
         <div className="grid grid-cols-3 gap-2">
           <CompactStat label="Total" value={stats.total} color="#0f766e" />
+          <CompactStat label="Unread" value={stats.unread} color="#f59e0b" />
           <CompactStat label="Urgent" value={stats.urgent} color="#ef4444" />
-          <CompactStat label="Info" value={stats.info} color="#14b8a6" />
         </div>
       </section>
 
@@ -158,7 +165,7 @@ const NoticeList = () => {
             <NoticeCard
               key={`${notice.source || 'unified'}-${notice.id}`}
               notice={notice}
-              onOpen={() => setSelectedNotice(notice)}
+              onOpen={() => handleOpenNotice(notice)}
               onEdit={() => navigate(ROUTES.TEACHER_NOTICE_NEW, { state: { notice } })}
               onDelete={() => setIsDeleteConfirmOpen(notice.id)}
             />
@@ -189,7 +196,10 @@ const NoticeCard = ({ notice, onOpen, onEdit, onDelete }) => {
   const canManage = notice.can_manage === true
 
   return (
-    <article className="rounded-[22px] border p-5 transition-all hover:shadow-sm" style={{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface)' }}>
+    <article className="relative rounded-[22px] border p-5 transition-all hover:shadow-sm" style={{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface)' }}>
+      {!notice.is_read && (
+        <div className="absolute top-4 right-4 h-2 w-2 rounded-full bg-brand shadow-sm animate-pulse" />
+      )}
       <div className="flex items-start justify-between gap-4">
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2 mb-2">

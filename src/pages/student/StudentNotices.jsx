@@ -48,7 +48,7 @@ const StudentNotices = () => {
     setSelectedNotice(notice)
     if (!notice.is_read) {
       try {
-        await markRead(notice.id)
+        await markRead(notice.id, notice.source || 'unified')
         setSelectedNotice((prev) => prev ? { ...prev, is_read: true } : prev)
       } catch (err) {
         toastError(err?.message || 'Unable to mark notice as read.')

@@ -34,12 +34,14 @@ const useStudentNotices = () => {
     load().catch(() => {})
   }, [load])
 
-  const markRead = useCallback(async (noticeId) => {
+  const markRead = useCallback(async (noticeId, source = 'unified') => {
     setActionId(noticeId)
     try {
-      await noticesApi.markNoticeRead(noticeId)
+      await noticesApi.markNoticeRead(noticeId, source)
       setNotices((prev) => prev.map((notice) => (
-        Number(notice.id) === Number(noticeId) ? { ...notice, is_read: true } : notice
+        Number(notice.id) === Number(noticeId) && (notice.source || 'unified') === source 
+          ? { ...notice, is_read: true } 
+          : notice
       )))
       setUnreadCount((prev) => Math.max(prev - 1, 0))
       setActionId(null)

@@ -126,6 +126,7 @@ const Header = ({ onMenuClick }) => {
               description : [item.priority, item.posted_by_name].filter(Boolean).join(' | ') || 'A notice is waiting in your notice board.',
               count       : 1,
               route       : ROUTES.TEACHER_NOTICES,
+              source      : item.source || 'unified',
             }))
           const homeworkItems = homework
             .filter(item => Number(item?.pending_count || 0) > 0 || item?.workflow_status === 'overdue')
@@ -160,7 +161,8 @@ const Header = ({ onMenuClick }) => {
               title       : item.title || 'New notice',
               description : [item.priority, item.posted_by_name].filter(Boolean).join(' | ') || 'A notice is waiting in your notice board.',
               count       : 1,
-              route       : ROUTES.ACCOUNTANT_ROOT + '/notices', // Adjust if needed
+              route       : ROUTES.ACCOUNTANT_ROOT + '/notices',
+              source      : item.source || 'unified',
             }))
 
           const staticItems = [
@@ -195,6 +197,7 @@ const Header = ({ onMenuClick }) => {
               description : [item.priority, item.posted_by_name].filter(Boolean).join(' | ') || 'A notice is waiting in your notice board.',
               count       : 1,
               route       : ROUTES.RECEPTIONIST_NOTICES,
+              source      : item.source || 'unified',
             }))
 
           const staticItems = [
@@ -236,6 +239,7 @@ const Header = ({ onMenuClick }) => {
             description : [item.priority, item.posted_by_name].filter(Boolean).join(' | ') || 'A notice is waiting in your notice board.',
             count       : 1,
             route       : ROUTES.STUDENT_NOTICES,
+            source      : item.source || 'unified',
           }))
         const homeworkItems = homework
           .filter(item => item?.submission_status !== 'submitted')
@@ -268,10 +272,10 @@ const Header = ({ onMenuClick }) => {
     if (item.id.includes('notice')) {
       const id = item.id.split('-').pop()
       try {
-        if (isTeacherUser)          await teacherApi.markTeacherNoticeRead(id)
-        else if (isStudentUser)     await studentApi.markStudentNoticeRead(id)
-        else if (isAccountantUser)   await noticesApi.markAccountantNoticeRead(id)
-        else if (isReceptionistUser) await noticesApi.markReceptionistNoticeRead(id)
+        if (isTeacherUser)          await teacherApi.markTeacherNoticeRead(id, item.source)
+        else if (isStudentUser)     await studentApi.markStudentNoticeRead(id, item.source)
+        else if (isAccountantUser)   await noticesApi.markAccountantNoticeRead(id, item.source)
+        else if (isReceptionistUser) await noticesApi.markReceptionistNoticeRead(id, item.source)
       } catch (err) {
         console.error('Failed to mark notice as read on click', err)
       }
@@ -285,18 +289,17 @@ const Header = ({ onMenuClick }) => {
 
   const handleClearNotifications = async () => {
     if (!notifications.length) return
-    const noticeIds = notifications
-      .filter(n => n.id.includes('notice'))
-      .map(n => n.id.split('-').pop())
+    const noticeItems = notifications.filter(n => n.id.includes('notice'))
 
     try {
       setNotifLoading(true)
-      if (noticeIds.length > 0) {
-        await Promise.all(noticeIds.map(id => {
-          if (isTeacherUser)     return teacherApi.markTeacherNoticeRead(id)
-          if (isStudentUser)     return studentApi.markStudentNoticeRead(id)
-          if (isAccountantUser)   return noticesApi.markAccountantNoticeRead(id)
-          if (isReceptionistUser) return noticesApi.markReceptionistNoticeRead(id)
+      if (noticeItems.length > 0) {
+        await Promise.all(noticeItems.map(item => {
+          const id = item.id.split('-').pop()
+          if (isTeacherUser)     return teacherApi.markTeacherNoticeRead(id, item.source)
+          if (isStudentUser)     return studentApi.markStudentNoticeRead(id, item.source)
+          if (isAccountantUser)   return noticesApi.markAccountantNoticeRead(id, item.source)
+          if (isReceptionistUser) return noticesApi.markReceptionistNoticeRead(id, item.source)
           return Promise.resolve()
         }))
       }
