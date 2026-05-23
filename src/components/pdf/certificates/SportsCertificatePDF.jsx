@@ -1,5 +1,14 @@
-import { Text, View } from '@react-pdf/renderer';
+import { Text, View, StyleSheet } from '@react-pdf/renderer';
 import BaseCertificate, { commonStyles } from './BaseCertificate';
+
+const styles = StyleSheet.create({
+  accentBox: {
+    ...commonStyles.extraDataBox,
+    marginTop: 30,
+    borderLeftWidth: 4,
+    borderLeftColor: '#f59e0b',
+  }
+});
 
 const SportsCertificatePDF = ({ data }) => {
   const { recipient, extra_data } = data;
@@ -30,7 +39,7 @@ const SportsCertificatePDF = ({ data }) => {
         The student secured {extra_data.position} position / achieved {extra_data.achievement}.
       </Text>
 
-      <View style={[commonStyles.extraDataBox, { marginTop: 30, borderLeftWidth: 4, borderLeftColor: '#f59e0b' }]}>
+      <View style={styles.accentBox}>
         <View style={commonStyles.extraDataRow}>
           <Text style={commonStyles.extraDataLabel}>Event</Text>
           <Text style={commonStyles.extraDataValue}>: {extra_data.event_name}</Text>

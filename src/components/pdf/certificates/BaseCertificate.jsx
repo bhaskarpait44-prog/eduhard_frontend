@@ -16,7 +16,9 @@ export const commonStyles = StyleSheet.create({
     left: 20,
     right: 20,
     bottom: 20,
-    border: `2px solid ${accentColor}`,
+    borderWidth: 2,
+    borderStyle: 'solid',
+    borderColor: accentColor,
   },
   borderInner: {
     position: 'absolute',
@@ -24,7 +26,9 @@ export const commonStyles = StyleSheet.create({
     left: 25,
     right: 25,
     bottom: 25,
-    border: `1px solid ${accentColor}`,
+    borderWidth: 1,
+    borderStyle: 'solid',
+    borderColor: accentColor,
   },
   header: {
     flexDirection: 'row',

@@ -1,5 +1,5 @@
 // src/pages/admin/CertificatesPage.jsx
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, useRef } from 'react'
 import { 
   Award, Download, Eye, Plus, FileText, Shield, 
   ArrowRightLeft, BookOpen, Trophy, GraduationCap, 
@@ -124,19 +124,55 @@ const CERTIFICATE_TYPES = [
   },
 ]
 
+const SAMPLE_DATA = {
+  school: {
+    name: 'Demo School',
+    address: '123 School Lane, City - 123456',
+    phone: '+91 98765 43210',
+    email: 'school@demo.com',
+    logo_url: null,
+    principal_name: 'Mr. Principal Name'
+  },
+  recipient: {
+    name: 'Sample Student / Staff',
+    father_name: 'Sample Father Name',
+    admission_no: 'ADM-2024-001',
+    class_name: 'Class X - A',
+    employee_id: 'EMP-001',
+    designation: 'Teacher'
+  },
+  certificate_no: 'TC-2026-0001',
+  issued_date: '23 May 2026',
+  extra_data: {
+    leaving_date: '2026-05-23', reason: 'Transfer', last_class: 'X', conduct: 'Good',
+    purpose: 'Bank Account Opening',
+    conduct_grade: 'Excellent', remarks: 'A sincere and hardworking student.',
+    from_board: 'CBSE', to_board: 'SEBA', last_exam_year: '2025',
+    exam_name: 'Annual Examination 2026', session: '2025-2026',
+    achievement: 'Gold Medal', event_name: 'District Sports Meet', event_date: '2026-03-15', position: '1st',
+    scheme_name: 'Post Matric Scholarship', class: 'XI', year: '2026',
+    designation: 'PGT Physics', join_date: '2020-06-01', leaving_date: '2026-05-23',
+  }
+}
+
 const CertificatesPage = () => {
   usePageTitle('Certificates')
   const { toastSuccess, toastError } = useToast()
+  const toastErrorRef = useRef(toastError)
+  useEffect(() => { toastErrorRef.current = toastError }, [toastError])
 
   const [activeTab, setActiveTab] = useState('issue')
   const [loading, setLoading] = useState(false)
+  const [submitting, setSubmitting] = useState(false)
   const [certificates, setCertificates] = useState([])
   const [pagination, setPagination] = useState({ page: 1, pages: 1, total: 0 })
   const [filters, setFilters] = useState({ type: '', status: '', search: '', page: 1 })
+  const [searchInput, setSearchInput] = useState('')
 
   // Modal State
   const [issueModal, setIssueModal] = useState({ open: false, type: null })
   const [successModal, setSuccessModal] = useState({ open: false, data: null })
+  const [templatePreview, setTemplatePreview] = useState({ open: false, type: null })
   const [formData, setFormData] = useState({ recipient_id: '', extra_data: {} })
   const [recipients, setRecipients] = useState([])
   
@@ -155,11 +191,18 @@ const CertificatesPage = () => {
         total: res.data.total
       })
     } catch (err) {
-      toastError('Failed to load certificates.')
+      toastErrorRef.current('Failed to load certificates.')
     } finally {
       setLoading(false)
     }
-  }, [filters, toastError])
+  }, [filters])
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setFilters(p => ({ ...p, search: searchInput, page: 1 }))
+    }, 400)
+    return () => clearTimeout(timer)
+  }, [searchInput])
 
   useEffect(() => {
     if (activeTab === 'register') {
@@ -233,7 +276,7 @@ const CertificatesPage = () => {
     e.preventDefault()
     if (!formData.recipient_id) return toastError('Please select a recipient.')
 
-    setLoading(true)
+    setSubmitting(true)
     try {
       const payload = {
         type: issueModal.type.value,
@@ -254,7 +297,7 @@ const CertificatesPage = () => {
     } catch (err) {
       toastError(err.response?.data?.message || 'Failed to generate certificate.')
     } finally {
-      setLoading(false)
+      setSubmitting(false)
     }
   }
 
@@ -358,8 +401,8 @@ const CertificatesPage = () => {
               <Input 
                 placeholder="Search by Certificate No or Name..." 
                 icon={Search}
-                value={filters.search}
-                onChange={(e) => setFilters(p => ({ ...p, search: e.target.value, page: 1 }))}
+                value={searchInput}
+                onChange={(e) => setSearchInput(e.target.value)}
               />
             </div>
             <div className="w-48">
@@ -535,7 +578,10 @@ const CertificatesPage = () => {
                 </div>
               </div>
 
-              <Button variant="outline" size="sm" fullWidth className="gap-2">
+              <Button 
+                variant="outline" size="sm" fullWidth className="gap-2"
+                onClick={() => setTemplatePreview({ open: true, type })}
+              >
                 <Eye size={14} />
                 Preview Template
               </Button>
@@ -621,9 +667,9 @@ const CertificatesPage = () => {
             >
               Cancel
             </button>
-            <Button type="submit" className="gap-2">
-              <Plus size={18} />
-              Generate Certificate
+            <Button type="submit" disabled={submitting} className="gap-2">
+              {submitting ? <RefreshCw size={16} className="animate-spin" /> : <Plus size={18} />}
+              {submitting ? 'Generating...' : 'Generate Certificate'}
             </Button>
           </div>
         </form>
@@ -660,6 +706,33 @@ const CertificatesPage = () => {
             >
               Done
             </Button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Preview Modal */}
+      <Modal
+        open={templatePreview.open}
+        onClose={() => setTemplatePreview({ open: false, type: null })}
+        title={`Preview: ${templatePreview.type?.label}`}
+        size="sm"
+      >
+        <div className="flex flex-col items-center gap-4 p-4">
+          <div
+            className="w-16 h-16 rounded-2xl flex items-center justify-center"
+            style={{ backgroundColor: `${templatePreview.type?.color}15`, color: templatePreview.type?.color }}
+          >
+            {templatePreview.type && <templatePreview.type.icon size={32} />}
+          </div>
+          <p className="text-sm text-center" style={{ color: 'var(--color-text-muted)' }}>
+            This is a sample preview using placeholder data. The actual certificate will contain real student/staff information.
+          </p>
+          <div className="w-full pt-2 border-t" style={{ borderColor: 'var(--color-border-subtle)' }}>
+            <CertificateDownloadButton
+              certType={templatePreview.type?.value}
+              data={{ ...SAMPLE_DATA, type: templatePreview.type?.value }}
+              fileName={`sample-${templatePreview.type?.value}-certificate.pdf`}
+            />
           </div>
         </div>
       </Modal>
