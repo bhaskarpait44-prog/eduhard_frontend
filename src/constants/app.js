@@ -76,6 +76,7 @@ export const ROUTES = {
   ADMIN_FAMILIES: '/admin/families',
   ADMIN_INVENTORY: '/admin/inventory',
   ADMIN_TRANSPORT: '/admin/transport',
+  ADMIN_CERTIFICATES: '/admin/certificates',
 
   // Enrollments
   ENROLLMENTS: '/enrollments',

@@ -226,6 +226,7 @@ const getNavGroups = (user) => {
         { label: 'Families',   icon: 'Users',              path: ROUTES.ADMIN_FAMILIES,    roles: [ROLES.ADMIN, ROLES.ACCOUNTANT] },
         { label: 'Inventory',  icon: 'Package',            path: ROUTES.ADMIN_INVENTORY,   roles: [ROLES.ADMIN, ROLES.ACCOUNTANT] },
         { label: 'Transport',  icon: 'Bus',                path: ROUTES.ADMIN_TRANSPORT,   roles: [ROLES.ADMIN, ROLES.ACCOUNTANT] },
+        { label: 'Certificates', icon: 'Award',            path: ROUTES.ADMIN_CERTIFICATES, roles: [ROLES.ADMIN] },
         { label: 'Staff Attendance', icon: 'UserCheck',    path: ROUTES.STAFF_ATTENDANCE,  roles: [ROLES.ADMIN, ROLES.ACCOUNTANT] },
         { label: 'Notices',    icon: 'BellRing',           path: ROUTES.ADMIN_NOTICES,     roles: [ROLES.ADMIN] },
         { label: 'Promotions', icon: 'ArrowUpWideNarrow',  path: ROUTES.ADMIN_PROMOTIONS,  roles: [ROLES.ADMIN] },

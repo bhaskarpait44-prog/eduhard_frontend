@@ -77,6 +77,7 @@ const SettingsPage = lazy(() => import('@/pages/SettingsPage'))
 const AdminTeacherControlPage = lazy(() => import('@/pages/admin/AdminTeacherControlPage'))
 const AdminNoticePage = lazy(() => import('@/pages/admin/AdminNoticePage'))
 const AdminPromotionPage = lazy(() => import('@/pages/admin/AdminPromotionPage'))
+const CertificatesPage = lazy(() => import('@/pages/admin/CertificatesPage'))
 const FamilyManager = lazy(() => import('@/pages/admin/families/FamilyManager'))
 const InventoryManager = lazy(() => import('@/pages/admin/inventory/InventoryManager'))
 const TransportManager = lazy(() => import('@/pages/admin/transport/TransportManager'))
@@ -563,6 +564,14 @@ const router = createBrowserRouter([
         element: (
           <ProtectedRoute roles={[ROLES.ADMIN]}>
             <Lazy component={AdminPromotionPage} />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: ROUTES.ADMIN_CERTIFICATES,
+        element: (
+          <ProtectedRoute roles={[ROLES.ADMIN]}>
+            <Lazy component={CertificatesPage} />
           </ProtectedRoute>
         ),
       },
