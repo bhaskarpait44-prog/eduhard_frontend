@@ -1,9 +1,9 @@
 // src/pages/admin/CertificatesPage.jsx
-import { useEffect, useState, useCallback, useMemo } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { 
   Award, Download, Eye, Plus, FileText, Shield, 
   ArrowRightLeft, BookOpen, Trophy, GraduationCap, 
-  Briefcase, RefreshCw, XCircle, Search, Filter
+  Briefcase, RefreshCw, XCircle, Search, Filter, CheckCircle
 } from 'lucide-react'
 import { certificateApi, studentsApi, adminTeacherControlApi, classApi } from '@/api'
 import usePageTitle from '@/hooks/usePageTitle'
@@ -16,6 +16,7 @@ import Input from '@/components/ui/Input'
 import EmptyState from '@/components/ui/EmptyState'
 import { format } from 'date-fns'
 import { cn } from '@/utils/helpers'
+import CertificateDownloadButton from '@/components/pdf/certificates/CertificateDownloadButton'
 
 const CERTIFICATE_TYPES = [
   {
@@ -125,19 +126,19 @@ const CERTIFICATE_TYPES = [
 
 const CertificatesPage = () => {
   usePageTitle('Certificates')
-  const { toastSuccess, toastError, toastLoading } = useToast()
+  const { toastSuccess, toastError } = useToast()
 
   const [activeTab, setActiveTab] = useState('issue')
   const [loading, setLoading] = useState(false)
   const [certificates, setCertificates] = useState([])
   const [pagination, setPagination] = useState({ page: 1, pages: 1, total: 0 })
-  const [filters, setFilters] = useState({ type: '', status: '', page: 1 })
+  const [filters, setFilters] = useState({ type: '', status: '', search: '', page: 1 })
 
   // Modal State
   const [issueModal, setIssueModal] = useState({ open: false, type: null })
+  const [successModal, setSuccessModal] = useState({ open: false, data: null })
   const [formData, setFormData] = useState({ recipient_id: '', extra_data: {} })
   const [recipients, setRecipients] = useState([])
-  const [searchQuery, setSearchQuery] = useState('')
   
   const [classes, setClasses] = useState([])
   const [sections, setSections] = useState([])
@@ -232,7 +233,7 @@ const CertificatesPage = () => {
     e.preventDefault()
     if (!formData.recipient_id) return toastError('Please select a recipient.')
 
-    const loadingId = toastLoading('Generating certificate...')
+    setLoading(true)
     try {
       const payload = {
         type: issueModal.type.value,
@@ -242,32 +243,18 @@ const CertificatesPage = () => {
       }
       
       const res = await certificateApi.generateCertificate(payload)
-      toastSuccess('Certificate generated successfully!', { id: loadingId })
+      toastSuccess('Certificate generated successfully!')
       setIssueModal({ open: false, type: null })
       
-      // Auto download
-      if (res.data.certificate?.id) {
-        handleDownload(res.data.certificate.id, res.data.certificate.certificate_no)
+      if (res.data.certificate) {
+        setSuccessModal({ open: true, data: res.data.certificate })
       }
 
       if (activeTab === 'register') loadCertificates()
     } catch (err) {
-      toastError(err.response?.data?.message || 'Failed to generate certificate.', { id: loadingId })
-    }
-  }
-
-  const handleDownload = async (id, certNo) => {
-    try {
-      const res = await certificateApi.downloadCertificate(id)
-      const url = window.URL.createObjectURL(new Blob([res.data]))
-      const link = document.createElement('a')
-      link.href = url
-      link.setAttribute('download', `${certNo}.pdf`)
-      document.body.appendChild(link)
-      link.click()
-      link.remove()
-    } catch (err) {
-      toastError('Failed to download PDF.')
+      toastError(err.response?.data?.message || 'Failed to generate certificate.')
+    } finally {
+      setLoading(false)
     }
   }
 
@@ -371,7 +358,8 @@ const CertificatesPage = () => {
               <Input 
                 placeholder="Search by Certificate No or Name..." 
                 icon={Search}
-                onChange={(e) => setSearchQuery(e.target.value)}
+                value={filters.search}
+                onChange={(e) => setFilters(p => ({ ...p, search: e.target.value, page: 1 }))}
               />
             </div>
             <div className="w-48">
@@ -379,7 +367,7 @@ const CertificatesPage = () => {
                 placeholder="All Types"
                 options={[{ label: 'All Types', value: '' }, ...CERTIFICATE_TYPES.map(t => ({ label: t.label, value: t.value }))]}
                 value={filters.type}
-                onChange={(val) => setFilters(p => ({ ...p, type: val, page: 1 }))}
+                onChange={(e) => setFilters(p => ({ ...p, type: e.target.value, page: 1 }))}
               />
             </div>
             <div className="w-40">
@@ -391,7 +379,7 @@ const CertificatesPage = () => {
                   { label: 'Revoked', value: 'revoked' },
                 ]}
                 value={filters.status}
-                onChange={(val) => setFilters(p => ({ ...p, status: val, page: 1 }))}
+                onChange={(e) => setFilters(p => ({ ...p, status: e.target.value, page: 1 }))}
               />
             </div>
           </div>
@@ -437,27 +425,22 @@ const CertificatesPage = () => {
                       <td className="px-4 py-3">
                         <div className="flex flex-col">
                           <span className="text-sm font-medium">
-                            {cert.recipient_type === 'student' 
-                              ? `${cert.student?.first_name} ${cert.student?.last_name}` 
-                              : `${cert.teacher?.first_name} ${cert.teacher?.last_name}`}
+                            {cert.recipient?.name}
                           </span>
                           <span className="text-xs" style={{ color: 'var(--color-text-muted)' }}>
-                            {cert.recipient_type === 'student' ? `Roll: ${cert.student?.admission_no}` : cert.teacher?.employee_id}
+                            {cert.recipient_type === 'student' ? `Roll: ${cert.recipient?.admission_no}` : cert.recipient?.employee_id}
                           </span>
                         </div>
                       </td>
-                      <td className="px-4 py-3 text-sm">{format(new Date(cert.issued_date), 'dd MMM yyyy')}</td>
+                      <td className="px-4 py-3 text-sm">{format(new Date(cert.issued_date + 'T00:00:00'), 'dd MMM yyyy')}</td>
                       <td className="px-4 py-3">{getStatusBadge(cert.status)}</td>
                       <td className="px-4 py-3 text-right">
                         <div className="flex items-center justify-end gap-2">
-                          <Button 
-                            variant="ghost" 
-                            size="sm" 
-                            title="Download PDF"
-                            onClick={() => handleDownload(cert.id, cert.certificate_no)}
-                          >
-                            <Download size={16} />
-                          </Button>
+                          <CertificateDownloadButton 
+                            certType={cert.type}
+                            data={cert}
+                            fileName={`${cert.certificate_no}.pdf`}
+                          />
                           {cert.status === 'active' && (
                             <Button 
                               variant="ghost" 
@@ -630,15 +613,55 @@ const CertificatesPage = () => {
           </div>
 
           <div className="flex items-center justify-end gap-3 pt-4 border-t" style={{ borderColor: 'var(--color-border-subtle)' }}>
-            <Button variant="ghost" type="button" onClick={() => setIssueModal({ open: false, type: null })}>
+            <button 
+              type="button" 
+              onClick={() => setIssueModal({ open: false, type: null })}
+              className="px-4 py-2 text-sm font-medium transition-colors rounded-lg hover:bg-black/5"
+              style={{ color: 'var(--color-text-muted)' }}
+            >
               Cancel
-            </Button>
+            </button>
             <Button type="submit" className="gap-2">
               <Plus size={18} />
-              Generate & Download
+              Generate Certificate
             </Button>
           </div>
         </form>
+      </Modal>
+
+      {/* Success Modal */}
+      <Modal
+        open={successModal.open}
+        onClose={() => setSuccessModal({ open: false, data: null })}
+        title="Certificate Generated"
+        size="sm"
+      >
+        <div className="flex flex-col items-center text-center p-4">
+          <div className="w-16 h-16 rounded-full bg-green-100 flex items-center justify-center mb-4 text-green-600">
+            <CheckCircle size={32} />
+          </div>
+          <h3 className="text-lg font-bold mb-2">Success!</h3>
+          <p className="text-sm text-gray-500 mb-6">
+            Certificate <span className="font-mono font-bold text-gray-900">{successModal.data?.certificate_no}</span> has been generated successfully.
+          </p>
+          
+          <div className="w-full space-y-3">
+            <div className="flex justify-center">
+              <CertificateDownloadButton 
+                certType={successModal.data?.type}
+                data={successModal.data}
+                fileName={`${successModal.data?.certificate_no}.pdf`}
+              />
+            </div>
+            <Button 
+              variant="outline" 
+              fullWidth 
+              onClick={() => setSuccessModal({ open: false, data: null })}
+            >
+              Done
+            </Button>
+          </div>
+        </div>
       </Modal>
     </div>
   )
