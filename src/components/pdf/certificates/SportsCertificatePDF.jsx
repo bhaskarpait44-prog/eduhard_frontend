@@ -1,5 +1,5 @@
 import { Text, View, StyleSheet } from '@react-pdf/renderer';
-import BaseCertificate, { commonStyles } from './BaseCertificate';
+import BaseCertificate, { commonStyles, formatDate } from './BaseCertificate';
 
 const styles = StyleSheet.create({
   accentBox: {
@@ -32,22 +32,23 @@ const SportsCertificatePDF = ({ data }) => {
       </Text>
       
       <Text style={{ textAlign: 'center' }}>
-        of Class {recipient.class_name} for outstanding achievement in {extra_data.event_name} held on {extra_data.event_date}.
+        of Class {recipient.class_name} for outstanding achievement in {extra_data.event_name} held on {formatDate(extra_data.event_date)}.
       </Text>
-      
+
       <Text style={{ textAlign: 'center', marginTop: 10 }}>
         The student secured {extra_data.position} position / achieved {extra_data.achievement}.
       </Text>
 
       <View style={styles.accentBox}>
         <View style={commonStyles.extraDataRow}>
-          <Text style={commonStyles.extraDataLabel}>Event</Text>
+          <Text style={commonStyles.extraDataLabel}>Event Name</Text>
           <Text style={commonStyles.extraDataValue}>: {extra_data.event_name}</Text>
         </View>
         <View style={commonStyles.extraDataRow}>
-          <Text style={commonStyles.extraDataLabel}>Date</Text>
-          <Text style={commonStyles.extraDataValue}>: {extra_data.event_date}</Text>
+          <Text style={commonStyles.extraDataLabel}>Event Date</Text>
+          <Text style={commonStyles.extraDataValue}>: {formatDate(extra_data.event_date)}</Text>
         </View>
+
         <View style={commonStyles.extraDataRow}>
           <Text style={commonStyles.extraDataLabel}>Position</Text>
           <Text style={commonStyles.extraDataValue}>: {extra_data.position}</Text>

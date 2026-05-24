@@ -7,7 +7,8 @@ const MarksheetCertificatePDF = ({ data }) => {
   return (
     <BaseCertificate title="Mark Sheet / Result Certificate" data={data}>
       <Text>
-        This is to certify that {recipient.name}, Admission No. {recipient.admission_no}, 
+        This is to certify that {recipient.name}, ward of {recipient.father_name}, 
+        bearing Admission No. {recipient.admission_no}, 
         appeared in the {extra_data.exam_name} examination for the academic 
         session {extra_data.session} and has passed successfully.
       </Text>

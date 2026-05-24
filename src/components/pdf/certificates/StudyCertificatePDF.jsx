@@ -7,7 +7,7 @@ const StudyCertificatePDF = ({ data }) => {
   return (
     <BaseCertificate title="Study Certificate" data={data}>
       <Text>
-        This is to certify that {recipient.name}, son/daughter of {recipient.father_name}, 
+        This is to certify that {recipient.name}, ward of {recipient.father_name}, 
         bearing Admission No. {recipient.admission_no}, is studying in Class {extra_data.class || recipient.class_name} 
         in the academic year {extra_data.year}.
       </Text>

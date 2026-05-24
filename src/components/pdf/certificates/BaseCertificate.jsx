@@ -128,11 +128,35 @@ export const commonStyles = StyleSheet.create({
     textAlign: 'center',
     fontSize: 8,
     color: '#94a3b8',
+  },
+  revokedWatermark: {
+    position: 'absolute',
+    top: '40%',
+    left: '10%',
+    fontSize: 60,
+    color: 'rgba(239, 68, 68, 0.1)',
+    transform: 'rotate(-30deg)',
+    fontWeight: 'bold',
+    zIndex: -1,
+    width: '100%',
+    textAlign: 'center',
   }
 });
 
+export const formatDate = (dateStr) => {
+  if (!dateStr) return 'N/A';
+  try {
+    const d = new Date(dateStr);
+    if (isNaN(d.getTime())) return dateStr;
+    const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+    return `${d.getDate()} ${months[d.getMonth()]} ${d.getFullYear()}`;
+  } catch (e) {
+    return dateStr;
+  }
+};
+
 const BaseCertificate = ({ title, data, children, accentOverride }) => {
-  const { school, certificate_no, issued_date } = data;
+  const { school, certificate_no, issued_date, status } = data;
   const currentAccent = accentOverride || accentColor;
 
   return (
@@ -140,6 +164,10 @@ const BaseCertificate = ({ title, data, children, accentOverride }) => {
       <Page size="A4" style={commonStyles.page}>
         <View style={[commonStyles.borderOuter, accentOverride ? { borderColor: accentOverride } : {}]} />
         <View style={[commonStyles.borderInner, accentOverride ? { borderColor: accentOverride } : {}]} />
+
+        {status === 'revoked' && (
+          <Text style={commonStyles.revokedWatermark}>REVOKED</Text>
+        )}
 
         {/* Header */}
         <View style={[commonStyles.header, accentOverride ? { borderBottomColor: accentOverride } : {}]}>
@@ -155,7 +183,7 @@ const BaseCertificate = ({ title, data, children, accentOverride }) => {
 
         <View style={commonStyles.metaRow}>
           <Text>Cert No: {certificate_no}</Text>
-          <Text>Date: {issued_date}</Text>
+          <Text>Date: {formatDate(issued_date)}</Text>
         </View>
 
         <View style={commonStyles.body}>

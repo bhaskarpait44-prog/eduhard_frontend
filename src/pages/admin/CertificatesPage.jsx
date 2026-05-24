@@ -3,8 +3,10 @@ import { useEffect, useState, useCallback, useRef } from 'react'
 import { 
   Award, Download, Eye, Plus, FileText, Shield, 
   ArrowRightLeft, BookOpen, Trophy, GraduationCap, 
-  Briefcase, RefreshCw, XCircle, Search, Filter, CheckCircle
+  Briefcase, RefreshCw, XCircle, Search, Filter, CheckCircle,
+  AlertTriangle, Settings
 } from 'lucide-react'
+import { PDFViewer } from '@react-pdf/renderer'
 import { certificateApi, studentsApi, adminTeacherControlApi, classApi } from '@/api'
 import usePageTitle from '@/hooks/usePageTitle'
 import useToast from '@/hooks/useToast'
@@ -13,10 +15,22 @@ import Badge from '@/components/ui/Badge'
 import Modal from '@/components/ui/Modal'
 import Select from '@/components/ui/Select'
 import Input from '@/components/ui/Input'
+import Textarea from '@/components/ui/Textarea'
 import EmptyState from '@/components/ui/EmptyState'
+import TableSkeleton from '@/components/ui/TableSkeleton'
 import { format } from 'date-fns'
 import { cn } from '@/utils/helpers'
 import CertificateDownloadButton from '@/components/pdf/certificates/CertificateDownloadButton'
+
+// Import PDF Components for Preview
+import TransferCertificatePDF from '@/components/pdf/certificates/TransferCertificatePDF'
+import BonafideCertificatePDF from '@/components/pdf/certificates/BonafideCertificatePDF'
+import CharacterCertificatePDF from '@/components/pdf/certificates/CharacterCertificatePDF'
+import MigrationCertificatePDF from '@/components/pdf/certificates/MigrationCertificatePDF'
+import MarksheetCertificatePDF from '@/components/pdf/certificates/MarksheetCertificatePDF'
+import SportsCertificatePDF from '@/components/pdf/certificates/SportsCertificatePDF'
+import StudyCertificatePDF from '@/components/pdf/certificates/StudyCertificatePDF'
+import ExperienceCertificatePDF from '@/components/pdf/certificates/ExperienceCertificatePDF'
 
 const CERTIFICATE_TYPES = [
   {
@@ -134,15 +148,16 @@ const SAMPLE_DATA = {
     principal_name: 'Mr. Principal Name'
   },
   recipient: {
-    name: 'Sample Student / Staff',
-    father_name: 'Sample Father Name',
+    name: 'Sample Recipient',
+    father_name: 'Sample Parent Name',
     admission_no: 'ADM-2024-001',
     class_name: 'Class X - A',
     employee_id: 'EMP-001',
     designation: 'Teacher'
   },
-  certificate_no: 'TC-2026-0001',
-  issued_date: '23 May 2026',
+  certificate_no: 'CERT-2026-0001',
+  issued_date: format(new Date(), 'yyyy-MM-dd'),
+  status: 'active',
   extra_data: {
     leaving_date: '2026-05-23', reason: 'Transfer', last_class: 'X', conduct: 'Good',
     purpose: 'Bank Account Opening',
@@ -155,6 +170,63 @@ const SAMPLE_DATA = {
   }
 }
 
+const getCertificateComponent = (type, data = {}, settings = {}) => {
+  const props = { 
+    data: { 
+      ...SAMPLE_DATA, 
+      ...data, 
+      type,
+      school: {
+        ...SAMPLE_DATA.school,
+        name: settings.school_name || SAMPLE_DATA.school.name,
+        principal_name: settings.principal_name || SAMPLE_DATA.school.principal_name,
+        address: settings.address || SAMPLE_DATA.school.address,
+        phone: settings.phone || SAMPLE_DATA.school.phone,
+        email: settings.email || SAMPLE_DATA.school.email,
+      }
+    } 
+  }
+  switch (type) {
+    case 'transfer': return <TransferCertificatePDF {...props} />
+    case 'bonafide': return <BonafideCertificatePDF {...props} />
+    case 'character': return <CharacterCertificatePDF {...props} />
+    case 'migration': return <MigrationCertificatePDF {...props} />
+    case 'marksheet': return <MarksheetCertificatePDF {...props} />
+    case 'sports': return <SportsCertificatePDF {...props} />
+    case 'study': return <StudyCertificatePDF {...props} />
+    case 'experience': return <ExperienceCertificatePDF {...props} />
+    default: return null
+  }
+}
+
+const PreviewSkeleton = () => (
+  <div className="w-full h-full p-8 space-y-8 animate-pulse bg-white">
+    <div className="flex items-center gap-4 border-b-2 pb-6 border-gray-100">
+      <div className="w-14 h-14 rounded-xl bg-gray-100" />
+      <div className="space-y-3 flex-1">
+        <div className="h-5 bg-gray-100 rounded w-1/3" />
+        <div className="h-3 bg-gray-50 rounded w-1/2" />
+      </div>
+    </div>
+    <div className="h-8 bg-gray-100 rounded w-1/2 mx-auto" />
+    <div className="flex justify-between">
+      <div className="h-4 bg-gray-50 rounded w-24" />
+      <div className="h-4 bg-gray-50 rounded w-24" />
+    </div>
+    <div className="space-y-4 pt-4">
+      <div className="h-4 bg-gray-50 rounded w-full" />
+      <div className="h-4 bg-gray-50 rounded w-full" />
+      <div className="h-4 bg-gray-50 rounded w-3/4" />
+    </div>
+    <div className="h-24 bg-gray-50/50 rounded-2xl w-full border border-gray-50" />
+    <div className="flex justify-between pt-12">
+      <div className="w-40 h-1 bg-gray-100 rounded" />
+      <div className="w-40 h-1 bg-gray-100 rounded" />
+    </div>
+    <div className="h-2 bg-gray-50 rounded w-32 mx-auto" />
+  </div>
+)
+
 const CertificatesPage = () => {
   usePageTitle('Certificates')
   const { toastSuccess, toastError } = useToast()
@@ -164,15 +236,30 @@ const CertificatesPage = () => {
   const [activeTab, setActiveTab] = useState('issue')
   const [loading, setLoading] = useState(false)
   const [submitting, setSubmitting] = useState(false)
+  const [previewLoading, setPreviewLoading] = useState(false)
   const [certificates, setCertificates] = useState([])
   const [pagination, setPagination] = useState({ page: 1, pages: 1, total: 0 })
   const [filters, setFilters] = useState({ type: '', status: '', search: '', page: 1 })
   const [searchInput, setSearchInput] = useState('')
 
+  // Template State (Editable)
+  const [templates, setTemplates] = useState(CERTIFICATE_TYPES)
+  const [editTemplateModal, setEditTemplateModal] = useState({ open: false, type: null, label: '', description: '', color: '' })
+  
+  // Global Branding Settings
+  const [certSettings, setCertSettings] = useState({
+    school_name: SAMPLE_DATA.school.name,
+    principal_name: SAMPLE_DATA.school.principal_name,
+    address: SAMPLE_DATA.school.address,
+    phone: SAMPLE_DATA.school.phone,
+    email: SAMPLE_DATA.school.email,
+  })
+
   // Modal State
   const [issueModal, setIssueModal] = useState({ open: false, type: null })
   const [successModal, setSuccessModal] = useState({ open: false, data: null })
   const [templatePreview, setTemplatePreview] = useState({ open: false, type: null })
+  const [revokeModal, setRevokeModal] = useState({ open: false, id: null })
   const [formData, setFormData] = useState({ recipient_id: '', extra_data: {} })
   const [recipients, setRecipients] = useState([])
   
@@ -274,7 +361,7 @@ const CertificatesPage = () => {
 
   const handleIssueSubmit = async (e) => {
     e.preventDefault()
-    if (!formData.recipient_id) return toastError('Please select a recipient.')
+    if (!formData.recipient_id) return toastErrorRef.current('Please select a recipient.')
 
     setSubmitting(true)
     try {
@@ -295,21 +382,58 @@ const CertificatesPage = () => {
 
       if (activeTab === 'register') loadCertificates()
     } catch (err) {
-      toastError(err.response?.data?.message || 'Failed to generate certificate.')
+      toastErrorRef.current(err.response?.data?.message || 'Failed to generate certificate.')
     } finally {
       setSubmitting(false)
     }
   }
 
-  const handleRevoke = async (id) => {
-    if (!window.confirm('Are you sure you want to revoke this certificate? This action cannot be undone.')) return
+  const handleRevoke = (id) => {
+    setRevokeModal({ open: true, id })
+  }
+
+  const confirmRevoke = async () => {
     try {
-      await certificateApi.revokeCertificate(id)
+      await certificateApi.revokeCertificate(revokeModal.id)
       toastSuccess('Certificate revoked.')
+      setRevokeModal({ open: false, id: null })
       loadCertificates()
     } catch (err) {
-      toastError('Failed to revoke certificate.')
+      toastErrorRef.current('Failed to revoke certificate.')
     }
+  }
+
+  const handleEditTemplate = (e) => {
+    e.preventDefault()
+    setTemplates(prev => prev.map(t => 
+      t.value === editTemplateModal.type.value 
+        ? { ...t, label: editTemplateModal.label, description: editTemplateModal.description, color: editTemplateModal.color } 
+        : t
+    ))
+    toastSuccess('Template updated successfully.')
+    setEditTemplateModal({ open: false, type: null, label: '', description: '', color: '' })
+  }
+
+  const handleOpenPreview = (type) => {
+    setPreviewLoading(true)
+    setTemplatePreview({ open: true, type })
+    setTimeout(() => setPreviewLoading(false), 1000)
+  }
+
+  // Pagination Helper
+  const getPageNumbers = () => {
+    const { page, pages } = pagination
+    const maxVisible = 5
+    let start = Math.max(1, page - Math.floor(maxVisible / 2))
+    let end = Math.min(pages, start + maxVisible - 1)
+    
+    if (end - start + 1 < maxVisible) {
+      start = Math.max(1, end - maxVisible + 1)
+    }
+    
+    const nums = []
+    for (let i = start; i <= end; i++) nums.push(i)
+    return nums
   }
 
   const getStatusBadge = (status) => {
@@ -443,11 +567,8 @@ const CertificatesPage = () => {
               <tbody className="divide-y" style={{ divideColor: 'var(--color-border-subtle)' }}>
                 {loading ? (
                   <tr>
-                    <td colSpan="6" className="px-4 py-10 text-center">
-                      <div className="flex flex-col items-center gap-3">
-                        <RefreshCw className="animate-spin" size={24} style={{ color: 'var(--color-brand)' }} />
-                        <span className="text-sm" style={{ color: 'var(--color-text-muted)' }}>Loading records...</span>
-                      </div>
+                    <td colSpan="6">
+                      <TableSkeleton rows={5} cols={6} />
                     </td>
                   </tr>
                 ) : certificates.length === 0 ? (
@@ -462,7 +583,7 @@ const CertificatesPage = () => {
                   </tr>
                 ) : (
                   certificates.map((cert) => (
-                    <tr key={cert.id} className="hover:bg-black/5 transition-colors">
+                    <tr key={cert.id} className={cn("hover:bg-black/5 transition-colors", cert.status === 'revoked' && "opacity-60 grayscale-[0.5]")}>
                       <td className="px-4 py-3 font-mono text-sm">{cert.certificate_no}</td>
                       <td className="px-4 py-3 text-sm capitalize">{cert.type.replace('_', ' ')}</td>
                       <td className="px-4 py-3">
@@ -483,6 +604,7 @@ const CertificatesPage = () => {
                             certType={cert.type}
                             data={cert}
                             fileName={`${cert.certificate_no}.pdf`}
+                            disabled={cert.status === 'revoked'}
                           />
                           {cert.status === 'active' && (
                             <Button 
@@ -520,20 +642,20 @@ const CertificatesPage = () => {
                   Previous
                 </Button>
                 <div className="flex items-center gap-1">
-                  {[...Array(pagination.pages)].map((_, i) => (
+                  {getPageNumbers().map((i) => (
                     <button
                       key={i}
-                      onClick={() => setFilters(p => ({ ...p, page: i + 1 }))}
+                      onClick={() => setFilters(p => ({ ...p, page: i }))}
                       className={cn(
                         "w-8 h-8 rounded-lg text-xs font-bold transition-all",
-                        filters.page === i + 1 ? "bg-brand text-white" : "hover:bg-black/5"
+                        filters.page === i ? "bg-brand text-white" : "hover:bg-black/5"
                       )}
                       style={{
-                        backgroundColor: filters.page === i + 1 ? 'var(--color-brand)' : 'transparent',
-                        color: filters.page === i + 1 ? '#fff' : 'var(--color-text-muted)'
+                        backgroundColor: filters.page === i ? 'var(--color-brand)' : 'transparent',
+                        color: filters.page === i ? '#fff' : 'var(--color-text-muted)'
                       }}
                     >
-                      {i + 1}
+                      {i}
                     </button>
                   ))}
                 </div>
@@ -552,41 +674,100 @@ const CertificatesPage = () => {
       )}
 
       {activeTab === 'templates' && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {CERTIFICATE_TYPES.map((type) => (
-            <div key={type.value} className="p-6 rounded-2xl border" style={{ backgroundColor: 'var(--color-surface-card)', borderColor: 'var(--color-border-subtle)' }}>
-              <div className="flex items-start justify-between mb-4">
-                <div 
-                  className="w-10 h-10 rounded-lg flex items-center justify-center"
-                  style={{ backgroundColor: `${type.color}15`, color: type.color }}
-                >
-                  <type.icon size={20} />
-                </div>
-                <Badge variant="outline">Standard Template</Badge>
+        <div className="space-y-8">
+          {/* Global Branding Settings */}
+          <div className="p-6 rounded-3xl border bg-gradient-to-br from-brand/5 to-transparent shadow-sm" style={{ borderColor: 'var(--color-border-subtle)' }}>
+            <div className="flex items-center gap-3 mb-6">
+              <div className="w-10 h-10 rounded-xl bg-brand/10 text-brand flex items-center justify-center">
+                <Shield size={20} />
               </div>
-              <h4 className="font-bold mb-2" style={{ color: 'var(--color-text-primary)' }}>{type.label}</h4>
-              <p className="text-sm mb-6" style={{ color: 'var(--color-text-muted)' }}>{type.description}</p>
-              
-              <div className="space-y-3 mb-6">
-                <p className="text-[10px] font-bold uppercase tracking-wider" style={{ color: 'var(--color-text-muted)' }}>Fields Included:</p>
-                <div className="flex flex-wrap gap-2">
-                  {['Name', 'ID', 'School Name', ...type.fields.map(f => f.label)].map(field => (
-                    <span key={field} className="px-2 py-1 rounded-md text-[10px] bg-black/5" style={{ color: 'var(--color-text-muted)' }}>
-                      {field}
-                    </span>
-                  ))}
-                </div>
+              <div>
+                <h3 className="font-bold text-lg">Branding & School Info</h3>
+                <p className="text-xs text-muted">These details appear on every generated certificate.</p>
               </div>
-
-              <Button 
-                variant="outline" size="sm" fullWidth className="gap-2"
-                onClick={() => setTemplatePreview({ open: true, type })}
-              >
-                <Eye size={14} />
-                Preview Template
-              </Button>
             </div>
-          ))}
+            
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <Input 
+                label="School Name"
+                value={certSettings.school_name}
+                onChange={(e) => setCertSettings(p => ({ ...p, school_name: e.target.value }))}
+              />
+              <Input 
+                label="Principal Name / Signatory"
+                value={certSettings.principal_name}
+                onChange={(e) => setCertSettings(p => ({ ...p, principal_name: e.target.value }))}
+              />
+              <Input 
+                label="Contact Phone"
+                value={certSettings.phone}
+                onChange={(e) => setCertSettings(p => ({ ...p, phone: e.target.value }))}
+              />
+              <div className="md:col-span-2">
+                <Input 
+                  label="School Address"
+                  value={certSettings.address}
+                  onChange={(e) => setCertSettings(p => ({ ...p, address: e.target.value }))}
+                />
+              </div>
+              <Input 
+                label="School Email"
+                value={certSettings.email}
+                onChange={(e) => setCertSettings(p => ({ ...p, email: e.target.value }))}
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {templates.map((type) => (
+              <div key={type.value} className="p-6 rounded-2xl border group" style={{ backgroundColor: 'var(--color-surface-card)', borderColor: 'var(--color-border-subtle)' }}>
+                <div className="flex items-start justify-between mb-4">
+                  <div 
+                    className="w-10 h-10 rounded-lg flex items-center justify-center"
+                    style={{ backgroundColor: `${type.color}15`, color: type.color }}
+                  >
+                    <type.icon size={20} />
+                  </div>
+                  <div className="flex gap-2">
+                    <Button 
+                      variant="ghost" size="sm" className="h-8 w-8 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                      onClick={() => setEditTemplateModal({ 
+                        open: true, 
+                        type, 
+                        label: type.label, 
+                        description: type.description, 
+                        color: type.color 
+                      })}
+                    >
+                      <Plus size={14} className="rotate-45" />
+                    </Button>
+                    <Badge variant="outline">Standard</Badge>
+                  </div>
+                </div>
+                <h4 className="font-bold mb-2" style={{ color: 'var(--color-text-primary)' }}>{type.label}</h4>
+                <p className="text-sm mb-6" style={{ color: 'var(--color-text-muted)' }}>{type.description}</p>
+                
+                <div className="space-y-3 mb-6">
+                  <p className="text-[10px] font-bold uppercase tracking-wider" style={{ color: 'var(--color-text-muted)' }}>Fields Included:</p>
+                  <div className="flex flex-wrap gap-2">
+                    {['Name', 'ID', 'School Name', ...type.fields.map(f => f.label)].map(field => (
+                      <span key={field} className="px-2 py-1 rounded-md text-[10px] bg-black/5" style={{ color: 'var(--color-text-muted)' }}>
+                        {field}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+
+                <Button 
+                  variant="outline" size="sm" fullWidth className="gap-2"
+                  onClick={() => handleOpenPreview(type)}
+                >
+                  <Eye size={14} />
+                  Preview Template
+                </Button>
+              </div>
+            ))}
+          </div>
         </div>
       )}
 
@@ -710,31 +891,132 @@ const CertificatesPage = () => {
         </div>
       </Modal>
 
+      {/* Revoke Confirmation Modal */}
+      <Modal
+        open={revokeModal.open}
+        onClose={() => setRevokeModal({ open: false, id: null })}
+        title="Revoke Certificate"
+        size="sm"
+      >
+        <div className="p-4 space-y-4">
+          <div className="flex items-center gap-3 text-red-600">
+            <AlertTriangle size={24} />
+            <h3 className="font-bold">Are you absolutely sure?</h3>
+          </div>
+          <p className="text-sm text-gray-500 leading-relaxed">
+            This action will mark the certificate as <span className="font-bold text-gray-900">Revoked</span>. 
+            This is permanent and cannot be undone. The certificate will remain in the register for audit purposes but will be visually grayed out and downloads will be disabled.
+          </p>
+          <div className="flex justify-end gap-3 pt-4 border-t" style={{ borderColor: 'var(--color-border-subtle)' }}>
+            <button 
+              onClick={() => setRevokeModal({ open: false, id: null })}
+              className="px-4 py-2 text-sm font-medium transition-colors rounded-lg hover:bg-black/5"
+              style={{ color: 'var(--color-text-muted)' }}
+            >
+              Cancel
+            </button>
+            <Button variant="danger" onClick={confirmRevoke}>Yes, Revoke Certificate</Button>
+          </div>
+        </div>
+      </Modal>
+
       {/* Preview Modal */}
       <Modal
         open={templatePreview.open}
         onClose={() => setTemplatePreview({ open: false, type: null })}
         title={`Preview: ${templatePreview.type?.label}`}
-        size="sm"
+        size="lg"
       >
-        <div className="flex flex-col items-center gap-4 p-4">
-          <div
-            className="w-16 h-16 rounded-2xl flex items-center justify-center"
-            style={{ backgroundColor: `${templatePreview.type?.color}15`, color: templatePreview.type?.color }}
-          >
-            {templatePreview.type && <templatePreview.type.icon size={32} />}
+        <div className="flex flex-col gap-4">
+          <div className="w-full h-[550px] border rounded-2xl overflow-hidden bg-gray-100 shadow-inner relative">
+            {previewLoading ? (
+              <PreviewSkeleton />
+            ) : templatePreview.type && (
+              <PDFViewer width="100%" height="100%" showToolbar={false} className="border-none">
+                {getCertificateComponent(templatePreview.type.value, { status: 'active' }, certSettings)}
+              </PDFViewer>
+            )}
           </div>
-          <p className="text-sm text-center" style={{ color: 'var(--color-text-muted)' }}>
-            This is a sample preview using placeholder data. The actual certificate will contain real student/staff information.
-          </p>
-          <div className="w-full pt-2 border-t" style={{ borderColor: 'var(--color-border-subtle)' }}>
-            <CertificateDownloadButton
-              certType={templatePreview.type?.value}
-              data={{ ...SAMPLE_DATA, type: templatePreview.type?.value }}
-              fileName={`sample-${templatePreview.type?.value}-certificate.pdf`}
-            />
+          
+          <div className="flex items-center justify-between pt-2 border-t" style={{ borderColor: 'var(--color-border-subtle)' }}>
+            <p className="text-xs text-gray-500">
+              This is a live preview using sample data.
+            </p>
+            <div className="flex gap-2">
+              <Button variant="outline" onClick={() => setTemplatePreview({ open: false, type: null })}>
+                Close
+              </Button>
+              <CertificateDownloadButton
+                certType={templatePreview.type?.value}
+                data={{ 
+                  ...SAMPLE_DATA, 
+                  type: templatePreview.type?.value,
+                  school: {
+                    ...SAMPLE_DATA.school,
+                    name: certSettings.school_name,
+                    principal_name: certSettings.principal_name,
+                    address: certSettings.address,
+                    phone: certSettings.phone,
+                    email: certSettings.email,
+                  }
+                }}
+                fileName={`sample-${templatePreview.type?.value}-certificate.pdf`}
+              />
+            </div>
           </div>
         </div>
+      </Modal>
+
+      {/* Edit Template Modal */}
+      <Modal
+        open={editTemplateModal.open}
+        onClose={() => setEditTemplateModal({ open: false, type: null, label: '', description: '', color: '' })}
+        title="Edit Template Properties"
+        size="sm"
+      >
+        <form onSubmit={handleEditTemplate} className="p-4 space-y-4">
+          <div>
+            <label className="block text-sm font-bold mb-2">Display Label</label>
+            <Input 
+              required
+              value={editTemplateModal.label}
+              onChange={(e) => setEditTemplateModal(p => ({ ...p, label: e.target.value }))}
+              placeholder="e.g. Transfer Certificate (TC)"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-bold mb-2">Description</label>
+            <Input 
+              required
+              value={editTemplateModal.description}
+              onChange={(e) => setEditTemplateModal(p => ({ ...p, description: e.target.value }))}
+              placeholder="Brief description of the template..."
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-bold mb-2">Branding Color (HEX)</label>
+            <div className="flex gap-2">
+              <Input 
+                required
+                value={editTemplateModal.color}
+                onChange={(e) => setEditTemplateModal(p => ({ ...p, color: e.target.value }))}
+                placeholder="#000000"
+              />
+              <div className="w-10 h-10 rounded-lg border shadow-sm" style={{ backgroundColor: editTemplateModal.color }} />
+            </div>
+          </div>
+          <div className="flex justify-end gap-3 pt-4 border-t" style={{ borderColor: 'var(--color-border-subtle)' }}>
+            <button 
+              type="button"
+              onClick={() => setEditTemplateModal({ open: false, type: null, label: '', description: '', color: '' })}
+              className="px-4 py-2 text-sm font-medium transition-colors rounded-lg hover:bg-black/5"
+              style={{ color: 'var(--color-text-muted)' }}
+            >
+              Cancel
+            </button>
+            <Button type="submit">Update Template</Button>
+          </div>
+        </form>
       </Modal>
     </div>
   )

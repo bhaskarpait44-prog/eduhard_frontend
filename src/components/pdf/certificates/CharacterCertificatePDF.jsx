@@ -7,7 +7,7 @@ const CharacterCertificatePDF = ({ data }) => {
   return (
     <BaseCertificate title="Character Certificate" data={data}>
       <Text>
-        This is to certify that {recipient.name}, son/daughter of {recipient.father_name}, 
+        This is to certify that {recipient.name}, ward of {recipient.father_name}, 
         bearing Admission No. {recipient.admission_no}, was a student of this institution.
       </Text>
       

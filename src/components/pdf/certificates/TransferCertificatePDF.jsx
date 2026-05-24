@@ -1,5 +1,5 @@
 import { Text, View } from '@react-pdf/renderer';
-import BaseCertificate, { commonStyles } from './BaseCertificate';
+import BaseCertificate, { commonStyles, formatDate } from './BaseCertificate';
 
 const TransferCertificatePDF = ({ data }) => {
   const { recipient, extra_data } = data;
@@ -7,9 +7,9 @@ const TransferCertificatePDF = ({ data }) => {
   return (
     <BaseCertificate title="Transfer Certificate" data={data}>
       <Text>
-        This is to certify that {recipient.name}, son/daughter of {recipient.father_name}, 
+        This is to certify that {recipient.name}, ward of {recipient.father_name}, 
         bearing Admission No. {recipient.admission_no}, was a student of this school 
-        in Class {recipient.class_name}. The student has left the school on {extra_data.leaving_date} 
+        in Class {recipient.class_name}. The student has left the school on {formatDate(extra_data.leaving_date)} 
         due to {extra_data.reason || 'parental request'}.
       </Text>
       

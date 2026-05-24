@@ -1,5 +1,5 @@
 import { Text, View } from '@react-pdf/renderer';
-import BaseCertificate, { commonStyles } from './BaseCertificate';
+import BaseCertificate, { commonStyles, formatDate } from './BaseCertificate';
 
 const ExperienceCertificatePDF = ({ data }) => {
   const { recipient, extra_data } = data;
@@ -9,7 +9,7 @@ const ExperienceCertificatePDF = ({ data }) => {
       <Text>
         This is to certify that {recipient.name}, holding Employee ID {recipient.employee_id}, 
         served as {extra_data.designation || recipient.designation} in this institution 
-        from {extra_data.join_date} to {extra_data.leaving_date}.
+        from {formatDate(extra_data.join_date)} to {formatDate(extra_data.leaving_date)}.
       </Text>
       
       <Text style={{ marginTop: 10 }}>
@@ -24,11 +24,11 @@ const ExperienceCertificatePDF = ({ data }) => {
         </View>
         <View style={commonStyles.extraDataRow}>
           <Text style={commonStyles.extraDataLabel}>Joining Date</Text>
-          <Text style={commonStyles.extraDataValue}>: {extra_data.join_date}</Text>
+          <Text style={commonStyles.extraDataValue}>: {formatDate(extra_data.join_date)}</Text>
         </View>
         <View style={commonStyles.extraDataRow}>
           <Text style={commonStyles.extraDataLabel}>Relieving Date</Text>
-          <Text style={commonStyles.extraDataValue}>: {extra_data.leaving_date}</Text>
+          <Text style={commonStyles.extraDataValue}>: {formatDate(extra_data.leaving_date)}</Text>
         </View>
       </View>
     </BaseCertificate>
