@@ -1,5 +1,5 @@
 import { PDFDownloadLink } from '@react-pdf/renderer'
-import { Download } from 'lucide-react'
+import { Download, AlertCircle } from 'lucide-react'
 import TransferCertificatePDF from './TransferCertificatePDF'
 import BonafideCertificatePDF from './BonafideCertificatePDF'
 import CharacterCertificatePDF from './CharacterCertificatePDF'
@@ -20,9 +20,23 @@ const PDF_COMPONENTS = {
   experience: ExperienceCertificatePDF,
 }
 
-const CertificateDownloadButton = ({ certType, data, fileName }) => {
+const CertificateDownloadButton = ({ certType, data, fileName, disabled }) => {
   const PdfComponent = PDF_COMPONENTS[certType]
   if (!PdfComponent || !data) return null
+
+  // Bug 4 Fix: Disable and style differently if revoked
+  if (disabled) {
+    return (
+      <button 
+        disabled
+        title="Certificate Revoked"
+        className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold bg-gray-200 text-gray-400 cursor-not-allowed border border-gray-300"
+      >
+        <AlertCircle size={14} />
+        Revoked
+      </button>
+    )
+  }
 
   return (
     <PDFDownloadLink
@@ -31,7 +45,7 @@ const CertificateDownloadButton = ({ certType, data, fileName }) => {
     >
       {({ loading }) => (
         <button 
-          className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-sm active:transform active:scale-95"
           disabled={loading}
           style={{ 
             backgroundColor: loading ? '#94a3b8' : '#0f766e', 

@@ -32,7 +32,8 @@ const SportsCertificatePDF = ({ data }) => {
       </Text>
       
       <Text style={{ textAlign: 'center' }}>
-        of Class {recipient.class_name} for outstanding achievement in {extra_data.event_name} held on {formatDate(extra_data.event_date)}.
+        ward of {recipient.father_name}, of Class {recipient.class_name} for outstanding 
+        achievement in {extra_data.event_name} held on {formatDate(extra_data.event_date)}.
       </Text>
 
       <Text style={{ textAlign: 'center', marginTop: 10 }}>

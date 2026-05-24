@@ -1,10 +1,10 @@
 // src/pages/admin/CertificatesPage.jsx
 import { useEffect, useState, useCallback, useRef } from 'react'
 import { 
-  Award, Download, Eye, Plus, FileText, Shield, 
+  Award, Plus, FileText, Shield, 
   ArrowRightLeft, BookOpen, Trophy, GraduationCap, 
-  Briefcase, RefreshCw, XCircle, Search, Filter, CheckCircle,
-  AlertTriangle, Settings
+  Briefcase, RefreshCw, XCircle, Search, Eye,
+  AlertTriangle, CheckCircle
 } from 'lucide-react'
 import { PDFViewer } from '@react-pdf/renderer'
 import { certificateApi, studentsApi, adminTeacherControlApi, classApi } from '@/api'
@@ -15,9 +15,9 @@ import Badge from '@/components/ui/Badge'
 import Modal from '@/components/ui/Modal'
 import Select from '@/components/ui/Select'
 import Input from '@/components/ui/Input'
-import Textarea from '@/components/ui/Textarea'
 import EmptyState from '@/components/ui/EmptyState'
 import TableSkeleton from '@/components/ui/TableSkeleton'
+import ConfirmDialog from '@/components/ui/ConfirmDialog'
 import { format } from 'date-fns'
 import { cn } from '@/utils/helpers'
 import CertificateDownloadButton from '@/components/pdf/certificates/CertificateDownloadButton'
@@ -361,6 +361,7 @@ const CertificatesPage = () => {
 
   const handleIssueSubmit = async (e) => {
     e.preventDefault()
+    // Bug 3 Fix: Use toastErrorRef.current consistently
     if (!formData.recipient_id) return toastErrorRef.current('Please select a recipient.')
 
     setSubmitting(true)
@@ -389,6 +390,7 @@ const CertificatesPage = () => {
   }
 
   const handleRevoke = (id) => {
+    // Bug 2 Fix: Prepare for ConfirmDialog
     setRevokeModal({ open: true, id })
   }
 
@@ -420,19 +422,31 @@ const CertificatesPage = () => {
     setTimeout(() => setPreviewLoading(false), 1000)
   }
 
-  // Pagination Helper
+  // Pagination Helper - Bug 8 Fix (Windowed Pagination)
   const getPageNumbers = () => {
     const { page, pages } = pagination
-    const maxVisible = 5
-    let start = Math.max(1, page - Math.floor(maxVisible / 2))
-    let end = Math.min(pages, start + maxVisible - 1)
-    
-    if (end - start + 1 < maxVisible) {
-      start = Math.max(1, end - maxVisible + 1)
+    if (pages <= 7) {
+      return Array.from({ length: pages }, (_, i) => i + 1)
     }
-    
+
     const nums = []
-    for (let i = start; i <= end; i++) nums.push(i)
+    if (page <= 4) {
+      for (let i = 1; i <= 5; i++) nums.push(i)
+      nums.push('...')
+      nums.push(pages)
+    } else if (page >= pages - 3) {
+      nums.push(1)
+      nums.push('...')
+      for (let i = pages - 4; i <= pages; i++) nums.push(i)
+    } else {
+      nums.push(1)
+      nums.push('...')
+      nums.push(page - 1)
+      nums.push(page)
+      nums.push(page + 1)
+      nums.push('...')
+      nums.push(pages)
+    }
     return nums
   }
 
@@ -596,7 +610,7 @@ const CertificatesPage = () => {
                           </span>
                         </div>
                       </td>
-                      <td className="px-4 py-3 text-sm">{format(new Date(cert.issued_date + 'T00:00:00'), 'dd MMM yyyy')}</td>
+                      <td className="px-4 py-3 text-sm">{cert.issued_date}</td>
                       <td className="px-4 py-3">{getStatusBadge(cert.status)}</td>
                       <td className="px-4 py-3 text-right">
                         <div className="flex items-center justify-end gap-2">
@@ -642,21 +656,25 @@ const CertificatesPage = () => {
                   Previous
                 </Button>
                 <div className="flex items-center gap-1">
-                  {getPageNumbers().map((i) => (
-                    <button
-                      key={i}
-                      onClick={() => setFilters(p => ({ ...p, page: i }))}
-                      className={cn(
-                        "w-8 h-8 rounded-lg text-xs font-bold transition-all",
-                        filters.page === i ? "bg-brand text-white" : "hover:bg-black/5"
-                      )}
-                      style={{
-                        backgroundColor: filters.page === i ? 'var(--color-brand)' : 'transparent',
-                        color: filters.page === i ? '#fff' : 'var(--color-text-muted)'
-                      }}
-                    >
-                      {i}
-                    </button>
+                  {getPageNumbers().map((i, idx) => (
+                    i === '...' ? (
+                      <span key={`dots-${idx}`} className="px-2 text-muted">...</span>
+                    ) : (
+                      <button
+                        key={i}
+                        onClick={() => setFilters(p => ({ ...p, page: i }))}
+                        className={cn(
+                          "w-8 h-8 rounded-lg text-xs font-bold transition-all",
+                          filters.page === i ? "bg-brand text-white" : "hover:bg-black/5"
+                        )}
+                        style={{
+                          backgroundColor: filters.page === i ? 'var(--color-brand)' : 'transparent',
+                          color: filters.page === i ? '#fff' : 'var(--color-text-muted)'
+                        }}
+                      >
+                        {i}
+                      </button>
+                    )
                   ))}
                 </div>
                 <Button 
@@ -891,34 +909,17 @@ const CertificatesPage = () => {
         </div>
       </Modal>
 
-      {/* Revoke Confirmation Modal */}
-      <Modal
+      {/* Revoke Confirmation Dialog - Bug 2 Fix */}
+      <ConfirmDialog
         open={revokeModal.open}
         onClose={() => setRevokeModal({ open: false, id: null })}
+        onConfirm={confirmRevoke}
         title="Revoke Certificate"
-        size="sm"
-      >
-        <div className="p-4 space-y-4">
-          <div className="flex items-center gap-3 text-red-600">
-            <AlertTriangle size={24} />
-            <h3 className="font-bold">Are you absolutely sure?</h3>
-          </div>
-          <p className="text-sm text-gray-500 leading-relaxed">
-            This action will mark the certificate as <span className="font-bold text-gray-900">Revoked</span>. 
-            This is permanent and cannot be undone. The certificate will remain in the register for audit purposes but will be visually grayed out and downloads will be disabled.
-          </p>
-          <div className="flex justify-end gap-3 pt-4 border-t" style={{ borderColor: 'var(--color-border-subtle)' }}>
-            <button 
-              onClick={() => setRevokeModal({ open: false, id: null })}
-              className="px-4 py-2 text-sm font-medium transition-colors rounded-lg hover:bg-black/5"
-              style={{ color: 'var(--color-text-muted)' }}
-            >
-              Cancel
-            </button>
-            <Button variant="danger" onClick={confirmRevoke}>Yes, Revoke Certificate</Button>
-          </div>
-        </div>
-      </Modal>
+        description="This action will mark the certificate as Revoked. This is permanent and cannot be undone. The certificate will remain in the register for audit purposes but will be visually grayed out and downloads will be disabled."
+        confirmText="Yes, Revoke Certificate"
+        variant="danger"
+        icon={AlertTriangle}
+      />
 
       {/* Preview Modal */}
       <Modal

@@ -171,11 +171,11 @@ const BaseCertificate = ({ title, data, children, accentOverride }) => {
 
         {/* Header */}
         <View style={[commonStyles.header, accentOverride ? { borderBottomColor: accentOverride } : {}]}>
-          {school.logo_url && <Image src={school.logo_url} style={commonStyles.logo} />}
+          {school?.logo_url && <Image src={school.logo_url} style={commonStyles.logo} />}
           <View style={commonStyles.schoolInfo}>
-            <Text style={[commonStyles.schoolName, accentOverride ? { color: accentOverride } : {}]}>{school.name}</Text>
-            <Text style={commonStyles.schoolMeta}>{school.address}</Text>
-            <Text style={commonStyles.schoolMeta}>Phone: {school.phone} | Email: {school.email}</Text>
+            <Text style={[commonStyles.schoolName, accentOverride ? { color: accentOverride } : {}]}>{school?.name || 'EduCore School'}</Text>
+            <Text style={commonStyles.schoolMeta}>{school?.address || 'N/A'}</Text>
+            <Text style={commonStyles.schoolMeta}>Phone: {school?.phone || 'N/A'} | Email: {school?.email || 'N/A'}</Text>
           </View>
         </View>
 
@@ -196,7 +196,7 @@ const BaseCertificate = ({ title, data, children, accentOverride }) => {
             <Text style={commonStyles.signatureLine}>Authorized Signatory</Text>
           </View>
           <View style={commonStyles.signatureBox}>
-            <Text style={commonStyles.signatureLine}>{school.principal_name || 'Principal'}</Text>
+            <Text style={commonStyles.signatureLine}>{school?.principal_name || 'Principal'}</Text>
           </View>
         </View>
 

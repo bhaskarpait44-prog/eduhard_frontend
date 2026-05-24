@@ -23,7 +23,7 @@ export default defineConfig({
     open: true,
     proxy: {
       '/api': {
-        target: 'http://10.137.4.32:5000',
+        target: 'http://10.241.71.32:5000',
         changeOrigin: true,
         secure: false,
       },
