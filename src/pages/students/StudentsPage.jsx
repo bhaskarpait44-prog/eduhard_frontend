@@ -134,10 +134,15 @@ const StudentGridCard = ({ student, onView, onEdit, onDelete }) => {
         <div className="mb-4 relative">
           <AvatarCircle name={fullName} size="h-16 w-16" fontSize="text-lg" />
           {student.is_active && (
-            <div className="absolute bottom-0 right-0 w-4 h-4 bg-green-500 border-2 border-white dark:border-gray-800 rounded-full" />
+            <div className={`absolute bottom-0 right-0 w-4 h-4 border-2 border-white dark:border-gray-800 rounded-full ${student.is_online ? 'bg-indigo-500 animate-pulse' : 'bg-green-500'}`} />
           )}
         </div>
-        <h3 className="text-base font-bold text-gray-900 dark:text-gray-100 line-clamp-1 mb-1">{fullName}</h3>
+        <h3 className="text-base font-bold text-gray-900 dark:text-gray-100 line-clamp-1 mb-1 flex items-center gap-1.5">
+          {fullName}
+          {student.is_online && (
+            <span className="w-2 h-2 rounded-full bg-indigo-500 animate-pulse shadow-[0_0_8px_rgba(99,102,241,0.6)]" title="Online now" />
+          )}
+        </h3>
         <p className="text-xs text-gray-500 dark:text-gray-400 font-medium mb-4">{classLabel}</p>
 
         {/* Status Indicator */}
@@ -191,13 +196,21 @@ const StudentTableRow = ({ student, onView, onToggleStatus, isSaving }) => {
     <tr className="hover:bg-gray-50 dark:hover:bg-gray-800/40 transition-colors group">
       <td className="px-6 py-4">
         <div className="flex items-center gap-3">
-          <AvatarCircle name={fullName} />
+          <div className="relative">
+            <AvatarCircle name={fullName} />
+            {student.is_online && (
+              <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-indigo-500 border-2 border-white dark:border-gray-800 rounded-full animate-pulse" />
+            )}
+          </div>
           <div className="min-w-0">
             <p 
               onClick={onView}
-              className="text-sm font-semibold text-gray-900 dark:text-gray-100 truncate hover:text-indigo-600 dark:hover:text-indigo-400 cursor-pointer"
+              className="text-sm font-semibold text-gray-900 dark:text-gray-100 truncate hover:text-indigo-600 dark:hover:text-indigo-400 cursor-pointer flex items-center gap-1.5"
             >
               {fullName}
+              {student.is_online && (
+                <span className="text-[10px] font-bold text-indigo-500 uppercase tracking-tighter">Online</span>
+              )}
             </p>
             <p className="text-xs text-gray-400 truncate">
               {enrollment ? `${enrollment.class} · ${enrollment.section || '-'}` : 'Not Enrolled'}

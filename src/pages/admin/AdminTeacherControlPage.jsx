@@ -651,8 +651,11 @@ const AssignmentCard = ({ group, onToggle, onEdit, onDelete }) => {
             {group.class_name}{group.class_stream ? ` (${group.class_stream.toUpperCase()})` : ''} — {group.section_name}
           </span>
           {group.classTeacher ? (
-            <span className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>
+            <span className="text-sm flex items-center gap-1.5" style={{ color: 'var(--color-text-secondary)' }}>
               CT: <span style={{ color: 'var(--color-text-primary)', fontWeight: 600 }}>{group.classTeacher.teacher_name}</span>
+              {group.classTeacher.is_online && (
+                <span className="w-2 h-2 rounded-full bg-indigo-500 animate-pulse" title="Online now" />
+              )}
             </span>
           ) : (
             <span className="text-xs font-semibold" style={{ color: '#dc2626' }}>No class teacher</span>
@@ -706,7 +709,12 @@ const SubjectChip = ({ item, onToggle, onEdit, onDelete }) => (
       <span className="h-2.5 w-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: subjectColor(item.subject_id) }} />
       <div className="min-w-0">
         <p className="truncate text-xs font-semibold" style={{ color: 'var(--color-text-primary)' }}>{item.subject_name || 'Subject'}</p>
-        <p className="truncate text-[11px]" style={{ color: 'var(--color-text-secondary)' }}>{item.teacher_name}</p>
+        <p className="truncate text-[11px] flex items-center gap-1.5" style={{ color: 'var(--color-text-secondary)' }}>
+          {item.teacher_name}
+          {item.is_online && (
+            <span className="w-1.5 h-1.5 rounded-full bg-indigo-500 animate-pulse" title="Online now" />
+          )}
+        </p>
       </div>
     </div>
     <div className="flex items-center gap-1.5">

@@ -172,12 +172,20 @@ const StudentList = () => {
                     <tr key={student.enrollment_id} style={{ borderTop: '1px solid var(--color-border)' }}>
                       <td className="px-4 py-4">
                         <div className="flex items-center gap-3">
-                          <div className="flex h-11 w-11 items-center justify-center rounded-2xl text-sm font-bold" style={{ backgroundColor: '#0f766e', color: '#fff' }}>
-                            {student.first_name?.[0]}{student.last_name?.[0]}
+                          <div className="relative">
+                            <div className="flex h-11 w-11 items-center justify-center rounded-2xl text-sm font-bold" style={{ backgroundColor: '#0f766e', color: '#fff' }}>
+                              {student.first_name?.[0]}{student.last_name?.[0]}
+                            </div>
+                            {student.is_online && (
+                              <span className="absolute -bottom-1 -right-1 w-3.5 h-3.5 bg-indigo-500 border-2 border-white dark:border-gray-800 rounded-full animate-pulse shadow-[0_0_8px_rgba(99,102,241,0.6)]" />
+                            )}
                           </div>
                           <div>
-                            <p className="text-sm font-semibold" style={{ color: 'var(--color-text-primary)' }}>
+                            <p className="text-sm font-semibold flex items-center gap-1.5" style={{ color: 'var(--color-text-primary)' }}>
                               {student.first_name} {student.last_name}
+                              {student.is_online && (
+                                <span className="text-[10px] font-bold text-indigo-500 uppercase tracking-tighter bg-indigo-50 px-1 rounded">Online</span>
+                              )}
                             </p>
                             <p className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>
                               Roll {student.roll_number || '--'} | {student.class_name} {student.section_name}

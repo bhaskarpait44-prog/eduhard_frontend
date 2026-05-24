@@ -41,7 +41,12 @@ const NoticeCard = ({ notice, onOpen, onTogglePin, loading = false }) => {
           <span className="flex items-center gap-1.5">
             <User2 size={12} style={{ color: 'var(--color-text-muted)' }} />
             <span className="font-semibold text-[var(--color-text-secondary)]">From:</span>
-            <span style={{ color: 'var(--color-text-muted)' }}>{notice.posted_by_name || 'School'}</span>
+            <span style={{ color: 'var(--color-text-muted)' }} className="flex items-center gap-1.5">
+              {notice.posted_by_name || 'School'}
+              {notice.is_online && (
+                <span className="w-1.5 h-1.5 rounded-full bg-indigo-500 animate-pulse" title="Online now" />
+              )}
+            </span>
           </span>
           <span className="flex items-center gap-1.5 border-l pl-4 border-slate-200 dark:border-slate-800">
             <CalendarDays size={12} style={{ color: 'var(--color-text-muted)' }} />

@@ -177,7 +177,7 @@ const StudyMaterials = () => {
               </div>
 
               <div className="mt-4 grid grid-cols-2 gap-3">
-                <InfoCard label="Teacher" value={item.teacher_name} />
+                <InfoCard label="Teacher" value={item.teacher_name} isOnline={item.is_online} />
                 <InfoCard label="Added" value={formatDate(item.created_at, 'short')} />
                 <InfoCard label="Size" value={formatFileSize(item.file_size)} />
                 <InfoCard label="Viewed" value={item.last_viewed_at ? formatDate(item.last_viewed_at, 'short') : 'Not yet'} />
@@ -239,10 +239,15 @@ const StudyMaterials = () => {
   )
 }
 
-const InfoCard = ({ label, value }) => (
+const InfoCard = ({ label, value, isOnline }) => (
   <div className="rounded-[20px] border px-4 py-4" style={{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface-raised)' }}>
     <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--color-text-muted)]">{label}</p>
-    <p className="mt-2 text-sm text-[var(--color-text-primary)]">{value || '--'}</p>
+    <div className="mt-2 text-sm text-[var(--color-text-primary)] flex items-center gap-1.5">
+      {value || '--'}
+      {isOnline && (
+        <span className="w-1.5 h-1.5 rounded-full bg-indigo-500 animate-pulse" title="Online now" />
+      )}
+    </div>
   </div>
 )
 

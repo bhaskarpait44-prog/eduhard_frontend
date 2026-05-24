@@ -611,10 +611,18 @@ const UserListPage = () => {
                     </td>
                     <td className="px-5 py-4"><RoleBadge role={user.role} /></td>
                     <td className="px-5 py-4">
-                      <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${user.is_active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>
-                        <span className={`w-1.5 h-1.5 rounded-full ${user.is_active ? 'bg-green-500' : 'bg-gray-400'}`} />
-                        {user.is_active ? 'Active' : 'Inactive'}
-                      </span>
+                      <div className="flex flex-col gap-1.5 items-start">
+                        <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${user.is_active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>
+                          <span className={`w-1.5 h-1.5 rounded-full ${user.is_active ? 'bg-green-500' : 'bg-gray-400'}`} />
+                          {user.is_active ? 'Active' : 'Inactive'}
+                        </span>
+                        {user.is_online && (
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-bold bg-indigo-100 text-indigo-700 uppercase tracking-widest border border-indigo-200">
+                            <span className="w-1.5 h-1.5 rounded-full bg-indigo-500 animate-pulse" />
+                            Online
+                          </span>
+                        )}
+                      </div>
                     </td>
                     <td className="px-5 py-4">
                         <span className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>
@@ -624,7 +632,11 @@ const UserListPage = () => {
                       </span>
                     </td>
                     <td className="px-5 py-4 text-xs" style={{ color: 'var(--color-text-muted)' }}>
-                      {user.last_login_at ? formatDate(user.last_login_at) : 'Never'}
+                      {user.is_online ? (
+                        <span className="text-indigo-600 font-bold">Active now</span>
+                      ) : (
+                        user.last_login_at ? formatDate(user.last_login_at) : 'Never'
+                      )}
                     </td>
                       <td className="px-5 py-4">
                         <div className="flex items-center gap-1">

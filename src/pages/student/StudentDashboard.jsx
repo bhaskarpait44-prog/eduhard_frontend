@@ -205,8 +205,11 @@ const StudentDashboard = () => {
                   >
                     <div className="min-w-0">
                       <p className="truncate text-sm font-semibold text-[var(--color-text-primary)]">{item.title}</p>
-                      <p className="truncate text-xs text-[var(--color-text-secondary)]">
+                      <p className="truncate text-xs text-[var(--color-text-secondary)] flex items-center gap-1.5">
                         {item.subject_name} • {item.teacher_name}
+                        {item.is_online && (
+                          <span className="w-1.5 h-1.5 rounded-full bg-indigo-500 animate-pulse" title="Online now" />
+                        )}
                       </p>
                     </div>
                     <button
@@ -371,8 +374,11 @@ const StudentDashboard = () => {
                         <p className="mt-2 text-lg font-semibold text-[var(--color-text-primary)]">
                           {item.subject_name}
                         </p>
-                        <p className="mt-1 text-sm text-[var(--color-text-secondary)]">
+                        <p className="mt-1 text-sm text-[var(--color-text-secondary)] flex items-center gap-1.5">
                           {item.teacher_name}
+                          {item.is_online && (
+                            <span className="w-1.5 h-1.5 rounded-full bg-indigo-500 animate-pulse" title="Online now" />
+                          )}
                         </p>
                         <p className="mt-1 text-xs text-[var(--color-text-muted)]">
                           {formatTimeRange(item.start_time, item.end_time)}
