@@ -16,6 +16,14 @@ import {
   MapPin,
   Bell,
   MonitorCog,
+  KeyRound,
+  Eye,
+  EyeOff,
+  Check,
+  X,
+  Loader2,
+  ShieldCheck,
+  AlertCircle
 } from 'lucide-react'
 import usePageTitle from '@/hooks/usePageTitle'
 import useToast from '@/hooks/useToast'
@@ -37,17 +45,44 @@ const DEFAULT_SETTINGS = {
   feeReminder: true,
 }
 
+// ── Password strength calculation ─────────────────────────────────────────
+const getStrength = (password) => {
+  if (!password) return { score: 0, label: '', color: '' }
+  let score = 0
+  if (password.length >= 8)               score++
+  if (password.length >= 12)              score++
+  if (/[A-Z]/.test(password))            score++
+  if (/[0-9]/.test(password))            score++
+  if (/[^A-Za-z0-9]/.test(password))    score++
+  const levels = [
+    { label: '',          color: '' },
+    { label: 'Very weak', color: '#dc2626' },
+    { label: 'Weak',      color: '#f97316' },
+    { label: 'Fair',      color: '#eab308' },
+    { label: 'Strong',    color: '#22c55e' },
+    { label: 'Very strong', color: '#16a34a' },
+  ]
+  return { score, ...levels[score] }
+}
+
 const SettingsPage = () => {
   usePageTitle('Settings')
 
   const navigate = useNavigate()
-  const { toastSuccess, toastInfo } = useToast()
+  const { toastSuccess, toastInfo, toastError } = useToast()
   const { user } = useAuthStore()
   const { theme, setTheme, sidebarCollapsed, setSidebarCollapsed } = useUiStore()
   const { currentSession, fetchCurrentSession } = useSessionStore()
 
   const [settings, setSettings] = useState(DEFAULT_SETTINGS)
   const [isLoading, setIsLoading] = useState(false)
+
+  // Password state
+  const [pwdForm, setPwdForm] = useState({ currentPassword: '', newPassword: '', confirmPassword: '' })
+  const [showPwd, setShowPwd] = useState({ current: false, new: false, confirm: false })
+  const [isChangingPwd, setIsChangingPwd] = useState(false)
+
+  const strength = getStrength(pwdForm.newPassword)
 
   useEffect(() => {
     fetchCurrentSession()
@@ -77,23 +112,6 @@ const SettingsPage = () => {
     }
   }
 
-  const completion = useMemo(() => {
-    const requiredFields = [
-      settings.schoolName,
-      settings.schoolEmail,
-      settings.schoolPhone,
-      settings.schoolAddress,
-      settings.timezone,
-    ]
-
-    const filled = requiredFields.filter((value) => String(value || '').trim()).length
-    return Math.round((filled / requiredFields.length) * 100)
-  }, [settings])
-
-  const handleChange = (key, value) => {
-    setSettings((prev) => ({ ...prev, [key]: value }))
-  }
-
   const handleSave = async () => {
     setIsLoading(true)
     try {
@@ -106,6 +124,32 @@ const SettingsPage = () => {
       toastSuccess('Settings saved locally (API failed)')
     } finally {
       setIsLoading(false)
+    }
+  }
+
+  const handlePasswordChange = async (e) => {
+    e.preventDefault()
+    if (pwdForm.newPassword !== pwdForm.confirmPassword) {
+      toastError('New passwords do not match')
+      return
+    }
+    if (strength.score < 3) {
+      toastError('Please choose a stronger password')
+      return
+    }
+
+    setIsChangingPwd(true)
+    try {
+      await api.post('/auth/change-password', {
+        currentPassword: pwdForm.currentPassword,
+        newPassword: pwdForm.newPassword
+      })
+      toastSuccess('Password updated successfully')
+      setPwdForm({ currentPassword: '', newPassword: '', confirmPassword: '' })
+    } catch (err) {
+      toastError(err.message || 'Failed to update password')
+    } finally {
+      setIsChangingPwd(false)
     }
   }
 
@@ -276,6 +320,71 @@ const SettingsPage = () => {
                 </div>
               </PreferenceBox>
             </div>
+          </SettingsCard>
+
+          <SettingsCard
+            icon={ShieldCheck}
+            title="Account Security"
+            description="Update your password periodically to keep your account secure."
+          >
+            <form onSubmit={handlePasswordChange} className="space-y-5">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                <PasswordField
+                  label="Current password"
+                  value={pwdForm.currentPassword}
+                  onChange={(v) => setPwdForm({ ...pwdForm, currentPassword: v })}
+                  show={showPwd.current}
+                  onToggle={() => setShowPwd({ ...showPwd, current: !showPwd.current })}
+                />
+                <div className="hidden md:block" />
+                
+                <div className="space-y-3">
+                  <PasswordField
+                    label="New password"
+                    value={pwdForm.newPassword}
+                    onChange={(v) => setPwdForm({ ...pwdForm, newPassword: v })}
+                    show={showPwd.new}
+                    onToggle={() => setShowPwd({ ...showPwd, new: !showPwd.new })}
+                  />
+                  {pwdForm.newPassword && (
+                    <div className="px-1">
+                      <div className="flex gap-1 mb-2">
+                        {[1, 2, 3, 4, 5].map((i) => (
+                          <div key={i} className="h-1 flex-1 rounded-full transition-all" style={{ backgroundColor: i <= strength.score ? strength.color : 'var(--color-border)' }} />
+                        ))}
+                      </div>
+                      <p className="text-[10px] font-bold uppercase tracking-wider" style={{ color: strength.color || 'var(--color-text-muted)' }}>{strength.label || 'Strength'}</p>
+                    </div>
+                  )}
+                </div>
+
+                <PasswordField
+                  label="Confirm new password"
+                  value={pwdForm.confirmPassword}
+                  onChange={(v) => setPwdForm({ ...pwdForm, confirmPassword: v })}
+                  show={showPwd.confirm}
+                  onToggle={() => setShowPwd({ ...showPwd, confirm: !showPwd.confirm })}
+                />
+              </div>
+
+              <div className="flex flex-wrap items-center justify-between gap-4 pt-2">
+                <div className="flex flex-wrap gap-x-4 gap-y-1">
+                  <Rule label="8+ chars" pass={pwdForm.newPassword.length >= 8} />
+                  <Rule label="Uppercase" pass={/[A-Z]/.test(pwdForm.newPassword)} />
+                  <Rule label="Number" pass={/[0-9]/.test(pwdForm.newPassword)} />
+                  <Rule label="Special" pass={/[^A-Za-z0-9]/.test(pwdForm.newPassword)} />
+                </div>
+                <button
+                  type="submit"
+                  disabled={isChangingPwd || !pwdForm.newPassword || pwdForm.newPassword !== pwdForm.confirmPassword}
+                  className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-bold text-white transition-all hover:shadow-lg disabled:opacity-50 disabled:grayscale"
+                  style={{ backgroundColor: 'var(--color-brand)' }}
+                >
+                  {isChangingPwd ? <Loader2 size={16} className="animate-spin" /> : <KeyRound size={16} />}
+                  Update Password
+                </button>
+              </div>
+            </form>
           </SettingsCard>
 
           <SettingsCard
@@ -505,6 +614,36 @@ const OverviewRow = ({ label, value }) => (
   <div className="flex items-center justify-between gap-4 rounded-2xl px-4 py-3" style={{ backgroundColor: 'var(--color-surface-raised)' }}>
     <span style={{ color: 'var(--color-text-secondary)' }}>{label}</span>
     <span className="font-semibold" style={{ color: 'var(--color-text-primary)' }}>{value}</span>
+  </div>
+)
+
+const PasswordField = ({ label, value, onChange, show, onToggle }) => (
+  <div className="space-y-1.5">
+    <label className="text-sm font-medium" style={{ color: 'var(--color-text-primary)' }}>{label}</label>
+    <div className="relative">
+      <input
+        type={show ? 'text' : 'password'}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className="w-full rounded-2xl border px-4 py-2.5 text-sm outline-none transition-all focus:ring-2 focus:ring-brand/20 pr-10"
+        style={{ backgroundColor: 'var(--color-surface)', borderColor: 'var(--color-border)', color: 'var(--color-text-primary)' }}
+        placeholder="••••••••"
+      />
+      <button
+        type="button"
+        onClick={onToggle}
+        className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-text-muted hover:text-text-primary transition-colors"
+      >
+        {show ? <EyeOff size={16} /> : <Eye size={16} />}
+      </button>
+    </div>
+  </div>
+)
+
+const Rule = ({ label, pass }) => (
+  <div className="flex items-center gap-1.5 text-[11px] font-medium" style={{ color: pass ? 'var(--color-success)' : 'var(--color-text-muted)' }}>
+    {pass ? <Check size={12} /> : <X size={12} />}
+    {label}
   </div>
 )
 

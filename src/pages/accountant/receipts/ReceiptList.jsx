@@ -97,7 +97,7 @@ const ReceiptList = () => {
         </div>
         <div
           className="text-sm font-semibold px-4 py-2 rounded-full"
-          style={{ backgroundColor: 'var(--color-brand-subtle, #fff7ed)', color: 'var(--color-brand)' }}
+          style={{ backgroundColor: 'var(--color-accent-subtle)', color: 'var(--color-accent-emphasis)' }}
         >
           {filtered.length} record{filtered.length !== 1 ? 's' : ''}
         </div>
@@ -141,7 +141,7 @@ const ReceiptList = () => {
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full rounded-xl pl-9 pr-3 py-2 text-sm border outline-none focus:ring-2"
                 style={{
-                  backgroundColor: 'var(--color-bg-input, var(--color-surface-2, #f8fafc))',
+                  backgroundColor: 'var(--color-bg-input)',
                   borderColor: 'var(--color-border)',
                   color: 'var(--color-text-primary)',
                 }}
@@ -160,7 +160,7 @@ const ReceiptList = () => {
               onChange={(e) => setDateFrom(e.target.value)}
               className="w-full rounded-xl px-3 py-2 text-sm border outline-none focus:ring-2"
               style={{
-                backgroundColor: 'var(--color-bg-input, var(--color-surface-2, #f8fafc))',
+                backgroundColor: 'var(--color-bg-input)',
                 borderColor: 'var(--color-border)',
                 color: 'var(--color-text-primary)',
               }}
@@ -178,7 +178,7 @@ const ReceiptList = () => {
               onChange={(e) => setDateTo(e.target.value)}
               className="w-full rounded-xl px-3 py-2 text-sm border outline-none focus:ring-2"
               style={{
-                backgroundColor: 'var(--color-bg-input, var(--color-surface-2, #f8fafc))',
+                backgroundColor: 'var(--color-bg-input)',
                 borderColor: 'var(--color-border)',
                 color: 'var(--color-text-primary)',
               }}
@@ -195,7 +195,7 @@ const ReceiptList = () => {
               onChange={(e) => setSelectedClass(e.target.value)}
               className="w-full rounded-xl px-3 py-2 text-sm border outline-none focus:ring-2"
               style={{
-                backgroundColor: 'var(--color-bg-input, var(--color-surface-2, #f8fafc))',
+                backgroundColor: 'var(--color-bg-input)',
                 borderColor: 'var(--color-border)',
                 color: 'var(--color-text-primary)',
               }}
@@ -217,7 +217,7 @@ const ReceiptList = () => {
               onChange={(e) => setPaymentMode(e.target.value)}
               className="w-full rounded-xl px-3 py-2 text-sm border outline-none focus:ring-2"
               style={{
-                backgroundColor: 'var(--color-bg-input, var(--color-surface-2, #f8fafc))',
+                backgroundColor: 'var(--color-bg-input)',
                 borderColor: 'var(--color-border)',
                 color: 'var(--color-text-primary)',
               }}
@@ -283,7 +283,7 @@ const ReceiptList = () => {
                 return (
                   <tr
                     key={receipt.id}
-                    className="transition-colors hover:bg-orange-50/30"
+                    className="transition-colors hover:bg-brand/5"
                     style={{
                       borderBottom:
                         i < filtered.length - 1 ? '1px solid var(--color-border)' : 'none',
@@ -292,7 +292,7 @@ const ReceiptList = () => {
                     <td className="px-4 py-3.5">
                       <span
                         className="text-xs font-bold tracking-wide px-2 py-1 rounded-lg"
-                        style={{ backgroundColor: '#fff7ed', color: '#c2410c' }}
+                        style={{ backgroundColor: 'var(--color-accent-subtle)', color: 'var(--color-accent-emphasis)' }}
                       >
                         {receipt.receipt_no}
                       </span>
@@ -309,7 +309,7 @@ const ReceiptList = () => {
                       {receipt.class_name}
                     </td>
                     <td className="px-4 py-3.5">
-                      <span className="text-sm font-bold" style={{ color: '#15803d' }}>
+                      <span className="text-sm font-bold" style={{ color: 'var(--color-success)' }}>
                         {formatCurrency(receipt.amount)}
                       </span>
                     </td>
@@ -342,11 +342,11 @@ const ReceiptList = () => {
             </tbody>
             {/* Footer totals row */}
             <tfoot>
-              <tr style={{ borderTop: '2px solid var(--color-border)', backgroundColor: 'var(--color-surface-2, #fafaf9)' }}>
+              <tr style={{ borderTop: '2px solid var(--color-border)', backgroundColor: 'var(--color-surface-2)' }}>
                 <td colSpan={4} className="px-4 py-3 text-xs font-bold uppercase tracking-wider" style={{ color: 'var(--color-text-muted)' }}>
                   Total ({filtered.length} receipts)
                 </td>
-                <td className="px-4 py-3 text-sm font-bold" style={{ color: '#15803d' }}>
+                <td className="px-4 py-3 text-sm font-bold" style={{ color: 'var(--color-success)' }}>
                   {formatCurrency(totalAmount)}
                 </td>
                 <td colSpan={3} />

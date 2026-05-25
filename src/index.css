@@ -43,8 +43,16 @@
   /* Surface */
   --color-bg:            #f8fafc;
   --color-surface:       #ffffff;
+  --color-surface-2:     #fafaf9;
   --color-surface-raised:#f1f5f9;
   --color-border:        #e2e8f0;
+  --color-bg-input:      #f8fafc;
+
+  /* Accent - Light mode (Amber/Orange) */
+  --color-accent-subtle: #fff7ed;
+  --color-accent-muted:  #fed7aa;
+  --color-accent-emphasis:#9a3412;
+  --color-accent-heading: #7c2d12;
 
   /* Text */
   --color-text-primary:  #0f172a;
@@ -104,7 +112,14 @@
   --color-sidebar-muted: #94a3b8;
   --color-sidebar-hover: #162338;
   --color-sidebar-border:#1e293b;
-  --color-sidebar-card:  rgba(15, 23, 42, 0.72);
+  --color-bg-input:      #1e293b;
+  --color-surface-2:     #0f172a;
+
+  /* Accent - Dark mode (Deeper Amber/Orange) */
+  --color-accent-subtle: #451a03;
+  --color-accent-muted:  #92400e;
+  --color-accent-emphasis:#fbbf24;
+  --color-accent-heading: #fcd34d;
 }
 
 /* ── Base resets ────────────────────────────────────────────────────────── */

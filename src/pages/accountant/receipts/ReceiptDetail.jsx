@@ -100,7 +100,7 @@ const ReceiptDetail = () => {
               Receipt Detail
             </h1>
             {receipt && (
-              <p className="text-sm mt-0.5 font-semibold" style={{ color: '#c2410c' }}>
+              <p className="text-sm mt-0.5 font-bold" style={{ color: 'var(--color-accent-emphasis)' }}>
                 {receipt.receipt_no}
               </p>
             )}
@@ -142,8 +142,8 @@ const ReceiptDetail = () => {
               </p>
               <div className="flex items-center gap-3 mb-4">
                 <div
-                  className="w-11 h-11 rounded-2xl flex items-center justify-center text-sm font-bold flex-shrink-0"
-                  style={{ backgroundColor: '#fff7ed', color: '#c2410c' }}
+                  className="w-11 h-11 rounded-2xl flex items-center justify-center text-sm font-bold flex-shrink-0 shadow-sm"
+                  style={{ backgroundColor: 'var(--color-accent-subtle)', color: 'var(--color-accent-emphasis)' }}
                 >
                   {(receipt.student_name || '?').charAt(0).toUpperCase()}
                 </div>
@@ -151,7 +151,7 @@ const ReceiptDetail = () => {
                   <p className="font-bold text-base leading-tight" style={{ color: 'var(--color-text-primary)' }}>
                     {receipt.student_name}
                   </p>
-                  <p className="text-sm mt-0.5" style={{ color: 'var(--color-text-muted)' }}>
+                  <p className="text-sm mt-0.5 font-medium" style={{ color: 'var(--color-text-secondary)' }}>
                     {receipt.class_name}
                   </p>
                 </div>
@@ -204,7 +204,7 @@ const ReceiptDetail = () => {
                 </p>
                 <span
                   className="text-xs font-bold px-2 py-1 rounded-lg"
-                  style={{ backgroundColor: '#fff7ed', color: '#c2410c' }}
+                  style={{ backgroundColor: 'var(--color-accent-subtle)', color: 'var(--color-accent-emphasis)' }}
                 >
                   {receipt.receipt_no}
                 </span>

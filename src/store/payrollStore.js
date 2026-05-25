@@ -59,6 +59,18 @@ const usePayrollStore = create((set, get) => ({
       set({ error: err.message, isLoading: false })
       throw err
     }
+  },
+
+  fetchPayslip: async (id) => {
+    set({ isLoading: true })
+    try {
+      const res = await api.getPayslip(id)
+      set({ isLoading: false })
+      return res.data
+    } catch (err) {
+      set({ error: err.message, isLoading: false })
+      throw err
+    }
   }
 }))
 

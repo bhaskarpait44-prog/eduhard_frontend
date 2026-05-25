@@ -267,7 +267,7 @@ const StudentsPage = () => {
   const { isAdmin } = useAuth()
   const { students, pagination, isLoading, isSaving, fetchStudents, deleteStudent, toggleStatus, fetchClassIDCardsData } = useAdminStudentStore()
   const { classes, sections, fetchClasses, fetchSections } = useClasses()
-  const { currentSession } = useSessionStore()
+  const { currentSession, fetchCurrentSession, isLoading: isSessionLoading } = useSessionStore()
 
   const [search, setSearch] = useState('')
   const [isFilterPanelOpen, setIsFilterPanelOpen] = useState(false)
@@ -280,19 +280,24 @@ const StudentsPage = () => {
   const [confirmDelete, setConfirmDelete] = useState(null)
   const [bulkIDData, setBulkIDData] = useState(null)
   const [fetchingBulk, setFetchingBulk] = useState(false)
+  const [isInitialLoading, setIsInitialLoading] = useState(true)
 
   const doFetch = useCallback(
     debounce((q, f, p) => {
       fetchStudents({ search: q, ...f, page: p, perPage: 20 })
         .catch(() => toastError('Failed to load students'))
+        .finally(() => setIsInitialLoading(false))
     }, 350),
     []
   )
 
   useEffect(() => {
-    if (!currentSession?.id) return
+    if (!currentSession?.id) {
+      fetchCurrentSession().catch(() => setIsInitialLoading(false))
+      return
+    }
     doFetch(search, { ...filters, session_id: String(currentSession.id) }, page)
-  }, [search, filters, page, currentSession?.id, doFetch])
+  }, [search, filters, page, currentSession?.id, doFetch, fetchCurrentSession])
 
   useEffect(() => {
     fetchClasses().catch(() => toastError('Failed to load classes'))
@@ -348,7 +353,7 @@ const StudentsPage = () => {
         <div>
           <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 flex items-center gap-3">
             Students
-            {pagination.total > 0 && (
+            {!isInitialLoading && pagination.total > 0 && (
               <span className="text-xs font-medium bg-indigo-100 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400 px-2 py-0.5 rounded-full">
                 {pagination.total} Total
               </span>
@@ -500,7 +505,7 @@ const StudentsPage = () => {
 
       {/* Main Content */}
       <div className="min-h-[400px]">
-        {isLoading ? (
+        {isInitialLoading || isLoading ? (
           <div className={view === 'grid' ? 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6' : 'space-y-4'}>
             {[1,2,3,4,5,6,7,8].map(i => (
               <div key={i} className={`animate-pulse bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-2xl ${view === 'grid' ? 'h-64' : 'h-16'}`} />

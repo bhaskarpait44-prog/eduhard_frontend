@@ -479,6 +479,7 @@ const EditModalBody = ({ form, setForm }) => {
         <SectionHeading>Basic info</SectionHeading>
         <div className="grid gap-3 sm:grid-cols-2">
           {field('name',       'Full name')}
+          {field('email',      'Email address', 'email')}
           {field('phone',      'Phone number')}
           {field('employee_id','Employee ID')}
           {field('department', 'Department')}
@@ -530,7 +531,7 @@ const TeacherDetailPage = () => {
   const [resetResult, setResetResult] = useState(null)
 
   const [editForm, setEditForm] = useState({
-    name: '', phone: '', employee_id: '', department: '', designation: '',
+    name: '', email: '', phone: '', employee_id: '', department: '', designation: '',
     joining_date: '', address: '', highest_qualification: '', specialization: '',
     university_name: '', graduation_year: '', years_of_experience: '', internal_notes: '',
   })
@@ -563,6 +564,7 @@ const TeacherDetailPage = () => {
     if (!teacher) return
     setEditForm({
       name:                  teacher.name                  || '',
+      email:                 teacher.email                 || '',
       phone:                 teacher.phone                 || '',
       employee_id:           teacher.employee_id           || '',
       department:            teacher.department            || '',

@@ -1,5 +1,8 @@
 import { useEffect, useState, useMemo } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { Eye, Wallet, ExternalLink, MoreVertical } from 'lucide-react'
 import usePageTitle from '@/hooks/usePageTitle'
+import { ROUTES } from '@/constants/app'
 import * as accountantApi from '@/api/accountantApi'
 import { formatCurrency, formatDate } from '@/utils/helpers'
 
@@ -40,6 +43,7 @@ const AllInvoices = () => {
 }
 
 export const InvoiceTable = ({ title, rows = [], loading = false }) => {
+  const navigate = useNavigate()
   const [search, setSearch]           = useState('')
   const [classFilter, setClassFilter] = useState('')
   const [statusFilter, setStatus]     = useState('')
@@ -74,7 +78,7 @@ export const InvoiceTable = ({ title, rows = [], loading = false }) => {
   const hasFilter = search || classFilter || statusFilter || feeFilter
 
   const inputStyle = {
-    backgroundColor: 'var(--color-bg-input, var(--color-surface-2, #f8fafc))',
+    backgroundColor: 'var(--color-bg-input)',
     borderColor: 'var(--color-border)',
     color: 'var(--color-text-primary)',
   }
@@ -90,7 +94,7 @@ export const InvoiceTable = ({ title, rows = [], loading = false }) => {
           <p className="mt-0.5 text-sm" style={{ color: 'var(--color-text-muted)' }}>Fee invoices across all students</p>
         </div>
         <span className="rounded-full px-4 py-2 text-sm font-semibold"
-          style={{ backgroundColor: '#fff7ed', color: '#c2410c' }}>
+          style={{ backgroundColor: 'var(--color-accent-subtle)', color: 'var(--color-accent-emphasis)' }}>
           {filtered.length} invoice{filtered.length !== 1 ? 's' : ''}
         </span>
       </div>
@@ -118,7 +122,7 @@ export const InvoiceTable = ({ title, rows = [], loading = false }) => {
               </svg>
               <input type="text" placeholder="Student name or invoice no..."
                 value={search} onChange={(e) => { setSearch(e.target.value); resetPage() }}
-                className="w-full rounded-xl pl-9 pr-3 py-2 text-sm border outline-none" style={inputStyle} />
+                className="w-full rounded-xl pl-9 pr-3 py-2 text-sm border outline-none transition-all focus:border-brand" style={inputStyle} />
             </div>
           </div>
 
@@ -154,7 +158,7 @@ export const InvoiceTable = ({ title, rows = [], loading = false }) => {
 
           {hasFilter && (
             <button type="button" onClick={clearAll}
-              className="rounded-xl px-4 py-2 text-sm font-semibold border"
+              className="rounded-xl px-4 py-2 text-sm font-semibold border transition-colors hover:bg-gray-50"
               style={{ borderColor: 'var(--color-border)', color: 'var(--color-text-muted)' }}>
               Clear
             </button>
@@ -170,7 +174,7 @@ export const InvoiceTable = ({ title, rows = [], loading = false }) => {
           <div className="space-y-0">
             {Array.from({ length: 8 }).map((_, i) => (
               <div key={i} className="flex gap-4 px-4 py-4" style={{ borderBottom: '1px solid var(--color-border)' }}>
-                {[80, 120, 80, 100, 80, 70, 70, 70, 60].map((w, j) => (
+                {[80, 120, 80, 100, 80, 70, 70, 70, 60, 50].map((w, j) => (
                   <div key={j} className="h-4 rounded-lg animate-pulse flex-shrink-0"
                     style={{ width: w, backgroundColor: 'var(--color-border)' }} />
                 ))}
@@ -193,8 +197,8 @@ export const InvoiceTable = ({ title, rows = [], loading = false }) => {
         ) : (
           <table className="w-full">
             <thead>
-              <tr style={{ borderBottom: '1px solid var(--color-border)' }}>
-                {['Invoice', 'Student', 'Class', 'Fee Type', 'Due Date', 'Amount', 'Paid', 'Balance', 'Status'].map((head) => (
+              <tr style={{ borderBottom: '1px solid var(--color-border)', backgroundColor: 'var(--color-bg)' }}>
+                {['Invoice', 'Student', 'Class', 'Fee Type', 'Due Date', 'Amount', 'Paid', 'Balance', 'Status', 'Actions'].map((head) => (
                   <th key={head}
                     className="px-4 py-3 text-left text-[10px] font-bold uppercase tracking-widest whitespace-nowrap"
                     style={{ color: 'var(--color-text-muted)' }}>
@@ -209,13 +213,14 @@ export const InvoiceTable = ({ title, rows = [], loading = false }) => {
                 const bal = Number(row.balance || 0)
                 return (
                   <tr key={row.id}
-                    className="transition-colors hover:bg-orange-50/20"
+                    className="group cursor-pointer transition-colors hover:bg-orange-50/30"
+                    onClick={() => navigate(ROUTES.ACCOUNTANT_STUDENT_FEES.replace(':id', row.student_id))}
                     style={{ borderBottom: i < paginated.length - 1 ? '1px solid var(--color-border)' : 'none' }}>
 
                     {/* Invoice No */}
                     <td className="px-4 py-3.5">
                       <span className="text-xs font-bold px-2 py-1 rounded-lg"
-                        style={{ backgroundColor: '#fff7ed', color: '#c2410c' }}>
+                        style={{ backgroundColor: 'var(--color-accent-subtle)', color: 'var(--color-accent-emphasis)' }}>
                         INV-{row.id}
                       </span>
                     </td>
@@ -224,7 +229,7 @@ export const InvoiceTable = ({ title, rows = [], loading = false }) => {
                     <td className="px-4 py-3.5">
                       <div className="flex items-center gap-2.5">
                         <div className="w-7 h-7 rounded-xl flex items-center justify-center text-[10px] font-bold flex-shrink-0"
-                          style={{ backgroundColor: '#fff7ed', color: '#c2410c' }}>
+                          style={{ backgroundColor: 'var(--color-accent-subtle)', color: 'var(--color-accent-emphasis)' }}>
                           {(row.student_name || '?').charAt(0).toUpperCase()}
                         </div>
                         <span className="text-sm font-semibold whitespace-nowrap"
@@ -243,7 +248,7 @@ export const InvoiceTable = ({ title, rows = [], loading = false }) => {
                     {/* Fee Type */}
                     <td className="px-4 py-3.5">
                       <span className="text-xs font-semibold px-2 py-1 rounded-lg whitespace-nowrap"
-                        style={{ backgroundColor: 'var(--color-surface-2, #f8fafc)', color: 'var(--color-text-secondary)', border: '1px solid var(--color-border)' }}>
+                        style={{ backgroundColor: 'var(--color-surface-2)', color: 'var(--color-text-secondary)', border: '1px solid var(--color-border)' }}>
                         {row.fee_name}
                       </span>
                     </td>
@@ -274,12 +279,36 @@ export const InvoiceTable = ({ title, rows = [], loading = false }) => {
 
                     {/* Status */}
                     <td className="px-4 py-3.5">
-                      <span className="inline-flex items-center gap-1.5 text-xs font-bold px-2.5 py-1 rounded-full whitespace-nowrap"
+                      <span className="inline-flex items-center gap-1.5 text-xs font-bold px-2.5 py-1 rounded-full whitespace-nowrap shadow-sm"
                         style={{ backgroundColor: st.bg, color: st.text }}>
                         <span className="w-1.5 h-1.5 rounded-full flex-shrink-0"
                           style={{ backgroundColor: st.dot }} />
                         {st.label}
                       </span>
+                    </td>
+
+                    {/* Actions */}
+                    <td className="px-4 py-3.5" onClick={(e) => e.stopPropagation()}>
+                      <div className="flex items-center gap-1">
+                        <button
+                          type="button"
+                          onClick={() => navigate(ROUTES.ACCOUNTANT_STUDENT_FEES.replace(':id', row.student_id))}
+                          className="flex h-8 w-8 items-center justify-center rounded-full text-muted transition-colors hover:bg-orange-100 hover:text-orange-700"
+                          title="View Detail"
+                        >
+                          <Eye size={16} />
+                        </button>
+                        {bal > 0 && (
+                          <button
+                            type="button"
+                            onClick={() => navigate(ROUTES.ACCOUNTANT_COLLECTION)}
+                            className="flex h-8 w-8 items-center justify-center rounded-full text-brand transition-colors hover:bg-orange-100"
+                            title="Collect Fee"
+                          >
+                            <Wallet size={16} />
+                          </button>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 )
@@ -288,7 +317,7 @@ export const InvoiceTable = ({ title, rows = [], loading = false }) => {
 
             {/* ── Footer / Pagination ── */}
             <tfoot>
-              <tr style={{ borderTop: '2px solid var(--color-border)', backgroundColor: 'var(--color-surface-2, #fafaf9)' }}>
+              <tr style={{ borderTop: '2px solid var(--color-border)', backgroundColor: 'var(--color-surface-2)' }}>
                 <td colSpan={5} className="px-4 py-3">
                   <span className="text-xs font-bold" style={{ color: 'var(--color-text-muted)' }}>
                     Showing {(page - 1) * PAGE_SIZE + 1}–{Math.min(page * PAGE_SIZE, filtered.length)} of {filtered.length}
@@ -303,7 +332,7 @@ export const InvoiceTable = ({ title, rows = [], loading = false }) => {
                 <td className="px-4 py-3 text-sm font-bold whitespace-nowrap" style={{ color: totalBal > 0 ? '#b91c1c' : '#15803d' }}>
                   {formatCurrency(totalBal)}
                 </td>
-                <td className="px-4 py-3">
+                <td colSpan={2} className="px-4 py-3">
                   <div className="flex items-center gap-1 justify-end">
                     <button type="button" disabled={page === 1} onClick={() => setPage((p) => p - 1)}
                       className="w-7 h-7 rounded-lg flex items-center justify-center text-xs font-bold border disabled:opacity-30 transition-colors hover:bg-orange-50"

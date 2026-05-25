@@ -1,5 +1,7 @@
 // src/components/ui/Badge.jsx
+import { useEffect, useState } from 'react'
 import { cn } from '@/utils/helpers'
+import useUiStore from '@/store/uiStore'
 
 const VARIANTS = {
   blue   : { bg: '#eff6ff', color: '#1d4ed8', border: '#bfdbfe' },
@@ -20,7 +22,13 @@ const DARK_VARIANTS = {
 }
 
 const Badge = ({ variant = 'grey', children, size = 'sm', dot = false, className }) => {
-  const isDark = document.documentElement.classList.contains('dark')
+  const theme = useUiStore((state) => state.theme)
+  const [isDark, setIsDark] = useState(false)
+
+  useEffect(() => {
+    setIsDark(document.documentElement.classList.contains('dark'))
+  }, [theme])
+
   const style  = (isDark ? DARK_VARIANTS : VARIANTS)[variant] || VARIANTS.grey
 
   return (
