@@ -49,7 +49,7 @@ const TeacherDashboard = () => {
     return 'Good evening'
   }, [])
 
-  const scheduleRows = schedule?.length ? schedule : dashboard?.today_schedule || []
+  const scheduleRows = schedule || []
   const glance = dashboard?.today_at_a_glance || {}
   const nextPeriod = glance?.todays_classes?.next_period || null
   const unmarkedCount = Math.max(

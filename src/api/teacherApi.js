@@ -50,7 +50,7 @@ export const getTeacherNotices = (params) => api.get('/notices/teacher', { param
 export const createTeacherNotice = (data) => api.post('/notices/teacher', data)
 export const updateTeacherNotice = (id, data) => api.patch(`/notices/teacher/${id}`, data)
 export const deleteTeacherNotice = (id) => api.delete(`/notices/teacher/${id}`)
-export const markTeacherNoticeRead = (id, source = 'unified') => api.post(`/notices/teacher/${id}/read?source=${source}`)
+export const markTeacherNoticeRead = (id) => api.post(`/notices/teacher/${id}/read`)
 export const getTeacherLeaveBalance = () => api.get('/teacher/leave/balance')
 export const getTeacherLeaveApplications = () => api.get('/teacher/leave/applications')
 export const applyTeacherLeave = (data) => api.post('/teacher/leave/apply', data)

@@ -22,7 +22,7 @@ const ExamAnalyticsPage = () => {
     const fetchAnalytics = async () => {
       try {
         const res = await api.get(`/analytics/exams/${id}`)
-        setData(res.data.data)
+        setData(res.data)
       } catch (err) {
         toastError('Failed to load analytics')
       } finally {

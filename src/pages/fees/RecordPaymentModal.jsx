@@ -15,14 +15,15 @@ import { formatCurrency, formatDate } from '@/utils/helpers'
 const schema = z.object({
   amount          : z.string().min(1, 'Amount is required')
     .refine(v => !isNaN(parseFloat(v)) && parseFloat(v) > 0, 'Enter a valid amount'),
-  payment_mode    : z.enum(['cash','online','cheque','dd'], { required_error: 'Select payment mode' }),
+  payment_mode    : z.enum(['cash','online','upi','cheque','dd'], { required_error: 'Select payment mode' }),
   payment_date    : z.string().min(1, 'Payment date is required'),
   transaction_ref : z.string().optional(),
 })
 
 const PAYMENT_MODES = [
   { value: 'cash',   label: 'Cash — counter payment'     },
-  { value: 'online', label: 'Online — UPI / NEFT / IMPS' },
+  { value: 'online', label: 'Online — NEFT / IMPS'       },
+  { value: 'upi',    label: 'UPI — PhonePe / GPay / QR'  },
   { value: 'cheque', label: 'Cheque'                     },
   { value: 'dd',     label: 'Demand Draft'                },
 ]
@@ -197,11 +198,12 @@ const RecordPaymentModal = ({ open, invoice, onClose, onSuccess }) => {
             {...register('payment_mode')}
           />
 
-          {(paymentMode === 'online' || paymentMode === 'cheque' || paymentMode === 'dd') && (
+          {(paymentMode === 'online' || paymentMode === 'upi' || paymentMode === 'cheque' || paymentMode === 'dd') && (
             <Input
               label="Transaction / Reference Number"
               placeholder={
                 paymentMode === 'online' ? 'UPI transaction ID or NEFT ref' :
+                paymentMode === 'upi' ? 'Transaction reference number' :
                 paymentMode === 'cheque' ? 'Cheque number' : 'DD number'
               }
               {...register('transaction_ref')}

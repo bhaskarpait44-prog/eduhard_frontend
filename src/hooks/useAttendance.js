@@ -148,23 +148,18 @@ const useAttendance = () => {
 
       let data = null
 
-      if (assignment?.id) {
-        data = await buildFallbackData(null)
-      }
-
       try {
         const res = await teacherApi.getTeacherAttendanceStudents(payload)
         const apiData = res?.data || null
-        data = (apiData?.students || []).length > 0
-          ? apiData
-          : await buildFallbackData(apiData || data)
+        
+        if ((apiData?.students || []).length > 0) {
+          data = apiData
+        } else {
+          data = await buildFallbackData(apiData)
+        }
       } catch (error) {
-        data = await buildFallbackData(data)
+        data = await buildFallbackData(null)
         if (!data) throw error
-      }
-
-      if ((data?.students || []).length === 0) {
-        data = await buildFallbackData(data)
       }
 
       setStudentPayload(data)

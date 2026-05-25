@@ -148,7 +148,7 @@ export const ROUTES = {
   PARENT_NOTICES: '/parent/notices',
 
   // Teacher Portal
-  TEACHER_CLASSES: '/teacher/classes',
+  TEACHER_CLASSES: '/teacher/my-classes',
   TEACHER_ATTENDANCE_MARK: '/teacher/attendance/mark',
   TEACHER_ATTENDANCE_REGISTER: '/teacher/attendance/register',
   TEACHER_ATTENDANCE_REPORTS: '/teacher/attendance/reports',

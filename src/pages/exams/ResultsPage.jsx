@@ -28,7 +28,10 @@ const GRADE_COLOR = { 'A+':'#15803d','A':'#16a34a','B+':'#2563eb','B':'#1d4ed8',
 
 const ResultsPage = () => {
   const { toastSuccess, toastError } = useToast()
-  const { classResults, classResultsMeta, isLoading, isSaving, fetchClassResults, calculateResults, releaseResult } = useExamStore()
+  const { 
+    classResults, classResultsMeta, isLoading, isSaving, 
+    fetchClassResults, calculateResults, bulkCalculateResults, releaseResult 
+  } = useExamStore()
   const { sessions, currentSession, fetchSessions } = useSessionStore()
 
   const [sessionId,    setSessionId]    = useState('')
@@ -44,17 +47,17 @@ const ResultsPage = () => {
     getClasses()
       .then(r => setClasses(getClassOptions(r)))
       .catch(() => {})
-  }, [])
+  }, [fetchSessions])
 
   useEffect(() => {
     if (currentSession && !sessionId) setSessionId(String(currentSession.id))
-  }, [currentSession])
+  }, [currentSession, sessionId])
 
   useEffect(() => {
     if (!sessionId || !classId) return
     fetchClassResults({ session_id: sessionId, class_id: classId })
       .catch(() => toastError('Failed to load results'))
-  }, [sessionId, classId])
+  }, [sessionId, classId, fetchClassResults, toastError])
 
   const handleCalculate = async () => {
     setCalcConfirm(false)

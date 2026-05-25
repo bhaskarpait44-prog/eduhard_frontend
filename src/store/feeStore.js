@@ -125,7 +125,7 @@ const useFeeStore = create((set, get) => ({
       } else {
         set({ isSaving: false })
       }
-      return { success: true, data: res.data }
+      return res // Return the full response object { success, data, message }
     } catch (err) {
       set({ isSaving: false })
       return { success: false, message: err.message }

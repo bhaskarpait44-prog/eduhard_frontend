@@ -98,6 +98,7 @@ const EnterMarksPage = () => {
   const [submitting, setSubmitting] = useState(false)
   const [finalizing, setFinalizing] = useState(false)
   const [bulkOpen, setBulkOpen] = useState(false)
+  const autoSaveTimers = useRef({})
 
   const isAdmin = user?.role === ROLES.ADMIN || user?.role === 'super_admin'
 
@@ -106,16 +107,16 @@ const EnterMarksPage = () => {
   useEffect(() => {
     fetchSessions().catch(() => {})
     getClasses().then(r => setClasses(getClassOptions(r))).catch(() => {})
-  }, [])
+  }, [fetchSessions])
 
   useEffect(() => {
     if (currentSession && !sessionId) setSessionId(String(currentSession.id))
-  }, [currentSession])
+  }, [currentSession, sessionId])
 
   useEffect(() => {
     if (!sessionId) return
     fetchExams({ session_id: sessionId }).catch(() => {})
-  }, [sessionId])
+  }, [sessionId, fetchExams])
 
   useEffect(() => {
     if (!classId) { setSections([]); setSectionId(''); return }
@@ -146,7 +147,7 @@ const EnterMarksPage = () => {
       })
       .catch(() => toastError('Failed to load students'))
       .finally(() => setLoading(false))
-  }, [examId, classId, sectionId, subjects])
+  }, [examId, classId, sectionId, sessionId, toastError])
 
   const autoSaveCell = useCallback(
     debounce(async (enrollmentId, examId) => {
@@ -165,18 +166,19 @@ const EnterMarksPage = () => {
         setTimeout(() => setSaved(prev => { const n = { ...prev }; delete n[enrollmentId]; return n }), 2000)
       }
     }, 1500),
-    [marks, subjects, examId]
+    [marks, subjects, enterMarks]
   )
 
   const updateCell = (enrollmentId, subjectId, field, value) => {
     setMarks(prev => ({ ...prev, [`${enrollmentId}-${subjectId}`]: { ...prev[`${enrollmentId}-${subjectId}`], [field]: value } }))
-    clearTimeout(autoSaveTimers.current[enrollmentId])
+    if (autoSaveTimers.current[enrollmentId]) clearTimeout(autoSaveTimers.current[enrollmentId])
     autoSaveTimers.current[enrollmentId] = setTimeout(() => autoSaveCell(enrollmentId, examId), 1200)
   }
 
   const handleSubmitAll = async () => {
     setSubmitting(true)
     let ok = 0
+    let failed = 0
     for (const student of students) {
       const res = await enterMarks({
         exam_id: parseInt(examId),
@@ -187,9 +189,11 @@ const EnterMarksPage = () => {
         }),
       })
       if (res.success) ok++
+      else failed++
     }
     setSubmitting(false)
     ok > 0 ? toastSuccess(`Marks saved for ${ok} students`) : toastError('Failed to save marks')
+    return { ok, failed }
   }
 
   const handleFinalize = async () => {
@@ -197,8 +201,15 @@ const EnterMarksPage = () => {
     setFinalizing(true)
     try {
       // 1. Save everything first
-      await handleSubmitAll()
+      const result = await handleSubmitAll()
       
+      if (result.failed > 0) {
+        if (!window.confirm(`Warning: Marks for ${result.failed} students failed to save. Proceed with finalization anyway?`)) {
+          setFinalizing(false)
+          return
+        }
+      }
+
       // 2. Approve all subjects for this exam
       const res = await approveAllExamSubjects(examId)
       if (res.success) {

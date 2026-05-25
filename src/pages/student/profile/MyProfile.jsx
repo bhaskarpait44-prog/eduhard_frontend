@@ -1,92 +1,19 @@
 import { useEffect } from 'react'
 import {
   ShieldCheck, User, Phone, BookOpen, Award,
-  MessageSquare, ChevronRight, Pencil, KeyRound,
-  Heart, MapPin, GraduationCap, Users
+  MessageSquare, Heart, MapPin, GraduationCap, Users, KeyRound, Pencil, Mail,
 } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
+import Badge from '@/components/ui/Badge'
+import Button from '@/components/ui/Button'
 import EmptyState from '@/components/ui/EmptyState'
 import AchievementBadge from '@/components/student/AchievementBadge'
 import usePageTitle from '@/hooks/usePageTitle'
 import useStudentProfile from '@/hooks/useStudentProfile'
 import useToast from '@/hooks/useToast'
 import { ROUTES } from '@/constants/app'
-import { formatDate, getInitials } from '@/utils/helpers'
+import { formatDate } from '@/utils/helpers'
 
-// ─── Skeleton ────────────────────────────────────────────────────────────────
-const Skeleton = ({ h = 20, w = '100%', r = 8 }) => (
-  <div style={{
-    height: h, width: w, borderRadius: r,
-    background: 'var(--color-border)',
-    animation: 'pulse 1.6s ease-in-out infinite',
-  }} />
-)
-
-// ─── Section Wrapper ─────────────────────────────────────────────────────────
-const Card = ({ children, style = {} }) => (
-  <div style={{
-    borderRadius: 20,
-    backgroundColor: 'var(--color-surface)',
-    border: '1px solid var(--color-border)',
-    overflow: 'hidden',
-    ...style,
-  }}>
-    {children}
-  </div>
-)
-
-const CardHeader = ({ icon: Icon, title, accent = '#6366f1' }) => (
-  <div style={{
-    display: 'flex', alignItems: 'center', gap: 10,
-    padding: '14px 20px',
-    borderBottom: '1px solid var(--color-border)',
-    backgroundColor: 'var(--color-surface-raised)',
-  }}>
-    <div style={{
-      width: 30, height: 30, borderRadius: 8, display: 'flex',
-      alignItems: 'center', justifyContent: 'center',
-      backgroundColor: accent + '18',
-    }}>
-      <Icon size={15} style={{ color: accent }} />
-    </div>
-    <span style={{ fontSize: 13, fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase', color: 'var(--color-text-secondary)' }}>
-      {title}
-    </span>
-  </div>
-)
-
-// ─── Info Field ───────────────────────────────────────────────────────────────
-const Field = ({ label, value, full = false }) => (
-  <div style={{
-    gridColumn: full ? '1 / -1' : undefined,
-    padding: '14px 0',
-    borderBottom: '1px solid var(--color-border)',
-  }}>
-    <p style={{ margin: 0, fontSize: 10.5, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--color-text-muted)' }}>
-      {label}
-    </p>
-    <p style={{ margin: '5px 0 0', fontSize: 14, fontWeight: 500, color: value ? 'var(--color-text-primary)' : 'var(--color-text-muted)', fontStyle: value ? 'normal' : 'italic' }}>
-      {value || 'Not provided'}
-    </p>
-  </div>
-)
-
-const FieldGrid = ({ items }) => (
-  <div style={{
-    display: 'grid',
-    gridTemplateColumns: 'repeat(2, 1fr)',
-    columnGap: 32,
-    padding: '0 20px',
-  }}>
-    {items.map(([label, value, full]) => (
-      <Field key={label} label={label} value={value} full={full} />
-    ))}
-    {/* spacer to close bottom border */}
-    <div style={{ height: 8, gridColumn: '1 / -1' }} />
-  </div>
-)
-
-// ─── Main ─────────────────────────────────────────────────────────────────────
 const MyProfile = () => {
   usePageTitle('My Profile')
   const navigate = useNavigate()
@@ -97,275 +24,224 @@ const MyProfile = () => {
 
   if (loading) {
     return (
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-        <style>{`@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.45} }`}</style>
-        <div style={{ borderRadius: 20, backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)', padding: 24 }}>
-          <div style={{ display: 'flex', gap: 20 }}>
-            <Skeleton h={72} w={72} r={36} />
-            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 10 }}>
-              <Skeleton h={22} w="55%" />
-              <Skeleton h={14} w="35%" />
-              <Skeleton h={14} w="40%" />
-            </div>
+      <div className="space-y-5">
+        <div className="h-40 animate-pulse rounded-[28px]" style={{ backgroundColor: 'var(--color-surface-raised)' }} />
+        <div className="grid grid-cols-1 gap-5 xl:grid-cols-[minmax(0,1.2fr)_minmax(320px,0.8fr)]">
+          <div className="space-y-5">
+            <div className="h-64 animate-pulse rounded-[28px]" style={{ backgroundColor: 'var(--color-surface-raised)' }} />
+            <div className="h-64 animate-pulse rounded-[28px]" style={{ backgroundColor: 'var(--color-surface-raised)' }} />
+          </div>
+          <div className="space-y-5">
+            <div className="h-96 animate-pulse rounded-[28px]" style={{ backgroundColor: 'var(--color-surface-raised)' }} />
           </div>
         </div>
-        {[1, 2, 3].map(i => (
-          <div key={i} style={{ borderRadius: 20, backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)', padding: 24 }}>
-            <Skeleton h={16} w="30%" />
-            <div style={{ marginTop: 20, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
-              <Skeleton h={48} /><Skeleton h={48} /><Skeleton h={48} /><Skeleton h={48} />
-            </div>
-          </div>
-        ))}
       </div>
     )
   }
 
-  if (!profile) return (
-    <EmptyState icon={ShieldCheck} title="Profile unavailable" description="Your profile details could not be loaded right now." />
-  )
-
-  const initials = getInitials(profile.full_name)
+  if (!profile) {
+    return (
+      <div className="flex h-[60vh] items-center justify-center">
+        <EmptyState icon={ShieldCheck} title="Profile unavailable" description="Your profile details could not be loaded right now." />
+      </div>
+    )
+  }
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-      <style>{`
-        @keyframes fadeUp { from { opacity:0; transform:translateY(12px) } to { opacity:1; transform:translateY(0) } }
-        .profile-card { animation: fadeUp 0.35s ease both; }
-        .profile-card:nth-child(2) { animation-delay: 0.05s }
-        .profile-card:nth-child(3) { animation-delay: 0.1s }
-        .profile-card:nth-child(4) { animation-delay: 0.15s }
-        .profile-card:nth-child(5) { animation-delay: 0.2s }
-        .profile-card:nth-child(6) { animation-delay: 0.25s }
-        .profile-card:nth-child(7) { animation-delay: 0.3s }
-        .profile-card:nth-child(8) { animation-delay: 0.35s }
-        .action-btn:hover { opacity: 0.82; transform: translateY(-1px); }
-        .action-btn { transition: all 0.15s ease; }
-      `}</style>
-
-      {/* ── Hero Card ─────────────────────────────────────────────────────── */}
-      <Card className="profile-card" style={{ position: 'relative', overflow: 'hidden' }}>
-        {/* Decorative accent stripe */}
-        <div style={{
-          position: 'absolute', top: 0, left: 0, right: 0, height: 4,
-          background: 'linear-gradient(90deg, #6366f1, #8b5cf6, #06b6d4)',
-        }} />
-
-        <div style={{ padding: '28px 24px 24px', display: 'flex', flexDirection: 'column', gap: 24 }}>
-          <div style={{ display: 'flex', alignItems: 'flex-start', gap: 20, flexWrap: 'wrap' }}>
-            {/* Avatar */}
-            <div style={{ position: 'relative', flexShrink: 0 }}>
-              <div style={{
-                width: 76, height: 76, borderRadius: '50%',
-                background: 'linear-gradient(135deg, #6366f1, #8b5cf6)',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                fontSize: 26, fontWeight: 800, color: '#fff',
-                letterSpacing: '-0.02em',
-              }}>
-                {initials}
-              </div>
-              {/* Online dot */}
-              <div style={{
-                position: 'absolute', bottom: 4, right: 4,
-                width: 14, height: 14, borderRadius: '50%',
-                backgroundColor: '#22c55e',
-                border: '2.5px solid var(--color-surface)',
-              }} />
+    <div className="space-y-5 pb-20">
+      {/* ── Header / Hero Section ─────────────────────────────────────────── */}
+      <section
+        className="rounded-[28px] border p-5 sm:p-6"
+        style={{
+          borderColor: 'var(--color-border)',
+          background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.18), rgba(139, 92, 246, 0.06) 58%, var(--color-surface) 100%)',
+        }}
+      >
+        <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
+          <div className="flex items-start gap-4">
+            <div
+              className="flex h-20 w-20 items-center justify-center rounded-[28px] text-2xl font-bold text-white shadow-lg"
+              style={{ background: 'linear-gradient(135deg, #6366f1, #8b5cf6)' }}
+            >
+              {profile?.full_name?.split(' ').map((p) => p[0]).slice(0, 2).join('') || 'S'}
             </div>
-
-            {/* Info */}
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <h1 style={{ margin: 0, fontSize: 22, fontWeight: 800, letterSpacing: '-0.025em', color: 'var(--color-text-primary)', lineHeight: 1.2 }}>
+            <div>
+              <h1 className="text-2xl font-bold" style={{ color: 'var(--color-text-primary)' }}>
                 {profile.full_name}
               </h1>
-              <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '4px 12px', marginTop: 6 }}>
-                <span style={{ fontSize: 13, color: 'var(--color-text-secondary)', fontWeight: 500 }}>
-                  {profile.class_name} {profile.section_name}
-                </span>
-                <span style={{ width: 3, height: 3, borderRadius: '50%', backgroundColor: 'var(--color-text-muted)', flexShrink: 0 }} />
-                <span style={{ fontSize: 13, color: 'var(--color-text-secondary)', fontWeight: 500 }}>
-                  Roll No. {profile.roll_number}
-                </span>
+              <p className="mt-1 text-sm font-medium" style={{ color: 'var(--color-text-secondary)' }}>
+                Adm No: {profile.admission_no} | {profile.class_name} {profile.section_name} | Roll No: {profile.roll_number || '--'}
+              </p>
+              <div className="mt-3 flex flex-wrap gap-2">
+                <Badge variant="blue">{profile.session_name}</Badge>
+                {profile.blood_group && <Badge variant="red">{profile.blood_group}</Badge>}
+                <Badge variant="green">Active</Badge>
               </div>
-
-              {/* Tags row */}
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 12 }}>
-                <Chip label={`Adm. ${profile.admission_no}`} />
-                {profile.blood_group && <Chip label={profile.blood_group} color="#ef4444" />}
-                {profile.gender && <Chip label={profile.gender} />}
-              </div>
-            </div>
-
-            {/* Actions */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 8, flexShrink: 0 }}>
-              <ActionButton
-                icon={Pencil}
-                label="Request correction"
-                onClick={() => navigate(ROUTES.STUDENT_PROFILE_CORRECTION)}
-                variant="outline"
-              />
-              <ActionButton
-                icon={KeyRound}
-                label="Change password"
-                onClick={() => navigate(ROUTES.STUDENT_PROFILE_PASSWORD)}
-                variant="primary"
-              />
             </div>
           </div>
+
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <MiniInfo icon={Phone} label="Phone" value={profile.phone || '--'} />
+            <MiniInfo icon={Mail} label="Email" value={profile.email || '--'} />
+            <MiniInfo icon={MapPin} label="City" value={profile.city || '--'} />
+            <MiniInfo icon={GraduationCap} label="Teacher" value={profile.class_teacher_name || '--'} />
+          </div>
         </div>
-      </Card>
+      </section>
 
-      {/* ── Identity ──────────────────────────────────────────────────────── */}
-      <Card className="profile-card">
-        <CardHeader icon={User} title="Identity details" accent="#6366f1" />
-        <FieldGrid items={[
-          ['Date of Birth', formatDate(profile.date_of_birth, 'long')],
-          ['Gender', profile.gender],
-          ['Blood Group', profile.blood_group],
-          ['Medical Notes', profile.medical_notes, true],
-        ]} />
-      </Card>
+      <div className="grid grid-cols-1 gap-5 xl:grid-cols-[minmax(0,1.2fr)_minmax(320px,0.8fr)]">
+        {/* ── Left Column ── */}
+        <div className="space-y-5">
+          <Panel title="Identity Details" icon={User}>
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <DetailRow label="Date of Birth" value={formatDate(profile.date_of_birth, 'long')} />
+              <DetailRow label="Gender" value={profile.gender} />
+              <DetailRow label="Blood Group" value={profile.blood_group} />
+              <DetailRow label="Joining Date" value={formatDate(profile.joined_date, 'long')} />
+              <DetailRow label="Joining Type" value={profile.joining_type} className="sm:col-span-2" />
+              <DetailRow label="Medical Notes" value={profile.medical_notes} className="sm:col-span-2" />
+            </div>
+          </Panel>
 
-      {/* ── Contact ───────────────────────────────────────────────────────── */}
-      <Card className="profile-card">
-        <CardHeader icon={Phone} title="Contact details" accent="#0ea5e9" />
-        <FieldGrid items={[
-          ['Student Phone', profile.phone],
-          ['Student Email', profile.email],
-          ['City', profile.city],
-          ['Address', profile.address, true],
-        ]} />
-      </Card>
+          <Panel title="Parent & Family Info" icon={Users}>
+            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+              <div className="space-y-4">
+                <p className="text-xs font-bold uppercase tracking-widest text-[var(--color-text-muted)]">Father's Details</p>
+                <DetailRow label="Name" value={profile.father_name} />
+                <DetailRow label="Phone" value={profile.father_phone} />
+                <DetailRow label="Occupation" value={profile.father_occupation} />
+              </div>
+              <div className="space-y-4">
+                <p className="text-xs font-bold uppercase tracking-widest text-[var(--color-text-muted)]">Mother's Details</p>
+                <DetailRow label="Name" value={profile.mother_name} />
+                <DetailRow label="Phone" value={profile.mother_phone} />
+                <DetailRow label="Email" value={profile.mother_email} />
+              </div>
+              <div className="sm:col-span-2 border-t pt-4" style={{ borderColor: 'var(--color-border)' }}>
+                <DetailRow label="Emergency Contact" value={profile.emergency_contact} />
+              </div>
+            </div>
+          </Panel>
 
-      {/* ── Parents ───────────────────────────────────────────────────────── */}
-      <Card className="profile-card">
-        <CardHeader icon={Users} title="Parent details" accent="#f59e0b" />
-        <FieldGrid items={[
-          ['Father Name', profile.father_name],
-          ['Father Phone', profile.father_phone],
-          ['Mother Name', profile.mother_name],
-          ['Mother Phone', profile.mother_phone],
-          ['Mother Email', profile.mother_email],
-          ['Emergency Contact', profile.emergency_contact],
-        ]} />
-      </Card>
+          <Panel title="Contact & Address" icon={Phone}>
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <DetailRow label="Personal Phone" value={profile.phone} />
+              <DetailRow label="Personal Email" value={profile.email} />
+              <DetailRow label="City" value={profile.city} />
+              <DetailRow label="State" value={profile.state} />
+              <DetailRow label="Pincode" value={profile.pincode} />
+              <DetailRow label="Full Address" value={profile.address} className="sm:col-span-2" />
+            </div>
+          </Panel>
+        </div>
 
-      {/* ── Academic ──────────────────────────────────────────────────────── */}
-      <Card className="profile-card">
-        <CardHeader icon={GraduationCap} title="Academic info" accent="#10b981" />
-        <FieldGrid items={[
-          ['Current Session', profile.session_name],
-          ['Class Teacher', profile.class_teacher_name],
-          ['Joining Date', formatDate(profile.joined_date, 'long')],
-          ['Joining Type', profile.joining_type],
-        ]} />
-      </Card>
+        {/* ── Right Column ── */}
+        <div className="space-y-5">
+          <Panel title="Quick Actions" icon={Pencil}>
+            <div className="flex flex-col gap-3">
+              <Button
+                variant="secondary"
+                icon={Pencil}
+                onClick={() => navigate(ROUTES.STUDENT_PROFILE_CORRECTION)}
+                className="w-full justify-start"
+              >
+                Request Correction
+              </Button>
+              <Button
+                variant="primary"
+                icon={KeyRound}
+                onClick={() => navigate(ROUTES.STUDENT_PROFILE_PASSWORD)}
+                className="w-full justify-start"
+              >
+                Change Password
+              </Button>
+            </div>
+          </Panel>
 
-      {/* ── Remarks ───────────────────────────────────────────────────────── */}
-      <Card className="profile-card">
-        <CardHeader icon={MessageSquare} title="Shared remarks" accent="#8b5cf6" />
-        <div style={{ padding: 16 }}>
-          {sharedRemarks.length ? (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-              {sharedRemarks.map(remark => (
-                <div key={remark.id} style={{
-                  padding: '14px 16px', borderRadius: 12,
-                  backgroundColor: 'var(--color-surface-raised)',
-                  border: '1px solid var(--color-border)',
-                }}>
-                  <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
-                    <span style={{
-                      fontSize: 10, fontWeight: 700, letterSpacing: '0.1em',
-                      textTransform: 'uppercase', color: '#8b5cf6',
-                      backgroundColor: '#8b5cf618', padding: '3px 9px', borderRadius: 99,
-                    }}>
-                      {String(remark.remark_type || 'general').replace(/_/g, ' ')}
-                    </span>
-                    <span style={{ fontSize: 12, color: 'var(--color-text-muted)' }}>
-                      {formatDate(remark.created_at, 'long')}
-                    </span>
+          <Panel title="Achievements" icon={Award}>
+            {achievements.length ? (
+              <div className="grid grid-cols-1 gap-3">
+                {achievements.map((a) => (
+                  <AchievementBadge key={a.id} achievement={a} />
+                ))}
+              </div>
+            ) : (
+              <p className="text-center py-4 text-sm text-[var(--color-text-muted)] italic">
+                No achievement badges earned yet.
+              </p>
+            )}
+          </Panel>
+
+          <Panel title="Shared Remarks" icon={MessageSquare}>
+            {sharedRemarks.length ? (
+              <div className="space-y-3">
+                {sharedRemarks.map((remark) => (
+                  <div
+                    key={remark.id}
+                    className="rounded-2xl border p-4"
+                    style={{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface-raised)' }}
+                  >
+                    <div className="flex items-center justify-between gap-2">
+                      <Badge variant="blue" className="text-[10px] uppercase">
+                        {String(remark.remark_type || 'general').replace(/_/g, ' ')}
+                      </Badge>
+                      <span className="text-[10px] text-[var(--color-text-muted)]">
+                        {formatDate(remark.created_at)}
+                      </span>
+                    </div>
+                    <p className="mt-2 text-sm leading-relaxed" style={{ color: 'var(--color-text-primary)' }}>
+                      "{remark.remark_text}"
+                    </p>
+                    <p className="mt-2 text-[11px] font-bold text-right" style={{ color: 'var(--color-text-secondary)' }}>
+                      — {remark.teacher_name || 'Teacher'}
+                    </p>
                   </div>
-                  <p style={{ margin: '10px 0 0', fontSize: 14, lineHeight: 1.6, color: 'var(--color-text-primary)' }}>
-                    {remark.remark_text}
-                  </p>
-                  <p style={{ margin: '8px 0 0', fontSize: 12, color: 'var(--color-text-muted)' }}>
-                    — {remark.teacher_name || profile.class_teacher_name || 'Teacher'}
-                  </p>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <EmptyInline text="No remarks have been shared with you yet." />
-          )}
-        </div>
-      </Card>
+                ))}
+              </div>
+            ) : (
+              <p className="text-center py-4 text-sm text-[var(--color-text-muted)] italic">
+                No remarks shared by teachers yet.
+              </p>
+            )}
+          </Panel>
 
-      {/* ── Achievements ──────────────────────────────────────────────────── */}
-      <Card className="profile-card">
-        <CardHeader icon={Award} title="Achievement badges" accent="#f59e0b" />
-        <div style={{ padding: 16 }}>
-          {achievements.length ? (
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 12 }}>
-              {achievements.map(a => <AchievementBadge key={a.id} achievement={a} />)}
-            </div>
-          ) : (
-            <EmptyInline text="Your badges will appear here as you earn them." />
-          )}
+          <div className="rounded-[28px] border p-5 sm:p-6" style={{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface-raised)' }}>
+            <p className="text-xs leading-relaxed text-[var(--color-text-muted)]">
+              To request changes to your details, contact your class teacher or use the <strong>correction request</strong> feature.
+            </p>
+          </div>
         </div>
-      </Card>
-
-      {/* ── Footer Note ───────────────────────────────────────────────────── */}
-      <div style={{ padding: '12px 20px', borderRadius: 14, backgroundColor: 'var(--color-surface-raised)', border: '1px solid var(--color-border)' }}>
-        <p style={{ margin: 0, fontSize: 13, color: 'var(--color-text-muted)', lineHeight: 1.6 }}>
-          To request changes to your details, contact your class teacher or use the correction request feature above.
-        </p>
       </div>
     </div>
   )
 }
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
-const Chip = ({ label, color }) => (
-  <span style={{
-    fontSize: 11.5, fontWeight: 600, padding: '4px 10px', borderRadius: 99,
-    backgroundColor: color ? color + '15' : 'var(--color-surface-raised)',
-    color: color || 'var(--color-text-secondary)',
-    border: `1px solid ${color ? color + '30' : 'var(--color-border)'}`,
-  }}>
-    {label}
-  </span>
+/* ── Helpers ────────────────────────────────────────────────────────────────── */
+
+const Panel = ({ title, icon: Icon, children }) => (
+  <section className="rounded-[28px] border p-5 sm:p-6" style={{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface)' }}>
+    <div className="mb-5 flex items-center gap-2">
+      <Icon size={18} style={{ color: 'var(--color-text-secondary)' }} />
+      <h2 className="text-lg font-bold" style={{ color: 'var(--color-text-primary)' }}>{title}</h2>
+    </div>
+    {children}
+  </section>
 )
 
-const ActionButton = ({ icon: Icon, label, onClick, variant = 'outline' }) => (
-  <button
-    className="action-btn"
-    onClick={onClick}
-    style={{
-      display: 'inline-flex', alignItems: 'center', gap: 7,
-      padding: '8px 14px', borderRadius: 10, fontSize: 12.5, fontWeight: 600,
-      cursor: 'pointer', whiteSpace: 'nowrap',
-      ...(variant === 'primary' ? {
-        backgroundColor: 'var(--color-text-primary)',
-        color: 'var(--color-surface)',
-        border: 'none',
-      } : {
-        backgroundColor: 'transparent',
-        color: 'var(--color-text-secondary)',
-        border: '1.5px solid var(--color-border)',
-      }),
-    }}
-  >
-    <Icon size={13} />
-    {label}
-  </button>
+const MiniInfo = ({ icon: Icon, label, value }) => (
+  <div className="rounded-2xl px-4 py-3" style={{ backgroundColor: 'var(--color-surface-raised)' }}>
+    <div className="flex items-center gap-2">
+      <Icon size={14} className="text-indigo-600" />
+      <p className="text-[10px] font-extrabold uppercase tracking-widest text-[var(--color-text-muted)]">{label}</p>
+    </div>
+    <p className="mt-1 text-sm font-bold truncate text-[var(--color-text-primary)]">{value || '--'}</p>
+  </div>
 )
 
-const EmptyInline = ({ text }) => (
-  <div style={{
-    padding: '20px 16px', borderRadius: 12, textAlign: 'center',
-    backgroundColor: 'var(--color-surface-raised)', border: '1px dashed var(--color-border)',
-  }}>
-    <p style={{ margin: 0, fontSize: 13, color: 'var(--color-text-muted)' }}>{text}</p>
+const DetailRow = ({ label, value, className = '' }) => (
+  <div className={`space-y-1 ${className}`}>
+    <p className="text-[10px] font-extrabold uppercase tracking-widest text-[var(--color-text-muted)]">{label}</p>
+    <p className="text-sm font-medium text-[var(--color-text-primary)]">{value || 'Not provided'}</p>
   </div>
 )
 

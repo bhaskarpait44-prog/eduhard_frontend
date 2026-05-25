@@ -46,10 +46,12 @@ const StudentRemarks = () => {
   const [editText, setEditText] = useState('')
   const [editVisibility, setEditVisibility] = useState('private')
 
-  const loadRemarks = async () => {
+  const loadRemarks = async (studentId = null) => {
     setLoadingRemarks(true)
     try {
-      const res = await teacherApi.getTeacherRemarks()
+      const res = studentId 
+        ? await teacherApi.getTeacherStudentRemarks(studentId)
+        : await teacherApi.getTeacherRemarks()
       setRemarks(res?.data?.remarks || [])
     } finally {
       setLoadingRemarks(false)
@@ -57,10 +59,10 @@ const StudentRemarks = () => {
   }
 
   useEffect(() => {
-    loadRemarks().catch(() => {
+    loadRemarks(filters.studentId).catch(() => {
       setLoadingRemarks(false)
     })
-  }, [])
+  }, [filters.studentId])
 
   const filteredRemarks = useMemo(() => remarks.filter((remark) => {
     const searchText = `${remark.first_name} ${remark.last_name} ${remark.remark_text} ${remark.teacher_name}`.toLowerCase()

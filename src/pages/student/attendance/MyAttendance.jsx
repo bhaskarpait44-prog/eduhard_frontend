@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import {
   CalendarDays,
   CircleAlert,
+  Download,
   List,
   RefreshCw,
   Search,
@@ -81,6 +82,23 @@ const MyAttendance = () => {
     } catch {}
   }
 
+  const handleExport = async () => {
+    try {
+      const blob = await exportAttendance()
+      if (!blob) return
+      const url = window.URL.createObjectURL(new Blob([blob]))
+      const link = document.createElement('a')
+      link.href = url
+      link.setAttribute('download', `Attendance_Report_${selectedMonth.label.replace(' ', '_')}.pdf`)
+      document.body.appendChild(link)
+      link.click()
+      link.parentNode.removeChild(link)
+      toastSuccess('Attendance report downloaded.')
+    } catch (err) {
+      toastError('Failed to export attendance report')
+    }
+  }
+
   return (
     <div className="space-y-5">
       <section
@@ -102,6 +120,9 @@ const MyAttendance = () => {
           </div>
 
           <div className="flex flex-wrap gap-2">
+            <Button variant="secondary" onClick={handleExport} loading={exporting} icon={Download}>
+              Download Report
+            </Button>
             <Button variant="secondary" onClick={handleRefresh} loading={refreshing} icon={RefreshCw}>
               Refresh
             </Button>

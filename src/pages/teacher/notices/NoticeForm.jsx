@@ -92,7 +92,8 @@ const NoticeForm = () => {
     formData.append('body', form.body)
     formData.append('audience', form.audience)
     formData.append('target_class_id', classId || '')
-    formData.append('target_section_id', sectionId || '')
+    // Bug 6 Fix: Clear section_id for class-level notices
+    formData.append('target_section_id', form.audience === 'class' ? '' : (sectionId || ''))
     formData.append('target_subject_id', form.target_subject_id || '')
     formData.append('target_student_id', form.target_student_id || '')
     formData.append('priority', form.priority)

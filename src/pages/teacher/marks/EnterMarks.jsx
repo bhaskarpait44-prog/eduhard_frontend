@@ -129,7 +129,7 @@ const EnterMarks = () => {
     getAvailableSubjects({
       examId,
       classId: selectedSection.class_id,
-      sectionId: selectedSection.section_id,
+      section_id: selectedSection.section_id,
     }).then((subjects) => {
       setSubjectOptions(subjects)
       if (!subjects.length) {
@@ -151,7 +151,7 @@ const EnterMarks = () => {
       setSubjectOptions([])
       setSubjectId('')
     })
-  }, [selectedSection, getAvailableSubjects, subjectId, examId, preferredAssignment.subject_id])
+  }, [selectedSection, getAvailableSubjects, examId, preferredAssignment.subject_id])
 
   useEffect(() => {
     if (!examId || !selectedSection || !subjectId || selectionMismatch) return
@@ -193,7 +193,7 @@ const EnterMarks = () => {
     }
   }, [entryPayload, subjectId, subjectOptions])
 
-  const persistAll = async () => {
+  const persistAll = useCallback(async () => {
     if (!selectedSection || !subjectId || !examId || !entryPayload?.students?.length) return
 
     const entries = entryPayload.students.map((row) => {
@@ -219,7 +219,7 @@ const EnterMarks = () => {
 
     await saveEntry({ entries }, true)
     setLastSavedAt(new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }))
-  }
+  }, [selectedSection, subjectId, examId, entryPayload, state, currentSubject, saveEntry])
 
   useEffect(() => {
     if (entryPayload?.students?.length && !entryPayload.locked) {
@@ -232,7 +232,7 @@ const EnterMarks = () => {
     return () => {
       if (autoSaveRef.current) window.clearInterval(autoSaveRef.current)
     }
-  }, [entryPayload, state, currentSubject, examId, selectedSection, subjectId])
+  }, [entryPayload?.students?.length, entryPayload?.locked, persistAll])
 
   return (
     <div className="space-y-6">

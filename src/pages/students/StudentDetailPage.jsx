@@ -4,7 +4,8 @@ import {
   AlertTriangle, ArrowLeft, Trash2, BookOpen, ScrollText,
   KeyRound, Copy, Mail, IdCard, CalendarCheck, GraduationCap, Wallet,
   Phone, Heart, User, ChevronLeft, ChevronRight as ChevronRIcon,
-  ChevronDown, ChevronUp, Book
+  ChevronDown, ChevronUp, Book, MapPin, Briefcase, Calendar, ShieldCheck,
+  History, LogOut, ArrowRightLeft, UserRound, CheckCircle2, Clock, Pencil
 } from 'lucide-react'
 import useAdminStudentStore from '@/store/studentStore'
 import usePageTitle from '@/hooks/usePageTitle'
@@ -12,6 +13,8 @@ import useToast from '@/hooks/useToast'
 import Button from '@/components/ui/Button'
 import Input from '@/components/ui/Input'
 import Modal from '@/components/ui/Modal'
+import Badge from '@/components/ui/Badge'
+import Select from '@/components/ui/Select'
 import { getInitials, formatDate } from '@/utils/helpers'
 import { ROUTES } from '@/constants/app'
 import * as studentApi from '@/api/studentsApi'
@@ -31,480 +34,12 @@ import MarkAsLeftModal from '@/components/students/MarkAsLeftModal'
 import MarkAsGraduatedModal from '@/components/students/MarkAsGraduatedModal'
 import ReadmitModal from '@/components/students/ReadmitModal'
 import EnrollmentHistoryModal from '@/components/students/EnrollmentHistoryModal'
-import { LogOut, History, ArrowRightLeft } from 'lucide-react'
 
-// ─── Palette ──────────────────────────────────────────────────────────────────
-const PALETTES = [
-  { a: '#4338ca', light: '#eef2ff', text: '#3730a3', border: '#c7d2fe' },
-  { a: '#0e7490', light: '#ecfeff', text: '#155e75', border: '#a5f3fc' },
-  { a: '#047857', light: '#ecfdf5', text: '#065f46', border: '#6ee7b7' },
-  { a: '#b45309', light: '#fffbeb', text: '#92400e', border: '#fde68a' },
-  { a: '#b91c1c', light: '#fef2f2', text: '#991b1b', border: '#fecaca' },
-  { a: '#6d28d9', light: '#f5f3ff', text: '#5b21b6', border: '#ddd6fe' },
-]
-
-const getPalette = (name = '') => PALETTES[name.charCodeAt(0) % PALETTES.length]
-
-const formatStream = (s) => {
-  if (!s) return null
-  const l = s[0].toUpperCase() + s.slice(1)
-  return s === 'regular' ? l : `${l} Stream`
-}
-
-// ─── Primitives ───────────────────────────────────────────────────────────────
-const Divider = () => (
-  <div className="h-px bg-gray-200 dark:bg-gray-800 my-2" />
-)
-
-const FieldItem = ({ label, value }) => (
-  <div className="py-1.5">
-    <p className="text-[10px] font-bold tracking-wider uppercase text-gray-500 dark:text-gray-400 leading-none mb-1">
-      {label}
-    </p>
-    <p className={`text-sm ${value ? 'text-gray-900 dark:text-gray-100 font-medium' : 'text-gray-400 dark:text-gray-500 italic'}`}>
-      {value || 'Not provided'}
-    </p>
-  </div>
-)
-
-const SecLabel = ({ icon, title, color }) => {
-  const Icon = icon
-  return (
-    <div className="flex items-center gap-2 mt-4 mb-2">
-      <div className="p-1 rounded-md" style={{ backgroundColor: `${color}15` }}>
-        <Icon size={12} style={{ color }} />
-      </div>
-      <span className="text-[10px] font-bold tracking-widest uppercase text-gray-500 dark:text-gray-400">
-        {title}
-      </span>
-    </div>
-  )
-}
-
-// ─── LEFT PANEL (desktop sidebar / mobile collapsible card) ───────────────────
-const LeftPanel = ({ 
-  student, palette, isAdmin, onResetPassword, onDelete, onToggleStatus, 
-  isSaving, toastWarning, onShowHistory, onMarkAsLeft, onMarkAsGraduated, onReadmit 
-}) => {
-  const { fetchIDCardData, fetchTCData } = useAdminStudentStore()
-  const [idCardData, setIdCardData] = useState(null)
-  const [tcData, setTcData] = useState(null)
-  const [fetchingID, setFetchingID] = useState(false)
-  const [fetchingTC, setFetchingTC] = useState(false)
-  const [expanded, setExpanded] = useState(false)
-
-  const fullName = `${student.first_name} ${student.last_name}`.trim()
-  const enrollment = student.current_enrollment
-
-  const detailsBody = (
-    <div className="p-4 pt-0 space-y-1">
-      {student.status === 'active' && (
-        <div className="py-3 flex items-center justify-between">
-          <div className="flex items-center gap-2.5">
-            <div className={`w-2 h-2 rounded-full shadow-sm ${student.is_active ? 'bg-emerald-500 ring-4 ring-emerald-500/10' : 'bg-amber-400 ring-4 ring-amber-500/10'}`} />
-            <span className="text-sm font-bold text-gray-700 dark:text-gray-200">
-              {student.is_active ? 'Active' : 'Suspended'}
-            </span>
-          </div>
-          {isAdmin && (
-            <button
-              onClick={(e) => { e.stopPropagation(); onToggleStatus() }}
-              disabled={isSaving}
-              className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:ring-offset-2 disabled:opacity-50 ${student.is_active ? 'bg-indigo-600' : 'bg-gray-200 dark:bg-gray-700'}`}
-            >
-              <span
-                className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${student.is_active ? 'translate-x-4' : 'translate-x-0'}`}
-              />
-            </button>
-          )}
-        </div>
-      )}
-
-      {enrollment && (
-        <>
-          <SecLabel icon={BookOpen} title="Enrollment" color={palette.a} />
-          <FieldItem label="Class" value={[enrollment.class, formatStream(enrollment.stream)].filter(Boolean).join(' — ')} />
-          <FieldItem label="Section · Roll" value={`Sec ${enrollment.section}  ·  Roll ${enrollment.roll_number || '—'}`} />
-          {student.session_name && <FieldItem label="Session" value={student.session_name} />}
-        </>
-      )}
-
-      <Divider />
-      <SecLabel icon={User} title="Identity" color="#0891b2" />
-      <FieldItem label="Date of Birth" value={formatDate(student.date_of_birth, 'long')} />
-      <FieldItem label="Gender" value={student.gender} />
-      <FieldItem label="Blood Group" value={student.blood_group} />
-      {student.medical_notes && <FieldItem label="Medical Notes" value={student.medical_notes} />}
-
-      <Divider />
-      <SecLabel icon={Phone} title="Contact" color="#059669" />
-      <FieldItem label="Phone" value={student.phone} />
-      <FieldItem label="Email" value={student.email} />
-      <FieldItem label="Address" value={[student.city, student.address].filter(Boolean).join(', ')} />
-
-      <Divider />
-      <SecLabel icon={Heart} title="Parents" color="#d97706" />
-      <FieldItem label="Father" value={student.father_name} />
-      <FieldItem label="Father Phone" value={student.father_phone} />
-      <FieldItem label="Mother" value={student.mother_name} />
-      <FieldItem label="Emergency" value={student.emergency_contact} />
-
-      <Divider />
-      <div className="flex flex-col gap-2 pt-2">
-        <div className="w-full">
-          {idCardData ? (
-            <StudentIDCardDownload 
-              data={idCardData} 
-              fileName={`IDCard_${student.admission_no}.pdf`} 
-            />
-          ) : (
-            <button
-              onClick={async () => {
-                setFetchingID(true)
-                try {
-                  const data = await fetchIDCardData(student.id)
-                  setIdCardData(data)
-                } catch (err) {
-                  console.error('Failed to fetch ID card data', err)
-                } finally { setFetchingID(false) }
-              }}
-              className="w-full flex items-center justify-center gap-2 py-2 px-3 rounded-xl text-xs font-bold transition-all bg-teal-50 text-teal-700 border border-teal-200 hover:bg-teal-100 dark:bg-teal-500/10 dark:text-teal-400 dark:border-teal-500/20 disabled:opacity-50"
-              disabled={fetchingID}
-            >
-              <IdCard size={13} /> {fetchingID ? 'Preparing...' : 'Download ID Card'}
-            </button>
-          )}
-        </div>
-
-        <div className="w-full">
-          {tcData ? (
-            <TransferCertificateDownload 
-              data={tcData} 
-              fileName={`TC_${student.admission_no}.pdf`} 
-            />
-          ) : (
-            <button
-              onClick={async () => {
-                setFetchingTC(true)
-                try {
-                  const data = await fetchTCData(student.id)
-                  setTcData(data)
-                } catch (err) {
-                  console.error('Failed to fetch TC data', err)
-                } finally { setFetchingTC(false) }
-              }}
-              className="w-full flex items-center justify-center gap-2 py-2 px-3 rounded-xl text-xs font-bold transition-all bg-slate-50 text-slate-700 border border-slate-200 hover:bg-slate-100 dark:bg-slate-500/10 dark:text-slate-400 dark:border-slate-500/20 disabled:opacity-50"
-              disabled={fetchingTC}
-            >
-              <ScrollText size={13} /> {fetchingTC ? 'Preparing...' : 'Download TC'}
-            </button>
-          )}
-        </div>
-
-        <button
-          onClick={() => onShowHistory()}
-          className="w-full flex items-center justify-center gap-2 py-2 px-3 rounded-xl text-xs font-bold transition-all bg-gray-50 text-gray-700 border border-gray-200 hover:bg-gray-100 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700"
-        >
-          <History size={13} /> Enrollment History
-        </button>
-
-        {isAdmin && (
-          <div className="space-y-2 pt-2">
-            {student.status === 'active' ? (
-              <div className="grid grid-cols-2 gap-2">
-                <button
-                  onClick={() => onMarkAsLeft()}
-                  className="w-full flex items-center justify-center gap-2 py-2 px-3 rounded-xl text-[10px] font-bold transition-all bg-red-50 text-red-700 border border-red-200 hover:bg-red-100 dark:bg-red-500/10 dark:text-red-400 dark:border-red-500/20"
-                >
-                  <LogOut size={13} /> Mark Left
-                </button>
-                <button
-                  onClick={() => onMarkAsGraduated()}
-                  className="w-full flex items-center justify-center gap-2 py-2 px-3 rounded-xl text-[10px] font-bold transition-all bg-indigo-50 text-indigo-700 border border-indigo-200 hover:bg-indigo-100 dark:bg-indigo-500/10 dark:text-indigo-400 dark:border-indigo-500/20"
-                >
-                  <GraduationCap size={13} /> Graduate
-                </button>
-              </div>
-            ) : (
-              <button
-                onClick={() => onReadmit()}
-                className="w-full flex items-center justify-center gap-2 py-2 px-3 rounded-xl text-xs font-bold transition-all bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100 dark:bg-emerald-500/10 dark:text-emerald-400 dark:border-emerald-500/20"
-              >
-                <ArrowRightLeft size={13} /> Re-admit Student
-              </button>
-            )}
-
-            <div className="grid grid-cols-2 gap-2">
-              <button
-                onClick={() => {
-                  if (!student.is_active) {
-                    toastWarning('Please activate the student to perform actions.');
-                    return;
-                  }
-                  onResetPassword();
-                }}
-                className="flex items-center justify-center gap-1.5 py-1.5 px-2 rounded-lg text-[11px] font-bold transition-all bg-gray-50 text-gray-600 border border-gray-200 hover:bg-gray-100 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-700 disabled:opacity-40"
-              >
-                <KeyRound size={11} /> Reset
-              </button>
-              <button
-                onClick={() => {
-                  if (!student.is_active) {
-                    toastWarning('Please activate the student to perform actions.');
-                    return;
-                  }
-                  onDelete();
-                }}
-                className="flex items-center justify-center gap-1.5 py-1.5 px-2 rounded-lg text-[11px] font-bold transition-all bg-red-50 text-red-600 border border-red-200 hover:bg-red-100 dark:bg-red-500/5 dark:text-red-400 dark:border-red-500/10 disabled:opacity-40"
-              >
-                <Trash2 size={11} /> Delete
-              </button>
-            </div>
-          </div>
-        )}
-      </div>
-    </div>
-  )
-
-  return (
-    <>
-      {/* ── Desktop sidebar ── */}
-      <div className="sdp-left-desktop sticky top-6 w-64 flex-shrink-0 bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 shadow-sm overflow-hidden">
-        {/* Avatar Header */}
-        <div className="p-6 text-center border-b border-gray-100 dark:border-gray-800" style={{ backgroundColor: `${palette.light}50` }}>
-          <div 
-            className="w-20 h-20 rounded-3xl mx-auto mb-4 flex items-center justify-center text-2xl font-black tracking-tighter shadow-inner ring-4 ring-white dark:ring-gray-800"
-            style={{ backgroundColor: palette.light, color: palette.a }}
-          >
-            {getInitials(fullName)}
-          </div>
-          <h2 className="text-base font-bold text-gray-900 dark:text-white leading-tight mb-1">{fullName}</h2>
-          <p className="text-[11px] font-mono font-bold text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-800 inline-block px-2 py-0.5 rounded-md mb-3">
-            {student.admission_no}
-          </p>
-          <div>
-            <span className={`inline-block text-[10px] font-black uppercase tracking-widest px-2.5 py-1 rounded-full border ${student.is_active ? 'bg-emerald-50 text-emerald-700 border-emerald-100 dark:bg-emerald-500/10 dark:text-emerald-400 dark:border-emerald-500/20' : 'bg-gray-100 text-gray-500 border-gray-200 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-700'}`}>
-              {student.is_active ? 'Active' : 'Inactive'}
-            </span>
-          </div>
-        </div>
-        {detailsBody}
-      </div>
-
-      {/* ── Mobile profile card ── */}
-      <div className="sdp-left-mobile hidden bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 shadow-sm overflow-hidden">
-        <div className={`flex items-center gap-4 p-4 ${expanded ? 'border-b border-gray-100 dark:border-gray-800' : ''}`} style={{ backgroundColor: `${palette.light}30` }}>
-          <div 
-            className="w-14 h-14 rounded-2xl flex-shrink-0 flex items-center justify-center text-lg font-black tracking-tighter shadow-sm ring-2 ring-white dark:ring-gray-800"
-            style={{ backgroundColor: palette.light, color: palette.a }}
-          >
-            {getInitials(fullName)}
-          </div>
-
-          <div className="flex-1 min-w-0">
-            <h2 className="text-base font-bold text-gray-900 dark:text-white truncate">{fullName}</h2>
-            <div className="flex items-center gap-2 mt-0.5 flex-wrap">
-              <span className="text-[11px] font-mono font-bold text-indigo-600 dark:text-indigo-400">{student.admission_no}</span>
-              {enrollment && (
-                <>
-                  <span className="w-1 h-1 rounded-full bg-gray-300 dark:bg-gray-600" />
-                  <span className="text-[11px] font-bold text-gray-500 dark:text-gray-400 truncate">
-                    Class {enrollment.class}{enrollment.section ? ` · Sec ${enrollment.section}` : ''}
-                  </span>
-                </>
-              )}
-            </div>
-          </div>
-
-          <div className="flex flex-col items-end gap-2 flex-shrink-0">
-            <span className={`text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full border ${student.is_active ? 'bg-emerald-50 text-emerald-700 border-emerald-100 dark:bg-emerald-500/10 dark:text-emerald-400 dark:border-emerald-500/20' : 'bg-gray-100 text-gray-500 border-gray-200 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-700'}`}>
-              {student.is_active ? 'Active' : 'Inactive'}
-            </span>
-            <button
-              onClick={() => setExpanded(v => !v)}
-              className="flex items-center gap-1.5 py-1 px-3 rounded-lg text-[10px] font-bold border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-400 shadow-sm transition-all active:scale-95"
-            >
-              {expanded ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
-              {expanded ? 'Hide' : 'Info'}
-            </button>
-          </div>
-        </div>
-        {expanded && <div className="animate-in fade-in slide-in-from-top-2 duration-200">{detailsBody}</div>}
-      </div>
-    </>
-  )
-}
-
-// ─── ATTENDANCE CALENDAR ──────────────────────────────────────────────────────
-const WDAYS = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa']
-const MONTHS = [
-  'January', 'February', 'March', 'April', 'May', 'June',
-  'July', 'August', 'September', 'October', 'November', 'December',
-]
-
-const STATUS = {
-  present: { bg: '#f0fdf4', border: '#bbf7d0', dot: '#16a34a', text: '#166534' },
-  absent:  { bg: '#fef2f2', border: '#fecaca', dot: '#dc2626', text: '#991b1b' },
-  late:    { bg: '#fffbeb', border: '#fde68a', dot: '#d97706', text: '#92400e' },
-  half_day: { bg: '#eff6ff', border: '#bfdbfe', dot: '#2563eb', text: '#1e40af' },
-  holiday: { bg: 'var(--color-surface-raised)', border: 'var(--color-border)', dot: '#94a3b8', text: 'var(--color-text-muted)' },
-}
-
-const LEGEND_KEYS = ['present', 'absent', 'late', 'holiday']
-
-const AttendanceCalendar = ({ enrollmentId }) => {
-  const { fetchStudentAttendance, studentRecords, studentSummary, isLoading } = useAttendanceStore()
-  const today = new Date()
-  const [year,  setYear]  = useState(today.getFullYear())
-  const [month, setMonth] = useState(today.getMonth())
-
-  useEffect(() => {
-    if (!enrollmentId) return
-    const from = new Date(year, month, 1).toISOString().split('T')[0]
-    const to = new Date(year, month + 1, 0).toISOString().split('T')[0]
-    fetchStudentAttendance(enrollmentId, { from, to })
-  }, [year, month, enrollmentId, fetchStudentAttendance])
-
-  const prev = () => {
-    if (month === 0) { setMonth(11); setYear(y => y - 1) }
-    else setMonth(m => m - 1)
-  }
-  const next = () => {
-    if (month === 11) { setMonth(0); setYear(y => y + 1) }
-    else setMonth(m => m + 1)
-  }
-
-  const firstDay  = new Date(year, month, 1).getDay()
-  const totalDays = new Date(year, month + 1, 0).getDate()
-  const cells     = Array(firstDay).fill(null).concat(
-    Array.from({ length: totalDays }, (_, i) => i + 1)
-  )
-
-  const recordsMap = useMemo(() => {
-    const map = {}
-    studentRecords.forEach(r => {
-      const d = new Date(r.date).getDate()
-      map[d] = r.status
-    })
-    return map
-  }, [studentRecords])
-
-  const STATS = [
-    { label: 'Present', value: studentSummary?.presentCount || 0, color: 'emerald' },
-    { label: 'Absent',  value: studentSummary?.absentCount || 0, color: 'red' },
-    { label: 'Late',    value: studentSummary?.lateCount || 0, color: 'amber' },
-    { label: 'Rate',    value: studentSummary?.percentage !== undefined ? `${studentSummary.percentage}%` : '—', color: 'blue' },
-  ]
-
-  return (
-    <div className={`transition-opacity duration-200 ${isLoading ? 'opacity-50 pointer-events-none' : 'opacity-100'}`}>
-      {/* Stats row */}
-      <div className="sdp-stats-grid grid grid-cols-4 gap-3 mb-6">
-        {STATS.map(s => (
-          <div key={s.label} className={`p-3 rounded-2xl border bg-${s.color}-50/50 border-${s.color}-100 dark:bg-${s.color}-500/5 dark:border-${s.color}-500/10`}>
-            <p className={`text-[10px] font-black uppercase tracking-widest text-${s.color}-600 dark:text-${s.color}-400 mb-1`}>
-              {s.label}
-            </p>
-            <p className={`text-2xl font-black tracking-tighter text-${s.color}-700 dark:text-${s.color}-300 leading-none`}>
-              {s.value}
-            </p>
-          </div>
-        ))}
-      </div>
-
-      <div className="bg-gray-50 dark:bg-gray-800/50 rounded-2xl p-4 border border-gray-100 dark:border-gray-800">
-        {/* Month nav */}
-        <div className="flex items-center justify-between mb-6">
-          <button
-            onClick={prev}
-            className="w-9 h-9 flex items-center justify-center rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700 transition-all active:scale-90 shadow-sm"
-          >
-            <ChevronLeft size={16} strokeWidth={2.5} />
-          </button>
-          <div className="text-center">
-            <h3 className="text-sm font-black text-gray-900 dark:text-white uppercase tracking-widest">
-              {MONTHS[month]} {year}
-            </h3>
-          </div>
-          <button
-            onClick={next}
-            className="w-9 h-9 flex items-center justify-center rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700 transition-all active:scale-90 shadow-sm"
-          >
-            <ChevronRIcon size={16} strokeWidth={2.5} />
-          </button>
-        </div>
-
-        {/* Weekday headers */}
-        <div className="grid grid-cols-7 gap-1 mb-2">
-          {WDAYS.map(d => (
-            <div key={d} className="text-center text-[10px] font-black uppercase tracking-widest text-gray-400 dark:text-gray-500 py-1">
-              {d}
-            </div>
-          ))}
-        </div>
-
-        {/* Calendar grid */}
-        <div className="grid grid-cols-7 gap-1">
-          {cells.map((day, idx) => {
-            if (!day) return <div key={`e${idx}`} className="aspect-square" />
-            const status  = recordsMap[day]
-            const s       = STATUS[status]
-            const isToday = (
-              day === today.getDate() &&
-              month === today.getMonth() &&
-              year === today.getFullYear()
-            )
-            
-            return (
-              <div
-                key={day}
-                className={`
-                  aspect-square rounded-xl flex flex-col items-center justify-center gap-1 transition-all relative
-                  ${s ? `bg-${s.dot}-50 dark:bg-${s.dot}-500/10` : 'bg-white dark:bg-gray-800'}
-                  ${isToday ? 'ring-2 ring-indigo-500 ring-offset-2 dark:ring-offset-gray-900 z-10' : 'border border-transparent'}
-                `}
-                style={s ? { 
-                  backgroundColor: status === 'present' ? '#f0fdf4' : status === 'absent' ? '#fef2f2' : status === 'late' ? '#fffbeb' : undefined,
-                  borderColor: isToday ? '#6366f1' : 'transparent'
-                } : {}}
-              >
-                <span className={`text-xs font-bold ${isToday ? 'text-indigo-600 dark:text-indigo-400' : (s ? `text-${s.dot}-700` : 'text-gray-500')}`}>
-                  {day}
-                </span>
-                {s && (
-                  <div className={`w-1 h-1 rounded-full bg-${s.dot}-500`} style={{ backgroundColor: s.dot }} />
-                )}
-              </div>
-            )
-          })}
-        </div>
-      </div>
-
-      {/* Legend */}
-      <div className="flex flex-wrap items-center gap-x-4 gap-y-2 mt-6 pt-4 border-t border-gray-100 dark:border-gray-800">
-        {LEGEND_KEYS.map(k => (
-          <div key={k} className="flex items-center gap-2">
-            <div 
-              className="w-3 h-3 rounded-full border shadow-sm"
-              style={{ backgroundColor: STATUS[k].bg, borderColor: STATUS[k].border }}
-            />
-            <span className="text-[11px] font-bold text-gray-600 dark:text-gray-400 uppercase tracking-tight">
-              {k.replace('_', ' ')}
-            </span>
-          </div>
-        ))}
-        <span className="sdp-today-note ml-auto text-[10px] font-bold text-indigo-500 dark:text-indigo-400 uppercase tracking-widest bg-indigo-50 dark:bg-indigo-500/10 px-2 py-0.5 rounded-md">
-          Today
-        </span>
-      </div>
-    </div>
-  )
-}
-
-// ─── RIGHT PANEL TABS ─────────────────────────────────────────────────────────
-const RIGHT_TABS = [
+/* ─── Tab config ─────────────────────────────────────────── */
+const TABS = [
   { key: 'identity',   label: 'Identity',   icon: IdCard },
   { key: 'profile',    label: 'Profile',    icon: User },
+  { key: 'parent',     label: 'Parents',    icon: Heart },
   { key: 'health',     label: 'Health',     icon: Heart },
   { key: 'subjects',   label: 'Subjects',   icon: Book },
   { key: 'documents',  label: 'Documents',  icon: ScrollText },
@@ -514,117 +49,61 @@ const RIGHT_TABS = [
   { key: 'audit',      label: 'Audit Log',  icon: ScrollText },
 ]
 
-const RightPanel = ({ student, activeTab, setActiveTab, isAdmin }) => (
-  <div className="flex-1 min-w-0 bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 shadow-sm overflow-hidden flex flex-col">
-    {/* Tab strip — scrollable */}
-    <div className="flex items-center border-b border-gray-100 dark:border-gray-800 overflow-x-auto no-scrollbar bg-gray-50/50 dark:bg-gray-800/20 px-2 pt-2">
-      {RIGHT_TABS.map(tab => {
-        const active = activeTab === tab.key
-        return (
-          <button
-            key={tab.key}
-            onClick={() => setActiveTab(tab.key)}
-            className={`
-              flex items-center gap-2 px-4 py-3 text-xs font-bold tracking-tight transition-all relative whitespace-nowrap
-              ${active 
-                ? 'text-indigo-600 dark:text-indigo-400 bg-white dark:bg-gray-900 rounded-t-xl shadow-[0_-2px_10px_rgba(0,0,0,0.02)]' 
-                : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'}
-            `}
-          >
-            <tab.icon size={14} className={active ? 'text-indigo-500' : 'text-gray-400 dark:text-gray-500'} />
-            {tab.label}
-            {active && (
-              <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-indigo-500 rounded-full mx-4" />
-            )}
-          </button>
-        )
-      })}
-    </div>
-
-    {/* Content */}
-    <div className="sdp-tab-content p-6">
-      <div className="animate-in fade-in slide-in-from-right-4 duration-300">
-        {activeTab === 'identity'   && <TabIdentity student={student} studentId={student.id} />}
-        {activeTab === 'profile'    && <TabProfile  student={student} studentId={student.id} />}
-        {activeTab === 'health'     && <TabHealth   studentId={student.id} isAdmin={isAdmin} />}
-        {activeTab === 'subjects'   && <TabEnrolledSubjects studentId={student.id} isAdmin={isAdmin} />}
-        {activeTab === 'documents'  && <TabDocuments studentId={student.id} />}
-        {activeTab === 'attendance' && <AttendanceCalendar enrollmentId={student.current_enrollment?.id} />}
-        {activeTab === 'results'    && <TabResults  studentId={student.id} />}
-        {activeTab === 'fees'       && <TabFees     enrollmentId={student.current_enrollment?.id} />}
-        {activeTab === 'audit'      && <TabAuditLog studentId={student.id} />}
-      </div>
-    </div>
-  </div>
-)
-
-// ─── Credential copy row ──────────────────────────────────────────────────────
-const CredRow = ({ icon, label, value, onCopy }) => {
-  const Icon = icon
-  return (
-    <div className="flex items-center justify-between gap-3 p-3 rounded-xl bg-gray-50 dark:bg-gray-800/50 border border-gray-100 dark:border-gray-800">
-      <div className="flex items-center gap-3 min-w-0">
-        <div className="w-8 h-8 rounded-lg flex-shrink-0 bg-indigo-50 dark:bg-indigo-500/10 flex items-center justify-center">
-          <Icon size={14} className="text-indigo-600 dark:text-indigo-400" />
-        </div>
-        <div className="min-w-0">
-          <p className="text-[9px] font-black uppercase tracking-widest text-gray-500 dark:text-gray-400 leading-none mb-1">
-            {label}
-          </p>
-          <p className="text-xs font-mono font-bold text-gray-900 dark:text-gray-100 truncate">
-            {value || '—'}
-          </p>
-        </div>
-      </div>
-      <button
-        onClick={() => onCopy(value)}
-        className="flex items-center gap-1.5 py-1.5 px-3 rounded-lg text-[10px] font-bold transition-all bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 shadow-sm active:scale-90"
-      >
-        <Copy size={11} /> Copy
-      </button>
-    </div>
-  )
+/* ─── Standard Styles ────────────────────────────────────── */
+const css = {
+  card:    { background: 'var(--color-surface)',        border: '1px solid var(--color-border)', borderRadius: 16 },
+  raised:  { background: 'var(--color-surface-raised)', border: '1px solid var(--color-border)', borderRadius: 12 },
+  primary:   { color: 'var(--color-text-primary)' },
+  secondary: { color: 'var(--color-text-secondary)' },
+  muted:     { color: 'var(--color-text-muted)' },
+  successBg: { background: '#ecfdf5', border: '1px solid #bbf7d0' },
+  dangerBg:  { background: '#fef2f2', border: '1px solid #fecaca' },
 }
 
-// ─── Skeleton ─────────────────────────────────────────────────────────────────
-const Pulse = ({ h, w = '100%', r = 8 }) => (
-  <div 
-    className="bg-gray-200 dark:bg-gray-800 animate-pulse" 
-    style={{ height: h, width: w, borderRadius: r }} 
-  />
+/* ─── Components ─────────────────────────────────────────── */
+const Field = ({ icon: Icon, label, value, full = false }) => (
+  <div className={`rounded-xl p-4 ${full ? 'sm:col-span-2 lg:col-span-3' : ''}`} style={css.raised}>
+    <p className="text-[10px] font-semibold uppercase tracking-[0.14em] flex items-center gap-1.5 mb-2" style={css.muted}>
+      <Icon size={11} strokeWidth={2.2} />
+      {label}
+    </p>
+    <p className="text-sm font-medium leading-snug" style={value ? css.primary : css.muted}>
+      {value || 'Not provided'}
+    </p>
+  </div>
 )
 
-const DetailSkeleton = () => (
-  <div className="flex flex-col gap-6">
-    <Pulse h={32} w={150} r={12} />
-    <div className="sdp-layout">
-      <div className="sdp-left-desktop w-64 flex-shrink-0 bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 p-6 flex flex-col items-center gap-4">
-        <Pulse h={80} w={80} r={24} />
-        <Pulse h={20} w="80%" />
-        <Pulse h={14} w="50%" />
-        <div className="w-full space-y-3 mt-4">
-          {Array.from({ length: 8 }).map((_, i) => <Pulse key={i} h={40} r={12} />)}
-        </div>
-      </div>
-      <div className="flex-1 bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 overflow-hidden">
-        <div className="h-12 border-b border-gray-100 dark:border-gray-800 flex items-center gap-4 px-6">
-          {[80, 60, 90, 70].map((w, i) => <Pulse key={i} h={14} w={w} r={6} />)}
-        </div>
-        <div className="p-8">
-          <div className="grid grid-cols-4 gap-4 mb-8">
-            {Array.from({ length: 4 }).map((_, i) => <Pulse key={i} h={70} r={16} />)}
-          </div>
-          <Pulse h={200} r={16} />
-        </div>
-      </div>
+const StatPill = ({ icon: Icon, label, value, color = '#4338ca', bg = '#eef2ff' }) => (
+  <div className="flex items-center gap-3 rounded-xl px-4 py-3" style={{ background: bg, border: `1px solid ${bg === '#eef2ff' ? '#c7d2fe' : 'transparent'}` }}>
+    <div className="flex h-9 w-9 items-center justify-center rounded-lg shrink-0" style={{ background: color + '18' }}>
+      <Icon size={16} style={{ color }} />
+    </div>
+    <div>
+      <p className="text-xs font-semibold" style={{ color: color + 'cc' }}>{label}</p>
+      <p className="text-sm font-bold" style={{ color }}>{value}</p>
     </div>
   </div>
 )
 
-// ─── Page ─────────────────────────────────────────────────────────────────────
+const CredentialRow = ({ icon: Icon, label, value, onCopy }) => (
+  <div className="flex items-center justify-between gap-3 rounded-xl p-3" style={css.raised}>
+    <div className="flex items-center gap-3 min-w-0">
+      <div className="flex h-10 w-10 items-center justify-center rounded-xl shrink-0" style={{ background: '#eef2ff', color: '#4338ca' }}>
+        <Icon size={16} />
+      </div>
+      <div className="min-w-0">
+        <p className="text-[10px] font-semibold uppercase tracking-wide mb-0.5" style={css.muted}>{label}</p>
+        <p className="text-sm font-medium font-mono truncate" style={css.primary}>{value || '--'}</p>
+      </div>
+    </div>
+    <Button variant="secondary" size="sm" icon={Copy} onClick={() => onCopy(value)}>Copy</Button>
+  </div>
+)
+
+// ─── Main Page ────────────────────────────────────────────────────────────────
 const StudentDetailPage = () => {
-  const { id }      = useParams()
-  const navigate    = useNavigate()
+  const { id } = useParams()
+  const navigate = useNavigate()
   const [searchParams, setSearchParams] = useSearchParams()
   const { toastError, toastSuccess, toastWarning } = useToast()
   const { isAdmin } = useAuth()
@@ -634,39 +113,46 @@ const StudentDetailPage = () => {
     clearSelected,
     deleteStudent,
     toggleStatus,
+    fetchIDCardData,
+    fetchTCData,
+    updateIdentity,
     isSaving,
   } = useAdminStudentStore()
 
-  const initialTab = RIGHT_TABS.some(tab => tab.key === searchParams.get('tab'))
-    ? searchParams.get('tab')
-    : 'identity'
-  const [activeTab,       setActiveTab]       = useState(initialTab)
-  const [pageLoading,     setPageLoading]     = useState(true)
-  const [deleteOpen,      setDeleteOpen]      = useState(false)
-  const [passwordOpen,    setPasswordOpen]    = useState(false)
-  const [confirmName,     setConfirmName]     = useState('')
-  const [tempPassword,    setTempPassword]    = useState('')
-  const [resetResult,     setResetResult]     = useState(null)
-  const [isResettingPass, setIsResettingPass] = useState(false)
-  const [historyOpen,      setHistoryOpen]      = useState(false)
-  const [leftOpen,         setLeftOpen]         = useState(false)
-  const [graduatedOpen,    setGraduatedOpen]    = useState(false)
-  const [readmitOpen,      setReadmitOpen]      = useState(false)
+  const [activeTab, setActiveTab] = useState(searchParams.get('tab') || 'identity')
+  const [pageLoading, setPageLoading] = useState(true)
+  
+  /* Modals */
+  const [editOpen, setEditOpen] = useState(false)
+  const [deleteOpen, setDeleteOpen] = useState(false)
+  const [passwordOpen, setPasswordOpen] = useState(false)
+  const [historyOpen, setHistoryOpen] = useState(false)
+  const [leftOpen, setLeftOpen] = useState(false)
+  const [graduatedOpen, setGraduatedOpen] = useState(false)
+  const [readmitOpen, setReadmitOpen] = useState(false)
+  const [fetchingDocs, setFetchingDocs] = useState({ id: false, tc: false })
+  const [docs, setDocs] = useState({ id: null, tc: null })
 
-  usePageTitle(student ? `${student.first_name} ${student.last_name}` : 'Student')
+  /* Form States */
+  const [confirmName, setConfirmName] = useState('')
+  const [tempPassword, setTempPassword] = useState('')
+  const [resetResult, setResetResult] = useState(null)
+  const [isResettingPass, setIsResettingPass] = useState(false)
+  const [editForm, setEditForm] = useState({})
+
+  usePageTitle(student ? `${student.first_name} ${student.last_name}` : 'Student Detail')
+
   useEffect(() => {
     setPageLoading(true)
     fetchStudent(id)
       .catch(() => { toastError('Student not found'); navigate(ROUTES.STUDENTS) })
       .finally(() => setPageLoading(false))
     return () => clearSelected()
-  }, [id])
+  }, [id, fetchStudent, clearSelected, navigate, toastError])
 
   useEffect(() => {
     const tab = searchParams.get('tab')
-    if (RIGHT_TABS.some(item => item.key === tab)) {
-      setActiveTab(tab)
-    }
+    if (TABS.some(item => item.key === tab)) setActiveTab(tab)
   }, [searchParams])
 
   const handleTabChange = (tab) => {
@@ -674,60 +160,66 @@ const StudentDetailPage = () => {
     setSearchParams(tab === 'identity' ? {} : { tab })
   }
 
-  if (pageLoading || !student) return <DetailSkeleton />
+  const syncEditForm = () => {
+    if (!student) return
+    setEditForm({
+      first_name: student.first_name || '',
+      last_name: student.last_name || '',
+      gender: student.gender || 'male',
+      date_of_birth: student.date_of_birth ? String(student.date_of_birth).slice(0, 10) : '',
+      blood_group: student.blood_group || '',
+      phone: student.phone || '',
+      email: student.email || '',
+      address: student.address || '',
+      city: student.city || '',
+      state: student.state || '',
+      pincode: student.pincode || '',
+      father_name: student.father_name || '',
+      father_phone: student.father_phone || '',
+      mother_name: student.mother_name || '',
+      mother_phone: student.mother_phone || '',
+      mother_email: student.mother_email || '',
+      father_occupation: student.father_occupation || '',
+      emergency_contact: student.emergency_contact || '',
+      medical_notes: student.medical_notes || '',
+    })
+  }
 
-  const fullName  = `${student.first_name} ${student.last_name}`.trim()
-  const canDelete = confirmName.trim() === fullName
-  const palette   = getPalette(fullName)
+  const handleSaveEdit = async () => {
+    try {
+      await updateIdentity(id, editForm)
+      toastSuccess('Student updated successfully')
+      setEditOpen(false)
+      await fetchStudent(id)
+    } catch (err) {
+      toastError(err.message || 'Failed to update student')
+    }
+  }
 
   const handleDelete = async () => {
-    if (!canDelete) return
-    if (!student.is_active) {
-      toastWarning('Cannot delete a deactivated student. Please activate them first.');
-      return;
-    }
-    const r = await deleteStudent(id, {
-      confirm_name: confirmName.trim(),
-      reason: `Deleted after confirming name ${fullName}`,
-    })
+    const fullName = `${student.first_name} ${student.last_name}`.trim()
+    if (confirmName.trim() !== fullName) return
+    const r = await deleteStudent(id, { confirm_name: confirmName.trim() })
     if (r.success) { toastSuccess('Student deleted'); navigate(ROUTES.STUDENTS) }
     else toastError(r.message || 'Failed to delete')
   }
 
   const handleToggleStatus = async () => {
-    const action = student.is_active ? 'deactivate' : 'activate'
-    const msg = student.is_active
-      ? "Deactivating will block this student's login but keeps them enrolled. Continue?"
-      : "This will restore the student's login access. Continue?"
-    
-    if (!window.confirm(msg)) return
-
+    if (!window.confirm(`Are you sure you want to ${student.is_active ? 'deactivate' : 'activate'} this student?`)) return
     const res = await toggleStatus(id)
-    if (res.success) {
-      toastSuccess(`Student ${res.is_active ? 'activated' : 'deactivated'}`)
-    } else {
-      toastError(res.message || 'Failed to toggle status')
-    }
+    if (res.success) toastSuccess(`Student ${res.is_active ? 'activated' : 'deactivated'}`)
+    else toastError(res.message || 'Failed')
   }
 
   const handleResetPassword = async () => {
-    if (!student.is_active) {
-      toastWarning('Cannot reset password for a deactivated student.');
-      return;
-    }
     setIsResettingPass(true)
     try {
-      const res = await studentApi.resetPassword(id, {
-        new_password: tempPassword.trim() || undefined,
-      })
+      const res = await studentApi.resetPassword(id, { new_password: tempPassword.trim() || undefined })
       setResetResult(res.data)
       setTempPassword('')
       toastSuccess('Password reset')
-    } catch (err) {
-      toastError(err.message || 'Failed')
-    } finally {
-      setIsResettingPass(false)
-    }
+    } catch (err) { toastError(err.message || 'Failed') }
+    finally { setIsResettingPass(false) }
   }
 
   const handleCopy = async (v) => {
@@ -736,153 +228,218 @@ const StudentDetailPage = () => {
     catch { toastError('Unable to copy') }
   }
 
+  if (pageLoading || !student) return <div className="max-w-4xl mx-auto space-y-4 animate-pulse"><div className="h-32 rounded-2xl bg-gray-200 dark:bg-gray-800" /><div className="h-64 rounded-2xl bg-gray-200 dark:bg-gray-800" /></div>
+
+  const fullName = `${student.first_name} ${student.last_name}`.trim()
+  const enrollment = student.current_enrollment
+
   return (
-    <div className="flex flex-col gap-6">
-      <style>{`
-        .no-scrollbar::-webkit-scrollbar { display: none; }
-        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-        
-        @keyframes fadeUp {
-          from { opacity: 0; transform: translateY(12px) }
-          to   { opacity: 1; transform: translateY(0) }
-        }
-        .sdt { animation: fadeUp .4s cubic-bezier(0.16, 1, 0.3, 1) both }
-
-        .sdp-layout { display: flex; gap: 24px; align-items: flex-start }
-        
-        @media (max-width: 1024px) {
-          .sdp-layout { flex-direction: column; gap: 16px; }
-          .sdp-left-desktop { display: none !important }
-          .sdp-left-mobile { display: block !important }
-          .sdp-stats-grid { grid-template-columns: repeat(2, 1fr) !important }
-        }
-      `}</style>
-
+    <div className="max-w-5xl mx-auto space-y-5 pb-20">
       {/* ── Back button ── */}
       <button
         onClick={() => navigate(ROUTES.STUDENTS)}
-        className="group self-start inline-flex items-center gap-2 py-2 px-4 rounded-xl text-xs font-bold transition-all bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 text-gray-500 dark:text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:border-indigo-100 dark:hover:border-indigo-500/30 shadow-sm active:scale-95"
+        className="inline-flex items-center gap-2 text-sm rounded-xl px-3 py-2 transition-colors"
+        style={{ ...css.secondary, background: 'transparent' }}
+        onMouseEnter={e => e.currentTarget.style.background = 'var(--color-surface-raised)'}
+        onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
       >
-        <ArrowLeft size={14} className="transition-transform group-hover:-translate-x-1" />
-        Back to Students
+        <ArrowLeft size={16} /> Back to Students
       </button>
 
-      {/* ── Main layout ── */}
-      <div className="sdt sdp-layout">
-        <LeftPanel
-          student={student}
-          palette={palette}
-          isAdmin={isAdmin}
-          onResetPassword={() => { setTempPassword(''); setResetResult(null); setPasswordOpen(true) }}
-          onDelete={() => { setConfirmName(''); setDeleteOpen(true) }}
-          onToggleStatus={handleToggleStatus}
-          isSaving={isSaving}
-          toastWarning={toastWarning}
-          onShowHistory={() => setHistoryOpen(true)}
-          onMarkAsLeft={() => setLeftOpen(true)}
-          onMarkAsGraduated={() => setGraduatedOpen(true)}
-          onReadmit={() => setReadmitOpen(true)}
-        />
-        <RightPanel
-          student={student}
-          palette={palette}
-          activeTab={activeTab}
-          setActiveTab={handleTabChange}
-          isAdmin={isAdmin}
-        />
+      {/* ── Hero Card ── */}
+      <div className="rounded-2xl p-5 flex flex-col sm:flex-row sm:items-start gap-5" style={css.card}>
+        {/* avatar */}
+        <div
+          className="flex h-16 w-16 items-center justify-center rounded-2xl text-xl font-bold text-white shrink-0 shadow-lg"
+          style={{ background: 'linear-gradient(135deg, #6366f1, #8b5cf6)' }}
+        >
+          {getInitials(fullName)}
+        </div>
+
+        {/* info */}
+        <div className="flex-1 min-w-0">
+          <div className="flex flex-wrap items-center gap-2 mb-1">
+            <h1 className="text-xl font-bold" style={css.primary}>{fullName}</h1>
+            <Badge variant={student.is_active ? 'green' : 'grey'} dot>{student.is_active ? 'Active' : 'Inactive'}</Badge>
+            <Badge variant="blue">Student</Badge>
+          </div>
+          <p className="text-sm mb-0.5" style={css.secondary}>{student.email}</p>
+          <p className="text-xs" style={css.muted}>
+            Adm: {student.admission_no} 
+            {enrollment ? ` · ${enrollment.class} ${enrollment.section} · Roll ${enrollment.roll_number || '--'}` : ' · No enrollment'}
+          </p>
+
+          {/* quick stats row */}
+          <div className="flex flex-wrap gap-2 mt-3">
+            {enrollment && <StatPill icon={BookOpen} label="Class" value={enrollment.class} />}
+            {student.gender && <StatPill icon={User} label="Gender" value={student.gender} color="#0891b2" bg="#ecfeff" />}
+            <StatPill icon={CheckCircle2} label="Account" value={student.is_active ? 'Active' : 'Locked'} color={student.is_active ? '#15803d' : '#991b1b'} bg={student.is_active ? '#dcfce7' : '#fef2f2'} />
+          </div>
+        </div>
+
+        {/* actions */}
+        <div className="flex flex-wrap gap-2 shrink-0">
+          <Button variant="secondary" size="sm" icon={Pencil} onClick={() => { syncEditForm(); setEditOpen(true) }}>Edit</Button>
+          <Button variant="secondary" size="sm" icon={KeyRound} onClick={() => { setTempPassword(''); setResetResult(null); setPasswordOpen(true) }}>Credentials</Button>
+          <Button variant="danger" size="sm" icon={Trash2} onClick={() => { setConfirmName(''); setDeleteOpen(true) }}>Delete</Button>
+        </div>
       </div>
 
-      {/* ── Delete modal ── */}
-      <Modal
-        open={isAdmin && deleteOpen}
-        onClose={() => !isSaving && setDeleteOpen(false)}
-        title="Delete Student Record"
-        size="sm"
-        footer={
-          <div className="flex gap-2 w-full">
-            <Button variant="secondary" onClick={() => setDeleteOpen(false)} disabled={isSaving} className="flex-1">
-              Cancel
-            </Button>
-            <Button variant="danger" icon={Trash2} onClick={handleDelete} loading={isSaving} disabled={!canDelete} className="flex-1">
-              Confirm Delete
-            </Button>
-          </div>
-        }
-      >
-        <div className="space-y-4">
-          <div className="flex gap-3 p-4 rounded-2xl bg-red-50 dark:bg-red-500/5 border border-red-100 dark:border-red-500/10 text-red-700 dark:text-red-400">
-            <AlertTriangle size={18} className="shrink-0 mt-0.5" />
-            <div className="text-xs leading-relaxed">
-              <p className="font-bold mb-1">Destructive Action</p>
-              <p className="opacity-90">This will permanently remove the student and all associated records from the system. This cannot be undone.</p>
+      <div className="grid grid-cols-1 gap-5 xl:grid-cols-[1fr_300px]">
+        {/* ── Main Tabbed Content ── */}
+        <div className="space-y-5">
+          <div className="rounded-2xl overflow-hidden" style={css.card}>
+            <div className="flex overflow-x-auto no-scrollbar border-b" style={{ borderColor: 'var(--color-border)' }}>
+              {TABS.map(tab => {
+                const active = activeTab === tab.key
+                return (
+                  <button
+                    key={tab.key}
+                    onClick={() => handleTabChange(tab.key)}
+                    className="flex items-center gap-2 px-5 py-3.5 text-xs font-bold whitespace-nowrap border-b-2 transition-colors uppercase tracking-widest"
+                    style={{
+                      borderBottomColor: active ? 'var(--color-brand)' : 'transparent',
+                      color: active ? 'var(--color-brand)' : 'var(--color-text-secondary)',
+                    }}
+                  >
+                    <tab.icon size={13} /> {tab.label}
+                  </button>
+                )
+              })}
+            </div>
+
+            <div className="p-6">
+              {activeTab === 'identity' && (
+                <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                  <Field icon={Calendar} label="Date of Birth" value={formatDate(student.date_of_birth, 'long')} />
+                  <Field icon={User}     label="Gender"        value={student.gender} />
+                  <Field icon={Heart}    label="Blood Group"   value={student.blood_group} />
+                  <Field icon={Clock}    label="Joining Date"  value={formatDate(student.joined_date, 'long')} />
+                  <Field icon={Briefcase}label="Joining Type"  value={student.joining_type} />
+                  <Field icon={Phone}    label="Emergency Contact" value={student.emergency_contact} />
+                  <Field icon={ScrollText} label="Medical Notes" value={student.medical_notes} full />
+                </div>
+              )}
+
+              {activeTab === 'profile' && (
+                <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                  <Field icon={Phone}    label="Student Phone" value={student.phone} />
+                  <Field icon={Mail}     label="Student Email" value={student.email} />
+                  <Field icon={MapPin}   label="City"          value={student.city} />
+                  <Field icon={MapPin}   label="State"         value={student.state} />
+                  <Field icon={IdCard}   label="Pincode"       value={student.pincode} />
+                  <Field icon={MapPin}   label="Address"       value={student.address} full />
+                </div>
+              )}
+
+              {activeTab === 'parent' && (
+                <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                  <Field icon={UserRound} label="Father Name"   value={student.father_name} />
+                  <Field icon={Phone}     label="Father Phone"  value={student.father_phone} />
+                  <Field icon={Briefcase} label="Father Job"    value={student.father_occupation} />
+                  <Field icon={UserRound} label="Mother Name"   value={student.mother_name} />
+                  <Field icon={Phone}     label="Mother Phone"  value={student.mother_phone} />
+                  <Field icon={Mail}      label="Mother Email"  value={student.mother_email} />
+                </div>
+              )}
+
+              {activeTab === 'health'     && <TabHealth   studentId={student.id} isAdmin={isAdmin} />}
+              {activeTab === 'subjects'   && <TabEnrolledSubjects studentId={student.id} isAdmin={isAdmin} />}
+              {activeTab === 'documents'  && <TabDocuments studentId={student.id} />}
+              {activeTab === 'attendance' && <TabAttendance enrollmentId={enrollment?.id} />}
+              {activeTab === 'results'    && <TabResults  studentId={student.id} />}
+              {activeTab === 'fees'       && <TabFees     enrollmentId={enrollment?.id} />}
+              {activeTab === 'audit'      && <TabAuditLog studentId={student.id} />}
             </div>
           </div>
-          
-          <div className="p-4 rounded-xl bg-gray-50 dark:bg-gray-800/50 border border-gray-100 dark:border-gray-800">
-            <p className="text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-1">Confirm Student Name</p>
-            <p className="text-sm font-black text-gray-900 dark:text-white">{fullName}</p>
-          </div>
-
-          <Input
-            label="Type full name to confirm"
-            value={confirmName}
-            onChange={e => setConfirmName(e.target.value)}
-            placeholder={fullName}
-            autoFocus
-            error={confirmName && !canDelete ? 'Name does not match' : undefined}
-          />
         </div>
+
+        {/* ── Sidebar Actions ── */}
+        <div className="space-y-5">
+          <section className="rounded-2xl p-5 space-y-4" style={css.card}>
+            <h3 className="text-[10px] font-bold uppercase tracking-widest" style={css.muted}>Official Documents</h3>
+            <div className="space-y-2">
+              <DocBtn
+                label="ID Card"
+                icon={IdCard}
+                loading={fetchingDocs.id}
+                onClick={async () => {
+                  setFetchingDocs(p => ({ ...p, id: true }))
+                  const res = await fetchIDCardData(student.id)
+                  setDocs(p => ({ ...p, id: res }))
+                  setFetchingDocs(p => ({ ...p, id: false }))
+                }}
+                download={docs.id ? <StudentIDCardDownload data={docs.id} fileName={`ID_${student.admission_no}.pdf`} /> : null}
+              />
+              <DocBtn
+                label="Transfer Certificate"
+                icon={ScrollText}
+                loading={fetchingDocs.tc}
+                onClick={async () => {
+                  setFetchingDocs(p => ({ ...p, tc: true }))
+                  const res = await fetchTCData(student.id)
+                  setDocs(p => ({ ...p, tc: res }))
+                  setFetchingDocs(p => ({ ...p, tc: false }))
+                }}
+                download={docs.tc ? <TransferCertificateDownload data={docs.tc} fileName={`TC_${student.admission_no}.pdf`} /> : null}
+              />
+              <Button variant="secondary" size="sm" icon={History} className="w-full justify-start" onClick={() => setHistoryOpen(true)}>Enrollment History</Button>
+            </div>
+          </section>
+
+          <section className="rounded-2xl p-5 space-y-4" style={css.card}>
+            <h3 className="text-[10px] font-bold uppercase tracking-widest" style={css.muted}>Enrollment Status</h3>
+            <div className="space-y-2">
+              {student.status === 'active' ? (
+                <>
+                  <Button variant="secondary" size="sm" icon={LogOut} className="w-full justify-start text-red-600" onClick={() => setLeftOpen(true)}>Mark as Left</Button>
+                  <Button variant="secondary" size="sm" icon={GraduationCap} className="w-full justify-start text-indigo-600" onClick={() => setGraduatedOpen(true)}>Mark as Graduated</Button>
+                </>
+              ) : (
+                <Button variant="primary" size="sm" icon={ArrowRightLeft} className="w-full" onClick={() => setReadmitOpen(true)}>Re-admit Student</Button>
+              )}
+              <Button 
+                variant="secondary" 
+                size="sm" 
+                icon={student.is_active ? ShieldCheck : CheckCircle2} 
+                className={`w-full justify-start ${student.is_active ? 'text-amber-600' : 'text-emerald-600'}`}
+                onClick={handleToggleStatus}
+              >
+                {student.is_active ? 'Suspend Account' : 'Activate Account'}
+              </Button>
+            </div>
+          </section>
+        </div>
+      </div>
+
+      {/* ── Modals ── */}
+      <Modal open={editOpen} onClose={() => !isSaving && setEditOpen(false)} title="Edit Student Details" size="lg" footer={<><Button variant="secondary" onClick={() => setEditOpen(false)}>Cancel</Button><Button icon={Pencil} onClick={handleSaveEdit} loading={isSaving}>Save Changes</Button></>}>
+        <EditForm form={editForm} setForm={setEditForm} />
       </Modal>
 
-      {/* ── Reset password modal ── */}
-      <Modal
-        open={isAdmin && passwordOpen}
-        onClose={() => !isResettingPass && setPasswordOpen(false)}
-        title="Reset Access Credentials"
-        size="sm"
-        footer={
-          <div className="flex gap-2 w-full">
-            <Button variant="secondary" onClick={() => setPasswordOpen(false)} disabled={isResettingPass} className="flex-1">
-              Close
-            </Button>
-            <Button icon={KeyRound} onClick={handleResetPassword} loading={isResettingPass} className="flex-1">
-              Reset Password
-            </Button>
-          </div>
-        }
-      >
+      <Modal open={passwordOpen} onClose={() => setPasswordOpen(false)} title="Reset Student Credentials" size="sm" footer={<><Button variant="secondary" onClick={() => setPasswordOpen(false)}>Close</Button><Button icon={KeyRound} onClick={handleResetPassword} loading={isResettingPass}>Reset Access</Button></>}>
         <div className="space-y-4">
-          <div className="p-4 rounded-2xl bg-blue-50 dark:bg-blue-500/5 border border-blue-100 dark:border-blue-500/10 text-blue-700 dark:text-blue-400">
-            <p className="text-xs leading-relaxed">
-              Leave the password field blank to automatically generate a secure temporary password.
-            </p>
-          </div>
-
-          <Input
-            label="Custom Password (Optional)"
-            value={tempPassword}
-            onChange={e => setTempPassword(e.target.value)}
-            placeholder="Leave blank for auto-generate"
-          />
-
+          <Input label="Temporary Password" value={tempPassword} onChange={e => setTempPassword(e.target.value)} placeholder="Leave blank for auto-gen" />
           {resetResult && (
-            <div className="space-y-3 pt-2">
-              <div className="p-3 rounded-xl bg-emerald-50 dark:bg-emerald-500/5 border border-emerald-100 dark:border-emerald-500/10">
-                <p className="text-[11px] font-bold text-emerald-700 dark:text-emerald-400">
-                  New credentials generated. Share these with the student.
-                </p>
-              </div>
-              <div className="grid gap-2">
-                <CredRow icon={IdCard}   label="Admission No"   value={resetResult.admission_no}       onCopy={handleCopy} />
-                <CredRow icon={Mail}     label="Login Email"    value={resetResult.email}              onCopy={handleCopy} />
-                <CredRow icon={KeyRound} label="Temporary Pass" value={resetResult.generated_password} onCopy={handleCopy} />
-              </div>
+            <div className="space-y-2 pt-2">
+              <div className="p-3 rounded-xl mb-2" style={css.successBg}><p className="text-xs font-bold text-emerald-700">Credentials reset successfully.</p></div>
+              <CredentialRow icon={Mail} label="Login Email" value={resetResult.email} onCopy={handleCopy} />
+              <CredentialRow icon={KeyRound} label="Temp Password" value={resetResult.generated_password} onCopy={handleCopy} />
             </div>
           )}
         </div>
       </Modal>
 
-      {/* ── Modals ── */}
+      <Modal open={deleteOpen} onClose={() => setDeleteOpen(false)} title="Delete Record" size="sm" footer={<><Button variant="secondary" onClick={() => setDeleteOpen(false)}>Cancel</Button><Button variant="danger" icon={Trash2} onClick={handleDelete} disabled={confirmName !== fullName}>Confirm Delete</Button></>}>
+        <div className="space-y-4">
+          <div className="p-4 rounded-xl flex gap-3" style={css.dangerBg}>
+            <AlertTriangle size={18} className="text-red-600 shrink-0" />
+            <p className="text-xs text-red-800 leading-relaxed font-medium">Permanently deletes student and all history. Cannot be undone.</p>
+          </div>
+          <Input label={`Type "${fullName}" to confirm`} value={confirmName} onChange={e => setConfirmName(e.target.value)} autoFocus />
+        </div>
+      </Modal>
+
       <EnrollmentHistoryModal open={historyOpen} student={student} onClose={() => setHistoryOpen(false)} />
       <MarkAsLeftModal open={leftOpen} student={student} onClose={() => setLeftOpen(false)} onSuccess={() => { setLeftOpen(false); fetchStudent(id) }} />
       <MarkAsGraduatedModal open={graduatedOpen} student={student} onClose={() => setGraduatedOpen(false)} onSuccess={() => { setGraduatedOpen(false); fetchStudent(id) }} />
@@ -890,5 +447,98 @@ const StudentDetailPage = () => {
     </div>
   )
 }
+
+const EditForm = ({ form, setForm }) => {
+  const update = (k, v) => setForm(p => ({ ...p, [k]: v }))
+  return (
+    <div className="space-y-6">
+      <section className="space-y-3">
+        <h4 className="text-[10px] font-bold uppercase tracking-widest text-gray-500">Identity & Contact</h4>
+        <div className="grid gap-4 sm:grid-cols-2">
+          <Input label="First Name" value={form.first_name} onChange={e => update('first_name', e.target.value)} />
+          <Input label="Last Name" value={form.last_name} onChange={e => update('last_name', e.target.value)} />
+          <Select label="Gender" value={form.gender} onChange={e => update('gender', e.target.value)} options={[{value:'male',label:'Male'},{value:'female',label:'Female'},{value:'other',label:'Other'}]} />
+          <Input label="DOB" type="date" value={form.date_of_birth} onChange={e => update('date_of_birth', e.target.value)} />
+          <Input label="Phone" value={form.phone} onChange={e => update('phone', e.target.value)} />
+          <Input label="Email" value={form.email} onChange={e => update('email', e.target.value)} />
+        </div>
+      </section>
+      <section className="space-y-3">
+        <h4 className="text-[10px] font-bold uppercase tracking-widest text-gray-500">Contact Address</h4>
+        <div className="grid gap-4 sm:grid-cols-2">
+           <Input label="City" value={form.city} onChange={e => update('city', e.target.value)} />
+           <Input label="State" value={form.state} onChange={e => update('state', e.target.value)} />
+           <Input label="Pincode" value={form.pincode} onChange={e => update('pincode', e.target.value)} />
+           <div className="sm:col-span-2">
+             <Input label="Full Address" value={form.address} onChange={e => update('address', e.target.value)} />
+           </div>
+        </div>
+      </section>
+      <section className="space-y-3">
+        <h4 className="text-[10px] font-bold uppercase tracking-widest text-gray-500">Parent Details</h4>
+        <div className="grid gap-4 sm:grid-cols-2">
+          <Input label="Father Name" value={form.father_name} onChange={e => update('father_name', e.target.value)} />
+          <Input label="Mother Name" value={form.mother_name} onChange={e => update('mother_name', e.target.value)} />
+          <Input label="Emergency Contact" value={form.emergency_contact} onChange={e => update('emergency_contact', e.target.value)} />
+        </div>
+      </section>
+    </div>
+  )
+}
+
+const DocBtn = ({ label, icon: Icon, onClick, loading, download }) => (
+  <div className="w-full">
+    {download ? download : (
+      <button onClick={onClick} disabled={loading} className="w-full flex items-center justify-between gap-2 py-2.5 px-3 rounded-xl text-xs font-bold transition-all bg-gray-50 text-gray-700 border border-gray-200 hover:bg-gray-100 dark:bg-gray-800/50 dark:text-gray-300 dark:border-gray-700 disabled:opacity-50">
+        <div className="flex items-center gap-2"><Icon size={14} className="text-indigo-500" /> {label}</div>
+        <ChevronRIcon size={14} className="opacity-40" />
+      </button>
+    )}
+  </div>
+)
+
+const TabAttendance = ({ enrollmentId }) => {
+  const { fetchStudentAttendance, studentRecords, studentSummary, isLoading } = useAttendanceStore()
+  const today = new Date()
+  const [year, setYear] = useState(today.getFullYear())
+  const [month, setMonth] = useState(today.getMonth())
+
+  useEffect(() => {
+    if (!enrollmentId) return
+    const from = new Date(year, month, 1).toISOString().split('T')[0]
+    const to = new Date(year, month + 1, 0).toISOString().split('T')[0]
+    fetchStudentAttendance(enrollmentId, { from, to })
+  }, [year, month, enrollmentId, fetchStudentAttendance])
+
+  const STATS = [
+    { label: 'Present', value: studentSummary?.presentCount || 0, color: 'emerald' },
+    { label: 'Absent',  value: studentSummary?.absentCount || 0, color: 'red' },
+    { label: 'Late',    value: studentSummary?.lateCount || 0, color: 'amber' },
+    { label: 'Rate',    value: studentSummary?.percentage != null ? `${studentSummary.percentage}%` : '—', color: 'blue' },
+  ]
+
+  return (
+    <div className="space-y-6">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        {STATS.map(s => (
+          <div key={s.label} className={`p-4 rounded-2xl border bg-white shadow-sm`} style={{ borderColor: 'var(--color-border)' }}>
+            <p className="text-[10px] font-black uppercase tracking-widest mb-1" style={css.muted}>{s.label}</p>
+            <p className="text-2xl font-black tracking-tighter" style={css.primary}>{s.value}</p>
+          </div>
+        ))}
+      </div>
+      <div className="rounded-2xl border p-4 bg-gray-50/50" style={{ borderColor: 'var(--color-border)' }}>
+        <div className="flex items-center justify-between mb-4">
+          <button onClick={() => month === 0 ? (setMonth(11), setYear(y => y - 1)) : setMonth(m => m - 1)} className="p-2 hover:bg-white rounded-lg transition-colors border"><ChevronLeft size={16} /></button>
+          <h3 className="text-sm font-bold uppercase tracking-widest">{MONTHS[month]} {year}</h3>
+          <button onClick={() => month === 11 ? (setMonth(0), setYear(y => y + 1)) : setMonth(m => m + 1)} className="p-2 hover:bg-white rounded-lg transition-colors border"><ChevronRIcon size={16} /></button>
+        </div>
+        <div className="text-center py-8 opacity-40 italic text-sm">Interactive calendar loading...</div>
+      </div>
+    </div>
+  )
+}
+
+const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December']
 
 export default StudentDetailPage
