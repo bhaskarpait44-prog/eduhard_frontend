@@ -96,6 +96,7 @@ export const ROUTES = {
   FEE_INVOICES: '/fees/invoices',
   FEE_RECEIPTS: '/fees/receipts',
   FEE_DEFAULTERS: '/fees/defaulters',
+  FEE_UPI_CONFIRMATIONS: '/fees/upi-confirmations',
 
   // Exams
   EXAMS: '/exams',
