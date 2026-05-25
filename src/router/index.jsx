@@ -64,6 +64,7 @@ const ExamsPage = lazy(() => import('@/pages/exams/ExamsPage'))
 const ExamAnalyticsPage = lazy(() => import('@/pages/exams/ExamAnalyticsPage'))
 const AuditPage = lazy(() => import('@/pages/audit/AuditPage'))
 const StudentFeePage = lazy(() => import('@/pages/fees/StudentFeePage'))
+const UpiConfirmationsPage = lazy(() => import('@/pages/fees/UpiConfirmationsPage'))
 const FeedbackList = lazy(() => import('@/pages/feedback/FeedbackList'))
 const ClassListPage = lazy(() => import('@/pages/classes/ClassListPage'))
 const UserManagementHomePage = lazy(() => import('@/pages/admin/users/UserManagementHomePage'))
@@ -273,6 +274,7 @@ const router = createBrowserRouter([
       { path: 'refunds', element: <Lazy component={RefundList} /> },
       { path: 'refunds/process', element: <Lazy component={ProcessRefund} /> },
       { path: 'cheques', element: <Lazy component={ChequeManagement} /> },
+      { path: 'upi-confirmations', element: <Lazy component={UpiConfirmationsPage} /> },
       { path: 'profile', element: <Lazy component={AccountantProfile} /> },
     ],
   },
@@ -621,6 +623,14 @@ const router = createBrowserRouter([
         element: (
           <ProtectedRoute roles={[ROLES.ADMIN]}>
             <Lazy component={FeeReportPage} />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: ROUTES.FEE_UPI_CONFIRMATIONS,
+        element: (
+          <ProtectedRoute roles={[ROLES.ADMIN]}>
+            <Lazy component={UpiConfirmationsPage} />
           </ProtectedRoute>
         ),
       },

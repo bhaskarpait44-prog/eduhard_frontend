@@ -197,6 +197,7 @@ export const ROUTES = {
   ACCOUNTANT_REFUNDS: '/accountant/refunds',
   ACCOUNTANT_REFUNDS_PROCESS: '/accountant/refunds/process',
   ACCOUNTANT_CHEQUES: '/accountant/cheques',
+  ACCOUNTANT_UPI_CONFIRMATIONS: '/accountant/upi-confirmations',
   ACCOUNTANT_PROFILE: '/accountant/profile',
 
   // Settings

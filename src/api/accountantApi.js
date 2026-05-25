@@ -73,6 +73,10 @@ export const getPendingCheques = (params) => api.get('/accountant/cheques/pendin
 export const clearCheque = (id, data) => api.post(`/accountant/cheques/${id}/clear`, data)
 export const bounceCheque = (id, data) => api.post(`/accountant/cheques/${id}/bounce`, data)
 
+export const getUpiRequests = (params) => api.get('/accountant/upi-requests', { params })
+export const confirmUpiRequest = (id, data) => api.post(`/accountant/upi-requests/${id}/confirm`, data)
+export const rejectUpiRequest = (id, data) => api.post(`/accountant/upi-requests/${id}/reject`, data)
+
 export const getAccountantProfile = () => api.get('/accountant/profile')
 export const getAccountantActivity = () => api.get('/accountant/profile/activity')
 export const changeAccountantPassword = (data) => api.post('/accountant/profile/change-password', data)

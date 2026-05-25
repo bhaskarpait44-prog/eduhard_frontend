@@ -209,7 +209,7 @@ const DashboardPage = () => {
               <tbody className="divide-y divide-border-base">
                 {stats?.classAttendance?.length > 0 ? (
                   stats.classAttendance.map((cls) => (
-                    <tr key={cls.class_name} className="group hover:bg-surface-raised transition-colors">
+                    <tr key={cls.id} className="group hover:bg-surface-raised transition-colors">
                       <td className="py-3 font-medium text-text-primary">{cls.class_name}</td>
                       <td className="py-3 text-text-secondary">{cls.total}</td>
                       <td className="py-3 text-emerald-600 font-bold">{cls.present}</td>

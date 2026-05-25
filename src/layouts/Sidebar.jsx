@@ -120,6 +120,7 @@ const getNavGroups = (user) => {
           { label: 'Carry Forward', icon: 'ArrowRightLeft', path: ROUTES.ACCOUNTANT_CARRY_FORWARD },
           ...(can('fees.refund') ? [{ label: 'Refunds', icon: 'Undo2', path: ROUTES.ACCOUNTANT_REFUNDS }] : []),
           { label: 'Cheques', icon: 'Landmark', path: ROUTES.ACCOUNTANT_CHEQUES },
+          { label: 'UPI Confirmations', icon: 'QrCode', path: ROUTES.ACCOUNTANT_UPI_CONFIRMATIONS },
           { label: 'Expenses', icon: 'Receipt', path: ROUTES.ACCOUNTANT_EXPENSES },
           { label: 'Payroll', icon: 'Banknote', path: ROUTES.ACCOUNTANT_PAYROLL },
         ],
@@ -192,6 +193,7 @@ const getNavGroups = (user) => {
         { label: 'Fees',          icon: 'Wallet',         path: ROUTES.FEES,           roles: [ROLES.ADMIN] },
         { label: 'Fee Structure', icon: 'NotebookTabs',   path: ROUTES.FEE_STRUCTURES, roles: [ROLES.ADMIN] },
         { label: 'Fee Report',    icon: 'BarChart3',      path: ROUTES.FEE_REPORT,     roles: [ROLES.ADMIN] },
+        { label: 'UPI Confirmations', icon: 'QrCode',     path: ROUTES.FEE_UPI_CONFIRMATIONS, roles: [ROLES.ADMIN] },
       ],
     },
     {
@@ -531,8 +533,8 @@ const SidebarContent = ({ collapsed, toggleCollapsed, user, initials, navGroups,
             />
           )}
           <ul className="space-y-0.5">
-            {group.items.map(item => (
-              <li key={item.path}>
+            {group.items.map((item, itemIdx) => (
+              <li key={item.path || `${item.label}-${itemIdx}`}>
                 <NavItem item={item} collapsed={collapsed && !isMobile} />
               </li>
             ))}

@@ -23,7 +23,9 @@ import {
   X,
   Loader2,
   ShieldCheck,
-  AlertCircle
+  AlertCircle,
+  IndianRupee,
+  QrCode
 } from 'lucide-react'
 import usePageTitle from '@/hooks/usePageTitle'
 import useToast from '@/hooks/useToast'
@@ -40,6 +42,7 @@ const DEFAULT_SETTINGS = {
   schoolEmail: 'admin@school.edu.in',
   schoolPhone: '+91 98765 43210',
   schoolAddress: '12 Knowledge Avenue, Bengaluru',
+  upi_id: '',
   timezone: 'Asia/Kolkata',
   attendanceReminder: true,
   feeReminder: true,
@@ -83,6 +86,16 @@ const SettingsPage = () => {
   const [isChangingPwd, setIsChangingPwd] = useState(false)
 
   const strength = getStrength(pwdForm.newPassword)
+
+  const handleChange = (key, value) => {
+    setSettings((prev) => ({ ...prev, [key]: value }))
+  }
+
+  const completion = useMemo(() => {
+    const fields = ['schoolName', 'schoolEmail', 'schoolPhone', 'schoolAddress', 'upi_id']
+    const filled = fields.filter((f) => settings[f]).length
+    return Math.round((filled / fields.length) * 100)
+  }, [settings])
 
   useEffect(() => {
     fetchCurrentSession()
@@ -265,6 +278,28 @@ const SettingsPage = () => {
                 placeholder="Full school address"
                 icon={MapPin}
               />
+            </div>
+          </SettingsCard>
+
+          <SettingsCard
+            icon={IndianRupee}
+            title="Payment Settings"
+            description="Configure payment options for students and parents."
+          >
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <Field
+                label="School UPI ID"
+                value={settings.upi_id}
+                onChange={(value) => handleChange('upi_id', value)}
+                placeholder="schoolname@upi"
+                icon={QrCode}
+              />
+              <div className="flex items-center gap-3 p-4 rounded-2xl bg-brand/5 border border-brand/10">
+                <AlertCircle size={20} className="text-brand shrink-0" />
+                <p className="text-xs leading-relaxed" style={{ color: 'var(--color-text-secondary)' }}>
+                  Students will use this UPI ID to pay fees via QR code on the mobile app. Ensure this ID is correct and active.
+                </p>
+              </div>
             </div>
           </SettingsCard>
 
