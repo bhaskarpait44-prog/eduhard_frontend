@@ -1,5 +1,5 @@
 import { useEffect, useState, useMemo } from 'react'
-import { Plus, ClipboardList, PenLine, Trash2, ShieldCheck, Send, BookOpen, AlertCircle, BarChart3, CalendarDays } from 'lucide-react'
+import { Plus, ClipboardList, PenLine, Trash2, ShieldCheck, Send, BookOpen, AlertCircle, BarChart3, CalendarDays, Printer } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import useExamStore from '@/store/examStore'
 import useSessionStore from '@/store/sessionStore'
@@ -13,6 +13,7 @@ import EmptyState from '@/components/ui/EmptyState'
 import ConfirmDialog from '@/components/ui/ConfirmDialog'
 import CreateExamModal from './CreateExamModal'
 import ReviewExamSubjectsModal from './ReviewExamSubjectsModal'
+import AdmitCardModal from './AdmitCardModal'
 import { getExamSubjects, updateExamTimetable } from '@/api/examsApi'
 import { getUsers } from '@/api/userManagementApi'
 import { formatDate, getExamTypeLabel } from '@/utils/helpers'
@@ -67,7 +68,7 @@ const ActionBtn = ({ icon: Icon, onClick, children, danger = false, title }) => 
 )
 
 /* ─── Single exam row inside a class card ────────────────── */
-const ExamRow = ({ exam, isLast, onReview, onMarks, onTimetable, onToggleStatus, onDelete }) => {
+const ExamRow = ({ exam, isLast, onReview, onMarks, onTimetable, onAdmitCard, onToggleStatus, onDelete }) => {
   const navigate = useNavigate()
   const statusCfg = STATUS_CFG[exam.status] || { label: exam.status, variant: 'grey' }
   const pending   = Number(exam.pending_review_count || 0)
@@ -110,6 +111,7 @@ const ExamRow = ({ exam, isLast, onReview, onMarks, onTimetable, onToggleStatus,
         {exam.status !== 'draft' && (
           <ActionBtn icon={PenLine} onClick={onMarks} title="Enter marks">Marks</ActionBtn>
         )}
+        <ActionBtn icon={Printer} onClick={() => onAdmitCard(exam)} title="Generate Admit Cards">Cards</ActionBtn>
         <ActionBtn
           icon={Send}
           onClick={() => onToggleStatus(exam)}
@@ -125,7 +127,7 @@ const ExamRow = ({ exam, isLast, onReview, onMarks, onTimetable, onToggleStatus,
 
 
 /* ─── Class card ─────────────────────────────────────────── */
-const ClassCard = ({ className, exams, onReview, onMarks, onTimetable, onToggleStatus, onDelete, onCreateForClass }) => {
+const ClassCard = ({ className, exams, onReview, onMarks, onTimetable, onAdmitCard, onToggleStatus, onDelete, onCreateForClass }) => {
   const total     = exams.length
   const published = exams.filter(e => ['published', 'ongoing'].includes(e.status)).length
   const draft     = exams.filter(e => e.status === 'draft').length
@@ -205,6 +207,7 @@ const ClassCard = ({ className, exams, onReview, onMarks, onTimetable, onToggleS
             onReview={onReview}
             onMarks={onMarks}
             onTimetable={onTimetable}
+            onAdmitCard={onAdmitCard}
             onToggleStatus={onToggleStatus}
             onDelete={onDelete}
           />
@@ -264,6 +267,7 @@ const ExamsListPage = ({ onNavigate }) => {
   const [deleteTarget,    setDeleteTarget]     = useState(null)
   const [reviewTarget,    setReviewTarget]     = useState(null)
   const [timetableTarget, setTimetableTarget]  = useState(null)
+  const [admitCardTarget, setAdmitCardTarget]  = useState(null)
 
   useEffect(() => { fetchSessions().catch(() => {}) }, [fetchSessions])
 
@@ -383,6 +387,7 @@ const ExamsListPage = ({ onNavigate }) => {
               onReview={setReviewTarget}
               onMarks={() => onNavigate('marks')}
               onTimetable={setTimetableTarget}
+              onAdmitCard={setAdmitCardTarget}
               onToggleStatus={handleToggleStatus}
               onDelete={setDeleteTarget}
               onCreateForClass={handleCreateForClass}
@@ -401,6 +406,7 @@ const ExamsListPage = ({ onNavigate }) => {
       />
       <ReviewExamSubjectsModal exam={reviewTarget} open={!!reviewTarget} onClose={() => setReviewTarget(null)} />
       <ExamTimetableModal exam={timetableTarget} open={!!timetableTarget} onClose={() => setTimetableTarget(null)} />
+      <AdmitCardModal exam={admitCardTarget} open={!!admitCardTarget} onClose={() => setAdmitCardTarget(null)} />
       <ConfirmDialog
         open={!!deleteTarget}
         onClose={() => setDeleteTarget(null)}

@@ -31,15 +31,24 @@ const UpiConfirmationsPage = () => {
   const [reason, setReason] = useState('')
   const [transactionRef, setTransactionRef] = useState('')
 
+  const [pagination, setPagination] = useState({ total: 0, page: 1, limit: 15, pages: 1 })
+
   useEffect(() => {
     fetchRequests()
-  }, [status])
+  }, [status, pagination.page])
 
   const fetchRequests = async () => {
     setIsLoading(true)
     try {
-      const res = await accountantApi.getUpiRequests({ status })
+      const res = await accountantApi.getUpiRequests({ 
+        status, 
+        page: pagination.page, 
+        limit: pagination.limit 
+      })
       setRequests(res.data?.requests || [])
+      if (res.data?.pagination) {
+        setPagination(prev => ({ ...prev, ...res.data.pagination }))
+      }
     } catch (err) {
       toastError('Failed to load UPI requests')
     } finally {
@@ -80,8 +89,8 @@ const UpiConfirmationsPage = () => {
   }
 
   const filteredRequests = requests.filter(r => 
-    r.student_name.toLowerCase().includes(search.toLowerCase()) ||
-    r.upi_transaction_id.toLowerCase().includes(search.toLowerCase())
+    (r.student_name?.toLowerCase() || '').includes(search.toLowerCase()) ||
+    (r.upi_transaction_id?.toLowerCase() || '').includes(search.toLowerCase())
   )
 
   const pendingCount = requests.filter(r => r.status === 'pending').length
@@ -119,7 +128,7 @@ const UpiConfirmationsPage = () => {
           {['all', 'pending', 'confirmed', 'rejected'].map((s) => (
             <button
               key={s}
-              onClick={() => setStatus(s)}
+              onClick={() => { setStatus(s); setPagination(p => ({ ...p, page: 1 })); }}
               className={`px-5 py-2 text-sm font-semibold rounded-xl transition-all capitalize ${
                 status === s 
                   ? 'bg-brand text-white shadow-lg shadow-brand/20' 
@@ -135,7 +144,7 @@ const UpiConfirmationsPage = () => {
           <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-text-muted" />
           <input
             type="text"
-            placeholder="Search by student or transaction ID..."
+            placeholder="Search in current page..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="w-full pl-11 pr-4 py-3 rounded-2xl border border-border bg-surface outline-none focus:ring-2 focus:ring-brand/20 transition-all text-sm"
@@ -155,82 +164,108 @@ const UpiConfirmationsPage = () => {
             className="py-16"
           />
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="border-bottom border-border bg-surface-raised/50">
-                  {['Student / Class', 'Fee Details', 'Amount', 'Transaction ID', 'Submitted', 'Status', 'Actions'].map(h => (
-                    <th key={h} className="px-6 py-4 text-left text-[11px] font-bold uppercase tracking-wider text-text-muted">
-                      {h}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-border">
-                {filteredRequests.map((req) => {
-                  const cfg = STATUS_CONFIG[req.status]
-                  return (
-                    <tr key={req.id} className="hover:bg-surface-raised/30 transition-colors">
-                      <td className="px-6 py-4">
-                        <p className="text-sm font-bold text-text-primary">{req.student_name}</p>
-                        <p className="text-xs text-text-muted">{req.class_name} {req.section_name ? ` · ${req.section_name}` : ''}</p>
-                      </td>
-                      <td className="px-6 py-4">
-                        <p className="text-sm font-medium text-text-primary">{req.fee_name}</p>
-                        <p className="text-[11px] text-text-muted">Due: {formatDate(req.due_date)}</p>
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="flex items-center gap-1.5 font-bold text-brand">
-                          <IndianRupee size={14} />
-                          {formatCurrency(req.amount).replace('₹', '')}
-                        </div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <p className="text-sm font-mono text-text-primary bg-surface-raised px-2 py-1 rounded-lg w-fit">
-                          {req.upi_transaction_id}
-                        </p>
-                      </td>
-                      <td className="px-6 py-4 text-sm text-text-secondary">
-                        {formatDate(req.created_at)}
-                      </td>
-                      <td className="px-6 py-4">
-                        <Badge variant={cfg.variant} dot icon={cfg.icon}>
-                          {cfg.label}
-                        </Badge>
-                      </td>
-                      <td className="px-6 py-4">
-                        {req.status === 'pending' ? (
-                          <div className="flex items-center gap-2">
-                            <button
-                              onClick={() => {
-                                setConfirmTarget(req)
-                                setTransactionRef(req.upi_transaction_id)
-                              }}
-                              className="p-2 rounded-xl bg-success/10 text-success hover:bg-success hover:text-white transition-all"
-                              title="Confirm Payment"
-                            >
-                              <CheckCircle size={18} />
-                            </button>
-                            <button
-                              onClick={() => setRejectTarget(req)}
-                              className="p-2 rounded-xl bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white transition-all"
-                              title="Reject Request"
-                            >
-                              <XCircle size={18} />
-                            </button>
+          <>
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-bottom border-border bg-surface-raised/50">
+                    {['Student / Class', 'Fee Details', 'Amount', 'Transaction ID', 'Submitted', 'Status', 'Actions'].map(h => (
+                      <th key={h} className="px-6 py-4 text-left text-[11px] font-bold uppercase tracking-wider text-text-muted">
+                        {h}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-border">
+                  {filteredRequests.map((req) => {
+                    const cfg = STATUS_CONFIG[req.status]
+                    return (
+                      <tr key={req.id} className="hover:bg-surface-raised/30 transition-colors">
+                        <td className="px-6 py-4">
+                          <p className="text-sm font-bold text-text-primary">{req.student_name}</p>
+                          <p className="text-xs text-text-muted">{req.class_name} {req.section_name ? ` · ${req.section_name}` : ''}</p>
+                        </td>
+                        <td className="px-6 py-4">
+                          <p className="text-sm font-medium text-text-primary">{req.fee_name}</p>
+                          <p className="text-[11px] text-text-muted">Due: {formatDate(req.due_date)}</p>
+                        </td>
+                        <td className="px-6 py-4">
+                          <div className="flex items-center gap-1.5 font-bold text-brand">
+                            <IndianRupee size={14} />
+                            {formatCurrency(req.amount).replace('₹', '')}
                           </div>
-                        ) : (
-                          <div className="text-xs text-text-muted italic">
-                            {req.status === 'confirmed' ? `By ${req.confirmed_by_name}` : 'Rejected'}
-                          </div>
-                        )}
-                      </td>
-                    </tr>
-                  )
-                })}
-              </tbody>
-            </table>
-          </div>
+                        </td>
+                        <td className="px-6 py-4">
+                          <p className="text-sm font-mono text-text-primary bg-surface-raised px-2 py-1 rounded-lg w-fit">
+                            {req.upi_transaction_id === 'PAYMENT_PENDING' ? 'Processing...' : (req.upi_transaction_id || 'N/A')}
+                          </p>
+                        </td>
+                        <td className="px-6 py-4 text-sm text-text-secondary">
+                          {formatDate(req.created_at)}
+                        </td>
+                        <td className="px-6 py-4">
+                          <Badge variant={cfg.variant} dot icon={cfg.icon}>
+                            {cfg.label}
+                          </Badge>
+                        </td>
+                        <td className="px-6 py-4">
+                          {req.status === 'pending' ? (
+                            <div className="flex items-center gap-2">
+                              <button
+                                onClick={() => {
+                                  setConfirmTarget(req)
+                                  setTransactionRef(req.upi_transaction_id === 'PAYMENT_PENDING' ? '' : req.upi_transaction_id)
+                                }}
+                                className="p-2 rounded-xl bg-success/10 text-success hover:bg-success hover:text-white transition-all"
+                                title="Confirm Payment"
+                              >
+                                <CheckCircle size={18} />
+                              </button>
+                              <button
+                                onClick={() => setRejectTarget(req)}
+                                className="p-2 rounded-xl bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white transition-all"
+                                title="Reject Request"
+                              >
+                                <XCircle size={18} />
+                              </button>
+                            </div>
+                          ) : (
+                            <div className="text-xs text-text-muted italic">
+                              {req.status === 'confirmed' ? `By ${req.confirmed_by_name}` : 'Rejected'}
+                            </div>
+                          )}
+                        </td>
+                      </tr>
+                    )
+                  })}
+                </tbody>
+              </table>
+            </div>
+
+            {pagination.pages > 1 && (
+              <div className="px-6 py-4 bg-surface-raised/30 border-t border-border flex items-center justify-between">
+                <p className="text-xs text-text-secondary font-medium">
+                  Showing <span className="text-text-primary">{(pagination.page - 1) * pagination.limit + 1}</span> to <span className="text-text-primary">{Math.min(pagination.page * pagination.limit, pagination.total)}</span> of <span className="text-text-primary">{pagination.total}</span> results
+                </p>
+                <div className="flex gap-2">
+                  <button
+                    disabled={pagination.page === 1}
+                    onClick={() => setPagination(p => ({ ...p, page: p.page - 1 }))}
+                    className="px-4 py-2 rounded-xl border border-border bg-surface text-xs font-bold transition-all hover:bg-surface-raised disabled:opacity-40 disabled:hover:bg-surface"
+                  >
+                    Previous
+                  </button>
+                  <button
+                    disabled={pagination.page === pagination.pages}
+                    onClick={() => setPagination(p => ({ ...p, page: p.page + 1 }))}
+                    className="px-4 py-2 rounded-xl border border-border bg-surface text-xs font-bold transition-all hover:bg-surface-raised disabled:opacity-40 disabled:hover:bg-surface"
+                  >
+                    Next
+                  </button>
+                </div>
+              </div>
+            )}
+          </>
         )}
       </div>
 

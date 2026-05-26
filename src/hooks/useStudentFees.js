@@ -1,23 +1,26 @@
 import { useEffect, useState } from 'react'
 import * as accountantApi from '@/api/accountantApi'
-
 const useStudentFees = (params = {}) => {
   const [students, setStudents] = useState([])
-  const [isLoading, setIsLoading] = useState(false)
+  const [pagination, setPagination] = useState({ total: 0, page: 1, limit: 10, pages: 1 })
+  const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState(null)
 
   useEffect(() => {
     let active = true
     setIsLoading(true)
-    setError(null)
+
     accountantApi.getStudentFeesList(params)
-      .then((response) => {
-        if (active) setStudents(response.data?.students || [])
+      .then((res) => {
+        if (active) {
+          setStudents(res.data?.students || [])
+          setPagination(res.data?.pagination || { total: 0, page: 1, limit: 10, pages: 1 })
+          setError(null)
+        }
       })
       .catch((err) => {
         if (active) {
-          setStudents([])
-          setError(err?.message || 'Failed to load students')
+          setError(err.response?.data?.message || 'Failed to load students')
         }
       })
       .finally(() => {
@@ -27,7 +30,7 @@ const useStudentFees = (params = {}) => {
     return () => { active = false }
   }, [JSON.stringify(params)])
 
-  return { students, isLoading, error }
+  return { students, pagination, isLoading, error }
 }
 
 export default useStudentFees

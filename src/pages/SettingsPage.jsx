@@ -43,6 +43,8 @@ const DEFAULT_SETTINGS = {
   schoolPhone: '+91 98765 43210',
   schoolAddress: '12 Knowledge Avenue, Bengaluru',
   upi_id: '',
+  upi_name: '',
+  upi_enabled: true,
   timezone: 'Asia/Kolkata',
   attendanceReminder: true,
   feeReminder: true,
@@ -92,7 +94,7 @@ const SettingsPage = () => {
   }
 
   const completion = useMemo(() => {
-    const fields = ['schoolName', 'schoolEmail', 'schoolPhone', 'schoolAddress', 'upi_id']
+    const fields = ['schoolName', 'schoolEmail', 'schoolPhone', 'schoolAddress', 'upi_id', 'upi_name']
     const filled = fields.filter((f) => settings[f]).length
     return Math.round((filled / fields.length) * 100)
   }, [settings])
@@ -107,8 +109,13 @@ const SettingsPage = () => {
     try {
       const res = await api.get('/settings')
       if (res.data?.data) {
-        setSettings((prev) => ({ ...prev, ...res.data.data }))
-        localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(res.data.data))
+        const data = res.data.data
+        setSettings((prev) => ({ 
+          ...prev, 
+          ...data,
+          schoolName: data.school_name || prev.schoolName // Map backend school_name to schoolName
+        }))
+        localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(data))
       }
     } catch (err) {
       console.error('Failed to fetch settings from API, falling back to local storage', err)
@@ -125,19 +132,46 @@ const SettingsPage = () => {
     }
   }
 
+  const validateUpiId = (id) => {
+    if (!id) return true // Allow empty
+    const regex = /^[a-zA-Z0-9.\-_]{2,256}@[a-zA-Z]{2,64}$/
+    return regex.test(id)
+  }
+
   const handleSave = async () => {
+    if (!validateUpiId(settings.upi_id)) {
+      toastError('Invalid UPI ID format. Should be like schoolname@upi')
+      return
+    }
+
     setIsLoading(true)
     try {
-      await api.put('/settings', settings)
+      await api.put('/settings', { 
+        upi_id: settings.upi_id,
+        upi_name: settings.upi_name,
+        upi_enabled: settings.upi_enabled,
+        school_name: settings.schoolName,
+      })
       localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(settings))
-      toastSuccess('Settings saved successfully')
+      toastSuccess('Server settings saved successfully')
     } catch (err) {
       console.error('Failed to save settings to API', err)
-      localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(settings))
-      toastSuccess('Settings saved locally (API failed)')
+      toastError(err.response?.data?.message || err.message || 'Failed to save settings to server')
     } finally {
       setIsLoading(false)
     }
+  }
+
+  const upiQrUrl = useMemo(() => {
+    if (!settings.upi_id || !settings.upi_enabled) return null
+    const displayName = settings.upi_name || settings.schoolName || 'School'
+    const upiLink = `upi://pay?pa=${settings.upi_id}&pn=${encodeURIComponent(displayName)}&cu=INR`
+    return `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(upiLink)}`
+  }, [settings.upi_id, settings.upi_name, settings.schoolName, settings.upi_enabled])
+
+  const handleLocalSave = () => {
+    localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(settings))
+    toastSuccess('Local preferences updated')
   }
 
   const handlePasswordChange = async (e) => {
@@ -229,16 +263,15 @@ const SettingsPage = () => {
           <SettingsCard
             icon={Building2}
             title="School Profile"
-            description="Basic identity and contact information for this workspace."
+            description="Basic identity and contact information (Saved locally on this device)."
             action={
               <button
-                onClick={handleSave}
-                disabled={isLoading}
-                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold text-white transition-opacity hover:opacity-90 disabled:opacity-50"
+                onClick={handleLocalSave}
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold text-white transition-opacity hover:opacity-90"
                 style={{ backgroundColor: 'var(--color-brand)' }}
               >
                 <Save size={15} />
-                {isLoading ? 'Saving...' : 'Save changes'}
+                Update Local
               </button>
             }
           >
@@ -284,22 +317,61 @@ const SettingsPage = () => {
           <SettingsCard
             icon={IndianRupee}
             title="Payment Settings"
-            description="Configure payment options for students and parents."
+            description="Configure payment options (Saved to school database)."
+            action={
+              <button
+                onClick={handleSave}
+                disabled={isLoading}
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold text-white transition-opacity hover:opacity-90 disabled:opacity-50"
+                style={{ backgroundColor: 'var(--color-brand)' }}
+              >
+                <Save size={15} />
+                {isLoading ? 'Saving...' : 'Save to DB'}
+              </button>
+            }
           >
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <Field
-                label="School UPI ID"
-                value={settings.upi_id}
-                onChange={(value) => handleChange('upi_id', value)}
-                placeholder="schoolname@upi"
-                icon={QrCode}
-              />
-              <div className="flex items-center gap-3 p-4 rounded-2xl bg-brand/5 border border-brand/10">
-                <AlertCircle size={20} className="text-brand shrink-0" />
-                <p className="text-xs leading-relaxed" style={{ color: 'var(--color-text-secondary)' }}>
-                  Students will use this UPI ID to pay fees via QR code on the mobile app. Ensure this ID is correct and active.
-                </p>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-4">
+                <Field
+                  label="School UPI ID"
+                  value={settings.upi_id}
+                  onChange={(value) => handleChange('upi_id', value)}
+                  placeholder="schoolname@upi"
+                  icon={QrCode}
+                />
+                <Field
+                  label="UPI Display Name"
+                  value={settings.upi_name}
+                  onChange={(value) => handleChange('upi_name', value)}
+                  placeholder="e.g. EduCore Academy"
+                  icon={User}
+                />
+                <ToggleRow
+                  title="UPI Payments Enabled"
+                  description="Toggle online UPI payments for all students (e.g., during bank maintenance)."
+                  checked={settings.upi_enabled}
+                  onToggle={() => handleChange('upi_enabled', !settings.upi_enabled)}
+                />
+                <div className="flex items-center gap-3 p-4 rounded-2xl bg-brand/5 border border-brand/10">
+                  <AlertCircle size={20} className="text-brand shrink-0" />
+                  <p className="text-xs leading-relaxed" style={{ color: 'var(--color-text-secondary)' }}>
+                    Students will use this UPI ID and name to pay fees. If "UPI Display Name" is empty, the school name will be used.
+                  </p>
+                </div>
               </div>
+
+              {upiQrUrl && (
+                <div className="flex flex-col items-center justify-center p-4 rounded-2xl bg-white border border-border shadow-sm w-fit mx-auto md:mr-0">
+                  <p className="text-[10px] font-bold uppercase text-text-muted mb-3">Live Preview</p>
+                  <img 
+                    src={upiQrUrl} 
+                    alt="UPI QR Code" 
+                    className="w-32 h-32 rounded-lg"
+                    onLoad={() => console.log('QR loaded')}
+                  />
+                  <p className="mt-3 text-[11px] font-medium text-brand">{settings.upi_id}</p>
+                </div>
+              )}
             </div>
           </SettingsCard>
 
@@ -515,7 +587,8 @@ const SettingsPage = () => {
             <div className="space-y-3 text-sm">
               <OverviewRow label="App name" value={APP_NAME} />
               <OverviewRow label="Version" value={APP_VERSION} />
-              <OverviewRow label="Toast alignment" value="Top center" />
+              <OverviewRow label="Active UPI" value={settings.upi_id || 'Not set'} />
+              <OverviewRow label="Merchant Name" value={settings.upi_name || settings.schoolName || 'Not set'} />
               <OverviewRow label="Theme mode" value={theme} />
             </div>
           </SettingsCard>

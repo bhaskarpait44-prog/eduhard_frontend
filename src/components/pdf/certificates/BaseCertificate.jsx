@@ -173,7 +173,7 @@ const BaseCertificate = ({ title, data, children, accentOverride }) => {
         <View style={[commonStyles.header, accentOverride ? { borderBottomColor: accentOverride } : {}]}>
           {school?.logo_url && <Image src={school.logo_url} style={commonStyles.logo} />}
           <View style={commonStyles.schoolInfo}>
-            <Text style={[commonStyles.schoolName, accentOverride ? { color: accentOverride } : {}]}>{school?.name || 'EduCore School'}</Text>
+            <Text style={[commonStyles.schoolName, accentOverride ? { color: accentOverride } : {}]}>{school?.name || ''}</Text>
             <Text style={commonStyles.schoolMeta}>{school?.address || 'N/A'}</Text>
             <Text style={commonStyles.schoolMeta}>Phone: {school?.phone || 'N/A'} | Email: {school?.email || 'N/A'}</Text>
           </View>

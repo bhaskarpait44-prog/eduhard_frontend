@@ -1,10 +1,13 @@
-import { AlertCircle, ChevronRight } from 'lucide-react'
+import { AlertCircle, ChevronRight, Clock, XCircle } from 'lucide-react'
 import { formatCurrency, formatDate } from '@/utils/helpers'
 
 const FeeInvoiceCard = ({ invoice, onOpen }) => {
   const balance = Number(invoice?.balance_remaining || 0)
   const isOverdue = balance > 0 && invoice?.due_date && new Date(invoice.due_date) < new Date()
   const overdueDays = isOverdue ? Math.max(Math.ceil((Date.now() - new Date(invoice.due_date).getTime()) / 86400000), 1) : 0
+
+  const isUpiPending = invoice.upi_latest_status === 'pending'
+  const isUpiRejected = invoice.upi_latest_status === 'rejected'
 
   return (
     <button
@@ -37,7 +40,30 @@ const FeeInvoiceCard = ({ invoice, onOpen }) => {
         <DataCell label="Balance" value={formatCurrency(balance)} tone={balance > 0 ? '#dc2626' : '#16a34a'} />
       </div>
 
-      {isOverdue && (
+      {isUpiPending && (
+        <div className="mt-4 rounded-[18px] border px-3 py-2 text-[11px] font-bold uppercase tracking-wider flex items-center gap-2" 
+             style={{ borderColor: '#fde68a', backgroundColor: '#fffbeb', color: '#b45309' }}>
+          <Clock size={14} />
+          Awaiting UPI Confirmation
+        </div>
+      )}
+
+      {isUpiRejected && (
+        <div className="mt-4 rounded-[18px] border px-3 py-2 text-[11px] font-bold uppercase tracking-wider" 
+             style={{ borderColor: '#fecaca', backgroundColor: '#fef2f2', color: '#dc2626' }}>
+          <div className="flex items-center gap-2">
+            <XCircle size={14} />
+            Payment Rejected
+          </div>
+          {invoice.upi_rejected_reason && (
+            <p className="mt-1 text-[10px] normal-case font-medium opacity-80 line-clamp-1 italic">
+              Reason: {invoice.upi_rejected_reason}
+            </p>
+          )}
+        </div>
+      )}
+
+      {isOverdue && !isUpiPending && (
         <div className="mt-4 rounded-[18px] border px-3 py-3 text-sm" style={{ borderColor: '#fecaca', backgroundColor: 'rgba(239,68,68,0.06)' }}>
           <div className="flex items-start gap-2">
             <AlertCircle size={16} className="mt-0.5 shrink-0 text-red-600" />

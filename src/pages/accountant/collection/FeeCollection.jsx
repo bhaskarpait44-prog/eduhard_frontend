@@ -30,6 +30,7 @@ const FeeCollection = () => {
     bank_name: '',
     cheque_number: '',
     cheque_date: today,
+    upi_id: '',
   })
   const [receipt, setReceipt] = useState(null)
   const [errors, setErrors] = useState({})
@@ -85,6 +86,11 @@ const FeeCollection = () => {
     if (paymentData.payment_mode === 'cheque') {
       if (!paymentData.cheque_number) newErrors.cheque_number = 'Cheque number is required'
       if (!paymentData.bank_name) newErrors.bank_name = 'Bank name is required'
+    }
+
+    if (paymentData.payment_mode === 'upi') {
+      if (!paymentData.upi_id) newErrors.upi_id = 'UPI ID is required'
+      if (!paymentData.bank_name) newErrors.bank_name = 'Bank / App name is required'
     }
 
     setErrors(newErrors)
@@ -232,14 +238,25 @@ const FeeCollection = () => {
                 placeholder="Optional ID" 
               />
               <Input 
-                label="Bank Name" 
+                label={paymentData.payment_mode === 'upi' ? "Bank / App Name" : "Bank Name"}
                 icon={Landmark}
                 value={paymentData.bank_name} 
                 onChange={(e) => { setPaymentData({ ...paymentData, bank_name: e.target.value }); setErrors({ ...errors, bank_name: '' }) }} 
-                placeholder="e.g. HDFC Bank" 
+                placeholder={paymentData.payment_mode === 'upi' ? "e.g. GPay, PhonePe, HDFC" : "e.g. HDFC Bank"} 
                 error={errors.bank_name}
-                required={paymentData.payment_mode === 'cheque'}
+                required={['cheque', 'upi'].includes(paymentData.payment_mode)}
               />
+              {paymentData.payment_mode === 'upi' && (
+                <Input 
+                  label="UPI ID (VPA)" 
+                  icon={Hash}
+                  value={paymentData.upi_id} 
+                  onChange={(e) => { setPaymentData({ ...paymentData, upi_id: e.target.value }); setErrors({ ...errors, upi_id: '' }) }} 
+                  placeholder="e.g. school@upi" 
+                  error={errors.upi_id}
+                  required
+                />
+              )}
               {paymentData.payment_mode === 'cheque' && (
                 <>
                   <Input 

@@ -1,16 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { CreditCard, Download, Receipt, RefreshCw } from 'lucide-react'
-import { useNavigate } from 'react-router-dom'
-import Button from '@/components/ui/Button'
-import EmptyState from '@/components/ui/EmptyState'
-import Modal from '@/components/ui/Modal'
-import FeeProgressBar from '@/components/student/FeeProgressBar'
-import FeeInvoiceCard from '@/components/student/FeeInvoiceCard'
-import usePageTitle from '@/hooks/usePageTitle'
-import useStudentFees from '@/hooks/useStudentFees'
-import useToast from '@/hooks/useToast'
-import { ROUTES } from '@/constants/app'
-import { formatCurrency, formatDate } from '@/utils/helpers'
+import { CreditCard, Download, Receipt, RefreshCw, QrCode, Info, ChevronRight } from 'lucide-react'
 
 const filters = ['all', 'pending', 'paid', 'partial', 'waived', 'carried_forward']
 
@@ -23,6 +12,8 @@ const MyFees = () => {
     summary,
     invoices,
     carriedForwardInvoices,
+    schoolUpi,
+    schoolName,
     loading,
     refreshing,
     detailLoading,
@@ -32,7 +23,7 @@ const MyFees = () => {
     openInvoice,
     closeInvoice,
     fetchReceipt,
-  } = useStudentFees()
+  } = useStudentMyFees()
 
   const [filter, setFilter] = useState('all')
 
@@ -58,6 +49,12 @@ const MyFees = () => {
     } catch {}
   }
 
+  const upiQrUrl = useMemo(() => {
+    if (!schoolUpi) return null
+    const upiLink = `upi://pay?pa=${schoolUpi}&pn=${encodeURIComponent(schoolName || 'School')}&cu=INR`
+    return `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(upiLink)}`
+  }, [schoolUpi, schoolName])
+
   return (
     <div className="space-y-5">
       <section
@@ -70,7 +67,7 @@ const MyFees = () => {
         <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
           <div className="min-w-0">
             <p className="text-sm font-semibold uppercase tracking-[0.18em]" style={{ color: 'var(--student-accent)' }}>
-              Student Fees
+              {schoolName || 'Student Fees'}
             </p>
             <h1 className="mt-2 text-2xl font-bold sm:text-3xl">My Fees</h1>
             <p className="mt-2 max-w-2xl text-sm text-[var(--color-text-secondary)] sm:text-base">
@@ -95,84 +92,146 @@ const MyFees = () => {
         <>
           <FeeProgressBar summary={summary} />
 
-          <section className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-            {miniCards.map((card) => (
-              <div
-                key={card.label}
-                className="rounded-[24px] border p-4"
+          <div className="grid grid-cols-1 xl:grid-cols-[1.6fr_1fr] gap-6">
+            <div className="space-y-6">
+              <section className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+                {miniCards.map((card) => (
+                  <div
+                    key={card.label}
+                    className="rounded-[24px] border p-4"
+                    style={{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface)' }}
+                  >
+                    <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--color-text-muted)]">{card.label}</p>
+                    <p className="mt-2 text-2xl font-bold" style={{ color: card.tone }}>{card.value}</p>
+                  </div>
+                ))}
+              </section>
+
+              {carriedForwardInvoices.length > 0 && (
+                <section
+                  className="rounded-[28px] border p-5"
+                  style={{ borderColor: '#93c5fd', backgroundColor: 'rgba(37,99,235,0.06)' }}
+                >
+                  <h2 className="text-lg font-semibold text-[var(--color-text-primary)]">Carried from Previous Session</h2>
+                  <p className="mt-1 text-sm text-[var(--color-text-secondary)]">
+                    These invoices include balances carried forward into the current session.
+                  </p>
+                  <div className="mt-4 grid grid-cols-1 gap-3">
+                    {carriedForwardInvoices.map((invoice) => (
+                      <FeeInvoiceCard key={invoice.id} invoice={invoice} onOpen={(row) => openInvoice(row.id).catch((err) => toastError(err?.message || 'Unable to load invoice detail.'))} />
+                    ))}
+                  </div>
+                </section>
+              )}
+
+              <section
+                className="rounded-[28px] border p-5"
                 style={{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface)' }}
               >
-                <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--color-text-muted)]">{card.label}</p>
-                <p className="mt-2 text-2xl font-bold" style={{ color: card.tone }}>{card.value}</p>
-              </div>
-            ))}
-          </section>
+                <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+                  <div>
+                    <h2 className="text-lg font-semibold text-[var(--color-text-primary)]">Current Session Invoices</h2>
+                    <p className="mt-1 text-sm text-[var(--color-text-secondary)]">
+                      Tap any invoice card to view details and payment history.
+                    </p>
+                  </div>
 
-          {carriedForwardInvoices.length > 0 && (
-            <section
-              className="rounded-[28px] border p-5"
-              style={{ borderColor: '#93c5fd', backgroundColor: 'rgba(37,99,235,0.06)' }}
-            >
-              <h2 className="text-lg font-semibold text-[var(--color-text-primary)]">Carried from Previous Session</h2>
-              <p className="mt-1 text-sm text-[var(--color-text-secondary)]">
-                These invoices include balances carried forward into the current session.
-              </p>
-              <div className="mt-4 grid grid-cols-1 gap-3">
-                {carriedForwardInvoices.map((invoice) => (
-                  <FeeInvoiceCard key={invoice.id} invoice={invoice} onOpen={(row) => openInvoice(row.id).catch((err) => toastError(err?.message || 'Unable to load invoice detail.'))} />
-                ))}
-              </div>
-            </section>
-          )}
+                  <div className="flex gap-2 overflow-x-auto pb-1">
+                    {filters.map((item) => (
+                      <button
+                        key={item}
+                        type="button"
+                        onClick={() => setFilter(item)}
+                        className="rounded-full px-3 py-2 text-xs font-semibold uppercase tracking-[0.14em] whitespace-nowrap"
+                        style={{
+                          backgroundColor: filter === item ? 'var(--student-accent)' : 'var(--color-surface-raised)',
+                          color: filter === item ? '#fff' : 'var(--color-text-secondary)',
+                        }}
+                      >
+                        {item.replace(/_/g, ' ')}
+                      </button>
+                    ))}
+                  </div>
+                </div>
 
-          <section
-            className="rounded-[28px] border p-5"
-            style={{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface)' }}
-          >
-            <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-              <div>
-                <h2 className="text-lg font-semibold text-[var(--color-text-primary)]">Current Session Invoices</h2>
-                <p className="mt-1 text-sm text-[var(--color-text-secondary)]">
-                  Tap any invoice card to view fee breakup and payment history for that invoice.
-                </p>
-              </div>
-
-              <div className="flex gap-2 overflow-x-auto pb-1">
-                {filters.map((item) => (
-                  <button
-                    key={item}
-                    type="button"
-                    onClick={() => setFilter(item)}
-                    className="rounded-full px-3 py-2 text-xs font-semibold uppercase tracking-[0.14em] whitespace-nowrap"
-                    style={{
-                      backgroundColor: filter === item ? 'var(--student-accent)' : 'var(--color-surface-raised)',
-                      color: filter === item ? '#fff' : 'var(--color-text-secondary)',
-                    }}
-                  >
-                    {item.replace(/_/g, ' ')}
-                  </button>
-                ))}
-              </div>
+                <div className="mt-5 grid grid-cols-1 gap-4">
+                  {filteredInvoices.length > 0 ? (
+                    filteredInvoices.map((invoice) => (
+                      <FeeInvoiceCard
+                        key={invoice.id}
+                        invoice={invoice}
+                        onOpen={(row) => openInvoice(row.id).catch((err) => toastError(err?.message || 'Unable to load invoice detail.'))}
+                      />
+                    ))
+                  ) : (
+                    <EmptyState
+                      icon={CreditCard}
+                      title="No invoices in this filter"
+                      description="Try another fee status filter to see your invoices."
+                    />
+                  )}
+                </div>
+              </section>
             </div>
 
-            <div className="mt-5 grid grid-cols-1 gap-4">
-              {filteredInvoices.length > 0 ? (
-                filteredInvoices.map((invoice) => (
-                  <FeeInvoiceCard
-                    key={invoice.id}
-                    invoice={invoice}
-                    onOpen={(row) => openInvoice(row.id).catch((err) => toastError(err?.message || 'Unable to load invoice detail.'))}
-                  />
-                ))
-              ) : (
-                <EmptyState
-                  icon={CreditCard}
-                  title="No invoices in this filter"
-                  description="Try another fee status filter to see your invoices."
-                />
+            <aside className="space-y-6">
+              {upiQrUrl && Number(summary?.total_pending || 0) > 0 && (
+                <section
+                  className="rounded-[28px] border p-6 text-center"
+                  style={{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface)' }}
+                >
+                  <div className="flex items-center justify-center gap-2 text-brand mb-4">
+                    <QrCode size={20} />
+                    <h3 className="font-bold text-lg">Pay via UPI</h3>
+                  </div>
+                  
+                  <div className="bg-white p-4 rounded-3xl inline-block shadow-sm border border-border mb-4">
+                    <img 
+                      src={upiQrUrl} 
+                      alt="School UPI QR" 
+                      className="w-48 h-48 rounded-xl mx-auto"
+                    />
+                  </div>
+                  
+                  <p className="text-sm font-bold text-[var(--color-text-primary)] mb-1">
+                    Scan to pay any amount
+                  </p>
+                  <p className="text-xs text-[var(--color-text-muted)] mb-5">
+                    Use any UPI app (GPay, PhonePe, Paytm etc.)
+                  </p>
+
+                  <div className="bg-brand/5 border border-brand/10 rounded-2xl p-4 text-left">
+                    <div className="flex gap-3">
+                      <Info size={16} className="text-brand shrink-0 mt-0.5" />
+                      <div className="text-[11px] leading-relaxed text-brand-dark">
+                        <p className="font-bold">After payment:</p>
+                        <p className="mt-1">Open the <span className="font-bold uppercase tracking-wider">EduHard</span> mobile app to submit your Transaction ID for confirmation.</p>
+                      </div>
+                    </div>
+                  </div>
+                </section>
               )}
-            </div>
-          </section>
+
+              <section
+                className="rounded-[28px] border p-5"
+                style={{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface-raised)' }}
+              >
+                <h3 className="font-semibold text-[var(--color-text-primary)]">Quick Links</h3>
+                <div className="mt-4 space-y-2">
+                  <QuickLink 
+                    label="Payment History" 
+                    icon={Receipt} 
+                    onClick={() => navigate(ROUTES.STUDENT_FEE_PAYMENTS)} 
+                  />
+                  <QuickLink 
+                    label="Download Receipts" 
+                    icon={Download} 
+                    onClick={() => navigate(ROUTES.STUDENT_FEE_PAYMENTS)} 
+                  />
+                </div>
+              </section>
+            </aside>
+          </div>
         </>
       )}
 
@@ -265,8 +324,24 @@ const MyFees = () => {
 const InfoCard = ({ label, value }) => (
   <div className="rounded-[20px] border px-4 py-4" style={{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface-raised)' }}>
     <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--color-text-muted)]">{label}</p>
-    <p className="mt-2 text-sm font-semibold text-[var(--color-text-primary)]">{value || '--'}</p>
+    <p className="mt-2 text-sm font-semibold" style={{ color: 'var(--color-text-primary)' }}>{value || '--'}</p>
   </div>
+)
+
+const QuickLink = ({ label, icon: Icon, onClick }) => (
+  <button
+    onClick={onClick}
+    className="flex w-full items-center justify-between gap-3 rounded-2xl border border-transparent p-3 text-sm font-medium transition-all hover:border-[var(--color-border)] hover:bg-[var(--color-surface)]"
+    style={{ color: 'var(--color-text-primary)' }}
+  >
+    <div className="flex items-center gap-3">
+      <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-[var(--color-surface)] shadow-sm">
+        <Icon size={16} className="text-[var(--student-accent)]" />
+      </div>
+      {label}
+    </div>
+    <ChevronRight size={14} className="text-[var(--color-text-muted)]" />
+  </button>
 )
 
 const FeesSkeleton = () => (

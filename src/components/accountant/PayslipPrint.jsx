@@ -25,8 +25,8 @@ const PayslipPrint = ({ payslip }) => {
       {/* Header */}
       <div className="flex items-start justify-between gap-6">
         <div className="flex-1">
-          <h2 className="text-2xl font-black tracking-tight" style={{ color: 'var(--color-text-primary)' }}>{payslip.school_name || 'Greenwood Academy'}</h2>
-          <p className="text-xs max-w-xs mt-1" style={{ color: 'var(--color-text-secondary)' }}>{payslip.school_address || 'Main Campus'}</p>
+          <h2 className="text-2xl font-black tracking-tight" style={{ color: 'var(--color-text-primary)' }}>{payslip.school_name || ''}</h2>
+          <p className="text-xs max-w-xs mt-1" style={{ color: 'var(--color-text-secondary)' }}>{payslip.school_address || ''}</p>
         </div>
         <div className="text-right">
           <div className="inline-block px-4 py-2 rounded-2xl bg-brand/10 border border-brand/20">

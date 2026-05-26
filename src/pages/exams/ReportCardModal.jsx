@@ -4,6 +4,7 @@ import { Printer, Download, GraduationCap } from 'lucide-react'
 import Modal from '@/components/ui/Modal'
 import Button from '@/components/ui/Button'
 import useExamStore from '@/store/examStore'
+import useSessionStore from '@/store/sessionStore'
 import { formatDate, formatPercent } from '@/utils/helpers'
 import ReportCardDownload from '@/components/pdf/ReportCardDownload'
 
@@ -18,6 +19,7 @@ const RESULT_COLOR = {
 
 const ReportCardModal = ({ open, student, onClose }) => {
   const { studentResult, fetchStudentResult, fetchReportCardData } = useExamStore()
+  const { currentSession } = useSessionStore()
   const [reportData, setReportData] = useState(null)
   const [fetchingData, setFetchingData] = useState(false)
   const printRef = useRef(null)
@@ -107,7 +109,7 @@ const ReportCardModal = ({ open, student, onClose }) => {
             <GraduationCap size={22} color="#fff" />
           </div>
           <h1 className="text-xl font-bold" style={{ color: 'var(--color-text-primary)' }}>
-            Greenwood Academy
+            {currentSession?.school_name || ''}
           </h1>
           <p className="text-sm mt-0.5" style={{ color: 'var(--color-text-secondary)' }}>
             Academic Report Card
