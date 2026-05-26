@@ -14,9 +14,10 @@ import ConfirmDialog from '@/components/ui/ConfirmDialog'
 import CreateExamModal from './CreateExamModal'
 import ReviewExamSubjectsModal from './ReviewExamSubjectsModal'
 import AdmitCardModal from './AdmitCardModal'
+import TimePicker12h from '@/components/shared/TimePicker12h'
 import { getExamSubjects, updateExamTimetable } from '@/api/examsApi'
 import { getUsers } from '@/api/userManagementApi'
-import { formatDate, getExamTypeLabel } from '@/utils/helpers'
+import { formatDate, getExamTypeLabel, formatTime } from '@/utils/helpers'
 
 /* ─── Config ─────────────────────────────────────────────── */
 const STATUS_CFG = {
@@ -552,17 +553,15 @@ const ExamTimetableModal = ({ exam, open, onClose }) => {
                       value={row.exam_date}
                       onChange={(event) => updateRow(row.subject_id, { exam_date: event.target.value })}
                     />
-                    <Input
+                    <TimePicker12h
                       label="Start"
-                      type="time"
                       value={row.start_time}
-                      onChange={(event) => updateRow(row.subject_id, { start_time: event.target.value })}
+                      onChange={(val) => updateRow(row.subject_id, { start_time: val })}
                     />
-                    <Input
+                    <TimePicker12h
                       label="End"
-                      type="time"
                       value={row.end_time}
-                      onChange={(event) => updateRow(row.subject_id, { end_time: event.target.value })}
+                      onChange={(val) => updateRow(row.subject_id, { end_time: val })}
                     />
                     <Select
                       label="Invigilator"

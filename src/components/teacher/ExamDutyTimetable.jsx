@@ -1,6 +1,6 @@
 import { useMemo } from 'react'
 import { Calendar, Clock, MapPin, UserCheck, ShieldCheck } from 'lucide-react'
-import { formatDate } from '@/utils/helpers'
+import { formatDate, formatTime } from '@/utils/helpers'
 
 const DAYS = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']
 
@@ -178,14 +178,6 @@ const ExamDutyTimetable = ({ duties = [] }) => {
       ))}
     </div>
   )
-}
-
-function formatTime(time) {
-  if (!time) return '--'
-  const [h, m] = time.split(':')
-  const date = new Date()
-  date.setHours(parseInt(h), parseInt(m))
-  return date.toLocaleTimeString('en-IN', { hour: 'numeric', minute: '2-digit', hour12: true })
 }
 
 export default ExamDutyTimetable

@@ -8,11 +8,13 @@ import * as teacherControlApi from '@/api/adminTeacherControlApi'
 import { getClasses, getClassList, getSections, getSubjects } from '@/api/classApi'
 import usePageTitle from '@/hooks/usePageTitle'
 import useToast from '@/hooks/useToast'
+import { formatTime } from '@/utils/helpers'
 import Input from '@/components/ui/Input'
 import Select from '@/components/ui/Select'
 import Button from '@/components/ui/Button'
 import Badge from '@/components/ui/Badge'
 import EmptyState from '@/components/ui/EmptyState'
+import TimePicker12h from '@/components/shared/TimePicker12h'
 
 const DAY_OPTIONS = [
   { value: 'monday',    label: 'Mon' },
@@ -29,8 +31,8 @@ const DAY_FULL = {
 }
 
 const PERIOD_TIMES = {
-  1: '08:00–08:45', 2: '08:45–09:30', 3: '09:30–10:15',
-  4: '10:30–11:15', 5: '11:15–12:00', 6: '12:30–13:15', 7: '13:15–14:00',
+  1: '08:00 AM – 08:45 AM', 2: '08:45 AM – 09:30 AM', 3: '09:30 AM – 10:15 AM',
+  4: '10:30 AM – 11:15 AM', 5: '11:15 AM – 12:00 PM', 6: '12:30 PM – 01:15 PM', 7: '01:15 PM – 02:00 PM',
 }
 
 const SUBJECT_COLORS = [
@@ -545,8 +547,8 @@ const AdminTeacherControlPage = () => {
                 <Select label="Subject" value={slotForm.subject_id} onChange={(e) => setSlotForm((p) => ({ ...p, subject_id: e.target.value }))} options={slotSubjectOpts} placeholder="Select assigned subject" required />
                 <Select label="Day" value={slotForm.day_of_week} onChange={(e) => setSlotForm((p) => ({ ...p, day_of_week: e.target.value }))} options={DAY_OPTIONS.map((d) => ({ value: d.value, label: DAY_FULL[d.value] }))} required />
                 <Input type="number" label="Period #" value={slotForm.period_number} onChange={(e) => setSlotForm((p) => ({ ...p, period_number: e.target.value }))} min="1" max="10" required />
-                <Input type="time"   label="Start"    value={slotForm.start_time}    onChange={(e) => setSlotForm((p) => ({ ...p, start_time: e.target.value }))} required />
-                <Input type="time"   label="End"      value={slotForm.end_time}      onChange={(e) => setSlotForm((p) => ({ ...p, end_time: e.target.value }))} required />
+                <TimePicker12h   label="Start"    value={slotForm.start_time}    onChange={(val) => setSlotForm((p) => ({ ...p, start_time: val }))} required />
+                <TimePicker12h   label="End"      value={slotForm.end_time}      onChange={(val) => setSlotForm((p) => ({ ...p, end_time: val }))} required />
                 <div className="sm:col-span-2 xl:col-span-3">
                   <Input label="Room (optional)" value={slotForm.room_number} onChange={(e) => setSlotForm((p) => ({ ...p, room_number: e.target.value }))} placeholder="e.g. 6-A" />
                 </div>
@@ -860,7 +862,7 @@ const TimetableListRow = ({ slot, onToggle }) => {
           {slot.room_number ? ` · Room ${slot.room_number}` : ''}
         </p>
         <p className="mt-0.5 flex items-center gap-1 text-[11px]" style={{ color: 'var(--color-text-secondary)' }}>
-          <Clock size={10} />{slot.start_time} – {slot.end_time}
+          <Clock size={10} />{formatTime(slot.start_time)} – {formatTime(slot.end_time)}
         </p>
       </div>
       <button

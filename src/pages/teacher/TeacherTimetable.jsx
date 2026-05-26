@@ -7,20 +7,13 @@ import * as teacherApi from '@/api/teacherApi'
 import TimetableGrid from '@/components/teacher/TimetableGrid'
 import TimetableToday from '@/components/shared/TimetableToday'
 import ExamDutyTimetable from '@/components/teacher/ExamDutyTimetable'
+import { formatTime } from '@/utils/helpers'
 
 // ─── Helpers ─────────────────────────────────────── (unchanged) ──────────────
 
-const to12Hour = (value) => {
-  if (!value) return '--'
-  const [hour = '0', minute = '0'] = String(value).slice(0, 5).split(':')
-  const date = new Date()
-  date.setHours(Number(hour), Number(minute), 0, 0)
-  return date.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })
-}
-
 const renderTimeRange = (slot) => {
   if (!slot) return '--'
-  return `${to12Hour(slot.start_time)} – ${to12Hour(slot.end_time)}`
+  return `${formatTime(slot.start_time)} – ${formatTime(slot.end_time)}`
 }
 
 const getDayName = () =>

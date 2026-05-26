@@ -10,6 +10,7 @@ import ExamTimetableWeekly from '@/components/student/ExamTimetableWeekly'
 import usePageTitle from '@/hooks/usePageTitle'
 import useStudentTimetable from '@/hooks/useStudentTimetable'
 import useToast from '@/hooks/useToast'
+import { formatTime } from '@/utils/helpers'
 
 const StudentTimetable = () => {
   usePageTitle('My Timetable')
@@ -225,15 +226,7 @@ const TimetableSkeleton = () => (
 
 function renderTimeRange(slot) {
   if (!slot) return '--'
-  return `${to12Hour(slot.start_time)} - ${to12Hour(slot.end_time)}`
-}
-
-function to12Hour(value) {
-  if (!value) return '--'
-  const [hour = '0', minute = '0'] = String(value).slice(0, 5).split(':')
-  const date = new Date()
-  date.setHours(Number(hour), Number(minute), 0, 0)
-  return date.toLocaleTimeString('en-IN', { hour: 'numeric', minute: '2-digit' })
+  return `${formatTime(slot.start_time)} - ${formatTime(slot.end_time)}`
 }
 
 const SUBJECT_COLORS = {

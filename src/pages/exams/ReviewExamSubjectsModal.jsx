@@ -7,7 +7,7 @@ import Input from '@/components/ui/Input'
 import Textarea from '@/components/ui/Textarea'
 import useExamStore from '@/store/examStore'
 import useToast from '@/hooks/useToast'
-import { formatDate } from '@/utils/helpers'
+import { formatDate, formatTime } from '@/utils/helpers'
 
 const STATUS_VARIANT = {
   draft: 'grey',
@@ -127,7 +127,7 @@ const ReviewExamSubjectsModal = ({ exam, open, onClose }) => {
                     {(row.exam_date || row.start_time || row.end_time || row.invigilator_teacher_name) && (
                       <p className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>
                         Timetable: {row.exam_date ? formatDate(row.exam_date) : 'Date not set'}
-                        {row.start_time && row.end_time ? ` | ${String(row.start_time).slice(0, 5)} - ${String(row.end_time).slice(0, 5)}` : ''}
+                        {row.start_time && row.end_time ? ` | ${formatTime(row.start_time)} - ${formatTime(row.end_time)}` : ''}
                         {row.invigilator_teacher_name ? ` | Invigilator: ${row.invigilator_teacher_name}` : ''}
                       </p>
                     )}

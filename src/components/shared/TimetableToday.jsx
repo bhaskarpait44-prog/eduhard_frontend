@@ -1,5 +1,6 @@
 import { CalendarClock, Clock, ClipboardCheck, Users } from 'lucide-react'
 import { ROUTES } from '@/constants/app'
+import { formatTime } from '@/utils/helpers'
 
 const TimetableToday = ({ 
   schedule = [], 
@@ -69,7 +70,7 @@ const TimetableToday = ({
                     {slot.room_number ? <span style={{ color: isCurrent ? '#15803d' : '#0f766e' }}> · Room {slot.room_number}</span> : null}
                   </p>
                   <p className="mt-0.5 text-[11px]" style={{ color: 'var(--color-text-muted)' }}>
-                    {to12Hour(slot.start_time)} – {to12Hour(slot.end_time)}
+                    {formatTime(slot.start_time)} – {formatTime(slot.end_time)}
                   </p>
                   {(isCurrent || isUpcoming) && typeof slot.countdown_minutes === 'number' && (
                     <p className="mt-1 text-[11px] font-semibold" style={{ color: isCurrent ? '#15803d' : '#b45309' }}>
@@ -148,7 +149,7 @@ const TimetableToday = ({
                   <div style={{ borderTop: '1px solid var(--color-border)', margin: '1px -10px' }} />
                   <div className="flex items-center gap-1 pt-0.5">
                     <Clock size={9} style={{ color: 'var(--color-text-muted)', flexShrink: 0 }} />
-                    <p className="text-[10px] truncate" style={{ color: 'var(--color-text-muted)' }}>{to12Hour(slot.start_time)} – {to12Hour(slot.end_time)}</p>
+                    <p className="text-[10px] truncate" style={{ color: 'var(--color-text-muted)' }}>{formatTime(slot.start_time)} – {formatTime(slot.end_time)}</p>
                   </div>
                   {slot.room_number && <p className="text-[10px] font-medium" style={{ color: current ? '#15803d' : '#0f766e' }}>Room {slot.room_number}</p>}
                   {(current || isNext) && typeof slot.countdown_minutes === 'number' && (
@@ -201,21 +202,5 @@ const ActionBtn = ({ icon: Icon, label, onClick, color }) => (
     {label}
   </button>
 )
-
-function to12Hour(value) {
-  if (!value) return '--'
-  const [hour = '0', minute = '0'] = String(value).slice(0, 5).split(':')
-  const date = new Date()
-  date.setHours(Number(hour), Number(minute), 0, 0)
-  return date.toLocaleTimeString('en-IN', { hour: 'numeric', minute: '2-digit' })
-}
-
-function formatMinutes(value) {
-  const m = Number(value || 0)
-  if (m < 60) return `${m}m`
-  const h = Math.floor(m / 60)
-  const r = m % 60
-  return r ? `${h}h ${r}m` : `${h}h`
-}
 
 export default TimetableToday

@@ -1,5 +1,5 @@
 import { Page, Text, View, Document, StyleSheet, Image } from '@react-pdf/renderer'
-import { formatCurrency } from '@/utils/helpers'
+import { formatCurrency, formatTime } from '@/utils/helpers'
 
 const styles = StyleSheet.create({
   page: {
@@ -180,7 +180,7 @@ const AdmitCardPDF = ({ students, exam, subjects, schoolName, balances }) => {
                     <View key={idx} style={styles.tableRow}>
                       <View style={styles.col1}><Text style={styles.tableCellText}>{sub.name}</Text></View>
                       <View style={styles.col2}><Text style={styles.tableCellText}>{sub.exam_date || 'TBD'}</Text></View>
-                      <View style={styles.col3}><Text style={styles.tableCellText}>{sub.start_time || '-'}</Text></View>
+                      <View style={styles.col3}><Text style={styles.tableCellText}>{formatTime(sub.start_time)}</Text></View>
                       <View style={styles.col4}><Text style={styles.tableCellText}>{sub.combined_total_marks || sub.total_marks || '-'}</Text></View>
                     </View>
                   ))

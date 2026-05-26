@@ -149,3 +149,20 @@ export const getExamTypeLabel = (examType, examName = '') => {
   if (normalizedName.includes('final')) return 'Final'
   return EXAM_TYPE_LABELS[examType] || titleCase(String(examType || 'Exam'))
 }
+
+/**
+ * Format a 24-hour time string to 12-hour AM/PM format
+ * @param {string} timeStr (e.g., "14:30" or "14:30:00")
+ */
+export const formatTime = (timeStr) => {
+  if (!timeStr) return '—'
+  const parts = timeStr.split(':')
+  if (parts.length < 2) return timeStr
+  
+  let hours = parseInt(parts[0], 10)
+  const minutes = parts[1].slice(0, 2)
+  const ampm = hours >= 12 ? 'PM' : 'AM'
+  
+  hours = hours % 12 || 12
+  return `${hours}:${minutes} ${ampm}`
+}

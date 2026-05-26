@@ -18,8 +18,28 @@ const AdmitCardModal = ({ exam, open, onClose }) => {
   const [defaulters,  setDefaulters]  = useState([])
   const [subjects,    setSubjects]    = useState([])
   const [selectedIds, setSelectedIds] = useState([])
+  const [printedIds,  setPrintedIds]  = useState([])
   const [searchQuery, setSearchQuery] = useState('')
   const [loading,     setLoading]     = useState(false)
+  const [isPreparing, setIsPreparing] = useState(false)
+
+  useEffect(() => {
+    if (exam?.id) {
+      const saved = localStorage.getItem(`printed_admit_cards_${exam.id}`)
+      if (saved) setPrintedIds(JSON.parse(saved))
+    }
+  }, [exam?.id, open])
+
+  // Reset preparation state when selection changes or modal opens
+  useEffect(() => {
+    setIsPreparing(false)
+  }, [selectedIds, open])
+
+  const markAsPrinted = () => {
+    const newPrinted = Array.from(new Set([...printedIds, ...selectedIds]))
+    setPrintedIds(newPrinted)
+    localStorage.setItem(`printed_admit_cards_${exam.id}`, JSON.stringify(newPrinted))
+  }
 
   useEffect(() => {
     if (!open || !exam?.id) return
@@ -35,7 +55,7 @@ const AdmitCardModal = ({ exam, open, onClose }) => {
       setStudents(allStudents)
       setDefaulters(defaulterRes.data?.defaulters || [])
       setSubjects(subjectRes.data?.subjects || [])
-      setSelectedIds(allStudents.map(s => s.id)) // default select all
+      setSelectedIds([]) // default select none
     })
     .catch(err => console.error('Failed to load admit card data', err))
     .finally(() => setLoading(false))
@@ -98,30 +118,43 @@ const AdmitCardModal = ({ exam, open, onClose }) => {
           <div className="flex gap-2">
             <Button variant="secondary" onClick={onClose}>Cancel</Button>
             
-            {selectedIds.length > 0 ? (
-              <PDFDownloadLink
-                document={
-                  <AdmitCardPDF 
-                    students={selectedStudents} 
-                    exam={{ ...exam, session_name: currentSession?.name }}
-                    subjects={subjects}
-                    schoolName={currentSession?.school_name || 'School Name'}
-                    balances={balances}
-                  />
-                }
-                fileName={pdfFileName}
-              >
-                {({ loading: pdfLoading }) => (
-                  <Button 
-                    variant="primary" 
-                    icon={Download} 
-                    loading={pdfLoading}
-                  >
-                    Download PDF
-                  </Button>
-                )}
-              </PDFDownloadLink>
-            ) : (
+            {selectedIds.length > 0 && (
+              isPreparing ? (
+                <PDFDownloadLink
+                  document={
+                    <AdmitCardPDF 
+                      students={selectedStudents} 
+                      exam={{ ...exam, session_name: currentSession?.name }}
+                      subjects={subjects}
+                      schoolName={currentSession?.school_name || 'School Name'}
+                      balances={balances}
+                    />
+                  }
+                  fileName={pdfFileName}
+                >
+                  {({ loading: pdfLoading }) => (
+                    <Button 
+                      variant="primary" 
+                      icon={Download} 
+                      loading={pdfLoading}
+                      onClick={() => setTimeout(markAsPrinted, 1000)}
+                      style={!pdfLoading ? { backgroundColor: '#16a34a' } : undefined}
+                    >
+                      {pdfLoading ? 'Generating...' : 'Download PDF'}
+                    </Button>
+                  )}
+                </PDFDownloadLink>
+              ) : (
+                <Button 
+                  variant="primary" 
+                  icon={Download} 
+                  onClick={() => setIsPreparing(true)}
+                >
+                  Generate PDF
+                </Button>
+              )
+            )}
+            {selectedIds.length === 0 && (
               <Button variant="primary" icon={Download} disabled>
                 Download PDF
               </Button>
@@ -214,12 +247,19 @@ const AdmitCardModal = ({ exam, open, onClose }) => {
                         {s.roll_number || '—'}
                       </td>
                       <td className="px-4 py-3">
-                        {balance > 0 && (
-                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-amber-50 text-amber-700 text-[10px] font-bold border border-amber-100">
-                            <AlertTriangle size={10} />
-                            Fee Pending
-                          </span>
-                        )}
+                        <div className="flex flex-wrap gap-2">
+                          {balance > 0 && (
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-amber-50 text-amber-700 text-[10px] font-bold border border-amber-100">
+                              <AlertTriangle size={10} />
+                              Fee Pending
+                            </span>
+                          )}
+                          {printedIds.includes(s.id) && (
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-green-50 text-green-700 text-[10px] font-bold border border-green-100">
+                              Already Printed
+                            </span>
+                          )}
+                        </div>
                       </td>
                     </tr>
                   )
