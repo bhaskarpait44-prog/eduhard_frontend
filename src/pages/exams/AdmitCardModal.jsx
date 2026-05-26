@@ -1,242 +1,243 @@
 // src/pages/exams/AdmitCardModal.jsx
 import { useEffect, useState, useMemo } from 'react'
-import { Printer, Users, AlertTriangle, IndianRupee } from 'lucide-react'
+import { Download, AlertTriangle, CheckSquare, Square, Search } from 'lucide-react'
+import { PDFDownloadLink } from '@react-pdf/renderer'
 import Modal from '@/components/ui/Modal'
 import Button from '@/components/ui/Button'
+import Input from '@/components/ui/Input'
 import { getDefaulters } from '@/api/accountantApi'
 import { getStudents } from '@/api/studentsApi'
+import { getExamSubjects } from '@/api/examsApi'
+import useSessionStore from '@/store/sessionStore'
 import { formatCurrency } from '@/utils/helpers'
+import AdmitCardPDF from '@/components/pdf/AdmitCardPDF'
 
-/* ── severity config (reuse same logic as DefaulterList) ── */
-const SEVERITY = (balance) => {
-  if (balance >= 10000) return { label: 'Critical', bg: '#fef2f2', text: '#b91c1c' }
-  if (balance >= 5000)  return { label: 'High',     bg: '#fff7ed', text: '#c2410c' }
-  return                       { label: 'Moderate', bg: '#fefce8', text: '#a16207' }
-}
-
-/* ══════════════════════════════════════════════════════════ */
 const AdmitCardModal = ({ exam, open, onClose }) => {
-  const [tab,        setTab]        = useState('admitCards') // 'admitCards' | 'feeDefaulters'
-  const [students,   setStudents]   = useState([])
-  const [defaulters, setDefaulters] = useState([])
-  const [loading,    setLoading]    = useState(false)
+  const { currentSession } = useSessionStore()
+  const [students,    setStudents]    = useState([])
+  const [defaulters,  setDefaulters]  = useState([])
+  const [subjects,    setSubjects]    = useState([])
+  const [selectedIds, setSelectedIds] = useState([])
+  const [searchQuery, setSearchQuery] = useState('')
+  const [loading,     setLoading]     = useState(false)
 
   useEffect(() => {
     if (!open || !exam?.id) return
     setLoading(true)
 
     Promise.all([
-      // fetch students for this class/session
       getStudents({ class_id: exam.class_id, session_id: exam.session_id, perPage: 1000 }),
-
-      // filter defaulters by the exam's class
-      getDefaulters({ class_id: exam.class_id })
+      getDefaulters({ class_id: exam.class_id }),
+      getExamSubjects(exam.id)
     ])
-    .then(([studentRes, defaulterRes]) => {
-      setStudents(studentRes.data?.students || [])
+    .then(([studentRes, defaulterRes, subjectRes]) => {
+      const allStudents = studentRes.data?.students || []
+      setStudents(allStudents)
       setDefaulters(defaulterRes.data?.defaulters || [])
+      setSubjects(subjectRes.data?.subjects || [])
+      setSelectedIds(allStudents.map(s => s.id)) // default select all
     })
+    .catch(err => console.error('Failed to load admit card data', err))
     .finally(() => setLoading(false))
   }, [open, exam?.id, exam?.class_id, exam?.session_id])
 
-  /* only defaulters who belong to this class */
-  const classDefaulters = useMemo(() =>
-    defaulters.filter(d => d.class_name === exam?.class_name),
-  [defaulters, exam?.class_name])
+  // Fee balance map for quick lookup
+  const balances = useMemo(() => {
+    const map = {}
+    defaulters.forEach(d => {
+      map[d.student_id] = Number(d.balance)
+    })
+    return map
+  }, [defaulters])
 
-  const totalDue = useMemo(() =>
-    classDefaulters.reduce((sum, d) => sum + Number(d.balance || 0), 0),
-  [classDefaulters])
+  const filteredStudents = useMemo(() => {
+    if (!searchQuery) return students
+    const q = searchQuery.toLowerCase()
+    return students.filter(s => 
+      s.student_name?.toLowerCase().includes(q) || 
+      s.admission_no?.toLowerCase().includes(q) ||
+      s.roll_number?.toString().includes(q)
+    )
+  }, [students, searchQuery])
+
+  const selectedStudents = useMemo(() => 
+    students.filter(s => selectedIds.includes(s.id)),
+  [students, selectedIds])
+
+  const toggleAll = () => {
+    if (selectedIds.length === filteredStudents.length) {
+      setSelectedIds([])
+    } else {
+      setSelectedIds(filteredStudents.map(s => s.id))
+    }
+  }
+
+  const toggleOne = (id) => {
+    setSelectedIds(prev => 
+      prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
+    )
+  }
+
+  const pdfFileName = useMemo(() => {
+    if (!exam) return 'admit-cards.pdf'
+    const name = `admit-cards-${exam.class_name}-${exam.name}`
+    return name.replace(/\s+/g, '-').replace(/[^a-zA-Z0-9-]/g, '') + '.pdf'
+  }, [exam])
 
   return (
     <Modal
       open={open}
       onClose={onClose}
-      title={`${exam?.name} — ${exam?.class_name}`}
+      title={`Generate Admit Cards — ${exam?.name}`}
       size="xl"
       footer={
-        <>
-          <Button variant="secondary" onClick={onClose}>Close</Button>
-          {tab === 'admitCards' && (
-            <Button icon={Printer} onClick={() => window.print()}>Print Cards</Button>
-          )}
-        </>
+        <div className="flex items-center justify-between w-full">
+          <p className="text-xs font-medium" style={{ color: 'var(--color-text-muted)' }}>
+            {selectedIds.length} of {students.length} students selected
+          </p>
+          <div className="flex gap-2">
+            <Button variant="secondary" onClick={onClose}>Cancel</Button>
+            
+            {selectedIds.length > 0 ? (
+              <PDFDownloadLink
+                document={
+                  <AdmitCardPDF 
+                    students={selectedStudents} 
+                    exam={{ ...exam, session_name: currentSession?.name }}
+                    subjects={subjects}
+                    schoolName={currentSession?.school_name || 'School Name'}
+                    balances={balances}
+                  />
+                }
+                fileName={pdfFileName}
+              >
+                {({ loading: pdfLoading }) => (
+                  <Button 
+                    variant="primary" 
+                    icon={Download} 
+                    loading={pdfLoading}
+                  >
+                    Download PDF
+                  </Button>
+                )}
+              </PDFDownloadLink>
+            ) : (
+              <Button variant="primary" icon={Download} disabled>
+                Download PDF
+              </Button>
+            )}
+          </div>
+        </div>
       }
     >
-      {/* ── Tab bar ── */}
-      <div className="flex gap-2 mb-5 border-b" style={{ borderColor: 'var(--color-border)' }}>
-        <TabBtn active={tab === 'admitCards'}    onClick={() => setTab('admitCards')}>
-          <Users size={13} /> Admit Cards
-        </TabBtn>
-        <TabBtn active={tab === 'feeDefaulters'} onClick={() => setTab('feeDefaulters')}>
-          <AlertTriangle size={13} />
-          Fee Defaulters
-          {classDefaulters.length > 0 && (
-            <span className="ml-1.5 rounded-full px-2 py-0.5 text-[10px] font-bold bg-red-100 text-red-700">
-              {classDefaulters.length}
-            </span>
-          )}
-        </TabBtn>
-      </div>
-
-      {loading ? (
-        <div className="space-y-3">
-          {[1,2,3].map(i => (
-            <div key={i} className="h-20 animate-pulse rounded-2xl"
-              style={{ background: 'var(--color-surface-raised)' }} />
-          ))}
+      <div className="space-y-4">
+        {/* Toolbar */}
+        <div className="flex flex-col sm:flex-row gap-3 items-center justify-between">
+          <div className="relative w-full sm:w-64">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted" size={14} />
+            <input
+              type="text"
+              placeholder="Search students..."
+              value={searchQuery}
+              onChange={e => setSearchQuery(e.target.value)}
+              className="w-full pl-9 pr-4 py-2 text-sm rounded-xl border transition-all focus:ring-2 focus:ring-indigo-500/20"
+              style={{ background: 'var(--color-surface)', borderColor: 'var(--color-border)' }}
+            />
+          </div>
+          
+          <button 
+            onClick={toggleAll}
+            className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold transition-colors hover:bg-surface-raised"
+            style={{ color: 'var(--color-brand)' }}
+          >
+            {selectedIds.length === filteredStudents.length ? <CheckSquare size={14} /> : <Square size={14} />}
+            {selectedIds.length === filteredStudents.length ? 'Deselect All' : 'Select All'}
+          </button>
         </div>
-      ) : tab === 'admitCards' ? (
-        <AdmitCardsTab students={students} exam={exam} />
-      ) : (
-        <FeeDefaultersTab defaulters={classDefaulters} totalDue={totalDue} />
-      )}
-    </Modal>
-  )
-}
 
-/* ── Tab button ── */
-const TabBtn = ({ active, onClick, children }) => (
-  <button
-    onClick={onClick}
-    className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-semibold border-b-2 transition-colors"
-    style={{
-      borderColor:  active ? '#4338ca' : 'transparent',
-      color:        active ? '#4338ca' : 'var(--color-text-secondary)',
-      background:   'transparent',
-    }}
-  >
-    {children}
-  </button>
-)
-
-/* ══════════════════════════════════════════════════════════
-   Admit Cards Tab (your existing card UI)
-═══════════════════════════════════════════════════════════ */
-const AdmitCardsTab = ({ students, exam }) => {
-  if (!students.length)
-    return (
-      <p className="text-sm text-center py-8" style={{ color: 'var(--color-text-muted)' }}>
-        No students found for this class.
-      </p>
-    )
-
-  return (
-    <div id="admit-card-print-area" className="space-y-4">
-      {students.map(s => (
-        <AdmitCard key={s.id} student={s} exam={exam} />
-      ))}
-    </div>
-  )
-}
-
-/* ── Placeholder for AdmitCard component ── */
-const AdmitCard = ({ student, exam }) => (
-  <div className="p-4 border rounded-xl" style={{ borderColor: 'var(--color-border)' }}>
-    <p className="font-bold">{student.student_name}</p>
-    <p className="text-xs text-muted">{exam.name}</p>
-  </div>
-)
-
-/* ══════════════════════════════════════════════════════════
-   Fee Defaulters Tab
-═══════════════════════════════════════════════════════════ */
-const FeeDefaultersTab = ({ defaulters, totalDue }) => {
-  if (!defaulters.length)
-    return (
-      <div className="rounded-2xl py-10 text-center"
-        style={{ background: 'var(--color-surface-raised)' }}>
-        <p className="text-sm font-medium" style={{ color: 'var(--color-text-secondary)' }}>
-          No pending payments for this class 🎉
-        </p>
-      </div>
-    )
-
-  return (
-    <div className="space-y-4">
-
-      {/* Summary strip */}
-      <div className="grid grid-cols-2 gap-3">
-        <div className="rounded-2xl p-4" style={{ background: '#fef2f2', border: '1px solid #fecaca' }}>
-          <p className="text-[10px] font-bold uppercase tracking-widest text-red-500 mb-1">Defaulters</p>
-          <p className="text-2xl font-bold text-red-700">{defaulters.length}</p>
-          <p className="text-xs text-red-500">students with due fees</p>
-        </div>
-        <div className="rounded-2xl p-4" style={{ background: '#fff7ed', border: '1px solid #fed7aa' }}>
-          <p className="text-[10px] font-bold uppercase tracking-widest text-orange-500 mb-1">Total Due</p>
-          <p className="text-2xl font-bold text-orange-700">{formatCurrency(totalDue)}</p>
-          <p className="text-xs text-orange-500">outstanding balance</p>
-        </div>
-      </div>
-
-      {/* Table */}
-      <div className="rounded-2xl overflow-hidden"
-        style={{ border: '1px solid var(--color-border)' }}>
-        <table className="w-full text-sm border-collapse">
-          <thead>
-            <tr style={{ background: 'var(--color-surface-raised)' }}>
-              <th className="text-left px-4 py-3 text-xs font-semibold"
-                style={{ color: 'var(--color-text-muted)' }}>#</th>
-              <th className="text-left px-4 py-3 text-xs font-semibold"
-                style={{ color: 'var(--color-text-muted)' }}>Student</th>
-              <th className="text-left px-4 py-3 text-xs font-semibold"
-                style={{ color: 'var(--color-text-muted)' }}>Due Since</th>
-              <th className="text-right px-4 py-3 text-xs font-semibold"
-                style={{ color: 'var(--color-text-muted)' }}>Balance</th>
-              <th className="text-center px-4 py-3 text-xs font-semibold"
-                style={{ color: 'var(--color-text-muted)' }}>Severity</th>
-            </tr>
-          </thead>
-          <tbody>
-            {defaulters.map((d, i) => {
-              const sev = SEVERITY(Number(d.balance))
-              return (
-                <tr key={d.student_id}
-                  style={{ borderTop: '1px solid var(--color-border)' }}
-                  onMouseEnter={e => e.currentTarget.style.background = 'var(--color-surface-raised)'}
-                  onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
-                >
-                  <td className="px-4 py-3 text-xs" style={{ color: 'var(--color-text-muted)' }}>
-                    {i + 1}
-                  </td>
-                  <td className="px-4 py-3">
-                    <p className="font-semibold text-sm" style={{ color: 'var(--color-text-primary)' }}>
-                      {d.student_name}
-                    </p>
-                    <p className="text-xs" style={{ color: 'var(--color-text-muted)' }}>
-                      {d.roll_number || '—'}
-                    </p>
-                  </td>
-                  <td className="px-4 py-3 text-xs" style={{ color: 'var(--color-text-secondary)' }}>
-                    {d.first_due_date ? new Date(d.first_due_date).toLocaleDateString('en-IN') : '—'}
-                  </td>
-                  <td className="px-4 py-3 text-right font-bold text-sm" style={{ color: '#b91c1c' }}>
-                    {formatCurrency(d.balance)}
-                  </td>
-                  <td className="px-4 py-3 text-center">
-                    <span className="inline-flex px-2 py-0.5 rounded-lg text-[10px] font-bold"
-                      style={{ background: sev.bg, color: sev.text }}>
-                      {sev.label}
-                    </span>
-                  </td>
+        {/* List */}
+        <div 
+          className="rounded-2xl border overflow-hidden max-h-[50vh] overflow-y-auto"
+          style={{ borderColor: 'var(--color-border)' }}
+        >
+          {loading ? (
+            <div className="p-4 space-y-3">
+              {[1, 2, 3, 4, 5].map(i => (
+                <div key={i} className="h-12 animate-pulse rounded-xl" style={{ background: 'var(--color-surface-raised)' }} />
+              ))}
+            </div>
+          ) : filteredStudents.length === 0 ? (
+            <div className="p-10 text-center">
+              <p className="text-sm text-muted">No students found matching your search.</p>
+            </div>
+          ) : (
+            <table className="w-full text-sm border-collapse">
+              <thead className="sticky top-0 z-10" style={{ background: 'var(--color-surface-raised)' }}>
+                <tr>
+                  <th className="w-10 px-4 py-3 text-left"></th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--color-text-muted)' }}>Student</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--color-text-muted)' }}>Roll No</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--color-text-muted)' }}>Status</th>
                 </tr>
-              )
-            })}
-          </tbody>
-        </table>
-      </div>
+              </thead>
+              <tbody style={{ background: 'var(--color-surface)' }}>
+                {filteredStudents.map((s) => {
+                  const isSelected = selectedIds.includes(s.id)
+                  const balance = balances[s.id] || 0
+                  
+                  return (
+                    <tr 
+                      key={s.id}
+                      onClick={() => toggleOne(s.id)}
+                      className="cursor-pointer transition-colors border-t"
+                      style={{ 
+                        borderColor: 'var(--color-border)',
+                        background: isSelected ? 'rgba(99, 102, 241, 0.04)' : 'transparent'
+                      }}
+                      onMouseEnter={e => !isSelected && (e.currentTarget.style.background = 'var(--color-surface-raised)')}
+                      onMouseLeave={e => !isSelected && (e.currentTarget.style.background = 'transparent')}
+                    >
+                      <td className="px-4 py-3">
+                        {isSelected ? (
+                          <CheckSquare size={18} className="text-indigo-600" />
+                        ) : (
+                          <Square size={18} className="text-gray-300" />
+                        )}
+                      </td>
+                      <td className="px-4 py-3">
+                        <p className="font-bold text-sm" style={{ color: 'var(--color-text-primary)' }}>
+                          {s.student_name || `${s.first_name} ${s.last_name}`}
+                        </p>
+                        <p className="text-xs text-muted font-mono">{s.admission_no}</p>
+                      </td>
+                      <td className="px-4 py-3 font-medium" style={{ color: 'var(--color-text-secondary)' }}>
+                        {s.roll_number || '—'}
+                      </td>
+                      <td className="px-4 py-3">
+                        {balance > 0 && (
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-amber-50 text-amber-700 text-[10px] font-bold border border-amber-100">
+                            <AlertTriangle size={10} />
+                            Fee Pending
+                          </span>
+                        )}
+                      </td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
+          )}
+        </div>
 
-      {/* Warning note */}
-      <div className="rounded-2xl p-3 flex gap-2 items-start"
-        style={{ background: '#fefce8', border: '1px solid #fef08a' }}>
-        <AlertTriangle size={14} className="text-yellow-600 shrink-0 mt-0.5" />
-        <p className="text-xs text-yellow-800 font-medium">
-          Students with pending fees may be restricted from receiving their admit card
-          until dues are cleared. Please coordinate with the accounts department.
-        </p>
+        {/* Disclaimer */}
+        <div className="rounded-xl p-3 bg-gray-50 dark:bg-gray-800/50 border border-gray-100 dark:border-gray-800 flex gap-3 items-start">
+          <AlertTriangle size={14} className="text-gray-400 shrink-0 mt-0.5" />
+          <p className="text-[10px] text-gray-500 leading-relaxed">
+            Generating a PDF with many students may take a moment. The PDF will be formatted as A5 size, one student per page, suitable for printing on standard paper or cards.
+          </p>
+        </div>
       </div>
-
-    </div>
+    </Modal>
   )
 }
 
