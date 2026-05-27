@@ -122,6 +122,7 @@ const FineCollectionPage = lazy(() => import('@/pages/library/FineCollectionPage
 const LibrarySettingsPage = lazy(() => import('@/pages/library/LibrarySettingsPage'))
 const MyBooksPage = lazy(() => import('@/pages/library/MyBooksPage'))
 const LibrarianProfile = lazy(() => import('@/pages/library/LibrarianProfile'))
+const BulkImportBooksPage = lazy(() => import('@/pages/library/BulkImportBooksPage'))
 
 const StudentDashboard = lazy(() => import('@/pages/student/StudentDashboard'))
 const MyAttendance = lazy(() => import('@/pages/student/attendance/MyAttendance'))
@@ -309,6 +310,11 @@ const router = createBrowserRouter([
       { path: 'books', element: (
         <ProtectedRoute roles={[ROLES.ADMIN, ROLES.LIBRARIAN]}>
           <Lazy component={BookCatalogPage} />
+        </ProtectedRoute>
+      )},
+      { path: 'books/import', element: (
+        <ProtectedRoute roles={[ROLES.ADMIN, ROLES.LIBRARIAN]}>
+          <Lazy component={BulkImportBooksPage} />
         </ProtectedRoute>
       )},
       { path: 'issues', element: (

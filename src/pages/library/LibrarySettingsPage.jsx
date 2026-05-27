@@ -7,7 +7,7 @@ import Input from '../../components/ui/Input';
 
 const LibrarySettingsPage = () => {
   usePageTitle('Library Settings');
-  const { toast } = useToast();
+  const { toastSuccess, toastError } = useToast();
 
   const [settings, setSettings] = useState({
     fine_per_day: 2,
@@ -31,7 +31,7 @@ const LibrarySettingsPage = () => {
         max_issue_days: data.max_issue_days || 14,
       });
     } catch (err) {
-      toast.error('Failed to fetch settings');
+      toastError('Failed to fetch settings');
     } finally {
       setLoading(false);
     }
@@ -39,7 +39,10 @@ const LibrarySettingsPage = () => {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setSettings(prev => ({ ...prev, [name]: value }));
+    setSettings(prev => ({ 
+      ...prev, 
+      [name]: name === 'fine_per_day' ? parseFloat(value) : parseInt(value, 10) 
+    }));
   };
 
   const handleSave = async (e) => {
@@ -47,9 +50,9 @@ const LibrarySettingsPage = () => {
     setSaving(true);
     try {
       await libraryApi.updateSettings(settings);
-      toast.success('Library settings updated');
+      toastSuccess('Library settings updated');
     } catch (err) {
-      toast.error('Failed to update settings');
+      toastError('Failed to update settings');
     } finally {
       setSaving(false);
     }

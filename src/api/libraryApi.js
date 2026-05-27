@@ -14,6 +14,8 @@ const libraryApi = {
   createBook: (data) => api.post('/library/books', data),
   updateBook: (id, data) => api.put(`/library/books/${id}`, data),
   deleteBook: (id) => api.delete(`/library/books/${id}`),
+  previewImportBooks: (data) => api.post('/library/books/import/preview', data),
+  confirmImportBooks: (data) => api.post('/library/books/import/confirm', data),
 
   // Issues
   getIssues: (params) => api.get('/library/issues', { params }),
@@ -26,6 +28,12 @@ const libraryApi = {
   getFines: (params) => api.get('/library/fines', { params }),
   getFineSummary: () => api.get('/library/fines/summary'),
   updateFineStatus: (id, data) => api.patch(`/library/fines/${id}`, data),
+
+  // Reservations
+  getReservations: (params) => api.get('/library/reservations', { params }),
+  getMyReservations: () => api.get('/library/reservations/my'),
+  createReservation: (data) => api.post('/library/reservations', data),
+  cancelReservation: (id) => api.patch(`/library/reservations/${id}/cancel`),
 };
 
 export default libraryApi;

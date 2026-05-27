@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import libraryApi from '../../api/libraryApi';
 import useToast from '../../hooks/useToast';
 import usePageTitle from '../../hooks/usePageTitle';
+import { formatDate } from '../../utils/helpers';
 import Button from '../../components/ui/Button';
 import Input from '../../components/ui/Input';
 import Select from '../../components/ui/Select';
@@ -14,7 +15,7 @@ import Modal from '../../components/ui/Modal';
 
 const FineCollectionPage = () => {
   usePageTitle('Fine Collection');
-  const { toast } = useToast();
+  const { toastSuccess, toastError } = useToast();
 
   const [fines, setFines] = useState([]);
   const [summary, setSummary] = useState({ total_collected: 0, total_waived: 0, total_pending: 0 });
@@ -47,7 +48,7 @@ const FineCollectionPage = () => {
       setFines(data.fines);
       setTotalPages(data.totalPages);
     } catch (err) {
-      toast.error('Failed to fetch fines');
+      toastError('Failed to fetch fines');
     } finally {
       setLoading(false);
     }
@@ -76,12 +77,12 @@ const FineCollectionPage = () => {
         fine_status: actionStatus,
         fine_remarks: remarks
       });
-      toast.success(`Fine marked as ${actionStatus}`);
+      toastSuccess(`Fine marked as ${actionStatus}`);
       setIsActionModalOpen(false);
       fetchFines();
       fetchSummary();
     } catch (err) {
-      toast.error('Failed to update fine status');
+      toastError('Failed to update fine status');
     } finally {
       setActionLoading(false);
     }
@@ -113,6 +114,7 @@ const FineCollectionPage = () => {
           </div>
           <Select
             options={[
+              { label: 'All', value: '' },
               { label: 'Pending', value: 'pending' },
               { label: 'Paid', value: 'paid' },
               { label: 'Waived', value: 'waived' },
@@ -147,7 +149,7 @@ const FineCollectionPage = () => {
                       </div>
                     </td>
                     <td className="py-4 px-2 text-sm">{fine.book_title}</td>
-                    <td className="py-4 px-2 text-sm text-red-500">{fine.due_date}</td>
+                    <td className="py-4 px-2 text-sm text-red-500">{formatDate(fine.due_date)}</td>
                     <td className="py-4 px-2 text-sm font-bold">₹{fine.fine_amount}</td>
                     <td className="py-4 px-2">
                       {fine.fine_status === 'pending' ? (

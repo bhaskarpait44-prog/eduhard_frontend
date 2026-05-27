@@ -13,54 +13,9 @@ import { ROUTES } from '@/constants/app'
 import { downloadClassStudentsPdf, getSections } from '@/api/classApi'
 import useToast from '@/hooks/useToast'
 import useSessionStore from '@/store/sessionStore'
-
-// ── Modal wrapper ─────────────────────────────────────────────────────────
-const Modal = ({ open, onClose, title, children }) => {
-  if (!open) return null
-  return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4"
-      style={{ backgroundColor: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(3px)' }}
-      onClick={e => e.target === e.currentTarget && onClose()}
-    >
-      <div className="w-full max-w-lg bg-white dark:bg-gray-900 rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-700 overflow-hidden">
-        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 dark:border-gray-800">
-          <h2 className="text-base font-semibold text-gray-900 dark:text-gray-100">{title}</h2>
-          <button
-            onClick={onClose}
-            className="p-1.5 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-          >
-            ✕
-          </button>
-        </div>
-        <div className="px-6 py-5">{children}</div>
-      </div>
-    </div>
-  )
-}
-
-// ── Confirm dialog ────────────────────────────────────────────────────────
-const ConfirmDialog = ({ open, onClose, onConfirm, title, description, loading, confirmLabel = 'Delete', danger = true }) => (
-  <Modal open={open} onClose={onClose} title={title}>
-    <div className="space-y-4">
-      <div className={`flex items-start gap-3 p-4 rounded-xl ${danger ? 'bg-red-50 dark:bg-red-950/30' : 'bg-amber-50 dark:bg-amber-950/30'}`}>
-        <AlertCircle size={18} className={danger ? 'text-red-500 shrink-0 mt-0.5' : 'text-amber-500 shrink-0 mt-0.5'} />
-        <p className="text-sm text-gray-700 dark:text-gray-300">{description}</p>
-      </div>
-      <div className="flex justify-end gap-3">
-        <button onClick={onClose} disabled={loading}
-          className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors disabled:opacity-50">
-          Cancel
-        </button>
-        <button onClick={onConfirm} disabled={loading}
-          className={`px-4 py-2 text-sm font-medium text-white rounded-lg transition-colors disabled:opacity-60 flex items-center gap-2 ${danger ? 'bg-red-600 hover:bg-red-700' : 'bg-amber-600 hover:bg-amber-700'}`}>
-          {loading && <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"/></svg>}
-          {loading ? 'Deleting…' : confirmLabel}
-        </button>
-      </div>
-    </div>
-  </Modal>
-)
+import Modal from '@/components/ui/Modal'
+import ConfirmDialog from '@/components/ui/ConfirmDialog'
+import Select from '@/components/ui/Select'
 
 // ── Status badge ──────────────────────────────────────────────────────────
 const StatusBadge = ({ active }) => (
@@ -628,39 +583,33 @@ const ClassListPage = () => {
             Download using filters. Current session: <span className="font-semibold">{currentSession?.name || 'Not loaded'}</span>
           </div>
 
-          <div className="space-y-1.5">
-            <label className="text-sm font-medium text-gray-900 dark:text-gray-100">Class</label>
-            <select
-              value={downloadClassId}
-              onChange={(e) => {
-                setDownloadClassId(e.target.value)
-                setDownloadSectionId('')
-              }}
-              className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2.5 text-sm text-gray-900 outline-none focus:border-indigo-500 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100"
-            >
-              <option value="">Select class</option>
-              {classes.map((cls) => (
-                <option key={cls.id} value={cls.id}>{cls.name}</option>
-              ))}
-            </select>
-          </div>
+          <Select
+            label="Class"
+            value={downloadClassId}
+            onChange={(e) => {
+              setDownloadClassId(e.target.value)
+              setDownloadSectionId('')
+            }}
+            options={filteredClasses.map(cls => ({
+              value: cls.id,
+              label: cls.display_name ? `${cls.name} (${cls.display_name})` : cls.name
+            }))}
+            placeholder="Select class"
+          />
 
-          <div className="space-y-1.5">
-            <label className="text-sm font-medium text-gray-900 dark:text-gray-100">Section</label>
-            <select
-              value={downloadSectionId}
-              onChange={(e) => setDownloadSectionId(e.target.value)}
-              disabled={!downloadClassId || sectionsLoading}
-              className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2.5 text-sm text-gray-900 outline-none focus:border-indigo-500 disabled:cursor-not-allowed disabled:opacity-60 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100"
-            >
-              <option value="">{sectionsLoading ? 'Loading sections...' : 'All sections'}</option>
-              {downloadSections.map((section) => (
-                <option key={section.id} value={section.id}>Section {section.name}</option>
-              ))}
-            </select>
-          </div>
+          <Select
+            label="Section"
+            value={downloadSectionId}
+            onChange={(e) => setDownloadSectionId(e.target.value)}
+            disabled={!downloadClassId || sectionsLoading}
+            options={downloadSections.map(section => ({
+              value: section.id,
+              label: `Section ${section.name}`
+            }))}
+            placeholder={sectionsLoading ? 'Loading sections...' : 'All sections'}
+          />
 
-          <div className="flex justify-end gap-3">
+          <div className="flex justify-end gap-3 pt-2">
             <button
               type="button"
               onClick={() => setDownloadModal(false)}
@@ -704,6 +653,7 @@ const ClassListPage = () => {
         description={`Delete "${deleteTarget?.name}"? This will soft-delete the class, sections, and subjects. If students are currently enrolled, their active enrollments will be closed as withdrawn.`}
         loading={isSaving}
         confirmLabel="Delete Class"
+        variant="danger"
       />
 
       {/* ── Toggle active confirm ──────────────────────────────────────── */}
@@ -717,7 +667,7 @@ const ClassListPage = () => {
           : `Activating "${toggleTarget?.name}" will allow new enrollments.`}
         loading={isSaving}
         confirmLabel={toggleTarget?.is_active ? 'Deactivate' : 'Activate'}
-        danger={toggleTarget?.is_active}
+        variant={toggleTarget?.is_active ? 'danger' : 'warning'}
       />
     </div>
   )

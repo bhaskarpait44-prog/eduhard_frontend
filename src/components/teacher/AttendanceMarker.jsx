@@ -5,6 +5,7 @@ import {
 import Button from '@/components/ui/Button'
 import Select from '@/components/ui/Select'
 import EmptyState from '@/components/ui/EmptyState'
+import Modal from '@/components/ui/Modal'
 import { cn } from '@/utils/helpers'
 
 const STATUS_OPTIONS = [
@@ -430,45 +431,41 @@ const AttendanceMarker = ({
       )}
 
       {/* ── Confirmation Overlay ── */}
-      {confirmOpen && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4 animate-in fade-in duration-300">
-          <div className="w-full max-w-md rounded-3xl bg-surface p-6 sm:p-8 shadow-2xl animate-in zoom-in-95 duration-200 border border-border/50">
-            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10 text-primary mb-6 shadow-inner">
-              <Activity size={28} />
-            </div>
-            <h3 className="text-2xl font-black text-text-primary tracking-tight leading-tight">Ready to File?</h3>
-            <p className="mt-3 text-sm font-medium text-text-muted leading-relaxed">
-              You are submitting attendance for <span className="font-bold text-text-primary whitespace-nowrap">{selectedAssignment?.class_name} {selectedAssignment?.section_name}</span>. This will trigger automated reporting and parent notifications for absent students.
-            </p>
-            
-            <div className="mt-8 grid grid-cols-2 gap-3">
-              <button
-                type="button"
-                onClick={() => setConfirmOpen(false)}
-                className="h-12 rounded-2xl bg-surface-raised text-[11px] font-black uppercase tracking-widest text-text-primary border border-border hover:bg-border/20 transition-colors"
-              >
-                Go Back
-              </button>
-              <button
-                type="button"
-                onClick={async () => {
-                  setSubmittingConfirm(true)
-                  try {
-                    await onSubmit(submitPayload())
-                    setConfirmOpen(false)
-                  } catch (error) {
-                    setSubmittingConfirm(false)
-                  }
-                }}
-                disabled={submittingConfirm}
-                className="h-12 rounded-2xl bg-primary text-[11px] font-black uppercase tracking-widest text-white shadow-xl shadow-primary/30 hover:opacity-95 transition-all flex items-center justify-center gap-2 active:scale-95"
-              >
-                {submittingConfirm ? <Loader2 size={16} className="animate-spin" /> : 'Confirm & File'}
-              </button>
-            </div>
-          </div>
+      <Modal open={confirmOpen} onClose={() => setConfirmOpen(false)} size="sm">
+        <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10 text-primary mb-6 shadow-inner">
+          <Activity size={28} />
         </div>
-      )}
+        <h3 className="text-2xl font-black text-text-primary tracking-tight leading-tight">Ready to File?</h3>
+        <p className="mt-3 text-sm font-medium text-text-muted leading-relaxed">
+          You are submitting attendance for <span className="font-bold text-text-primary whitespace-nowrap">{selectedAssignment?.class_name} {selectedAssignment?.section_name}</span>. This will trigger automated reporting and parent notifications for absent students.
+        </p>
+
+        <div className="mt-8 grid grid-cols-2 gap-3">
+          <button
+            type="button"
+            onClick={() => setConfirmOpen(false)}
+            className="h-12 rounded-2xl bg-surface-raised text-[11px] font-black uppercase tracking-widest text-text-primary border border-border hover:bg-border/20 transition-colors"
+          >
+            Go Back
+          </button>
+          <button
+            type="button"
+            onClick={async () => {
+              setSubmittingConfirm(true)
+              try {
+                await onSubmit(submitPayload())
+                setConfirmOpen(false)
+              } catch (error) {
+                setSubmittingConfirm(false)
+              }
+            }}
+            disabled={submittingConfirm}
+            className="h-12 rounded-2xl bg-primary text-[11px] font-black uppercase tracking-widest text-white shadow-xl shadow-primary/30 hover:opacity-95 transition-all flex items-center justify-center gap-2 active:scale-95"
+          >
+            {submittingConfirm ? <Loader2 size={16} className="animate-spin" /> : 'Confirm & File'}
+          </button>
+        </div>
+      </Modal>
     </div>
   )
 }

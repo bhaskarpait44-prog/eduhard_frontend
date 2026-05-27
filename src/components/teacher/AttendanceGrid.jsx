@@ -254,86 +254,82 @@ const AttendanceGrid = ({
       </section>
 
       {/* ── Override Modal ── */}
-      {editingCell && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-          <div className="w-full max-w-md rounded-3xl bg-surface p-6 sm:p-8 shadow-2xl animate-in zoom-in-95 border border-border/50">
-            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-orange-100 text-orange-600 mb-6">
-              <Activity size={24} />
-            </div>
-            
-            <h3 className="text-xl font-black text-text-primary tracking-tight">Manual Override</h3>
-            <p className="mt-2 text-sm font-medium text-text-muted leading-relaxed">
-              You are modifying the attendance record for <span className="font-bold text-text-primary">{editingCell.student?.first_name} {editingCell.student?.last_name}</span> on <span className="font-bold text-text-primary">{editingCell.date}</span>.
-            </p>
+      <Modal open={!!editingCell} onClose={() => setEditingCell(null)} size="sm">
+        <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-orange-100 text-orange-600 mb-6">
+          <Activity size={24} />
+        </div>
+        
+        <h3 className="text-xl font-black text-text-primary tracking-tight">Manual Override</h3>
+        <p className="mt-2 text-sm font-medium text-text-muted leading-relaxed">
+          You are modifying the attendance record for <span className="font-bold text-text-primary">{editingCell?.student?.first_name} {editingCell?.student?.last_name}</span> on <span className="font-bold text-text-primary">{editingCell?.date}</span>.
+        </p>
 
-            <div className="mt-8 space-y-6">
-              <div className="grid grid-cols-2 gap-2">
-                {['present', 'absent', 'late', 'half_day'].map((status) => {
-                  const style = STATUS_STYLE[status]
-                  const selected = overrideStatus === status
-                  return (
-                    <button
-                      key={status}
-                      type="button"
-                      onClick={() => setOverrideStatus(status)}
-                      className={cn(
-                        "h-11 rounded-xl border text-[11px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2",
-                        selected ? "text-white shadow-lg" : "text-text-primary hover:bg-surface-raised"
-                      )}
-                      style={{
-                        borderColor: selected ? style.color : 'var(--color-border)',
-                        backgroundColor: selected ? style.color : 'transparent',
-                        boxShadow: selected ? `0 6px 16px ${style.color}44` : 'none'
-                      }}
-                    >
-                      {style.label} {status.replace('_', ' ')}
-                    </button>
-                  )
-                })}
-              </div>
+        <div className="mt-8 space-y-6">
+          <div className="grid grid-cols-2 gap-2">
+            {['present', 'absent', 'late', 'half_day'].map((status) => {
+              const style = STATUS_STYLE[status]
+              const selected = overrideStatus === status
+              return (
+                <button
+                  key={status}
+                  type="button"
+                  onClick={() => setOverrideStatus(status)}
+                  className={cn(
+                    "h-11 rounded-xl border text-[11px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2",
+                    selected ? "text-white shadow-lg" : "text-text-primary hover:bg-surface-raised"
+                  )}
+                  style={{
+                    borderColor: selected ? style.color : 'var(--color-border)',
+                    backgroundColor: selected ? style.color : 'transparent',
+                    boxShadow: selected ? `0 6px 16px ${style.color}44` : 'none'
+                  }}
+                >
+                  {style.label} {status.replace('_', ' ')}
+                </button>
+              )
+            })}
+          </div>
 
-              <div className="space-y-2">
-                <label className="text-[10px] font-black uppercase tracking-widest text-text-muted ml-1">Reason for override</label>
-                <textarea
-                  value={overrideReason}
-                  onChange={(e) => setOverrideReason(e.target.value)}
-                  rows={3}
-                  placeholder="Required for audit compliance..."
-                  className="w-full rounded-xl px-4 py-3 text-sm outline-none border border-border focus:ring-2 focus:ring-primary/20 transition-all bg-surface-raised"
-                />
-              </div>
-            </div>
-
-            <div className="mt-8 grid grid-cols-2 gap-3">
-              <button
-                type="button"
-                onClick={() => setEditingCell(null)}
-                className="h-12 rounded-2xl bg-surface-raised text-[11px] font-black uppercase tracking-widest text-text-primary hover:bg-border/20 transition-colors border border-border"
-              >
-                Cancel
-              </button>
-              <button
-                disabled={!overrideReason.trim() || savingOverride}
-                onClick={async () => {
-                  setSavingOverride(true)
-                  try {
-                    await onOverride(editingCell.record.attendance_id, {
-                      status: overrideStatus,
-                      reason: overrideReason.trim(),
-                    })
-                    setEditingCell(null)
-                  } finally {
-                    setSavingOverride(false)
-                  }
-                }}
-                className="h-12 rounded-2xl bg-primary text-[11px] font-black uppercase tracking-widest text-white shadow-xl shadow-primary/30 transition-all flex items-center justify-center gap-2 active:scale-95 disabled:opacity-50"
-              >
-                {savingOverride ? <Loader2 size={16} className="animate-spin" /> : 'Save Changes'}
-              </button>
-            </div>
+          <div className="space-y-2">
+            <label className="text-[10px] font-black uppercase tracking-widest text-text-muted ml-1">Reason for override</label>
+            <textarea
+              value={overrideReason}
+              onChange={(e) => setOverrideReason(e.target.value)}
+              rows={3}
+              placeholder="Required for audit compliance..."
+              className="w-full rounded-xl px-4 py-3 text-sm outline-none border border-border focus:ring-2 focus:ring-primary/20 transition-all bg-surface-raised"
+            />
           </div>
         </div>
-      )}
+
+        <div className="mt-8 grid grid-cols-2 gap-3">
+          <button
+            type="button"
+            onClick={() => setEditingCell(null)}
+            className="h-12 rounded-2xl bg-surface-raised text-[11px] font-black uppercase tracking-widest text-text-primary hover:bg-border/20 transition-colors border border-border"
+          >
+            Cancel
+          </button>
+          <button
+            disabled={!overrideReason.trim() || savingOverride}
+            onClick={async () => {
+              setSavingOverride(true)
+              try {
+                await onOverride(editingCell.record.attendance_id, {
+                  status: overrideStatus,
+                  reason: overrideReason.trim(),
+                })
+                setEditingCell(null)
+              } finally {
+                setSavingOverride(false)
+              }
+            }}
+            className="h-12 rounded-2xl bg-primary text-[11px] font-black uppercase tracking-widest text-white shadow-xl shadow-primary/30 transition-all flex items-center justify-center gap-2 active:scale-95 disabled:opacity-50"
+          >
+            {savingOverride ? <Loader2 size={16} className="animate-spin" /> : 'Save Changes'}
+          </button>
+        </div>
+      </Modal>
     </div>
   )
 }

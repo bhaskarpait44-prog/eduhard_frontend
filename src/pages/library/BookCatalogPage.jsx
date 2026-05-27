@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import libraryApi from '../../api/libraryApi';
 import useToast from '../../hooks/useToast';
 import usePageTitle from '../../hooks/usePageTitle';
@@ -29,7 +30,7 @@ const CATEGORIES = [
 
 const BookCatalogPage = () => {
   usePageTitle('Book Catalog');
-  const { toast } = useToast();
+  const { toastSuccess, toastError } = useToast();
 
   const [books, setBooks] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -50,6 +51,7 @@ const BookCatalogPage = () => {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [bookToDelete, setBookToDelete] = useState(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
+  const [reserveLoading, setReserveLoading] = useState(false);
 
   useEffect(() => {
     fetchBooks();
@@ -68,7 +70,7 @@ const BookCatalogPage = () => {
       setBooks(data.books);
       setTotalPages(data.totalPages);
     } catch (err) {
-      toast.error('Failed to fetch books');
+      toastError('Failed to fetch books');
     } finally {
       setLoading(false);
     }
@@ -85,15 +87,15 @@ const BookCatalogPage = () => {
     try {
       if (selectedBook) {
         await libraryApi.updateBook(selectedBook.id, formData);
-        toast.success('Book updated successfully');
+        toastSuccess('Book updated successfully');
       } else {
         await libraryApi.createBook(formData);
-        toast.success('Book added to catalog');
+        toastSuccess('Book added to catalog');
       }
       setIsFormModalOpen(false);
       fetchBooks();
     } catch (err) {
-      toast.error(err.response?.data?.message || 'Action failed');
+      toastError(err.response?.data?.message || 'Action failed');
     } finally {
       setFormLoading(false);
     }
@@ -103,11 +105,11 @@ const BookCatalogPage = () => {
     setIssueLoading(true);
     try {
       await libraryApi.issueBook(issueData);
-      toast.success('Book issued successfully');
+      toastSuccess('Book issued successfully');
       setIsIssueModalOpen(false);
       fetchBooks();
     } catch (err) {
-      toast.error(err.response?.data?.message || 'Failed to issue book');
+      toastError(err.response?.data?.message || 'Failed to issue book');
     } finally {
       setIssueLoading(false);
     }
@@ -117,13 +119,26 @@ const BookCatalogPage = () => {
     setDeleteLoading(true);
     try {
       await libraryApi.deleteBook(bookToDelete.id);
-      toast.success('Book deleted successfully');
+      toastSuccess('Book deleted successfully');
       setIsDeleteDialogOpen(false);
       fetchBooks();
     } catch (err) {
-      toast.error('Failed to delete book');
+      toastError('Failed to delete book');
     } finally {
       setDeleteLoading(false);
+    }
+  };
+
+  const handleReserve = async (bookId) => {
+    setReserveLoading(true);
+    try {
+      await libraryApi.createReservation({ book_id: bookId });
+      toastSuccess('Book reserved successfully');
+      fetchBooks();
+    } catch (err) {
+      toastError(err.response?.data?.message || 'Failed to reserve book');
+    } finally {
+      setReserveLoading(false);
     }
   };
 
@@ -134,9 +149,14 @@ const BookCatalogPage = () => {
           <h1 className="text-2xl font-bold text-text-primary">Book Catalog</h1>
           <p className="text-text-muted">Manage your school library collection</p>
         </div>
-        <Button variant="primary" onClick={() => { setSelectedBook(null); setIsFormModalOpen(true); }}>
-          Add New Book
-        </Button>
+        <div className="flex gap-2">
+          <Link to="/library/books/import">
+            <Button variant="secondary">Bulk Import</Button>
+          </Link>
+          <Button variant="primary" onClick={() => { setSelectedBook(null); setIsFormModalOpen(true); }}>
+            Add New Book
+          </Button>
+        </div>
       </div>
 
       <div className="bg-surface border border-border rounded-[28px] p-6">
@@ -202,15 +222,26 @@ const BookCatalogPage = () => {
                   </div>
 
                   <div className="flex gap-2">
-                    <Button 
-                      variant="primary" 
-                      size="sm" 
-                      className="flex-1"
-                      onClick={() => { setBookToIssue(book); setIsIssueModalOpen(true); }}
-                      disabled={book.available_copies === 0}
-                    >
-                      Issue
-                    </Button>
+                    {book.available_copies > 0 ? (
+                      <Button 
+                        variant="primary" 
+                        size="sm" 
+                        className="flex-1"
+                        onClick={() => { setBookToIssue(book); setIsIssueModalOpen(true); }}
+                      >
+                        Issue
+                      </Button>
+                    ) : (
+                      <Button 
+                        variant="secondary" 
+                        size="sm" 
+                        className="flex-1"
+                        onClick={() => handleReserve(book.id)}
+                        loading={reserveLoading}
+                      >
+                        Reserve
+                      </Button>
+                    )}
                     <Button 
                       variant="secondary" 
                       size="sm" 
@@ -273,15 +304,26 @@ const BookCatalogPage = () => {
                       </td>
                       <td className="py-4 px-2 text-right">
                         <div className="flex items-center justify-end gap-2">
-                          <Button 
-                            variant="ghost" 
-                            size="sm" 
-                            className="text-primary-600"
-                            onClick={() => { setBookToIssue(book); setIsIssueModalOpen(true); }}
-                            disabled={book.available_copies === 0}
-                          >
-                            Issue
-                          </Button>
+                          {book.available_copies > 0 ? (
+                            <Button 
+                              variant="ghost" 
+                              size="sm" 
+                              className="text-primary-600"
+                              onClick={() => { setBookToIssue(book); setIsIssueModalOpen(true); }}
+                            >
+                              Issue
+                            </Button>
+                          ) : (
+                            <Button 
+                              variant="ghost" 
+                              size="sm" 
+                              className="text-orange-600"
+                              onClick={() => handleReserve(book.id)}
+                              loading={reserveLoading}
+                            >
+                              Reserve
+                            </Button>
+                          )}
                           <Button 
                             variant="ghost" 
                             size="sm" 

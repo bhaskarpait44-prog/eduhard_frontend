@@ -7,8 +7,8 @@ import Input from '@/components/ui/Input'
 import Button from '@/components/ui/Button'
 
 const LibrarianProfile = () => {
-  usePageTitle('My Profile')
-  const { toast } = useToast()
+  usePageTitle('Librarian Profile')
+  const { toastSuccess, toastError } = useToast()
   const [profile, setProfile] = useState(null)
   const [passwords, setPasswords] = useState({ current_password: '', new_password: '', confirm_password: '' })
   const [loading, setLoading] = useState(true)
@@ -31,16 +31,26 @@ const LibrarianProfile = () => {
 
   const handlePasswordChange = async (e) => {
     e.preventDefault()
-    if (passwords.new_password !== passwords.confirm_password) {
-      return toast.error('Passwords do not match')
+    
+    if (passwords.new_password.length < 8) {
+      return toastError('New password must be at least 8 characters long')
     }
+
+    if (passwords.new_password !== passwords.confirm_password) {
+      return toastError('Passwords do not match')
+    }
+
+    if (passwords.new_password === passwords.current_password) {
+      return toastError('New password must be different from the current password')
+    }
+
     setSaving(true)
     try {
       await axios.patch('/admin/users/change-password', passwords)
-      toast.success('Password changed successfully')
+      toastSuccess('Password changed successfully')
       setPasswords({ current_password: '', new_password: '', confirm_password: '' })
     } catch (err) {
-      toast.error(err.response?.data?.message || 'Failed to change password')
+      toastError(err.response?.data?.message || 'Failed to change password')
     } finally {
       setSaving(false)
     }

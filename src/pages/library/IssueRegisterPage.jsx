@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import libraryApi from '../../api/libraryApi';
 import useToast from '../../hooks/useToast';
 import usePageTitle from '../../hooks/usePageTitle';
+import { formatDate } from '../../utils/helpers';
 import Button from '../../components/ui/Button';
 import Input from '../../components/ui/Input';
 import Select from '../../components/ui/Select';
@@ -12,7 +13,7 @@ import ReturnBookModal from '../../components/library/ReturnBookModal';
 
 const IssueRegisterPage = () => {
   usePageTitle('Issue Register');
-  const { toast } = useToast();
+  const { toastSuccess, toastError } = useToast();
 
   const [issues, setIssues] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -27,6 +28,7 @@ const IssueRegisterPage = () => {
   const [isReturnModalOpen, setIsReturnModalOpen] = useState(false);
   const [selectedIssue, setSelectedIssue] = useState(null);
   const [returnLoading, setReturnLoading] = useState(false);
+  const [overdueLoading, setOverdueLoading] = useState(false);
 
   useEffect(() => {
     fetchIssues();
@@ -47,9 +49,22 @@ const IssueRegisterPage = () => {
       setIssues(data.issues);
       setTotalPages(data.totalPages);
     } catch (err) {
-      toast.error('Failed to fetch issues');
+      toastError('Failed to fetch issues');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleRefreshOverdue = async () => {
+    setOverdueLoading(true);
+    try {
+      const { data } = await libraryApi.markOverdue();
+      toastSuccess(data.message || `Overdue status updated: ${data.updatedCount} books.`);
+      fetchIssues();
+    } catch (err) {
+      toastError('Failed to refresh overdue status');
+    } finally {
+      setOverdueLoading(false);
     }
   };
 
@@ -63,11 +78,11 @@ const IssueRegisterPage = () => {
     setReturnLoading(true);
     try {
       await libraryApi.returnBook(selectedIssue.id, returnData);
-      toast.success('Book returned successfully');
+      toastSuccess('Book returned successfully');
       setIsReturnModalOpen(false);
       fetchIssues();
     } catch (err) {
-      toast.error(err.response?.data?.message || 'Failed to return book');
+      toastError(err.response?.data?.message || 'Failed to return book');
     } finally {
       setReturnLoading(false);
     }
@@ -89,7 +104,11 @@ const IssueRegisterPage = () => {
           <h1 className="text-2xl font-bold text-text-primary">Issue Register</h1>
           <p className="text-text-muted">Track and manage book issues/returns</p>
         </div>
-        <Button variant="secondary" onClick={() => libraryApi.markOverdue().then(() => fetchIssues())}>
+        <Button 
+          variant="secondary" 
+          loading={overdueLoading}
+          onClick={handleRefreshOverdue}
+        >
           Refresh Overdue Status
         </Button>
       </div>
@@ -128,6 +147,12 @@ const IssueRegisterPage = () => {
             value={startDate}
             onChange={(e) => setStartDate(e.target.value)}
           />
+          <Input
+            type="date"
+            placeholder="To Date"
+            value={endDate}
+            onChange={(e) => setEndDate(e.target.value)}
+          />
           <Button type="submit" variant="secondary">Filter</Button>
         </form>
 
@@ -163,9 +188,9 @@ const IssueRegisterPage = () => {
                     </td>
                     <td className="py-4 px-2">
                       <div className="flex flex-col text-xs">
-                        <span>Issued: {issue.issue_date}</span>
-                        <span className="text-red-500 font-medium">Due: {issue.due_date}</span>
-                        {issue.return_date && <span className="text-green-600">Ret: {issue.return_date}</span>}
+                        <span>Issued: {formatDate(issue.issue_date)}</span>
+                        <span className="text-red-500 font-medium">Due: {formatDate(issue.due_date)}</span>
+                        {issue.return_date && <span className="text-green-600">Ret: {formatDate(issue.return_date)}</span>}
                       </div>
                     </td>
                     <td className="py-4 px-2 text-sm">

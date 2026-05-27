@@ -1,16 +1,21 @@
 import React, { useState, useEffect } from 'react';
 import libraryApi from '../../api/libraryApi';
+import useToast from '../../hooks/useToast';
 import usePageTitle from '../../hooks/usePageTitle';
+import { formatDate } from '../../utils/helpers';
 import StatCard from '../../components/ui/StatCard';
+import Button from '../../components/ui/Button';
 import Badge from '../../components/ui/Badge';
 import EmptyState from '../../components/ui/EmptyState';
 import TableSkeleton from '../../components/ui/TableSkeleton';
 
 const LibraryDashboardPage = () => {
   usePageTitle('Library Dashboard');
+  const { toastError } = useToast();
 
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
 
   useEffect(() => {
     fetchDashboardData();
@@ -18,18 +23,36 @@ const LibraryDashboardPage = () => {
 
   const fetchDashboardData = async () => {
     setLoading(true);
+    setError(false);
     try {
       const res = await libraryApi.getDashboardStats();
       setData(res.data);
     } catch (err) {
       console.error('Failed to fetch dashboard data', err);
+      setError(true);
+      toastError('Failed to load dashboard data. Please try again.');
     } finally {
       setLoading(false);
     }
   };
 
   if (loading) return <div className="p-8"><TableSkeleton rows={5} cols={4} /></div>;
-  if (!data) return <div className="p-8 text-center">Failed to load dashboard.</div>;
+  
+  if (error) {
+    return (
+      <div className="p-8 flex flex-col items-center justify-center min-h-[400px]">
+        <EmptyState 
+          title="Connection Error" 
+          description="We couldn't reach the library servers. Please check your connection and try again."
+        />
+        <Button variant="secondary" onClick={fetchDashboardData} className="mt-4">
+          Retry Loading
+        </Button>
+      </div>
+    );
+  }
+
+  if (!data) return <div className="p-8 text-center text-text-muted">No dashboard data available.</div>;
 
   const { stats, recentIssues, topBooks } = data;
 
@@ -67,7 +90,7 @@ const LibraryDashboardPage = () => {
                     <tr key={issue.id} className="border-b border-border last:border-0">
                       <td className="py-3 font-medium">{issue.book_title}</td>
                       <td className="py-3">{issue.borrower_name}</td>
-                      <td className="py-3 text-red-500">{issue.due_date}</td>
+                      <td className="py-3 text-red-500">{formatDate(issue.due_date)}</td>
                       <td className="py-3">
                          <Badge variant={issue.status === 'overdue' ? 'danger' : 'primary'} size="sm">
                             {issue.status.toUpperCase()}
