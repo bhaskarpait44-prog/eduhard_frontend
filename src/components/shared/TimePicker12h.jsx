@@ -1,49 +1,72 @@
-import { useMemo } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 
 /**
  * A manual 12-hour time picker with text entry and AM/PM toggle.
- * Values are handled in 24h string format (HH:mm) for compatibility.
+ * Uses internal state to allow typing partial values.
  */
 const TimePicker12h = ({ label, value, onChange, required = false }) => {
-  const { h, m, p } = useMemo(() => {
-    if (!value) return { h: '', m: '', p: 'AM' }
+  const [localH, setLocalH] = useState('')
+  const [localM, setLocalM] = useState('')
+  const [localP, setLocalP] = useState('AM')
+
+  // Sync internal state when the value prop changes externally
+  useEffect(() => {
+    if (!value) {
+      setLocalH('')
+      setLocalM('')
+      return
+    }
     const [H, M] = value.split(':')
-    let hours = parseInt(H, 10)
-    const period = hours >= 12 ? 'PM' : 'AM'
-    hours = hours % 12 || 12
-    return { h: String(hours), m: M.slice(0, 2), p: period }
+    let h = parseInt(H, 10)
+    const p = h >= 12 ? 'PM' : 'AM'
+    h = h % 12 || 12
+    setLocalH(String(h))
+    setLocalM(M.slice(0, 2))
+    setLocalP(p)
   }, [value])
 
-  const handleUpdate = (part, val) => {
-    let nextH = h, nextM = m, nextP = p
-
-    if (part === 'h') {
-      let num = val.replace(/\D/g, '').slice(0, 2)
-      if (num !== '') {
-        const n = parseInt(num, 10)
-        if (n > 12) num = '12'
-        if (n < 0) num = '1'
-      }
-      nextH = num
-    } else if (part === 'm') {
-      let num = val.replace(/\D/g, '').slice(0, 2)
-      if (num !== '') {
-        const n = parseInt(num, 10)
-        if (n > 59) num = '59'
-      }
-      nextM = num
-    } else if (part === 'p') {
-      nextP = val
+  const pushUpdate = useCallback((h, m, p) => {
+    if (h === '' || m === '') {
+      // Don't clear parent state unless both are empty (optional logic)
+      if (h === '' && m === '') onChange('')
+      return
     }
-
-    if (nextH === '' || nextM === '') {
-      onChange('') 
-    } else {
-      let H = parseInt(nextH, 10)
-      if (nextP === 'PM' && H < 12) H += 12
-      if (nextP === 'AM' && H === 12) H = 0
-      onChange(`${String(H).padStart(2, '0')}:${nextM.padStart(2, '0')}`)
+    
+    let H = parseInt(h, 10)
+    if (p === 'PM' && H < 12) H += 12
+    if (p === 'AM' && H === 12) H = 0
+    
+    const formatted = `${String(H).padStart(2, '0')}:${m.padStart(2, '0')}`
+    if (formatted !== value) {
+      onChange(formatted)
     }
+  }, [onChange, value])
+
+  const handleHChange = (val) => {
+    let num = val.replace(/\D/g, '').slice(0, 2)
+    if (num !== '') {
+      const n = parseInt(num, 10)
+      if (n > 12) num = '12'
+      if (n === 0) num = '1' // 0 isn't valid in 12h format
+    }
+    setLocalH(num)
+    pushUpdate(num, localM, localP)
+  }
+
+  const handleMChange = (val) => {
+    let num = val.replace(/\D/g, '').slice(0, 2)
+    if (num !== '') {
+      const n = parseInt(num, 10)
+      if (n > 59) num = '59'
+    }
+    setLocalM(num)
+    pushUpdate(localH, num, localP)
+  }
+
+  const togglePeriod = () => {
+    const nextP = localP === 'AM' ? 'PM' : 'AM'
+    setLocalP(nextP)
+    pushUpdate(localH, localM, nextP)
   }
 
   return (
@@ -51,44 +74,41 @@ const TimePicker12h = ({ label, value, onChange, required = false }) => {
       {label && <label className="text-xs font-bold text-muted uppercase tracking-wider">{label}</label>}
       
       <div className="flex gap-1 items-center">
-        {/* Hour Input */}
         <input
           type="text"
           inputMode="numeric"
           placeholder="HH"
-          value={h}
+          value={localH}
           required={required}
-          onChange={(e) => handleUpdate('h', e.target.value)}
+          onChange={(e) => handleHChange(e.target.value)}
           className="w-12 text-center rounded-xl border py-2 text-sm bg-surface outline-none focus:ring-2 focus:ring-brand/20 transition-all"
-          style={{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface)' }}
+          style={{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface)', color: 'var(--color-text-primary)' }}
         />
         
         <span className="text-muted font-bold">:</span>
         
-        {/* Minute Input */}
         <input
           type="text"
           inputMode="numeric"
           placeholder="MM"
-          value={m}
+          value={localM}
           required={required}
-          onChange={(e) => handleUpdate('m', e.target.value)}
+          onChange={(e) => handleMChange(e.target.value)}
           className="w-12 text-center rounded-xl border py-2 text-sm bg-surface outline-none focus:ring-2 focus:ring-brand/20 transition-all"
-          style={{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface)' }}
+          style={{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface)', color: 'var(--color-text-primary)' }}
         />
 
-        {/* AM/PM Toggle */}
         <button
           type="button"
-          onClick={() => handleUpdate('p', p === 'AM' ? 'PM' : 'AM')}
+          onClick={togglePeriod}
           className="ml-1 px-3 py-2 rounded-xl text-[11px] font-black transition-all border select-none"
           style={{ 
-            backgroundColor: p === 'AM' ? '#eff6ff' : '#fff7ed', 
-            color: p === 'AM' ? '#1d4ed8' : '#c2410c',
-            borderColor: p === 'AM' ? '#bfdbfe' : '#fed7aa'
+            backgroundColor: localP === 'AM' ? '#eff6ff' : '#fff7ed', 
+            color: localP === 'AM' ? '#1d4ed8' : '#c2410c',
+            borderColor: localP === 'AM' ? '#bfdbfe' : '#fed7aa'
           }}
         >
-          {p}
+          {localP}
         </button>
       </div>
     </div>
