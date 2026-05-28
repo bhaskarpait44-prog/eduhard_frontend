@@ -5,7 +5,7 @@ import {
   Plus, Search, Users, ChevronRight,
   ChevronLeft, X, LayoutGrid, LayoutList,
   MoreVertical, Eye, Pencil, Trash2,
-  ExternalLink, Filter, Upload
+  ExternalLink, Filter, Upload, Download
 } from 'lucide-react'
 import useAdminStudentStore from '@/store/studentStore'
 import useSessionStore from '@/store/sessionStore'
@@ -16,9 +16,12 @@ import Button from '@/components/ui/Button'
 import Badge from '@/components/ui/Badge'
 import EmptyState from '@/components/ui/EmptyState'
 import ConfirmDialog from '@/components/ui/ConfirmDialog'
+import Modal from '@/components/ui/Modal'
+import Select from '@/components/ui/Select'
 import BulkIDCardsDownload from '@/components/pdf/BulkIDCardsDownload'
 import { formatDate, getInitials, debounce } from '@/utils/helpers'
 import { ROUTES } from '@/constants/app'
+import { downloadSimpleClassStudentsPdf } from '@/api/classApi'
 import useAuth from '@/hooks/useAuth'
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -280,6 +283,9 @@ const StudentsPage = () => {
   const [confirmDelete, setConfirmDelete] = useState(null)
   const [bulkIDData, setBulkIDData] = useState(null)
   const [fetchingBulk, setFetchingBulk] = useState(false)
+  const [downloadModal, setDownloadModal] = useState(false)
+  const [downloadFilters, setDownloadFilters] = useState({ class_id: '', section_id: '' })
+  const [downloadingPdf, setDownloadingPdf] = useState(false)
   const [isInitialLoading, setIsInitialLoading] = useState(true)
 
   const doFetch = useCallback(
@@ -346,6 +352,44 @@ const StudentsPage = () => {
     }
   }
 
+  const handleDownloadListPdf = async () => {
+    if (!downloadFilters.class_id) {
+      toastError('Please select a class.')
+      return
+    }
+    setDownloadingPdf(true)
+    try {
+      const response = await downloadSimpleClassStudentsPdf(downloadFilters.class_id, {
+        session_id: currentSession?.id,
+        section_id: downloadFilters.section_id
+      })
+      
+      const blob = response.data || response
+      if (blob.type === 'application/json') {
+        const text = await blob.text()
+        const errorData = JSON.parse(text)
+        throw new Error(errorData.message || 'Failed to generate PDF')
+      }
+
+      const finalBlob = blob instanceof Blob ? blob : new Blob([blob], { type: 'application/pdf' })
+      const url = window.URL.createObjectURL(finalBlob)
+      const link = document.createElement('a')
+      const clsName = classes.find(c => String(c.id) === String(downloadFilters.class_id))?.name || 'Students'
+      link.href = url
+      link.download = `${clsName.replace(/[^a-z0-9-_]+/gi, '-')}-student-list.pdf`
+      document.body.appendChild(link)
+      link.click()
+      link.remove()
+      window.URL.revokeObjectURL(url)
+      setDownloadModal(false)
+      toastSuccess('Student list downloaded.')
+    } catch (err) {
+      toastError(err.message || 'Failed to download student list.')
+    } finally {
+      setDownloadingPdf(false)
+    }
+  }
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -383,6 +427,13 @@ const StudentsPage = () => {
 
           {isAdmin && (
             <div className="flex items-center gap-2">
+              <Button 
+                variant="secondary" 
+                icon={Download} 
+                onClick={() => setDownloadModal(true)}
+              >
+                Download List
+              </Button>
               {filters.class_id && (
                 <>
                   {bulkIDData ? (
@@ -570,6 +621,60 @@ const StudentsPage = () => {
         confirmText="Delete"
         isLoading={isSaving}
       />
+
+      <Modal 
+        open={downloadModal} 
+        onClose={() => setDownloadModal(false)} 
+        title="Download Student List"
+      >
+        <div className="space-y-4">
+          <div className="p-3 bg-indigo-50 dark:bg-indigo-950/30 rounded-xl text-xs text-indigo-700 dark:text-indigo-300 leading-relaxed font-medium">
+            Generate a simplified student list for a specific class and section. 
+            Includes Student Name and Admission Number.
+          </div>
+
+          <Select
+            label="Class"
+            value={downloadFilters.class_id}
+            onChange={e => {
+              setDownloadFilters(prev => ({ ...prev, class_id: e.target.value, section_id: '' }))
+              if (e.target.value) fetchSections(e.target.value).catch(() => {})
+            }}
+            options={classes.map(cls => ({
+              value: cls.id,
+              label: `${cls.name}${cls.stream && cls.stream !== 'regular' ? ` (${cls.stream.charAt(0).toUpperCase() + cls.stream.slice(1)})` : ''}${!cls.is_active ? ' (Inactive)' : ''}`
+            }))}
+            placeholder="Select Class"
+            required
+          />
+
+          <Select
+            label="Section"
+            value={downloadFilters.section_id}
+            onChange={e => setDownloadFilters(prev => ({ ...prev, section_id: e.target.value }))}
+            disabled={!downloadFilters.class_id}
+            options={sections.map(sec => ({
+              value: sec.id,
+              label: `Section ${sec.name}`
+            }))}
+            placeholder={downloadFilters.class_id ? "All Sections" : "Select Class First"}
+          />
+
+          <div className="flex justify-end gap-3 pt-4">
+            <Button variant="secondary" onClick={() => setDownloadModal(false)} disabled={downloadingPdf}>
+              Cancel
+            </Button>
+            <Button 
+              icon={Download} 
+              onClick={handleDownloadListPdf} 
+              loading={downloadingPdf}
+              disabled={!downloadFilters.class_id}
+            >
+              Download PDF
+            </Button>
+          </div>
+        </div>
+      </Modal>
 
       {/* Pagination */}
       {pagination.totalPages > 1 && (

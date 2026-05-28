@@ -1,5 +1,5 @@
 // src/pages/exams/ResultsPage.jsx
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { Calculator, BarChart3, Download } from 'lucide-react'
 import useExamStore from '@/store/examStore'
 import useSessionStore from '@/store/sessionStore'
@@ -13,8 +13,9 @@ import ConfirmDialog from '@/components/ui/ConfirmDialog'
 import OverrideResultModal from './OverrideResultModal'
 import ReportCardModal from './ReportCardModal'
 import { getClasses, getClassOptions } from '@/api/classApi'
-import { downloadClassResultSheetPdf } from '@/api/examsApi'
+import { downloadClassResultSheetPdf, downloadExamTimetablePdf, downloadClassTimetablePdf } from '@/api/examsApi'
 import { formatPercent, formatCurrency } from '@/utils/helpers'
+import { downloadBlob } from '@/utils/downloadBlob'
 
 const RESULT_CFG = {
   pass        : { label: 'Pass',        variant: 'green'                                   },
@@ -29,18 +30,20 @@ const GRADE_COLOR = { 'A+':'#15803d','A':'#16a34a','B+':'#2563eb','B':'#1d4ed8',
 const ResultsPage = () => {
   const { toastSuccess, toastError } = useToast()
   const { 
-    classResults, classResultsMeta, isLoading, isSaving, 
-    fetchClassResults, calculateResults, bulkCalculateResults, releaseResult 
+    exams, classResults, classResultsMeta, isLoading, isSaving, 
+    fetchExams, fetchClassResults, calculateResults, bulkCalculateResults, releaseResult 
   } = useExamStore()
   const { sessions, currentSession, fetchSessions } = useSessionStore()
 
   const [sessionId,    setSessionId]    = useState('')
   const [classId,      setClassId]      = useState('')
+  const [examId,       setExamId]       = useState('')
   const [classes,      setClasses]      = useState([])
   const [overrideTarget, setOverrideTarget] = useState(null)
   const [reportTarget, setReportTarget] = useState(null)
   const [calcConfirm,  setCalcConfirm]  = useState(false)
   const [downloading,  setDownloading]  = useState(false)
+  const [downloadingTimetable, setDownloadingTimetable] = useState(false)
 
   useEffect(() => {
     fetchSessions().catch(() => {})
@@ -54,10 +57,45 @@ const ResultsPage = () => {
   }, [currentSession, sessionId])
 
   useEffect(() => {
+    if (!sessionId) return
+    fetchExams({ session_id: sessionId }).catch(() => {})
+  }, [sessionId, fetchExams])
+
+  useEffect(() => {
+    setExamId('')
     if (!sessionId || !classId) return
     fetchClassResults({ session_id: sessionId, class_id: classId })
       .catch(() => toastError('Failed to load results'))
   }, [sessionId, classId, fetchClassResults, toastError])
+
+  const filteredExams = useMemo(() => {
+    if (!classId) return []
+    return exams.filter(e => String(e.class_id) === String(classId))
+  }, [exams, classId])
+
+  const handleDownloadTimetable = async () => {
+    if (!examId) return
+    setDownloadingTimetable(true)
+    try {
+      const res = await downloadExamTimetablePdf(examId)
+      const examName = exams.find(e => String(e.id) === examId)?.name || 'Exam'
+      downloadBlob(res, `${examName.replace(/\s+/g, '_')}_Timetable.pdf`)
+    } catch (err) {
+      toastError('Failed to download exam timetable')
+    } finally { setDownloadingTimetable(false) }
+  }
+
+  const handleDownloadClassTimetable = async () => {
+    if (!classId || !sessionId) return
+    setDownloadingTimetable(true)
+    try {
+      const res = await downloadClassTimetablePdf({ class_id: classId, session_id: sessionId })
+      const className = classes.find(c => String(c.value) === String(classId))?.label || 'Class'
+      downloadBlob(res, `${className.replace(/\s+/g, '_')}_Class_Exam_Timetable.pdf`)
+    } catch (err) {
+      toastError('Failed to download class exam timetable')
+    } finally { setDownloadingTimetable(false) }
+  }
 
   const handleCalculate = async () => {
     setCalcConfirm(false)
@@ -107,15 +145,8 @@ const ResultsPage = () => {
     setDownloading(true)
     try {
       const res = await downloadClassResultSheetPdf({ session_id: sessionId, class_id: classId })
-      const url = window.URL.createObjectURL(new Blob([res.data], { type: 'application/pdf' }))
-      const link = document.createElement('a')
-      link.href = url
       const className = classes.find(c => c.value === classId)?.label || 'Class'
-      link.setAttribute('download', `Result_Sheet_${className.replace(/\s+/g, '_')}.pdf`)
-      document.body.appendChild(link)
-      link.click()
-      link.remove()
-      setTimeout(() => window.URL.revokeObjectURL(url), 1000)
+      downloadBlob(res, `Result_Sheet_${className.replace(/\s+/g, '_')}.pdf`)
     } catch (err) {
       toastError('Failed to download result sheet')
     } finally { setDownloading(false) }
@@ -148,7 +179,29 @@ const ResultsPage = () => {
           placeholder="Select class"
           containerClassName="flex-1"
         />
+        <Select
+          label="Exam Timetable"
+          value={examId}
+          onChange={e => setExamId(e.target.value)}
+          options={filteredExams.map(e => ({ 
+            value: String(e.id), 
+            label: e.name 
+          }))}
+          placeholder="Select exam"
+          containerClassName="flex-1"
+          disabled={!classId}
+        />
         <div className="flex items-end gap-2 flex-wrap">
+          {examId && (
+            <Button
+              variant="secondary"
+              icon={Download}
+              onClick={handleDownloadTimetable}
+              loading={downloadingTimetable}
+            >
+              Timetable
+            </Button>
+          )}
           <Button
             variant="outline"
             icon={Calculator}

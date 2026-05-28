@@ -590,10 +590,16 @@ const ClassListPage = () => {
               setDownloadClassId(e.target.value)
               setDownloadSectionId('')
             }}
-            options={filteredClasses.map(cls => ({
-              value: cls.id,
-              label: cls.display_name ? `${cls.name} (${cls.display_name})` : cls.name
-            }))}
+            options={filteredClasses.map(cls => {
+              const streamPart = cls.stream && cls.stream !== 'regular' 
+                ? ` - ${cls.stream.charAt(0).toUpperCase() + cls.stream.slice(1)}` 
+                : ''
+              const activePart = !cls.is_active ? ' (Inactive)' : ''
+              return {
+                value: cls.id,
+                label: `${cls.name}${streamPart}${activePart}`
+              }
+            })}
             placeholder="Select class"
           />
 

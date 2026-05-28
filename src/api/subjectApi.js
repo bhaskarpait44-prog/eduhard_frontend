@@ -3,6 +3,9 @@ import api from './axios'
 export const getSubjects = (classId) =>
   api.get(`/classes/${classId}/subjects`)
 
+export const downloadSubjectsPdf = (classId) =>
+  api.get(`/classes/${classId}/subjects/pdf`, { responseType: 'blob' })
+
 export const getSubjectById = (classId, subjectId) =>
   api.get(`/classes/${classId}/subjects/${subjectId}`)
 

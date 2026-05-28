@@ -7,6 +7,7 @@ import Select from '@/components/ui/Select'
 import useExamStore from '@/store/examStore'
 import useToast from '@/hooks/useToast'
 import * as api from '@/api/examsApi'
+import { downloadBlob } from '@/utils/downloadBlob'
 
 const BulkUploadModal = ({ open, onClose, examId, subjects = [] }) => {
   const { toastSuccess, toastError } = useToast()
@@ -22,14 +23,8 @@ const BulkUploadModal = ({ open, onClose, examId, subjects = [] }) => {
     }
     try {
       const response = await api.getMarksTemplate(examId, selectedSubject)
-      const url = window.URL.createObjectURL(new Blob([response.data]))
-      const link = document.createElement('a')
-      link.href = url
       const subjectName = subjects.find(s => String(s.id) === selectedSubject)?.name || 'Subject'
-      link.setAttribute('download', `MarksTemplate_${subjectName}.xlsx`)
-      document.body.appendChild(link)
-      link.click()
-      link.remove()
+      downloadBlob(response, `MarksTemplate_${subjectName}.xlsx`)
     } catch (err) {
       toastError('Failed to download template')
     }

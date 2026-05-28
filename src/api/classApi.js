@@ -33,6 +33,9 @@ export const getClassById = (id) =>
 export const downloadClassStudentsPdf = (id, params = {}) =>
   api.get(`/classes/${id}/students/pdf`, { params, responseType: 'blob' })
 
+export const downloadSimpleClassStudentsPdf = (id, params = {}) =>
+  api.get(`/classes/${id}/students/pdf/simple`, { params, responseType: 'blob' })
+
 export const createClass = (data) =>
   api.post('/classes', data)
 

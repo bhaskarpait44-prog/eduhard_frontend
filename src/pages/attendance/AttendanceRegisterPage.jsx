@@ -147,7 +147,13 @@ const AttendanceRegisterPage = ({ mode = 'register' }) => {
         month: month + 1,
         year,
       })
-      const url = window.URL.createObjectURL(new Blob([response.data], { type: 'application/pdf' }))
+      const blob = response.data || response
+      if (blob.type === 'application/json') {
+        const text = await blob.text()
+        const data = JSON.parse(text)
+        throw new Error(data.message || 'Server returned an error')
+      }
+      const url = window.URL.createObjectURL(new Blob([blob], { type: 'application/pdf' }))
       const link = document.createElement('a')
       link.href = url
       link.setAttribute('download', `Attendance_Register_${selectedClassLabel.replace(/\s+/g, '_')}_${monthName.replace(/\s+/g, '_')}.pdf`)
@@ -156,7 +162,7 @@ const AttendanceRegisterPage = ({ mode = 'register' }) => {
       link.remove()
       setTimeout(() => window.URL.revokeObjectURL(url), 1000)
     } catch (err) {
-      toastError('Failed to download register PDF.')
+      toastError(err.message || 'Failed to download register PDF.')
     } finally { setDownloading(false) }
   }
 

@@ -118,21 +118,22 @@ const AttendanceReportPage = () => {
     try {
       const className = classes.find(c => c.value === classId)?.label || 'Class'
       const sectionName = sections.find(s => s.value === sectionId)?.label || 'Section'
-      const response = await downloadAttendanceSummaryPdf({ 
-        session_id: sessionId, 
-        class_id: classId, 
-        section_id: sectionId, 
-        from_date: fromDate, 
-        to_date: toDate 
+      const response = await downloadAttendanceSummaryPdf({
+        session_id: sessionId,
+        class_id: classId,
+        section_id: sectionId,
+        from_date: fromDate,
+        to_date: toDate
       })
 
-      if (response.data?.type === 'application/json') {
-        const text = await response.data.text()
+      const blob = response.data || response
+      if (blob.type === 'application/json') {
+        const text = await blob.text()
         const errorData = JSON.parse(text)
         throw new Error(errorData.message || 'Failed to generate PDF')
       }
 
-      downloadBlob(response.data, `Attendance_Report_${className.replace(/\s+/g,'_')}_${sectionName.replace(/\s+/g,'_')}_${fromDate}_to_${toDate}.pdf`)
+      downloadBlob(blob, `Attendance_Report_${className.replace(/\s+/g,'_')}_${sectionName.replace(/\s+/g,'_')}_${fromDate}_to_${toDate}.pdf`)
     } catch (err) {
       toastError(err.message || 'Failed to download attendance summary.')
     } finally {
@@ -150,20 +151,20 @@ const AttendanceReportPage = () => {
         to_date: toDate
       })
 
-      if (response.data?.type === 'application/json') {
-        const text = await response.data.text()
+      const blob = response.data || response
+      if (blob.type === 'application/json') {
+        const text = await blob.text()
         const errorData = JSON.parse(text)
         throw new Error(errorData.message || 'Failed to generate PDF')
       }
 
-      downloadBlob(response.data, `Attendance_${selected.first_name}_${fromDate}_to_${toDate}.pdf`)
+      downloadBlob(blob, `Attendance_${selected.first_name}_${fromDate}_to_${toDate}.pdf`)
     } catch (err) {
       toastError(err.message || 'Failed to download student attendance card.')
     } finally {
       setIsDownloadingCard(false)
     }
   }
-
   const breakdown = useMemo(() => {
     const monthMap = {}
 

@@ -1,6 +1,6 @@
 // src/pages/subjects/SubjectsPage.jsx
 import { useEffect, useState } from 'react'
-import { BookOpen, AlertCircle, ArrowLeft } from 'lucide-react'
+import { BookOpen, AlertCircle, ArrowLeft, Download } from 'lucide-react'
 import * as subjectApi from '@/api/subjectApi'
 import * as classApi from '@/api/classApi'
 import usePageTitle from '@/hooks/usePageTitle'
@@ -159,6 +159,7 @@ const SubjectsPage = () => {
   const [isLoading, setIsLoading] = useState(true)
   const [selectedClass, setSelectedClass] = useState(null)
   const [searchTerm, setSearchTerm] = useState('')
+  const [downloadingPdf, setDownloadingPdf] = useState(false)
 
   useEffect(() => {
     fetchClasses()
@@ -205,6 +206,27 @@ const SubjectsPage = () => {
       toastError(err.message || 'Failed to load subjects')
     } finally {
       setIsLoading(false)
+    }
+  }
+
+  const handleDownloadPdf = async () => {
+    if (!selectedClass?.id) return
+    setDownloadingPdf(true)
+    try {
+      const response = await subjectApi.downloadSubjectsPdf(selectedClass.id)
+      const blob = response instanceof Blob ? response : new Blob([response], { type: 'application/pdf' })
+      const url = window.URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.href = url
+      link.download = `${selectedClass.name.replace(/[^a-z0-9-_]+/gi, '-')}-subjects.pdf`
+      document.body.appendChild(link)
+      link.click()
+      link.remove()
+      window.setTimeout(() => window.URL.revokeObjectURL(url), 5000)
+    } catch (err) {
+      toastError(err.message || 'Failed to download PDF')
+    } finally {
+      setDownloadingPdf(false)
     }
   }
 
@@ -258,6 +280,17 @@ const SubjectsPage = () => {
             </div>
           )}
         </div>
+
+        {selectedClass && (
+          <button
+            onClick={handleDownloadPdf}
+            disabled={downloadingPdf || subjects.length === 0}
+            className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-indigo-600 dark:bg-indigo-500 rounded-lg hover:bg-indigo-700 transition-colors disabled:opacity-50"
+          >
+            <Download size={16} />
+            {downloadingPdf ? 'Downloading...' : 'Download PDF'}
+          </button>
+        )}
       </div>
 
       {!selectedClass ? (

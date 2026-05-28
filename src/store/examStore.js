@@ -1,6 +1,7 @@
 // src/store/examStore.js
 import { create } from 'zustand'
 import * as api from '@/api/examsApi'
+import { downloadBlob } from '@/utils/downloadBlob'
 
 const useExamStore = create((set, get) => ({
   exams        : [],
@@ -299,13 +300,7 @@ const useExamStore = create((set, get) => ({
   downloadReportCard: async (enrollmentId) => {
     try {
       const response = await api.getReportCard(enrollmentId);
-      const url = window.URL.createObjectURL(new Blob([response.data]));
-      const link = document.createElement('a');
-      link.href = url;
-      link.setAttribute('download', `ReportCard_${enrollmentId}.pdf`);
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
+      downloadBlob(response, `ReportCard_${enrollmentId}.pdf`);
       return { success: true };
     } catch (err) {
       return { success: false, message: err.message };

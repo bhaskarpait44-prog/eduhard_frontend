@@ -1,6 +1,6 @@
 // src/pages/exams/EnterMarksPage.jsx
-import { useState, useEffect, useRef, useCallback } from 'react'
-import { Save, CheckCircle, AlertCircle, ChevronDown, Users, BookOpen, FileSpreadsheet, ShieldCheck } from 'lucide-react'
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
+import { Save, CheckCircle, AlertCircle, ChevronDown, Users, BookOpen, FileSpreadsheet, ShieldCheck, Download } from 'lucide-react'
 import BulkUploadModal from './BulkUploadModal'
 import useExamStore from '@/store/examStore'
 import useSessionStore from '@/store/sessionStore'
@@ -9,8 +9,10 @@ import useToast from '@/hooks/useToast'
 import Button from '@/components/ui/Button'
 import { getClasses, getClassOptions, getSections } from '@/api/classApi'
 import { getSessionReport } from '@/api/attendanceApi'
+import { downloadExamTimetablePdf, downloadClassTimetablePdf } from '@/api/examsApi'
 import { cn, debounce } from '@/utils/helpers'
 import { ROLES } from '@/constants/app'
+import { downloadBlob } from '@/utils/downloadBlob'
 
 // ─── Mini Select ────────────────────────────────────────────────────────────
 const FilterSelect = ({ label, value, onChange, options = [], disabled, placeholder }) => (
@@ -119,7 +121,9 @@ const EnterMarksPage = () => {
   }, [sessionId, fetchExams])
 
   useEffect(() => {
-    if (!classId) { setSections([]); setSectionId(''); return }
+    if (!classId) { setSections([]); setSectionId(''); setExamId(''); return }
+    setSectionId('')
+    setExamId('')
     getSections(classId)
       .then(r => setSections((r.data || []).map(s => ({ value: String(s.id), label: `Section ${s.name}` }))))
       .catch(() => {})
@@ -129,6 +133,11 @@ const EnterMarksPage = () => {
     if (!examId) return
     fetchExamSubjects(examId).catch(() => {})
   }, [examId, fetchExamSubjects])
+
+  const filteredExams = useMemo(() => {
+    if (!classId) return []
+    return exams.filter(e => String(e.class_id) === String(classId))
+  }, [exams, classId])
 
   useEffect(() => {
     if (!examId || !classId || !sectionId || !sessionId) { setStudents([]); return }
@@ -225,6 +234,28 @@ const EnterMarksPage = () => {
     }
   }
 
+  const handleDownloadTimetable = async () => {
+    if (!examId) return
+    try {
+      const res = await downloadExamTimetablePdf(examId)
+      const examName = exams.find(e => String(e.id) === examId)?.name || 'Exam'
+      downloadBlob(res, `${examName.replace(/\s+/g, '_')}_Timetable.pdf`)
+    } catch (err) {
+      toastError('Failed to download exam timetable')
+    }
+  }
+
+  const handleDownloadClassTimetable = async () => {
+    if (!classId || !sessionId) return
+    try {
+      const res = await downloadClassTimetablePdf({ class_id: classId, session_id: sessionId })
+      const className = classes.find(c => String(c.value) === String(classId))?.label || 'Class'
+      downloadBlob(res, `${className.replace(/\s+/g, '_')}_Class_Exam_Timetable.pdf`)
+    } catch (err) {
+      toastError('Failed to download class exam timetable')
+    }
+  }
+
   const handleKeyDown = (e, rowIdx, colIdx) => {
     if (e.key === 'Tab') {
       e.preventDefault()
@@ -283,18 +314,22 @@ const EnterMarksPage = () => {
           placeholder="Select session"
         />
         <FilterSelect
-          label="Examination"
-          value={examId}
-          onChange={e => setExamId(e.target.value)}
-          options={exams.map(e => ({ value: String(e.id), label: e.name }))}
-          placeholder="Select exam"
-        />
-        <FilterSelect
           label="Class"
           value={classId}
           onChange={e => { setClassId(e.target.value); setSectionId('') }}
           options={classes}
           placeholder="Select class"
+        />
+        <FilterSelect
+          label="Examination"
+          value={examId}
+          onChange={e => setExamId(e.target.value)}
+          options={filteredExams.map(e => ({ 
+            value: String(e.id), 
+            label: e.name 
+          }))}
+          placeholder="Select exam"
+          disabled={!classId}
         />
         <FilterSelect
           label="Section"
@@ -372,6 +407,15 @@ const EnterMarksPage = () => {
             </div>
 
             <div style={{ display: 'flex', gap: 10 }}>
+              {examId && (
+                <Button
+                  variant="secondary"
+                  icon={Download}
+                  onClick={handleDownloadTimetable}
+                >
+                  Timetable
+                </Button>
+              )}
               <Button
                 variant="outline"
                 icon={FileSpreadsheet}

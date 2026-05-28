@@ -113,7 +113,10 @@ const SettingsPage = () => {
         setSettings((prev) => ({ 
           ...prev, 
           ...data,
-          schoolName: data.school_name || prev.schoolName // Map backend school_name to schoolName
+          schoolName: data.school_name || prev.schoolName,
+          schoolEmail: data.school_email || prev.schoolEmail,
+          schoolPhone: data.school_phone || prev.schoolPhone,
+          schoolAddress: data.school_address || prev.schoolAddress,
         }))
         localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(data))
       }
@@ -151,6 +154,9 @@ const SettingsPage = () => {
         upi_name: settings.upi_name,
         upi_enabled: settings.upi_enabled,
         school_name: settings.schoolName,
+        school_email: settings.schoolEmail,
+        school_phone: settings.schoolPhone,
+        school_address: settings.schoolAddress,
       })
       localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(settings))
       toastSuccess('Server settings saved successfully')
@@ -252,7 +258,7 @@ const SettingsPage = () => {
               />
             </div>
             <p className="text-xs text-emerald-50/80 mt-3">
-              Last saved locally on this device when you press Save changes.
+              Press Save to DB to persist school details permanently.
             </p>
           </div>
         </div>
@@ -263,15 +269,16 @@ const SettingsPage = () => {
           <SettingsCard
             icon={Building2}
             title="School Profile"
-            description="Basic identity and contact information (Saved locally on this device)."
+            description="Basic identity and contact information (Saved to school database)."
             action={
               <button
-                onClick={handleLocalSave}
-                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold text-white transition-opacity hover:opacity-90"
+                onClick={handleSave}
+                disabled={isLoading}
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold text-white transition-opacity hover:opacity-90 disabled:opacity-50"
                 style={{ backgroundColor: 'var(--color-brand)' }}
               >
                 <Save size={15} />
-                Update Local
+                {isLoading ? 'Saving...' : 'Save to DB'}
               </button>
             }
           >

@@ -5,6 +5,7 @@ import useDefaulters from '@/hooks/useDefaulters'
 import ReminderModal from '@/components/accountant/ReminderModal'
 import * as accountantApi from '@/api/accountantApi'
 import { formatCurrency, formatDate } from '@/utils/helpers'
+import { downloadBlob } from '@/utils/downloadBlob'
 
 const SEVERITY = (balance) => {
   if (balance >= 10000) return { label: 'Critical', bg: '#fef2f2', text: '#b91c1c', dot: '#ef4444' }
@@ -79,14 +80,7 @@ const DefaulterList = () => {
         session_id: currentSession?.id,
         class_id: selectedClass ? defaulters.find(d => d.class_name === selectedClass)?.class_id : undefined
       })
-      const url = window.URL.createObjectURL(new Blob([response.data], { type: 'application/pdf' }))
-      const link = document.createElement('a')
-      link.href = url
-      link.setAttribute('download', `Defaulters_List_${new Date().toISOString().split('T')[0]}.pdf`)
-      document.body.appendChild(link)
-      link.click()
-      link.remove()
-      setTimeout(() => window.URL.revokeObjectURL(url), 1000)
+      downloadBlob(response, `Defaulters_List_${new Date().toISOString().split('T')[0]}.pdf`)
     } catch {} finally { setDownloading(false) }
   }
 

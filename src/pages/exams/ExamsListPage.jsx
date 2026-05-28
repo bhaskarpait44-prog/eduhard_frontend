@@ -1,5 +1,5 @@
 import { useEffect, useState, useMemo } from 'react'
-import { Plus, ClipboardList, PenLine, Trash2, ShieldCheck, Send, BookOpen, AlertCircle, BarChart3, CalendarDays, Printer, Copy, ChevronDown, ChevronUp, Check, Wand2 } from 'lucide-react'
+import { Plus, ClipboardList, PenLine, Trash2, ShieldCheck, Send, BookOpen, AlertCircle, BarChart3, CalendarDays, Printer, Copy, ChevronDown, ChevronUp, Check, Wand2, Download } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import useExamStore from '@/store/examStore'
 import useSessionStore from '@/store/sessionStore'
@@ -15,9 +15,10 @@ import CreateExamModal from './CreateExamModal'
 import ReviewExamSubjectsModal from './ReviewExamSubjectsModal'
 import AdmitCardModal from './AdmitCardModal'
 import TimePicker12h from '@/components/shared/TimePicker12h'
-import { getExamSubjects, updateExamTimetable } from '@/api/examsApi'
+import { getExamSubjects, updateExamTimetable, downloadExamTimetablePdf, downloadClassTimetablePdf } from '@/api/examsApi'
 import { getUsers } from '@/api/userManagementApi'
 import { formatDate, getExamTypeLabel, formatTime } from '@/utils/helpers'
+import { downloadBlob } from '@/utils/downloadBlob'
 
 /* ─── Config ─────────────────────────────────────────────── */
 const STATUS_CFG = {
@@ -69,7 +70,7 @@ const ActionBtn = ({ icon: Icon, onClick, children, danger = false, title }) => 
 )
 
 /* ─── Single exam row inside a class card ────────────────── */
-const ExamRow = ({ exam, isLast, onReview, onMarks, onTimetable, onAdmitCard, onToggleStatus, onDelete }) => {
+const ExamRow = ({ exam, isLast, onReview, onMarks, onTimetable, onAdmitCard, onToggleStatus, onDelete, onDownloadTimetable }) => {
   const navigate = useNavigate()
   const statusCfg = STATUS_CFG[exam.status] || { label: exam.status, variant: 'grey' }
   const pending   = Number(exam.pending_review_count || 0)
@@ -128,7 +129,7 @@ const ExamRow = ({ exam, isLast, onReview, onMarks, onTimetable, onAdmitCard, on
 
 
 /* ─── Class card ─────────────────────────────────────────── */
-const ClassCard = ({ className, exams, onReview, onMarks, onTimetable, onAdmitCard, onToggleStatus, onDelete, onCreateForClass }) => {
+const ClassCard = ({ className, exams, onReview, onMarks, onTimetable, onAdmitCard, onToggleStatus, onDelete, onCreateForClass, onDownloadTimetable, onDownloadClassTimetable }) => {
   const total     = exams.length
   const published = exams.filter(e => ['published', 'ongoing'].includes(e.status)).length
   const draft     = exams.filter(e => e.status === 'draft').length
@@ -211,6 +212,7 @@ const ClassCard = ({ className, exams, onReview, onMarks, onTimetable, onAdmitCa
             onAdmitCard={onAdmitCard}
             onToggleStatus={onToggleStatus}
             onDelete={onDelete}
+            onDownloadTimetable={onDownloadTimetable}
           />
         ))}
       </div>
@@ -332,6 +334,30 @@ const ExamsListPage = ({ onNavigate }) => {
     setCreateOpen(true)
   }
 
+  const handleDownloadTimetable = async (exam) => {
+    try {
+      const res = await downloadExamTimetablePdf(exam.id)
+      downloadBlob(res, `${exam.name.replace(/\s+/g, '_')}_Timetable.pdf`)
+    } catch (err) {
+      toastError('Failed to download exam timetable')
+    }
+  }
+
+  const handleDownloadClassTimetable = async (groupKey) => {
+    const examsInGroup = examsByGroup[groupKey]
+    if (!examsInGroup || examsInGroup.length === 0) return
+    const firstExam = examsInGroup[0]
+    try {
+      const res = await downloadClassTimetablePdf({ 
+        class_id: firstExam.class_id, 
+        session_id: sessionId 
+      })
+      downloadBlob(res, `${groupKey.replace(/\s+/g, '_')}_Class_Exam_Timetable.pdf`)
+    } catch (err) {
+      toastError('Failed to download class exam timetable')
+    }
+  }
+
   /* ────────────────────────── render ─────────────────────── */
   return (
     <div className="space-y-4">
@@ -392,6 +418,7 @@ const ExamsListPage = ({ onNavigate }) => {
               onToggleStatus={handleToggleStatus}
               onDelete={setDeleteTarget}
               onCreateForClass={handleCreateForClass}
+              onDownloadTimetable={handleDownloadTimetable}
             />
           ))}
         </div>
@@ -406,7 +433,12 @@ const ExamsListPage = ({ onNavigate }) => {
         prefillClassId={prefillClass}
       />
       <ReviewExamSubjectsModal exam={reviewTarget} open={!!reviewTarget} onClose={() => setReviewTarget(null)} />
-      <ExamTimetableModal exam={timetableTarget} open={!!timetableTarget} onClose={() => setTimetableTarget(null)} />
+      <ExamTimetableModal 
+        exam={timetableTarget} 
+        open={!!timetableTarget} 
+        onClose={() => setTimetableTarget(null)} 
+        onDownloadTimetable={handleDownloadTimetable}
+      />
       <AdmitCardModal exam={admitCardTarget} open={!!admitCardTarget} onClose={() => setAdmitCardTarget(null)} />
       <ConfirmDialog
         open={!!deleteTarget}
@@ -426,12 +458,13 @@ const ExamsListPage = ({ onNavigate }) => {
   )
 }
 
-const ExamTimetableModal = ({ exam, open, onClose }) => {
+const ExamTimetableModal = ({ exam, open, onClose, onDownloadTimetable }) => {
   const { toastError, toastSuccess } = useToast()
   const [rows, setRows] = useState([])
   const [teachers, setTeachers] = useState([])
   const [loading, setLoading] = useState(false)
   const [saving, setSaving] = useState(false)
+  const [downloading, setDownloading] = useState(false)
   const [showQuickFill, setShowQuickFill] = useState(false)
   const [copiedId, setCopiedId] = useState(null)
 
@@ -554,6 +587,16 @@ const ExamTimetableModal = ({ exam, open, onClose }) => {
     setTimeout(() => setCopiedId(null), 1500)
   }
 
+  const handleDownload = async () => {
+    if (!exam?.id) return
+    setDownloading(true)
+    try {
+      await onDownloadTimetable(exam)
+    } finally {
+      setDownloading(false)
+    }
+  }
+
   const handleSave = async () => {
     if (!exam?.id) return
     
@@ -599,10 +642,26 @@ const ExamTimetableModal = ({ exam, open, onClose }) => {
       size="xl"
       footer={(
         <>
-          <Button variant="secondary" onClick={onClose} disabled={saving}>Cancel</Button>
-          <Button icon={CalendarDays} onClick={handleSave} loading={saving} disabled={loading || rows.length === 0}>
-            Save Timetable
-          </Button>
+          <Button variant="secondary" onClick={onClose} disabled={saving || downloading}>Cancel</Button>
+          <div className="flex gap-2">
+            <Button 
+              variant="outline" 
+              icon={Download} 
+              onClick={handleDownload} 
+              loading={downloading}
+              disabled={loading || rows.length === 0}
+            >
+              Download PDF
+            </Button>
+            <Button 
+              icon={CalendarDays} 
+              onClick={handleSave} 
+              loading={saving} 
+              disabled={loading || rows.length === 0 || downloading}
+            >
+              Save Timetable
+            </Button>
+          </div>
         </>
       )}
     >

@@ -9,6 +9,7 @@ import Select from '@/components/ui/Select'
 import Button from '@/components/ui/Button'
 import Badge from '@/components/ui/Badge'
 import EmptyState from '@/components/ui/EmptyState'
+import { downloadBlob } from '@/utils/downloadBlob'
 
 const RESULT_SOURCE_OPTIONS = [
   { value: 'final_result', label: 'Final Result' },
@@ -205,15 +206,8 @@ const AdminPromotionPage = () => {
     setDownloading(true)
     try {
       const res = await downloadPromotionSummaryPdf({ session_id: sourceSessionId })
-      const url = window.URL.createObjectURL(new Blob([res.data], { type: 'application/pdf' }))
-      const link = document.createElement('a')
-      link.href = url
       const sessionName = sessions.find(s => String(s.id) === String(sourceSessionId))?.name || 'Session'
-      link.setAttribute('download', `Promotion_Summary_${sessionName.replace(/\s+/g, '_')}.pdf`)
-      document.body.appendChild(link)
-      link.click()
-      link.remove()
-      setTimeout(() => window.URL.revokeObjectURL(url), 1000)
+      downloadBlob(res, `Promotion_Summary_${sessionName.replace(/\s+/g, '_')}.pdf`)
     } catch (err) {
       toastError('Failed to download summary report')
     } finally { setDownloading(false) }
