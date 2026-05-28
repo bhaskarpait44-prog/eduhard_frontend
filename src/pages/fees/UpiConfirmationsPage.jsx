@@ -168,7 +168,7 @@ const UpiConfirmationsPage = () => {
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead>
-                  <tr className="border-bottom border-border bg-surface-raised/50">
+                  <tr className="border-b border-border bg-surface-raised/50">
                     {['Student / Class', 'Fee Details', 'Amount', 'Transaction ID', 'Submitted', 'Status', 'Actions'].map(h => (
                       <th key={h} className="px-6 py-4 text-left text-[11px] font-bold uppercase tracking-wider text-text-muted">
                         {h}

@@ -47,7 +47,7 @@ test.describe.serial('Admin Portal Comprehensive Test', () => {
   test('Dashboard page validation', async ({ page }) => {
     await page.waitForSelector('.grid'); // KPI cards container
     await expect(page.locator('text=Total Students')).toBeVisible();
-    await expect(page.locator('text=Today\'s Attendance')).toBeVisible();
+    await expect(page.locator('p:has-text("Today\'s Attendance")')).toBeVisible();
     
     // Confirm charts render
     await expect(page.locator('text=Attendance Analytics')).toBeVisible();

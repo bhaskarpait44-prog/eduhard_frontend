@@ -235,12 +235,12 @@ const AddFeeComponentModal = ({ open, onClose, sessionId, classId: preSelectedCl
               </label>
 
               {isBulk ? (
-                <div className="grid grid-cols-2 gap-2 p-3 rounded-xl border border-dashed border-border bg-surface-raised/30 max-h-[150px] overflow-y-auto">
+                <div className="grid grid-cols-2 gap-2 p-3 rounded-xl border border-dashed border-gray-200 dark:border-gray-700 bg-surface-raised/30 max-h-[150px] overflow-y-auto">
                   {classes.map(c => (
                     <label key={c.value} className="flex items-center gap-2 p-2 rounded-lg hover:bg-white transition-colors cursor-pointer group">
                       <input 
                         type="checkbox" 
-                        className="rounded border-border text-brand focus:ring-brand/20 w-4 h-4"
+                        className="rounded border-gray-300 dark:border-gray-600 text-brand focus:ring-brand/20 w-4 h-4"
                         checked={selectedClasses.includes(c.value)}
                         onChange={() => toggleClass(c.value)}
                       />
@@ -280,7 +280,7 @@ const AddFeeComponentModal = ({ open, onClose, sessionId, classId: preSelectedCl
               {...register('amount')}
             />
             {amount > 0 && (
-              <div className="rounded-xl p-3 flex justify-between items-center bg-brand/5 border border-brand/10 animate-in fade-in slide-in-from-top-2 duration-300">
+              <div className="rounded-xl p-3 flex justify-between items-center bg-brand/5 border border-brand/5 animate-in fade-in slide-in-from-top-2 duration-300">
                 <span className="text-[11px] font-semibold text-brand/70 uppercase tracking-wider">Estimated Annual Cost</span>
                 <span className="text-sm font-bold text-brand">{formatCurrency(annualCost)}</span>
               </div>

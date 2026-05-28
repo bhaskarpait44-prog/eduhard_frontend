@@ -8,6 +8,7 @@
   --color-bg-base: var(--color-bg);
   --color-surface: var(--color-surface);
   --color-surface-raised: var(--color-surface-raised);
+  --color-border: var(--color-border);
   --color-border-base: var(--color-border);
 
   --color-text-primary: var(--color-text-primary);
@@ -45,7 +46,7 @@
   --color-surface:       #ffffff;
   --color-surface-2:     #fafaf9;
   --color-surface-raised:#f1f5f9;
-  --color-border:        #e2e8f0;
+  --color-border:        #f3f4f6; /* Softened from #f1f5f9 to slate-100 equivalent */
   --color-bg-input:      #f8fafc;
 
   /* Accent - Light mode (Amber/Orange) */
@@ -101,7 +102,7 @@
   --color-bg:            #0f172a;
   --color-surface:       #1e293b;
   --color-surface-raised:#334155;
-  --color-border:        #334155;
+  --color-border:        #1e293b; /* Softened from #334155 */
 
   --color-text-primary:  #f1f5f9;
   --color-text-secondary:#94a3b8;
@@ -125,6 +126,7 @@
 /* ── Base resets ────────────────────────────────────────────────────────── */
 *, *::before, *::after {
   box-sizing: border-box;
+  border-color: var(--color-border);
 }
 
 html {

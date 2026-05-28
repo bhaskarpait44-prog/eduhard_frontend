@@ -42,7 +42,7 @@ const EditableCell = ({ value, onSave, isLoading }) => {
       <div className="flex items-center gap-1">
         <input
           autoFocus
-          className="w-full px-2 py-1 text-sm border rounded outline-none focus:ring-1 focus:ring-brand"
+          className="w-full px-2 py-1 text-sm border border-gray-200 dark:border-gray-700 rounded outline-none focus:ring-1 focus:ring-brand"
           value={tempValue}
           onChange={(e) => setTempValue(e.target.value)}
           onKeyDown={(e) => {
@@ -350,7 +350,7 @@ const FeeStructurePage = ({ apiMode = 'default' }) => {
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
-                <tr className="bg-surface-raised/30" style={{ borderBottom: '1px solid var(--color-border)' }}>
+                <tr className="bg-surface-raised/30 border-b border-border">
                   {['Fee Name', 'Amount', 'Annual Cost', 'Frequency', 'Due Day', 'Optional', 'Remarks', 'Actions'].map(h => (
                     <th key={h} className="px-5 py-4 text-left text-[10px] font-bold uppercase tracking-[0.15em]"
                       style={{ color: 'var(--color-text-muted)' }}>
@@ -439,7 +439,7 @@ const FeeStructurePage = ({ apiMode = 'default' }) => {
                   </Fragment>
                 ))}
               </tbody>
-              <tfoot className="bg-surface-raised/50 border-t-2 border-border">
+              <tfoot className="bg-surface-raised/50 border-t border-border">
                 <tr className="font-bold text-text-primary text-sm">
                   <td className="px-5 py-4">Total Components: {totalsFooter.count}</td>
                   <td className="px-5 py-4">{formatCurrency(totalsFooter.amountSum)}</td>

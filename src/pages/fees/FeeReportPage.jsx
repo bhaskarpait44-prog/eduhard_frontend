@@ -204,7 +204,7 @@ const FeeReportPage = () => {
               {/* Total row */}
               {students.length > 0 && (
                 <tfoot>
-                  <tr style={{ borderTop: '2px solid var(--color-border)', backgroundColor: 'var(--color-surface-raised)' }}>
+                  <tr style={{ borderTop: '1px solid var(--color-border)', backgroundColor: 'var(--color-surface-raised)' }}>
                     <td colSpan={2} className="px-4 py-3.5 text-sm font-bold" style={{ color: 'var(--color-text-primary)' }}>
                       Total ({students.length} students)
                     </td>
