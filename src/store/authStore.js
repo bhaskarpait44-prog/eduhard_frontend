@@ -119,6 +119,7 @@ const useAuthStore = create(
       name: 'educore_auth',
       partialize: (state) => ({
         token: state.token,
+        refreshToken: state.refreshToken,
         user: state.user,
       }),
     }
