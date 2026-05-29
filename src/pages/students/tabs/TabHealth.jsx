@@ -1,4 +1,7 @@
 import { useEffect, useState } from 'react'
+import { useForm } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { z } from 'zod'
 import useHealthStore from '@/store/healthStore'
 import useToast from '@/hooks/useToast'
 import { Activity, Syringe, AlertTriangle, Plus, Trash2 } from 'lucide-react'
@@ -7,54 +10,61 @@ import Input from '@/components/ui/Input'
 import Select from '@/components/ui/Select'
 import Modal from '@/components/ui/Modal'
 import { formatDate } from '@/utils/helpers'
+import { healthProfileSchema, vaccinationSchema, incidentSchema } from '@/utils/validations'
 
 export default function TabHealth({ studentId, isAdmin }) {
   const { profile, vaccinations, incidents, isLoading, fetchHealthData, updateProfile, addVaccination, deleteVaccination, addIncident, deleteIncident } = useHealthStore()
   const { toastSuccess, toastError } = useToast()
 
   const [editMode, setEditMode] = useState(false)
-  const [profileForm, setProfileForm] = useState({})
-  
   const [vaxModal, setVaxModal] = useState(false)
-  const [vaxForm, setVaxForm] = useState({ vaccine_name: '', date_administered: '', next_due_date: '', remarks: '' })
-
   const [incModal, setIncModal] = useState(false)
-  const [incForm, setIncForm] = useState({ incident_date: new Date().toISOString().split('T')[0], incident_time: '', type: 'injury', description: '', action_taken: '' })
+
+  const profileForm = useForm({
+    resolver: zodResolver(healthProfileSchema),
+  })
+
+  const vaxForm = useForm({
+    resolver: zodResolver(vaccinationSchema),
+    defaultValues: { vaccine_name: '', date_administered: '', next_due_date: '', remarks: '' }
+  })
+
+  const incForm = useForm({
+    resolver: zodResolver(incidentSchema),
+    defaultValues: { incident_date: new Date().toISOString().split('T')[0], incident_time: '', type: 'injury', description: '', action_taken: '' }
+  })
 
   useEffect(() => {
     fetchHealthData(studentId)
   }, [studentId, fetchHealthData])
 
   useEffect(() => {
-    if (profile) setProfileForm(profile)
-  }, [profile])
+    if (profile) profileForm.reset(profile)
+  }, [profile, profileForm])
 
-  const handleProfileSave = async (e) => {
-    e.preventDefault()
+  const handleProfileSave = async (data) => {
     try {
-      await updateProfile(studentId, profileForm)
+      await updateProfile(studentId, data)
       toastSuccess('Health profile updated')
       setEditMode(false)
     } catch (err) { toastError('Failed to update health profile') }
   }
 
-  const handleVaxSave = async (e) => {
-    e.preventDefault()
+  const handleVaxSave = async (data) => {
     try {
-      await addVaccination(studentId, vaxForm)
+      await addVaccination(studentId, data)
       toastSuccess('Vaccination recorded')
       setVaxModal(false)
-      setVaxForm({ vaccine_name: '', date_administered: '', next_due_date: '', remarks: '' })
+      vaxForm.reset()
     } catch (err) { toastError('Failed to record vaccination') }
   }
 
-  const handleIncSave = async (e) => {
-    e.preventDefault()
+  const handleIncSave = async (data) => {
     try {
-      await addIncident(studentId, incForm)
+      await addIncident(studentId, data)
       toastSuccess('Incident recorded')
       setIncModal(false)
-      setIncForm({ incident_date: new Date().toISOString().split('T')[0], incident_time: '', type: 'injury', description: '', action_taken: '' })
+      incForm.reset()
     } catch (err) { toastError('Failed to record incident') }
   }
 
@@ -68,21 +78,24 @@ export default function TabHealth({ studentId, isAdmin }) {
             <h3 className="text-lg font-bold">Health Profile</h3>
           </div>
           {isAdmin && (
-            <Button size="sm" variant="secondary" onClick={() => setEditMode(!editMode)}>
+            <Button size="sm" variant="secondary" onClick={() => {
+              if (editMode) profileForm.reset(profile)
+              setEditMode(!editMode)
+            }}>
               {editMode ? 'Cancel' : 'Edit Profile'}
             </Button>
           )}
         </div>
 
         {editMode ? (
-          <form onSubmit={handleProfileSave} className="space-y-4">
-            <div className="grid grid-cols-3 gap-4">
-              <Input label="Blood Group" value={profileForm.blood_group || ''} onChange={e => setProfileForm({...profileForm, blood_group: e.target.value})} placeholder="e.g. O+" />
-              <Input label="Height (cm)" type="number" step="0.1" value={profileForm.height_cm || ''} onChange={e => setProfileForm({...profileForm, height_cm: e.target.value})} />
-              <Input label="Weight (kg)" type="number" step="0.1" value={profileForm.weight_kg || ''} onChange={e => setProfileForm({...profileForm, weight_kg: e.target.value})} />
+          <form onSubmit={profileForm.handleSubmit(handleProfileSave)} className="space-y-4">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <Input label="Blood Group" {...profileForm.register('blood_group')} placeholder="e.g. O+" error={profileForm.formState.errors.blood_group?.message} />
+              <Input label="Height (cm)" type="number" step="0.1" {...profileForm.register('height_cm')} error={profileForm.formState.errors.height_cm?.message} />
+              <Input label="Weight (kg)" type="number" step="0.1" {...profileForm.register('weight_kg')} error={profileForm.formState.errors.weight_kg?.message} />
             </div>
-            <Input label="Allergies" value={profileForm.allergies || ''} onChange={e => setProfileForm({...profileForm, allergies: e.target.value})} />
-            <Input label="Medical Conditions" value={profileForm.medical_conditions || ''} onChange={e => setProfileForm({...profileForm, medical_conditions: e.target.value})} />
+            <Input label="Allergies" {...profileForm.register('allergies')} error={profileForm.formState.errors.allergies?.message} />
+            <Input label="Medical Conditions" {...profileForm.register('medical_conditions')} error={profileForm.formState.errors.medical_conditions?.message} />
             <div className="flex justify-end pt-2">
               <Button type="submit" loading={isLoading}>Save Profile</Button>
             </div>
@@ -121,7 +134,7 @@ export default function TabHealth({ studentId, isAdmin }) {
               <Syringe className="text-indigo-500" size={20} />
               <h3 className="text-lg font-bold">Vaccinations</h3>
             </div>
-            {isAdmin && <Button size="sm" variant="secondary" onClick={() => setVaxModal(true)} icon={Plus}>Add</Button>}
+            {isAdmin && <Button size="sm" variant="secondary" onClick={() => { vaxForm.reset(); setVaxModal(true); }} icon={Plus}>Add</Button>}
           </div>
           <div className="space-y-3">
             {vaccinations.length === 0 ? <p className="text-sm text-gray-500 italic">No vaccination records.</p> : vaccinations.map(v => (
@@ -144,7 +157,7 @@ export default function TabHealth({ studentId, isAdmin }) {
               <AlertTriangle className="text-amber-500" size={20} />
               <h3 className="text-lg font-bold">Medical Incidents</h3>
             </div>
-            {isAdmin && <Button size="sm" variant="secondary" onClick={() => setIncModal(true)} icon={Plus}>Log Incident</Button>}
+            {isAdmin && <Button size="sm" variant="secondary" onClick={() => { incForm.reset(); setIncModal(true); }} icon={Plus}>Log Incident</Button>}
           </div>
           <div className="space-y-3">
             {incidents.length === 0 ? <p className="text-sm text-gray-500 italic">No medical incidents recorded.</p> : incidents.map(i => (
@@ -165,26 +178,26 @@ export default function TabHealth({ studentId, isAdmin }) {
       </div>
 
       <Modal open={vaxModal} onClose={() => setVaxModal(false)} title="Record Vaccination">
-        <form onSubmit={handleVaxSave} className="space-y-4">
-          <Input label="Vaccine Name" value={vaxForm.vaccine_name} onChange={e => setVaxForm({...vaxForm, vaccine_name: e.target.value})} required />
+        <form onSubmit={vaxForm.handleSubmit(handleVaxSave)} className="space-y-4">
+          <Input label="Vaccine Name" {...vaxForm.register('vaccine_name')} error={vaxForm.formState.errors.vaccine_name?.message} required />
           <div className="grid grid-cols-2 gap-4">
-            <Input label="Date Administered" type="date" value={vaxForm.date_administered} onChange={e => setVaxForm({...vaxForm, date_administered: e.target.value})} />
-            <Input label="Next Due Date" type="date" value={vaxForm.next_due_date} onChange={e => setVaxForm({...vaxForm, next_due_date: e.target.value})} />
+            <Input label="Date Administered" type="date" {...vaxForm.register('date_administered')} error={vaxForm.formState.errors.date_administered?.message} />
+            <Input label="Next Due Date" type="date" {...vaxForm.register('next_due_date')} error={vaxForm.formState.errors.next_due_date?.message} />
           </div>
-          <Input label="Remarks" value={vaxForm.remarks} onChange={e => setVaxForm({...vaxForm, remarks: e.target.value})} />
+          <Input label="Remarks" {...vaxForm.register('remarks')} error={vaxForm.formState.errors.remarks?.message} />
           <div className="flex justify-end pt-2"><Button type="submit" loading={isLoading}>Save</Button></div>
         </form>
       </Modal>
 
       <Modal open={incModal} onClose={() => setIncModal(false)} title="Log Medical Incident">
-        <form onSubmit={handleIncSave} className="space-y-4">
-          <Select label="Type" value={incForm.type} onChange={e => setIncForm({...incForm, type: e.target.value})} options={[{value:'injury',label:'Injury'},{value:'illness',label:'Illness'},{value:'other',label:'Other'}]} required />
+        <form onSubmit={incForm.handleSubmit(handleIncSave)} className="space-y-4">
+          <Select label="Type" {...incForm.register('type')} options={[{value:'injury',label:'Injury'},{value:'illness',label:'Illness'},{value:'other',label:'Other'}]} error={incForm.formState.errors.type?.message} required />
           <div className="grid grid-cols-2 gap-4">
-            <Input label="Date" type="date" value={incForm.incident_date} onChange={e => setIncForm({...incForm, incident_date: e.target.value})} required />
-            <Input label="Time" type="time" value={incForm.incident_time} onChange={e => setIncForm({...incForm, incident_time: e.target.value})} />
+            <Input label="Date" type="date" {...incForm.register('incident_date')} error={incForm.formState.errors.incident_date?.message} required />
+            <Input label="Time" type="time" {...incForm.register('incident_time')} error={incForm.formState.errors.incident_time?.message} />
           </div>
-          <Input label="Description" value={incForm.description} onChange={e => setIncForm({...incForm, description: e.target.value})} required />
-          <Input label="Action Taken" value={incForm.action_taken} onChange={e => setIncForm({...incForm, action_taken: e.target.value})} />
+          <Input label="Description" {...incForm.register('description')} error={incForm.formState.errors.description?.message} required />
+          <Input label="Action Taken" {...incForm.register('action_taken')} error={incForm.formState.errors.action_taken?.message} />
           <div className="flex justify-end pt-2"><Button type="submit" loading={isLoading}>Save</Button></div>
         </form>
       </Modal>

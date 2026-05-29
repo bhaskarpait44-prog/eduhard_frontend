@@ -205,6 +205,25 @@ const StudentDetailPage = () => {
   }
 
   const handleSaveEdit = async () => {
+    const phoneRegex = /^[6-9]\d{9}$/
+    const pincodeRegex = /^\d{6}$/
+
+    if (editForm.phone && !phoneRegex.test(editForm.phone)) {
+      return toastError('Enter a valid 10-digit mobile number')
+    }
+    if (editForm.pincode && !pincodeRegex.test(editForm.pincode)) {
+      return toastError('Enter a valid 6-digit pincode')
+    }
+    if (editForm.father_phone && !phoneRegex.test(editForm.father_phone)) {
+      return toastError("Enter a valid 10-digit mobile number for Father's phone")
+    }
+    if (editForm.mother_phone && !phoneRegex.test(editForm.mother_phone)) {
+      return toastError("Enter a valid 10-digit mobile number for Mother's phone")
+    }
+    if (editForm.emergency_contact && !phoneRegex.test(editForm.emergency_contact)) {
+      return toastError('Enter a valid 10-digit mobile number for Emergency contact')
+    }
+
     try {
       await updateIdentity(id, editForm)
       toastSuccess('Student updated successfully')

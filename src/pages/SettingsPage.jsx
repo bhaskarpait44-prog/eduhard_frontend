@@ -147,6 +147,19 @@ const SettingsPage = () => {
       return
     }
 
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    if (settings.schoolEmail && !emailRegex.test(settings.schoolEmail)) {
+      toastError('Enter a valid school email address')
+      return
+    }
+
+    const phoneRegex = /^[6-9]\d{9}$/
+    const sanitizedPhone = (settings.schoolPhone || '').replace(/\D/g, '').replace(/^91/, '')
+    if (settings.schoolPhone && !phoneRegex.test(sanitizedPhone)) {
+      toastError('Enter a valid 10-digit school mobile number')
+      return
+    }
+
     setIsLoading(true)
     try {
       await api.put('/settings', { 

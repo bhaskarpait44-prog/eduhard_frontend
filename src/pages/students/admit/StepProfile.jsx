@@ -7,27 +7,12 @@ import Select   from '@/components/ui/Select'
 import Textarea from '@/components/ui/Textarea'
 import Button   from '@/components/ui/Button'
 import { SectionHeading } from './StepIdentity'
+import { studentProfileSchema } from '@/utils/validations'
 
 const BLOOD_GROUPS = ['A+','A-','B+','B-','AB+','AB-','O+','O-','unknown']
   .map(v => ({ value: v, label: v }))
 
-const schema = z.object({
-  address: z.string().optional(),
-  city: z.string().optional(),
-  state: z.string().optional(),
-  pincode: z.string().optional(),
-  phone: z.string().optional(),
-  email: z.string().email('A valid student email is required'),
-  father_name: z.string().optional(),
-  father_phone: z.string().optional(),
-  father_email: z.string().email('A valid parent email is required for login access').optional().or(z.literal('')),
-  mother_name: z.string().optional(),
-  mother_phone: z.string().optional(),
-  mother_email: z.string().email('A valid parent email is required').optional().or(z.literal('')),
-  emergency_contact: z.string().optional(),
-  blood_group: z.string().optional(),
-  medical_notes: z.string().optional(),
-}).refine(data => data.father_email || data.mother_email, {
+const schema = studentProfileSchema.refine(data => data.father_email || data.mother_email, {
   message: "At least one parent email is required for portal access",
   path: ["father_email"]
 })
@@ -54,10 +39,10 @@ const StepProfile = ({ defaultValues, onNext, onBack }) => {
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           <Input label="City"    placeholder="Guwahati" containerClassName="col-span-2" {...register('city')} />
           <Input label="State"   placeholder="Assam"                                    {...register('state')} />
-          <Input label="Pincode" placeholder="781001" type="number"                     {...register('pincode')} />
+          <Input label="Pincode" placeholder="781001" type="number" error={errors.pincode?.message} {...register('pincode')} />
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <Input label="Phone"  type="tel" placeholder="+91-9876543210" {...register('phone')} />
+          <Input label="Phone"  type="tel" placeholder="+91-9876543210" error={errors.phone?.message} {...register('phone')} />
           <Input
             label="Student Email"
             type="email"
@@ -79,7 +64,7 @@ const StepProfile = ({ defaultValues, onNext, onBack }) => {
             error={errors.father_email?.message}
             {...register('father_email')} 
           />
-          <Input label="Father's Phone" type="tel" placeholder="+91-9876543211" {...register('father_phone')} />
+          <Input label="Father's Phone" type="tel" placeholder="+91-9876543211" error={errors.father_phone?.message} {...register('father_phone')} />
           <div className="hidden sm:block" />
 
           <Input label="Mother's Name"  placeholder="Sunita Sharma" {...register('mother_name')} />
@@ -90,13 +75,13 @@ const StepProfile = ({ defaultValues, onNext, onBack }) => {
             error={errors.mother_email?.message}
             {...register('mother_email')} 
           />
-          <Input label="Mother's Phone" type="tel" placeholder="+91-9876543212" {...register('mother_phone')} />
+          <Input label="Mother's Phone" type="tel" placeholder="+91-9876543212" error={errors.mother_phone?.message} {...register('mother_phone')} />
         </div>
 
         {/* Medical */}
         <SectionHeading title="Medical Information" />
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <Input label="Emergency Contact" type="tel" placeholder="+91-9876543213" {...register('emergency_contact')} />
+          <Input label="Emergency Contact" type="tel" placeholder="+91-9876543213" error={errors.emergency_contact?.message} {...register('emergency_contact')} />
           <Select label="Blood Group" options={BLOOD_GROUPS} placeholder="Select…" {...register('blood_group')} />
         </div>
         <Textarea

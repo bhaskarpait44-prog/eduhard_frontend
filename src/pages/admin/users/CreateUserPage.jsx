@@ -15,31 +15,7 @@ import PermissionSelector from '@/components/admin/PermissionSelector'
 import { getDefaultPermissionsForRole } from '@/utils/permissions'
 import Button from '@/components/ui/Button'
 import Modal from '@/components/ui/Modal'
-
-const optionalEnum = (values) => z.preprocess(
-  (value) => (value === '' || value == null ? undefined : value),
-  z.enum(values).optional(),
-)
-
-const schema = z.object({
-  name: z.string().min(1, 'Name is required'),
-  email: z.string().email('Valid email required'),
-  phone: z.string().optional(),
-  role: z.enum(['admin', 'teacher', 'accountant', 'student', 'librarian', 'staff', 'receptionist', 'parent']),
-  employee_id: z.string().optional(),
-  department: z.string().optional(),
-  designation: z.string().optional(),
-  joining_date: z.string().optional(),
-  date_of_birth: z.string().optional(),
-  gender: optionalEnum(['male', 'female', 'other']),
-  address: z.string().optional(),
-  auto_password: z.boolean().optional(),
-  force_password_change: z.boolean().optional(),
-  password: z.string().optional().refine(val => !val || val.length >= 8, {
-    message: 'Password must be at least 8 characters'
-  }),
-  internal_notes: z.string().optional(),
-})
+import { createUserSchema } from '@/utils/validations'
 
 const ROLES = ['admin', 'teacher', 'accountant', 'student', 'librarian', 'staff', 'receptionist', 'parent']
 
@@ -133,7 +109,7 @@ const CreateUserPage = () => {
   const {
     register, handleSubmit, watch, setValue, reset, formState: { errors },
   } = useForm({
-    resolver: zodResolver(schema),
+    resolver: zodResolver(createUserSchema),
     defaultValues: buildDefaultValues(initialRole),
   })
 

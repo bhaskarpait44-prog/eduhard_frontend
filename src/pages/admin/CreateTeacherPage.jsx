@@ -16,24 +16,7 @@ import { getDefaultPermissionsForRole } from '@/utils/permissions'
 import Button from '@/components/ui/Button'
 import Modal from '@/components/ui/Modal'
 import { formatDate } from '@/utils/helpers'
-
-/* ─── schema ─── */
-const teacherSchema = z.object({
-  name:                   z.string().trim().min(1, 'Teacher name is required'),
-  email:                  z.string().trim().email('Valid email is required'),
-  phone:                  z.string().trim().optional(),
-  employee_id:            z.string().trim().optional(),
-  department:             z.string().trim().optional(),
-  designation:            z.string().trim().optional(),
-  joining_date:           z.string().optional(),
-  highest_qualification:  z.string().trim().optional(),
-  specialization:         z.string().trim().optional(),
-  university_name:        z.string().trim().optional(),
-  graduation_year:        z.string().trim().optional(),
-  years_of_experience:    z.string().trim().optional(),
-  address:                z.string().trim().optional(),
-  internal_notes:         z.string().trim().optional(),
-})
+import { teacherSchema } from '@/utils/validations'
 
 const defaultValues = {
   name: '', email: '', phone: '', employee_id: '', department: '',
@@ -408,8 +391,8 @@ const CreateTeacherPage = () => {
                       <Field label="Email Address" required error={errors.email?.message} hint="Used as login ID">
                         <TextInput {...register('email')} type="email" placeholder="ananya@school.edu.in" error={!!errors.email} />
                       </Field>
-                      <Field label="Phone">
-                        <TextInput {...register('phone')} placeholder="+91 9876543210" />
+                      <Field label="Phone" error={errors.phone?.message}>
+                        <TextInput {...register('phone')} placeholder="+91 9876543210" error={!!errors.phone} />
                       </Field>
                       <Field label="Employee ID">
                         <TextInput {...register('employee_id')} placeholder="TCH-014" />

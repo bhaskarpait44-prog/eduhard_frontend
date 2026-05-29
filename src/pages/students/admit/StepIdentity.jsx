@@ -6,14 +6,7 @@ import { Shuffle } from 'lucide-react'
 import Input from '@/components/ui/Input'
 import Select from '@/components/ui/Select'
 import Button from '@/components/ui/Button'
-
-const schema = z.object({
-  first_name   : z.string().min(1, 'First name is required'),
-  last_name    : z.string().min(1, 'Last name is required'),
-  date_of_birth: z.string().min(1, 'Date of birth is required'),
-  gender       : z.enum(['male', 'female', 'other'], { required_error: 'Gender is required' }),
-  admission_no : z.string().min(1, 'Admission number is required'),
-})
+import { studentAdmitSchema } from '@/utils/validations'
 
 const genAdmissionNo = () => {
   const year = new Date().getFullYear()
@@ -23,7 +16,7 @@ const genAdmissionNo = () => {
 
 const StepIdentity = ({ defaultValues, onNext }) => {
   const { register, handleSubmit, setValue, watch, formState: { errors } } = useForm({
-    resolver     : zodResolver(schema),
+    resolver     : zodResolver(studentAdmitSchema),
     defaultValues: { ...defaultValues, admission_no: defaultValues.admission_no || genAdmissionNo() },
   })
 

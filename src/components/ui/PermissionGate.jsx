@@ -34,9 +34,9 @@ const PermissionGate = ({
 
   let allowed = true
 
-  if (requires)    allowed = can(requires)
-  if (requiresAny) allowed = canAny(requiresAny)
-  if (requiresAll) allowed = canAll(requiresAll)
+  if (requires)    allowed = allowed && can(requires)
+  if (requiresAny) allowed = allowed && canAny(requiresAny)
+  if (requiresAll) allowed = allowed && canAll(requiresAll)
 
   return allowed ? children : fallback
 }

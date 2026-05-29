@@ -582,6 +582,11 @@ const TeacherDetailPage = () => {
 
   /* ── actions ── */
   const handleSaveEdit = async () => {
+    const phoneRegex = /^[6-9]\d{9}$/
+    if (editForm.phone && !phoneRegex.test(editForm.phone)) {
+      return toastError('Enter a valid 10-digit mobile number')
+    }
+
     setSavingEdit(true)
     try {
       await userApi.updateUser(id, {

@@ -44,6 +44,11 @@ const VisitorLog = () => {
     e.preventDefault()
     if (!formData.visitor_name) return toast.error('Visitor name is required')
 
+    const phoneRegex = /^[6-9]\d{9}$/
+    if (formData.visitor_phone && !phoneRegex.test(formData.visitor_phone)) {
+      return toast.error('Enter a valid 10-digit mobile number')
+    }
+
     try {
       setIsSubmitting(true)
       await logVisitor(formData)

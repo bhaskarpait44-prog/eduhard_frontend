@@ -11,14 +11,7 @@ import Select from '@/components/ui/Select'
 import useFeeStore from '@/store/feeStore'
 import useToast from '@/hooks/useToast'
 import { formatCurrency, formatDate } from '@/utils/helpers'
-
-const schema = z.object({
-  amount          : z.string().min(1, 'Amount is required')
-    .refine(v => !isNaN(parseFloat(v)) && parseFloat(v) > 0, 'Enter a valid amount'),
-  payment_mode    : z.enum(['cash','online','upi','cheque','dd'], { required_error: 'Select payment mode' }),
-  payment_date    : z.string().min(1, 'Payment date is required'),
-  transaction_ref : z.string().optional(),
-})
+import { paymentSchema } from '@/utils/validations'
 
 const PAYMENT_MODES = [
   { value: 'cash',   label: 'Cash — counter payment'     },
@@ -41,7 +34,7 @@ const RecordPaymentModal = ({ open, invoice, onClose, onSuccess }) => {
     : 0
 
   const { register, handleSubmit, reset, setValue, watch, formState: { errors } } = useForm({
-    resolver     : zodResolver(schema),
+    resolver     : zodResolver(paymentSchema),
     defaultValues: { amount: '', payment_mode: 'cash', payment_date: today(), transaction_ref: '' },
   })
 

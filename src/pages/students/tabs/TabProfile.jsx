@@ -1,6 +1,8 @@
 // src/pages/students/tabs/TabProfile.jsx
 import { useEffect, useMemo, useState } from 'react'
 import { Pencil, Clock, KeyRound, ShieldCheck } from 'lucide-react'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { z } from 'zod'
 import { formatDate } from '@/utils/helpers'
 import Button from '@/components/ui/Button'
 import Modal from '@/components/ui/Modal'
@@ -10,6 +12,7 @@ import Textarea from '@/components/ui/Textarea'
 import useAdminStudentStore from '@/store/studentStore'
 import useToast from '@/hooks/useToast'
 import { useForm } from 'react-hook-form'
+import { studentUpdateSchema } from '@/utils/validations'
 
 const BLOOD_GROUPS = ['A+','A-','B+','B-','AB+','AB-','O+','O-','unknown']
   .map(v => ({ value: v, label: v }))
@@ -20,6 +23,8 @@ const formatStream = (stream) => {
 }
 
 const PROFILE_FIELDS = [
+  'first_name',
+  'last_name',
   'address',
   'city',
   'state',
@@ -61,7 +66,10 @@ const TabProfile = ({ student, studentId }) => {
     [student]
   )
 
-  const { register, handleSubmit, reset } = useForm({ defaultValues })
+  const { register, handleSubmit, reset, formState: { errors } } = useForm({ 
+    defaultValues,
+    resolver: zodResolver(studentUpdateSchema)
+  })
 
   useEffect(() => {
     reset(defaultValues)
@@ -218,25 +226,29 @@ const TabProfile = ({ student, studentId }) => {
         }
       >
         <form className="space-y-4">
+          <div className="grid grid-cols-2 gap-4">
+            <Input label="First Name" error={errors.first_name?.message} {...register('first_name')} />
+            <Input label="Last Name"  error={errors.last_name?.message}  {...register('last_name')} />
+          </div>
           <Textarea label="Address" rows={2} {...register('address')} />
           <div className="grid grid-cols-2 gap-4">
             <Input label="City"    {...register('city')} />
             <Input label="State"   {...register('state')} />
-            <Input label="Pincode" {...register('pincode')} />
-            <Input label="Phone"   {...register('phone')} />
+            <Input label="Pincode" error={errors.pincode?.message} {...register('pincode')} />
+            <Input label="Phone"   error={errors.phone?.message} {...register('phone')} />
           </div>
           <div className="grid grid-cols-2 gap-4">
-            <Input label="Student Email" type="email" {...register('email')} />
-            <Input label="Parent Login Email" type="email" {...register('parent_email')} />
+            <Input label="Student Email" type="email" error={errors.email?.message} {...register('email')} />
+            <Input label="Parent Login Email" type="email" error={errors.parent_email?.message} {...register('parent_email')} />
           </div>
           <div className="grid grid-cols-2 gap-4">
             <Input label="Father Name"  {...register('father_name')} />
-            <Input label="Father Phone" {...register('father_phone')} />
+            <Input label="Father Phone" error={errors.father_phone?.message} {...register('father_phone')} />
             <Input label="Mother Name"  {...register('mother_name')} />
-            <Input label="Mother Phone" {...register('mother_phone')} />
+            <Input label="Mother Phone" error={errors.mother_phone?.message} {...register('mother_phone')} />
           </div>
           <div className="grid grid-cols-2 gap-4">
-            <Input label="Emergency Contact" {...register('emergency_contact')} />
+            <Input label="Emergency Contact" error={errors.emergency_contact?.message} {...register('emergency_contact')} />
             <Select label="Blood Group" options={BLOOD_GROUPS} {...register('blood_group')} />
           </div>
           <Textarea label="Medical Notes" rows={2} {...register('medical_notes')} />
@@ -246,6 +258,7 @@ const TabProfile = ({ student, studentId }) => {
               placeholder="Why is this profile being updated? (required)"
               rows={2}
               required
+              error={errors.change_reason?.message}
               {...register('change_reason')}
             />
           </div>

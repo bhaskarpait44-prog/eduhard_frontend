@@ -24,6 +24,7 @@ const LeaveForm = ({ workingDays, holidays, onSubmit, saving }) => {
     reason: '',
     document_path: '',
   })
+  const [errors, setErrors] = useState({})
 
   const holidaySet = useMemo(() => new Set((holidays || []).map((holiday) => String(holiday.holiday_date).slice(0, 10))), [holidays])
 
@@ -54,6 +55,13 @@ const LeaveForm = ({ workingDays, holidays, onSubmit, saving }) => {
 
   const handleSubmit = async (event) => {
     event.preventDefault()
+    
+    if (form.reason.trim().length < 20) {
+      setErrors({ reason: 'Please write at least 20 characters explaining the reason for leave.' })
+      return
+    }
+
+    setErrors({})
     await onSubmit({
       ...form,
       reason: form.reason.trim(),
@@ -101,11 +109,15 @@ const LeaveForm = ({ workingDays, holidays, onSubmit, saving }) => {
       <Textarea
         label="Reason"
         value={form.reason}
-        onChange={(event) => setForm((prev) => ({ ...prev, reason: event.target.value }))}
+        onChange={(event) => {
+          setForm((prev) => ({ ...prev, reason: event.target.value }))
+          if (errors.reason) setErrors(prev => ({ ...prev, reason: null }))
+        }}
         placeholder={`Respected Principal,\nI kindly request leave from ${form.from_date || '[from date]'} to ${form.to_date || '[to date]'} due to [reason]. I will complete all pending academic work and coordinate with the school as required.\nThank you.`}
         hint="Write a short formal application with dates, reason, and any handover note if needed."
         rows={5}
         required
+        error={errors.reason}
       />
 
       <Input

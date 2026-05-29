@@ -26,7 +26,7 @@ const processQueue = (error, token = null) => {
 // ── Request interceptor — inject access token ─────────────────────────────
 api.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem(STORAGE_KEYS.TOKEN)
+    const token = useAuthStore.getState().token
     if (token) config.headers.Authorization = `Bearer ${token}`
 
     // Let axios set Content-Type automatically for FormData (multipart/form-data + boundary)
@@ -52,7 +52,7 @@ api.interceptors.response.use(
 
     // ── 401 handling ──────────────────────────────────────────────────────
     if (status === 401 && !originalRequest._retry) {
-      const refreshTkn = localStorage.getItem(STORAGE_KEYS.REFRESH_TOKEN)
+      const refreshTkn = useAuthStore.getState().refreshToken
 
       // No refresh token → go to login immediately
       if (!refreshTkn) {
@@ -81,9 +81,8 @@ api.interceptors.response.use(
         )
         const { token: newToken, refresh_token: newRefresh } = response.data.data
 
-        // Store new tokens
-        localStorage.setItem(STORAGE_KEYS.TOKEN, newToken)
-        if (newRefresh) localStorage.setItem(STORAGE_KEYS.REFRESH_TOKEN, newRefresh)
+        // Store new tokens in Zustand (which persists them)
+        useAuthStore.getState().updateToken(newToken, newRefresh)
 
         // Update default header
         api.defaults.headers.common['Authorization'] = `Bearer ${newToken}`

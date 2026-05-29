@@ -47,9 +47,6 @@ const useAuthStore = create(
             throw new Error(message || 'Login failed - invalid response')
           }
 
-          localStorage.setItem(STORAGE_KEYS.TOKEN, token)
-          if (refresh_token) localStorage.setItem(STORAGE_KEYS.REFRESH_TOKEN, refresh_token)
-
           set({
             token,
             refreshToken: refresh_token || null,
@@ -78,9 +75,6 @@ const useAuthStore = create(
             throw new Error(message || 'Student login failed - invalid response')
           }
 
-          localStorage.setItem(STORAGE_KEYS.TOKEN, token)
-          if (refresh_token) localStorage.setItem(STORAGE_KEYS.REFRESH_TOKEN, refresh_token)
-
           set({
             token,
             refreshToken: refresh_token || null,
@@ -98,8 +92,6 @@ const useAuthStore = create(
 
 
       logout: () => {
-        localStorage.removeItem(STORAGE_KEYS.TOKEN)
-        localStorage.removeItem(STORAGE_KEYS.REFRESH_TOKEN)
         set({ token: null, refreshToken: null, user: null, error: null })
       },
 
@@ -107,8 +99,6 @@ const useAuthStore = create(
 
       // Called by Axios interceptor after a successful silent refresh
       updateToken: (token, refreshToken) => {
-        localStorage.setItem(STORAGE_KEYS.TOKEN, token)
-        if (refreshToken) localStorage.setItem(STORAGE_KEYS.REFRESH_TOKEN, refreshToken)
         set({ token, refreshToken: refreshToken || get().refreshToken })
       },
 

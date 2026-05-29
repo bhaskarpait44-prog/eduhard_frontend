@@ -1,25 +1,7 @@
 // src/utils/helpers.js
 // Pure utility functions — no side effects
 
-/**
- * Merge class names conditionally (lightweight clsx alternative)
- * Usage: cn('base', condition && 'extra', { 'active': isActive })
- */
-export const cn = (...args) => {
-  return args
-    .flatMap((arg) => {
-      if (!arg) return []
-      if (typeof arg === 'string') return [arg]
-      if (Array.isArray(arg)) return arg
-      if (typeof arg === 'object') {
-        return Object.entries(arg)
-          .filter(([, v]) => v)
-          .map(([k]) => k)
-      }
-      return []
-    })
-    .join(' ')
-}
+export { cn } from './cn'
 
 /**
  * Resolve a full URL for an uploaded file

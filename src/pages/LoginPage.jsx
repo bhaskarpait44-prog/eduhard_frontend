@@ -10,12 +10,7 @@ import useToast from '@/hooks/useToast'
 import usePageTitle from '@/hooks/usePageTitle'
 import { ROUTES, APP_NAME, ROLES } from '@/constants/app'
 import { cn } from '@/utils/helpers'
-
-const loginSchema = z.object({
-  identifier: z.string().min(1, 'Enter email or admission number'),
-  password: z.string().min(1, 'Password is required'),
-  remember: z.boolean().optional(),
-})
+import { loginSchema } from '@/utils/validations'
 
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 function getFallbackRouteForRole(role) {
