@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { Book, User, Hash, MapPin, Globe, ExternalLink, Trash2, Pencil, Search, Filter, Plus, FileSpreadsheet } from 'lucide-react';
 import libraryApi from '../../api/libraryApi';
 import useToast from '../../hooks/useToast';
 import usePageTitle from '../../hooks/usePageTitle';
@@ -54,8 +55,11 @@ const BookCatalogPage = () => {
   const [reserveLoading, setReserveLoading] = useState(false);
 
   useEffect(() => {
-    fetchBooks();
-  }, [page, category, availability]);
+    const delayDebounceFn = setTimeout(() => {
+      fetchBooks();
+    }, 500);
+    return () => clearTimeout(delayDebounceFn);
+  }, [search, page, category, availability]);
 
   const fetchBooks = async () => {
     setLoading(true);
@@ -77,7 +81,7 @@ const BookCatalogPage = () => {
   };
 
   const handleSearch = (e) => {
-    e.preventDefault();
+    e?.preventDefault();
     setPage(1);
     fetchBooks();
   };
@@ -151,9 +155,9 @@ const BookCatalogPage = () => {
         </div>
         <div className="flex gap-2">
           <Link to="/library/books/import">
-            <Button variant="secondary">Bulk Import</Button>
+            <Button variant="secondary" icon={FileSpreadsheet}>Bulk Import</Button>
           </Link>
-          <Button variant="primary" onClick={() => { setSelectedBook(null); setIsFormModalOpen(true); }}>
+          <Button variant="primary" icon={Plus} onClick={() => { setSelectedBook(null); setIsFormModalOpen(true); }}>
             Add New Book
           </Button>
         </div>
@@ -164,12 +168,13 @@ const BookCatalogPage = () => {
           <Input
             placeholder="Search by title, author, ISBN..."
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={(e) => { setSearch(e.target.value); setPage(1); }}
+            icon={Search}
           />
           <Select
             options={CATEGORIES}
             value={category}
-            onChange={setCategory}
+            onChange={(e) => { setCategory(e.target.value); setPage(1); }}
           />
           <Select
             options={[
@@ -178,7 +183,7 @@ const BookCatalogPage = () => {
               { label: 'Out of Stock', value: 'out_of_stock' },
             ]}
             value={availability}
-            onChange={setAvailability}
+            onChange={(e) => { setAvailability(e.target.value); setPage(1); }}
           />
           <Button type="submit" variant="secondary">Search</Button>
         </form>
@@ -191,24 +196,41 @@ const BookCatalogPage = () => {
             <div className="grid grid-cols-1 gap-4 md:hidden">
               {books.map((book) => (
                 <div key={book.id} className="bg-surface-raised border border-border rounded-2xl p-4 flex flex-col gap-4">
-                  <div className="flex justify-between items-start">
-                    <div className="flex-1 min-w-0">
-                      <h3 className="font-bold text-text-primary truncate">{book.title}</h3>
-                      <p className="text-xs text-text-muted truncate">{book.author} | ISBN: {book.isbn || 'N/A'}</p>
+                  <div className="flex gap-4">
+                    <div className="w-20 h-28 rounded-lg bg-surface border border-border overflow-hidden shrink-0 shadow-sm">
+                      {book.cover_image_url ? (
+                        <img src={book.cover_image_url} alt={book.title} className="w-full h-full object-cover" onError={(e) => e.target.src = 'https://placehold.co/100x140?text=No+Cover'} />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center text-text-muted">
+                           <Book size={24} />
+                        </div>
+                      )}
                     </div>
-                    <Badge variant="ghost" className="capitalize shrink-0">{book.category.replace('_', ' ')}</Badge>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex justify-between items-start mb-1">
+                        <Badge variant="ghost" className="capitalize text-[10px] py-0">{book.category.replace('_', ' ')}</Badge>
+                        {book.digital_url && (
+                          <a href={book.digital_url} target="_blank" rel="noreferrer" className="text-primary-600 hover:text-primary-700">
+                             <Globe size={14} />
+                          </a>
+                        )}
+                      </div>
+                      <h3 className="font-bold text-text-primary truncate">{book.title}</h3>
+                      <p className="text-xs text-text-muted truncate">{book.author}</p>
+                      <p className="text-[10px] text-text-muted mt-1 uppercase tracking-wider font-bold">ISBN: {book.isbn || 'N/A'}</p>
+                    </div>
                   </div>
                   
                   <div className="flex items-center justify-between text-xs py-2 border-y border-border/50">
-                    <div className="flex flex-col gap-1">
-                      <span className="text-text-muted uppercase tracking-wider font-semibold text-[10px]">Location</span>
-                      <span className="text-text-primary font-medium">{book.shelf_location || 'Not set'}</span>
+                    <div className="flex flex-col gap-0.5">
+                      <span className="text-text-muted uppercase tracking-wider font-bold text-[9px]">Shelf</span>
+                      <span className="text-text-primary font-bold">{book.shelf_location || '—'}</span>
                     </div>
                     <div className="text-right">
-                      <span className="text-text-muted uppercase tracking-wider font-semibold text-[10px] block mb-1">Stock</span>
+                      <span className="text-text-muted uppercase tracking-wider font-bold text-[9px] block mb-0.5">Stock</span>
                       <div className="flex items-center gap-2">
-                        <span className="font-bold text-text-primary">{book.available_copies} / {book.total_copies}</span>
-                        <div className="w-12 h-1.5 rounded-full bg-surface overflow-hidden">
+                        <span className="font-black text-text-primary">{book.available_copies} / {book.total_copies}</span>
+                        <div className="w-12 h-1.5 rounded-full bg-surface border border-border/50 overflow-hidden">
                           <div 
                             className="h-full rounded-full transition-all" 
                             style={{ 
@@ -235,29 +257,32 @@ const BookCatalogPage = () => {
                       <Button 
                         variant="secondary" 
                         size="sm" 
-                        className="flex-1"
+                        className="flex-1 text-orange-600"
                         onClick={() => handleReserve(book.id)}
                         loading={reserveLoading}
                       >
                         Reserve
                       </Button>
                     )}
+                    {book.digital_url && (
+                      <a href={book.digital_url} target="_blank" rel="noreferrer" className="flex-1">
+                        <Button variant="secondary" size="sm" className="w-full" icon={ExternalLink}>Read</Button>
+                      </a>
+                    )}
                     <Button 
                       variant="secondary" 
                       size="sm" 
-                      className="px-3"
+                      className="px-2.5"
                       onClick={() => { setSelectedBook(book); setIsFormModalOpen(true); }}
-                    >
-                      Edit
-                    </Button>
+                      icon={Pencil}
+                    />
                     <Button 
                       variant="ghost" 
                       size="sm" 
-                      className="text-red-500 px-3 hover:bg-red-50"
+                      className="text-red-500 px-2.5 hover:bg-red-50"
                       onClick={() => { setBookToDelete(book); setIsDeleteDialogOpen(true); }}
-                    >
-                      Delete
-                    </Button>
+                      icon={Trash2}
+                    />
                   </div>
                 </div>
               ))}
@@ -268,32 +293,49 @@ const BookCatalogPage = () => {
               <table className="w-full text-left border-collapse">
                 <thead>
                   <tr className="border-b border-border">
-                    <th className="py-4 px-2 text-sm font-semibold text-text-secondary">Book Details</th>
-                    <th className="py-4 px-2 text-sm font-semibold text-text-secondary">Category</th>
-                    <th className="py-4 px-2 text-sm font-semibold text-text-secondary">Location</th>
-                    <th className="py-4 px-2 text-sm font-semibold text-text-secondary">Availability</th>
-                    <th className="py-4 px-2 text-sm font-semibold text-text-secondary text-right">Actions</th>
+                    <th className="py-4 px-2 text-sm font-black uppercase tracking-widest text-text-muted">Book Catalog</th>
+                    <th className="py-4 px-2 text-sm font-black uppercase tracking-widest text-text-muted text-center">Category</th>
+                    <th className="py-4 px-2 text-sm font-black uppercase tracking-widest text-text-muted text-center">Location</th>
+                    <th className="py-4 px-2 text-sm font-black uppercase tracking-widest text-text-muted">Availability Status</th>
+                    <th className="py-4 px-2 text-sm font-black uppercase tracking-widest text-text-muted text-right">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
                   {books.map((book) => (
-                    <tr key={book.id} className="border-b border-border hover:bg-surface-raised transition-colors">
-                      <td className="py-4 px-2">
-                        <div className="flex flex-col">
-                          <span className="font-medium text-text-primary">{book.title}</span>
-                          <span className="text-xs text-text-muted">{book.author} | ISBN: {book.isbn || 'N/A'}</span>
+                    <tr key={book.id} className="border-b border-border hover:bg-surface-raised transition-colors group">
+                      <td className="py-4 px-2 min-w-[300px]">
+                        <div className="flex gap-4">
+                          <div className="w-12 h-16 rounded-md bg-surface border border-border overflow-hidden shrink-0 group-hover:scale-105 transition-transform">
+                             {book.cover_image_url ? (
+                               <img src={book.cover_image_url} alt="" className="w-full h-full object-cover" onError={(e) => e.target.src = 'https://placehold.co/60x80?text=Cover'} />
+                             ) : (
+                               <div className="w-full h-full flex items-center justify-center text-text-muted opacity-40"><Book size={18} /></div>
+                             )}
+                          </div>
+                          <div className="flex flex-col justify-center min-w-0">
+                            <span className="font-bold text-text-primary truncate">{book.title}</span>
+                            <span className="text-xs text-text-muted truncate flex items-center gap-1.5">
+                               <User size={10} className="shrink-0" /> {book.author}
+                               <span className="opacity-30">|</span>
+                               <Hash size={10} className="shrink-0" /> {book.isbn || 'No ISBN'}
+                            </span>
+                          </div>
                         </div>
                       </td>
-                      <td className="py-4 px-2">
-                        <Badge variant="ghost" className="capitalize">{book.category.replace('_', ' ')}</Badge>
+                      <td className="py-4 px-2 text-center">
+                        <Badge variant="ghost" className="capitalize text-[10px]">{book.category.replace('_', ' ')}</Badge>
                       </td>
-                      <td className="py-4 px-2 text-sm">
-                        {book.shelf_location || 'Not set'}
+                      <td className="py-4 px-2 text-sm text-center font-bold text-text-secondary">
+                        <div className="flex items-center justify-center gap-1.5">
+                           <MapPin size={12} className="text-text-muted" />
+                           {book.shelf_location || 'N/A'}
+                        </div>
                       </td>
-                      <td className="py-4 px-2 min-w-[150px]">
-                        <div className="flex flex-col gap-1">
-                          <div className="flex justify-between text-[10px] text-text-muted">
-                            <span>{book.available_copies} of {book.total_copies} available</span>
+                      <td className="py-4 px-2 min-w-[180px]">
+                        <div className="flex flex-col gap-1.5">
+                          <div className="flex justify-between text-[10px] font-black uppercase tracking-wider text-text-muted">
+                            <span>{book.available_copies} Left</span>
+                            <span>{Math.round((book.available_copies / (book.total_copies || 1)) * 100)}%</span>
                           </div>
                           <ProgressBar 
                             value={book.available_copies} 
@@ -303,12 +345,17 @@ const BookCatalogPage = () => {
                         </div>
                       </td>
                       <td className="py-4 px-2 text-right">
-                        <div className="flex items-center justify-end gap-2">
+                        <div className="flex items-center justify-end gap-1">
+                          {book.digital_url && (
+                             <a href={book.digital_url} target="_blank" rel="noreferrer">
+                               <Button variant="ghost" size="sm" className="text-blue-600 hover:bg-blue-50" icon={Globe} title="Read Digital Copy" />
+                             </a>
+                          )}
                           {book.available_copies > 0 ? (
                             <Button 
                               variant="ghost" 
                               size="sm" 
-                              className="text-primary-600"
+                              className="text-primary-600 font-black uppercase tracking-widest text-[10px]"
                               onClick={() => { setBookToIssue(book); setIsIssueModalOpen(true); }}
                             >
                               Issue
@@ -317,7 +364,7 @@ const BookCatalogPage = () => {
                             <Button 
                               variant="ghost" 
                               size="sm" 
-                              className="text-orange-600"
+                              className="text-orange-600 font-black uppercase tracking-widest text-[10px]"
                               onClick={() => handleReserve(book.id)}
                               loading={reserveLoading}
                             >
@@ -328,17 +375,15 @@ const BookCatalogPage = () => {
                             variant="ghost" 
                             size="sm" 
                             onClick={() => { setSelectedBook(book); setIsFormModalOpen(true); }}
-                          >
-                            Edit
-                          </Button>
+                            icon={Pencil}
+                          />
                           <Button 
                             variant="ghost" 
                             size="sm" 
-                            className="text-red-500"
+                            className="text-red-500 hover:bg-red-50"
                             onClick={() => { setBookToDelete(book); setIsDeleteDialogOpen(true); }}
-                          >
-                            Delete
-                          </Button>
+                            icon={Trash2}
+                          />
                         </div>
                       </td>
                     </tr>
@@ -366,7 +411,7 @@ const BookCatalogPage = () => {
       </div>
 
       <BookFormModal
-        isOpen={isFormModalOpen}
+        open={isFormModalOpen}
         onClose={() => setIsFormModalOpen(false)}
         onSubmit={handleCreateOrUpdate}
         book={selectedBook}
@@ -374,7 +419,7 @@ const BookCatalogPage = () => {
       />
 
       <IssueBookModal
-        isOpen={isIssueModalOpen}
+        open={isIssueModalOpen}
         onClose={() => setIsIssueModalOpen(false)}
         onSubmit={handleIssue}
         preSelectedBook={bookToIssue}
@@ -382,7 +427,7 @@ const BookCatalogPage = () => {
       />
 
       <ConfirmDialog
-        isOpen={isDeleteDialogOpen}
+        open={isDeleteDialogOpen}
         onClose={() => setIsDeleteDialogOpen(false)}
         onConfirm={handleDelete}
         title="Delete Book"

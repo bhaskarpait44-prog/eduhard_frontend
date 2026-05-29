@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { AlertTriangle, CheckCircle2, Download, FileSpreadsheet, FileText, TrendingDown, Users, CalendarDays, Activity, ChevronRight, Info } from 'lucide-react'
+import { AlertTriangle, CheckCircle2, Download, FileSpreadsheet, FileText, TrendingDown, Users, CalendarDays, Activity, ChevronRight, Info, Loader2 } from 'lucide-react'
 
 import Modal from '@/components/ui/Modal'
 import Button from '@/components/ui/Button'
@@ -70,14 +70,14 @@ const AttendanceGrid = ({
   return (
     <div className="space-y-6">
       {/* ── Sub Header ── */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between px-1">
         <div className="flex items-center gap-3">
-          <div className="h-10 w-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center">
+          <div className="h-10 w-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center border border-primary/10 shadow-inner">
             <CalendarDays size={20} />
           </div>
           <div>
-            <h2 className="text-sm font-black text-text-primary tracking-tight uppercase">Monthly Grid View</h2>
-            <p className="text-[10px] font-bold text-text-muted uppercase tracking-widest mt-0.5">
+            <h2 className="text-base font-bold text-text-primary tracking-tight uppercase tracking-[0.05em]">Monthly Grid View</h2>
+            <p className="text-[10px] font-semibold text-text-muted uppercase tracking-[0.15em] mt-0.5 opacity-70">
               {canEdit ? 'Full write access active' : 'Read-only mode active'}
             </p>
           </div>
@@ -85,11 +85,11 @@ const AttendanceGrid = ({
 
         <div className="flex gap-2">
           <Button 
-            variant="outline" 
+            variant="secondary" 
             size="sm"
-            icon={Download} 
+            icon={FileSpreadsheet} 
             onClick={exportCsv}
-            className="h-9 rounded-xl px-4 text-[10px] font-black uppercase tracking-widest"
+            className="h-9 rounded-2xl px-5 text-[10px] font-bold uppercase tracking-widest shadow-sm hover:shadow active:scale-95 transition-all"
           >
             Export CSV
           </Button>
@@ -98,7 +98,7 @@ const AttendanceGrid = ({
 
       {/* ── Grid Container ── */}
       <section
-        className="rounded-2xl border bg-surface shadow-sm overflow-hidden"
+        className="rounded-[28px] border bg-surface shadow-sm overflow-hidden"
         style={{ borderColor: 'var(--color-border)' }}
       >
         {loading ? (
@@ -108,22 +108,22 @@ const AttendanceGrid = ({
             <table className="w-full border-collapse">
               <thead>
                 <tr className="bg-surface-raised/30 border-b" style={{ borderColor: 'var(--color-border)' }}>
-                  <th className="sticky left-0 z-10 min-w-[200px] px-4 py-4 text-left text-[9px] font-black uppercase tracking-widest text-text-muted shadow-[2px_0_5px_rgba(0,0,0,0.02)]" style={{ backgroundColor: 'var(--color-surface)' }}>
+                  <th className="sticky left-0 z-10 min-w-[220px] px-6 py-5 text-left text-[10px] font-bold uppercase tracking-[0.15em] text-text-muted shadow-[2px_0_10px_rgba(0,0,0,0.03)] backdrop-blur-md bg-white/95" style={{ backgroundColor: 'inherit' }}>
                     Student Information
                   </th>
                   {days.map((day) => (
                     <th
                       key={day.date}
                       className={cn(
-                        "min-w-[36px] px-1 py-4 text-center text-[10px] font-black",
-                        day.weekend ? 'text-error/40' : 'text-text-muted'
+                        "min-w-[38px] px-1 py-5 text-center text-[11px] font-bold",
+                        day.weekend ? 'text-rose-400' : 'text-text-muted'
                       )}
                     >
                       {day.day}
                     </th>
                   ))}
-                  <th className="min-w-[100px] px-4 py-4 text-center text-[9px] font-black uppercase tracking-widest text-text-muted">
-                    Attendance
+                  <th className="min-w-[120px] px-6 py-5 text-center text-[10px] font-bold uppercase tracking-[0.15em] text-text-muted bg-surface-raised/10">
+                    Summary
                   </th>
                 </tr>
               </thead>
@@ -133,13 +133,13 @@ const AttendanceGrid = ({
                   const stats = computeStudentStats(student.records || [])
 
                   return (
-                    <tr key={student.enrollment_id} className="group hover:bg-surface-raised/40 transition-colors">
-                      <td className="sticky left-0 z-10 px-4 py-3 shadow-[2px_0_5px_rgba(0,0,0,0.02)]" style={{ backgroundColor: 'inherit' }}>
+                    <tr key={student.enrollment_id} className="group hover:bg-surface-raised/40 transition-colors duration-200">
+                      <td className="sticky left-0 z-10 px-6 py-4 shadow-[2px_0_10px_rgba(0,0,0,0.03)] backdrop-blur-md bg-white/95" style={{ backgroundColor: 'inherit' }}>
                         <div className="flex flex-col min-w-0">
-                          <p className="text-xs font-black text-text-primary group-hover:text-primary transition-colors truncate uppercase tracking-tight">
+                          <p className="text-sm font-bold text-text-primary group-hover:text-primary transition-colors truncate uppercase tracking-tight leading-tight">
                             {student.first_name} {student.last_name}
                           </p>
-                          <p className="mt-0.5 text-[9px] font-bold text-text-muted uppercase tracking-widest">
+                          <p className="mt-1 text-[10px] font-semibold text-text-muted uppercase tracking-[0.1em] opacity-60">
                             Roll: {student.roll_number || '--'}
                           </p>
                         </div>
@@ -162,13 +162,14 @@ const AttendanceGrid = ({
                                 setOverrideReason('')
                               }}
                               className={cn(
-                                "mx-auto flex h-7 w-7 items-center justify-center rounded-lg text-[10px] font-black transition-all",
-                                record?.attendance_id && canEdit ? "hover:scale-110 active:scale-90" : "cursor-default"
+                                "mx-auto flex h-8 w-8 items-center justify-center rounded-[10px] text-[10px] font-bold transition-all duration-200 shadow-sm",
+                                record?.attendance_id && canEdit ? "hover:scale-110 active:scale-90 hover:shadow-md" : "cursor-default"
                               )}
                               style={{
                                 backgroundColor: style.bg,
                                 color: style.color,
                                 opacity: day.isFuture ? 0.3 : 1,
+                                border: style.bg !== 'transparent' ? `1px solid ${style.color}22` : 'none'
                               }}
                               title={!record?.attendance_id ? undefined : canEdit ? 'Click to override status' : 'Records locked'}
                             >
@@ -178,17 +179,17 @@ const AttendanceGrid = ({
                         )
                       })}
 
-                      <td className="px-4 py-3 text-center">
+                      <td className="px-6 py-4 text-center bg-surface-raised/5">
                         <div className="flex flex-col items-center">
                           <span className={cn(
-                            "text-[11px] font-black",
-                            stats.percentage < 75 ? 'text-error' : 'text-success'
+                            "text-xs font-bold",
+                            stats.percentage < 75 ? 'text-rose-600' : 'text-emerald-600'
                           )}>
                             {stats.percentage.toFixed(0)}%
                           </span>
-                          <div className="flex gap-1.5 mt-1 text-[8px] font-black uppercase tracking-tighter opacity-40">
-                            <span>P:{stats.present}</span>
-                            <span>A:{stats.absent}</span>
+                          <div className="flex gap-2 mt-1.5 text-[9px] font-bold uppercase tracking-widest opacity-40">
+                            <span className="text-emerald-600">P:{stats.present}</span>
+                            <span className="text-rose-600">A:{stats.absent}</span>
                           </div>
                         </div>
                       </td>
@@ -198,8 +199,8 @@ const AttendanceGrid = ({
 
                 {!!rows.length && (
                   <tr className="bg-surface-raised/20">
-                    <td className="sticky left-0 z-10 px-4 py-4 shadow-[2px_0_5px_rgba(0,0,0,0.02)]" style={{ backgroundColor: 'inherit' }}>
-                      <p className="text-[10px] font-black text-text-muted uppercase tracking-widest">Daily Summary</p>
+                    <td className="sticky left-0 z-10 px-6 py-5 shadow-[2px_0_10px_rgba(0,0,0,0.03)] backdrop-blur-md bg-white/95" style={{ backgroundColor: 'inherit' }}>
+                      <p className="text-[10px] font-bold text-text-muted uppercase tracking-[0.2em]">Daily Rate</p>
                     </td>
                     {days.map((day) => {
                       const total = dailyTotals[day.date] || { present: 0, total: 0 }
@@ -208,8 +209,8 @@ const AttendanceGrid = ({
                         <td key={day.date} className="px-0.5 py-1 text-center border-l border-border/10">
                           <div 
                             className={cn(
-                              "text-[9px] font-black",
-                              pct < 80 && total.total ? 'text-orange-600' : 'text-text-muted'
+                              "text-[10px] font-bold",
+                              pct < 80 && total.total ? 'text-amber-600' : 'text-text-muted opacity-60'
                             )}
                           >
                             {total.total ? `${Math.round(pct)}%` : '--'}
@@ -217,8 +218,8 @@ const AttendanceGrid = ({
                         </td>
                       )
                     })}
-                    <td className="px-4 py-4 text-center">
-                      <Download size={14} className="mx-auto text-text-muted/30" />
+                    <td className="px-6 py-5 text-center bg-surface-raised/10">
+                      <TrendingDown size={16} className="mx-auto text-text-muted/30" />
                     </td>
                   </tr>
                 )}
@@ -229,105 +230,108 @@ const AttendanceGrid = ({
       </section>
 
       {/* ── Analytical Summary ── */}
-      <section className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+      <section className="grid grid-cols-1 gap-5 lg:grid-cols-3">
         <SummaryCard
           icon={TrendingDown}
           title="Attention Required"
-          subtitle="Top 5 students by absence count"
-          items={summary.mostAbsent.map((item) => ({ name: item.name, detail: `${item.absent} Days Absent` }))}
+          subtitle="Top absence counts"
+          items={summary.mostAbsent.map((item) => ({ name: item.name, detail: `${item.absent} Days Abs` }))}
           tone="warning"
         />
         <SummaryCard
           icon={AlertTriangle}
           title="Below Threshold"
-          subtitle="Students with < 75% attendance"
-          items={summary.belowThreshold.map((item) => ({ name: item.name, detail: `${item.percentage.toFixed(0)}% Attendance` }))}
+          subtitle="Target < 75%"
+          items={summary.belowThreshold.map((item) => ({ name: item.name, detail: `${item.percentage.toFixed(0)}% Rate` }))}
           tone="error"
         />
         <SummaryCard
           icon={CheckCircle2}
-          title="Perfect Score"
-          subtitle="Students with 100% attendance"
-          items={summary.perfectAttendance.map((item) => ({ name: item.name, detail: 'Perfect Attendance' }))}
+          title="Perfect Attendance"
+          subtitle="Maintaining 100%"
+          items={summary.perfectAttendance.map((item) => ({ name: item.name, detail: '100% Score' }))}
           tone="success"
         />
       </section>
 
       {/* ── Override Modal ── */}
       <Modal open={!!editingCell} onClose={() => setEditingCell(null)} size="sm">
-        <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-orange-100 text-orange-600 mb-6">
-          <Activity size={24} />
-        </div>
-        
-        <h3 className="text-xl font-black text-text-primary tracking-tight">Manual Override</h3>
-        <p className="mt-2 text-sm font-medium text-text-muted leading-relaxed">
-          You are modifying the attendance record for <span className="font-bold text-text-primary">{editingCell?.student?.first_name} {editingCell?.student?.last_name}</span> on <span className="font-bold text-text-primary">{editingCell?.date}</span>.
-        </p>
+        <div className="p-1">
+          <div className="flex h-14 w-14 items-center justify-center rounded-[20px] bg-amber-50 text-amber-600 mb-8 border border-amber-100 shadow-inner">
+            <Activity size={28} />
+          </div>
+          
+          <h3 className="text-2xl font-bold text-text-primary tracking-tight leading-tight">Manual Override</h3>
+          <p className="mt-3 text-sm font-medium text-text-muted leading-relaxed">
+            You are modifying the attendance record for <span className="font-bold text-text-primary">{editingCell?.student?.first_name} {editingCell?.student?.last_name}</span>.
+          </p>
 
-        <div className="mt-8 space-y-6">
-          <div className="grid grid-cols-2 gap-2">
-            {['present', 'absent', 'late', 'half_day'].map((status) => {
-              const style = STATUS_STYLE[status]
-              const selected = overrideStatus === status
-              return (
-                <button
-                  key={status}
-                  type="button"
-                  onClick={() => setOverrideStatus(status)}
-                  className={cn(
-                    "h-11 rounded-xl border text-[11px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2",
-                    selected ? "text-white shadow-lg" : "text-text-primary hover:bg-surface-raised"
-                  )}
-                  style={{
-                    borderColor: selected ? style.color : 'var(--color-border)',
-                    backgroundColor: selected ? style.color : 'transparent',
-                    boxShadow: selected ? `0 6px 16px ${style.color}44` : 'none'
-                  }}
-                >
-                  {style.label} {status.replace('_', ' ')}
-                </button>
-              )
-            })}
+          <div className="mt-10 space-y-8">
+            <div className="grid grid-cols-2 gap-3">
+              {['present', 'absent', 'late', 'half_day'].map((status) => {
+                const style = STATUS_STYLE[status]
+                const selected = overrideStatus === status
+                return (
+                  <button
+                    key={status}
+                    type="button"
+                    onClick={() => setOverrideStatus(status)}
+                    className={cn(
+                      "h-12 rounded-[18px] border text-[11px] font-bold uppercase tracking-widest transition-all duration-200 flex items-center justify-center gap-2 active:scale-95",
+                      selected ? "text-white shadow-lg" : "text-text-primary hover:bg-surface-raised border-border/60"
+                    )}
+                    style={{
+                      borderColor: selected ? style.color : undefined,
+                      backgroundColor: selected ? style.color : undefined,
+                      boxShadow: selected ? `0 8px 20px ${style.color}44` : 'none'
+                    }}
+                  >
+                    <span className="text-base">{style.label}</span>
+                    <span className="opacity-80">{status.replace('_', ' ')}</span>
+                  </button>
+                )
+              })}
+            </div>
+
+            <div className="space-y-2.5">
+              <label className="text-[10px] font-bold uppercase tracking-[0.2em] text-text-muted ml-1 opacity-70">Audit Reason</label>
+              <textarea
+                value={overrideReason}
+                onChange={(e) => setOverrideReason(e.target.value)}
+                rows={3}
+                placeholder="Reason for manual update (required)..."
+                className="w-full rounded-[20px] px-5 py-4 text-sm outline-none border border-border focus:ring-2 focus:ring-primary/10 transition-all bg-surface-raised font-medium shadow-inner"
+              />
+            </div>
           </div>
 
-          <div className="space-y-2">
-            <label className="text-[10px] font-black uppercase tracking-widest text-text-muted ml-1">Reason for override</label>
-            <textarea
-              value={overrideReason}
-              onChange={(e) => setOverrideReason(e.target.value)}
-              rows={3}
-              placeholder="Required for audit compliance..."
-              className="w-full rounded-xl px-4 py-3 text-sm outline-none border border-border focus:ring-2 focus:ring-primary/20 transition-all bg-surface-raised"
-            />
+          <div className="mt-10 grid grid-cols-2 gap-4">
+            <button
+              type="button"
+              onClick={() => setEditingCell(null)}
+              className="h-14 rounded-[22px] bg-surface-raised text-[11px] font-bold uppercase tracking-widest text-text-primary hover:bg-border/20 transition-all active:scale-95 border border-border"
+            >
+              Cancel
+            </button>
+            <button
+              disabled={!overrideReason.trim() || savingOverride}
+              onClick={async () => {
+                setSavingOverride(true)
+                try {
+                  await onOverride(editingCell.record.attendance_id, {
+                    status: overrideStatus,
+                    reason: overrideReason.trim(),
+                  })
+                  setEditingCell(null)
+                } finally {
+                  setSavingOverride(false)
+                }
+              }}
+              className="h-14 rounded-[22px] bg-primary text-[11px] font-bold uppercase tracking-widest text-white shadow-xl shadow-primary/30 transition-all flex items-center justify-center gap-2 active:scale-95 disabled:opacity-50"
+            >
+              {savingOverride ? <Loader2 size={18} className="animate-spin" /> : 'Apply Update'}
+            </button>
           </div>
-        </div>
-
-        <div className="mt-8 grid grid-cols-2 gap-3">
-          <button
-            type="button"
-            onClick={() => setEditingCell(null)}
-            className="h-12 rounded-2xl bg-surface-raised text-[11px] font-black uppercase tracking-widest text-text-primary hover:bg-border/20 transition-colors border border-border"
-          >
-            Cancel
-          </button>
-          <button
-            disabled={!overrideReason.trim() || savingOverride}
-            onClick={async () => {
-              setSavingOverride(true)
-              try {
-                await onOverride(editingCell.record.attendance_id, {
-                  status: overrideStatus,
-                  reason: overrideReason.trim(),
-                })
-                setEditingCell(null)
-              } finally {
-                setSavingOverride(false)
-              }
-            }}
-            className="h-12 rounded-2xl bg-primary text-[11px] font-black uppercase tracking-widest text-white shadow-xl shadow-primary/30 transition-all flex items-center justify-center gap-2 active:scale-95 disabled:opacity-50"
-          >
-            {savingOverride ? <Loader2 size={16} className="animate-spin" /> : 'Save Changes'}
-          </button>
         </div>
       </Modal>
     </div>
@@ -336,36 +340,36 @@ const AttendanceGrid = ({
 
 const SummaryCard = ({ icon: Icon, title, subtitle, items, tone }) => {
   const tones = {
-    warning: { color: '#f59e0b', bg: 'bg-orange-50/50', border: 'border-orange-100', item: 'bg-orange-50 text-orange-800' },
-    error: { color: '#ef4444', bg: 'bg-red-50/50', border: 'border-red-100', item: 'bg-red-50 text-red-800' },
-    success: { color: '#10b981', bg: 'bg-emerald-50/50', border: 'border-emerald-100', item: 'bg-emerald-50 text-emerald-800' }
+    warning: { color: '#f59e0b', bg: 'bg-orange-50/50', border: 'border-orange-100', item: 'bg-white text-orange-900 border-orange-100' },
+    error: { color: '#ef4444', bg: 'bg-rose-50/50', border: 'border-rose-100', item: 'bg-white text-rose-900 border-rose-100' },
+    success: { color: '#10b981', bg: 'bg-emerald-50/50', border: 'border-emerald-100', item: 'bg-white text-emerald-900 border-emerald-100' }
   }
-  const config = tones[tone] || { color: 'var(--color-primary)', bg: 'bg-surface-raised', border: 'border-border', item: 'bg-white text-text-primary' }
+  const config = tones[tone] || { color: 'var(--color-primary)', bg: 'bg-surface-raised', border: 'border-border', item: 'bg-white text-text-primary border-border' }
 
   return (
-    <div className={cn("rounded-2xl border p-5 sm:p-6 shadow-sm flex flex-col", config.bg, config.border)}>
-      <div className="flex items-center gap-3 mb-5">
-        <div className="h-9 w-9 rounded-xl bg-white flex items-center justify-center shadow-sm" style={{ color: config.color }}>
-          <Icon size={18} />
+    <div className={cn("rounded-[28px] border p-6 shadow-sm flex flex-col transition-all hover:shadow-md", config.bg, config.border)}>
+      <div className="flex items-center gap-4 mb-6">
+        <div className="h-11 w-11 rounded-[18px] bg-white flex items-center justify-center shadow-sm border border-white" style={{ color: config.color }}>
+          <Icon size={20} />
         </div>
         <div>
-          <h3 className="text-sm font-black text-text-primary tracking-tight leading-none">{title}</h3>
-          <p className="text-[10px] font-bold text-text-muted mt-1 uppercase tracking-widest">{subtitle}</p>
+          <h3 className="text-base font-bold text-text-primary tracking-tight leading-tight">{title}</h3>
+          <p className="text-[10px] font-semibold text-text-muted mt-1 uppercase tracking-[0.15em] opacity-60">{subtitle}</p>
         </div>
       </div>
 
-      <div className="flex-1 space-y-2">
+      <div className="flex-1 space-y-3">
         {items.length ? items.map((item, idx) => (
           <div
             key={idx}
-            className={cn("px-3 py-2.5 rounded-xl text-[11px] font-bold flex items-center justify-between shadow-xs", config.item)}
+            className={cn("px-4 py-3 rounded-2xl text-[11px] font-bold flex items-center justify-between shadow-sm border transition-all hover:translate-x-1", config.item)}
           >
-            <span className="truncate mr-2 uppercase tracking-tight">{item.name}</span>
-            <span className="shrink-0 opacity-60 font-black uppercase tracking-tighter text-[9px]">{item.detail}</span>
+            <span className="truncate mr-3 uppercase tracking-[0.05em]">{item.name}</span>
+            <span className="shrink-0 opacity-60 font-bold uppercase tracking-widest text-[9px] bg-surface-raised/40 px-2 py-0.5 rounded-lg border border-white/50">{item.detail}</span>
           </div>
         )) : (
-          <div className="h-full flex items-center justify-center py-6 border border-dashed border-border/40 rounded-xl">
-             <p className="text-[11px] font-bold text-text-muted/40 uppercase tracking-widest italic">No data available</p>
+          <div className="h-full flex items-center justify-center py-8 border border-dashed border-border/60 rounded-[22px]">
+             <p className="text-[11px] font-bold text-text-muted/40 uppercase tracking-widest italic tracking-[0.2em]">Perfect Streak</p>
           </div>
         )}
       </div>
@@ -396,8 +400,8 @@ const buildSummary = (rows) => {
 
   return {
     mostAbsent: [...normalized].sort((a, b) => b.absent - a.absent).slice(0, 5),
-    belowThreshold: normalized.filter((item) => item.percentage < 75).sort((a, b) => a.percentage - b.percentage),
-    perfectAttendance: normalized.filter((item) => item.percentage === 100),
+    belowThreshold: normalized.filter((item) => item.percentage < 75).sort((a, b) => a.percentage - b.percentage).slice(0, 5),
+    perfectAttendance: normalized.filter((item) => item.percentage === 100).slice(0, 5),
   }
 }
 
@@ -415,13 +419,13 @@ const buildDailyTotals = (rows) => {
 }
 
 const GridSkeleton = () => (
-  <div className="p-6 space-y-4 animate-pulse">
-    <div className="h-10 w-full rounded-xl bg-surface-raised" />
+  <div className="p-8 space-y-5 animate-pulse">
+    <div className="h-12 w-full rounded-2xl bg-surface-raised" />
     {[...Array(8)].map((_, index) => (
-      <div key={index} className="flex gap-2">
-        <div className="h-12 w-48 rounded-xl bg-surface-raised" />
+      <div key={index} className="flex gap-3">
+        <div className="h-14 w-56 rounded-2xl bg-surface-raised" />
         {[...Array(15)].map((__, cellIndex) => (
-          <div key={cellIndex} className="h-12 flex-1 rounded-xl bg-surface-raised" />
+          <div key={cellIndex} className="h-14 flex-1 rounded-2xl bg-surface-raised" />
         ))}
       </div>
     ))}

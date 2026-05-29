@@ -1,9 +1,12 @@
 import { useEffect, useMemo, useState } from 'react'
+import { Download, FileSpreadsheet, ChevronLeft, ChevronRight, CalendarDays, History } from 'lucide-react'
 import usePageTitle from '@/hooks/usePageTitle'
 import useToast from '@/hooks/useToast'
 import useAttendance from '@/hooks/useAttendance'
 import Select from '@/components/ui/Select'
+import Button from '@/components/ui/Button'
 import AttendanceGrid from '@/components/teacher/AttendanceGrid'
+import { downloadAttendanceRegisterPdf } from '@/api/attendanceApi'
 
 const AttendanceRegister = () => {
   usePageTitle('Attendance Register')
@@ -20,6 +23,7 @@ const AttendanceRegister = () => {
   const [assignmentKey, setAssignmentKey] = useState('')
   const [month, setMonth] = useState(String(new Date().getMonth() + 1))
   const [year, setYear]   = useState(String(new Date().getFullYear()))
+  const [downloading, setDownloading] = useState(false)
 
   const registerAssignments = useMemo(
     () => dedupeAssignmentsForRegister(assignmentOptions),
@@ -67,38 +71,91 @@ const AttendanceRegister = () => {
     })
   }, [currentAssignment, month, year, loadRegister, toastError])
 
+  const handleDownloadPdf = async () => {
+    if (!registerData?.session_id || !currentAssignment) return
+    setDownloading(true)
+    try {
+      const monthName = new Date(parseInt(year), parseInt(month) - 1).toLocaleString('default', { month: 'long' })
+      const response = await downloadAttendanceRegisterPdf({
+        session_id: registerData.session_id,
+        class_id: currentAssignment.class_id,
+        section_id: currentAssignment.section_id,
+        month: parseInt(month),
+        year: parseInt(year),
+      })
+      
+      const blob = response.data || response
+      if (blob.type === 'application/json') {
+        const text = await blob.text()
+        const errorData = JSON.parse(text)
+        throw new Error(errorData.message || 'Failed to generate PDF')
+      }
+
+      const url = window.URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.href = url
+      link.setAttribute('download', `Attendance_Register_${currentAssignment.class_name}_${currentAssignment.section_name}_${monthName}_${year}.pdf`)
+      document.body.appendChild(link)
+      link.click()
+      link.remove()
+      setTimeout(() => window.URL.revokeObjectURL(url), 1000)
+      toastSuccess('Register downloaded successfully.')
+    } catch (err) {
+      toastError(err.message || 'Failed to download register PDF.')
+    } finally { setDownloading(false) }
+  }
+
   return (
-    <div className="space-y-6 pb-10">
+    <div className="space-y-6 pb-20 lg:pb-8">
       {/* ── Header ── */}
-      <section className="rounded-2xl border p-5 sm:p-6" style={{ borderColor: 'var(--color-border)' }}>
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+      <section 
+        className="rounded-[28px] border p-6 overflow-hidden" 
+        style={{ 
+          borderColor: 'var(--color-border)',
+          background: 'linear-gradient(135deg, rgba(15, 118, 110, 0.12), rgba(20, 184, 166, 0.05) 55%, var(--color-surface) 100%)'
+        }}
+      >
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
           <div className="min-w-0">
-            <p className="text-[11px] font-semibold uppercase tracking-widest" style={{ color: '#0f766e' }}>
-              Attendance Management
+            <p className="text-sm font-semibold uppercase tracking-[0.18em]" style={{ color: '#0f766e' }}>
+              Attendance Records
             </p>
-            <h1 className="mt-1.5 text-2xl font-bold sm:text-3xl" style={{ color: 'var(--color-text-primary)' }}>
+            <h1 className="mt-2 text-2xl font-bold leading-tight sm:text-3xl" style={{ color: 'var(--color-text-primary)' }}>
               Attendance Register
             </h1>
-            <p className="mt-1.5 max-w-xl text-sm leading-relaxed" style={{ color: 'var(--color-text-secondary)' }}>
+            <p className="mt-2 text-sm sm:text-base opacity-80" style={{ color: 'var(--color-text-secondary)' }}>
               Monthly attendance grid for your assigned sections. View trends, perform quick overrides, and prepare for parent meetings.
             </p>
+          </div>
+          <div className="flex gap-2">
+            <Button 
+              variant="primary" 
+              size="sm" 
+              icon={Download} 
+              onClick={handleDownloadPdf}
+              loading={downloading}
+              disabled={!registerData || loadingRegister}
+              className="rounded-2xl font-semibold shadow-lg shadow-primary/20 h-11 px-6"
+            >
+              Export PDF
+            </Button>
           </div>
         </div>
 
         {/* ── Filters ── */}
-        <div className="mt-5 grid grid-cols-1 gap-4 xl:grid-cols-6">
-          <div className="space-y-1.5 xl:col-span-2">
-            <label className="text-sm font-medium" style={{ color: 'var(--color-text-primary)' }}>Assigned Section</label>
+        <div className="mt-8 grid grid-cols-1 gap-5 xl:grid-cols-6 items-end border-t border-dashed border-border pt-8">
+          <div className="space-y-2 xl:col-span-2">
+            <label className="text-sm font-semibold ml-1" style={{ color: 'var(--color-text-primary)' }}>Assigned Section</label>
             <Select
               value={assignmentKey}
               onChange={(e) => setAssignmentKey(e.target.value)}
               options={registerAssignments}
               placeholder="Select section"
-              className="h-9 px-3 py-1 rounded-xl bg-surface-raised border border-border/50 text-xs font-semibold focus:border-primary"
+              className="h-11 px-4 rounded-2xl bg-surface-raised border border-border/50 text-sm font-semibold focus:border-primary transition-all"
             />
           </div>
-          <div className="space-y-1.5 xl:col-span-2">
-            <label className="text-sm font-medium" style={{ color: 'var(--color-text-primary)' }}>Month</label>
+          <div className="space-y-2 xl:col-span-2">
+            <label className="text-sm font-semibold ml-1" style={{ color: 'var(--color-text-primary)' }}>Month</label>
             <Select
               value={month}
               onChange={(e) => setMonth(e.target.value)}
@@ -106,16 +163,16 @@ const AttendanceRegister = () => {
                 value: String(index + 1),
                 label: new Date(2024, index, 1).toLocaleString('en-IN', { month: 'long' }),
               }))}
-              className="h-9 px-3 py-1 rounded-xl bg-surface-raised border border-border/50 text-xs font-semibold focus:border-primary"
+              className="h-11 px-4 rounded-2xl bg-surface-raised border border-border/50 text-sm font-semibold focus:border-primary transition-all"
             />
           </div>
-          <div className="space-y-1.5 xl:col-span-2">
-            <label className="text-sm font-medium" style={{ color: 'var(--color-text-primary)' }}>Year</label>
+          <div className="space-y-2 xl:col-span-2">
+            <label className="text-sm font-semibold ml-1" style={{ color: 'var(--color-text-primary)' }}>Academic Year</label>
             <Select
               value={year}
               onChange={(e) => setYear(e.target.value)}
               options={buildYearOptions()}
-              className="h-9 px-3 py-1 rounded-xl bg-surface-raised border border-border/50 text-xs font-semibold focus:border-primary"
+              className="h-11 px-4 rounded-2xl bg-surface-raised border border-border/50 text-sm font-semibold focus:border-primary transition-all"
             />
           </div>
         </div>

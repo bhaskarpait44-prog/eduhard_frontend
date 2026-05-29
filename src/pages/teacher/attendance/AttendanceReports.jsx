@@ -1,11 +1,12 @@
 import { useEffect, useMemo, useState } from 'react'
-import { BellRing, Download, PhoneCall, TriangleAlert, TrendingUp, Users, AlertCircle, Activity, ChevronRight, RefreshCw, CalendarDays, FilterX, Search, CheckCircle2, Layout } from 'lucide-react'
+import { BellRing, Download, PhoneCall, TriangleAlert, TrendingUp, Users, AlertCircle, Activity, ChevronRight, RefreshCw, CalendarDays, FilterX, Search, CheckCircle2, Layout, FileText, FileSpreadsheet } from 'lucide-react'
 import usePageTitle from '@/hooks/usePageTitle'
 import useToast from '@/hooks/useToast'
 import useAttendance from '@/hooks/useAttendance'
 import Select from '@/components/ui/Select'
 import Button from '@/components/ui/Button'
 import { cn } from '@/utils/helpers'
+import { downloadAttendanceSummaryPdf } from '@/api/attendanceApi'
 
 // ─────────────────────────────────────────────────────────────────────────────
 //  STRUCTURAL COMPONENTS
@@ -13,91 +14,104 @@ import { cn } from '@/utils/helpers'
 
 const StatCard = ({ label, value, sub, color, icon: Icon }) => (
   <div 
-    className="bg-surface border rounded-2xl p-4 sm:p-5 flex flex-col shadow-sm transition-all hover:shadow-md"
+    className="bg-surface border rounded-[28px] p-5 flex flex-col shadow-sm transition-all hover:shadow-md group"
     style={{ borderColor: 'var(--color-border)' }}
   >
-    <div className="flex items-center justify-between mb-4">
-      <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-surface-raised" style={{ color }}>
-        <Icon size={16} />
+    <div className="flex items-center justify-between mb-5">
+      <div className="flex h-10 w-10 items-center justify-center rounded-[18px] bg-surface-raised shadow-inner" style={{ color }}>
+        <Icon size={20} />
       </div>
-      <span className="text-[10px] font-black tracking-widest uppercase text-text-muted">{label}</span>
+      <span className="text-[10px] font-bold tracking-[0.12em] uppercase text-text-muted group-hover:text-text-primary transition-colors">{label}</span>
     </div>
     <div>
-      <span className="text-2xl font-black text-text-primary leading-none tracking-tight">{value}</span>
-      {sub && <p className="text-[10px] font-bold text-text-muted uppercase mt-1.5 tracking-tighter">{sub}</p>}
+      <span className="text-3xl font-bold text-text-primary leading-none tracking-tight">{value}</span>
+      {sub && <p className="text-[10px] font-semibold text-text-muted uppercase mt-2 tracking-tighter opacity-70">{sub}</p>}
     </div>
   </div>
 )
 
-const ReportCard = ({ title, subtitle, onExport, accent = 'var(--color-primary)', children }) => (
+const ReportCard = ({ title, subtitle, onExport, onExportPdf, accent = 'var(--color-primary)', children }) => (
   <div 
-    className="bg-surface border rounded-2xl overflow-hidden flex flex-col shadow-sm"
+    className="bg-surface border rounded-[28px] overflow-hidden flex flex-col shadow-sm h-full"
     style={{ borderColor: 'var(--color-border)' }}
   >
-    <div className="p-4 sm:px-6 sm:py-5 border-b bg-surface-raised/30 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4" style={{ borderColor: 'var(--color-border)' }}>
+    <div className="p-5 sm:px-6 sm:py-5 border-b bg-surface-raised/20 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4" style={{ borderColor: 'var(--color-border)' }}>
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-3">
-          <div className="w-1 h-6 rounded-full shrink-0" style={{ background: accent }} />
-          <h2 className="text-sm sm:text-base font-black text-text-primary tracking-tight truncate">{title}</h2>
+          <div className="w-1.5 h-5 rounded-full shrink-0 shadow-sm" style={{ background: accent }} />
+          <h2 className="text-base font-bold text-text-primary tracking-tight truncate">{title}</h2>
         </div>
-        <p className="text-xs font-medium text-text-muted mt-1 ml-4 truncate">{subtitle}</p>
+        <p className="text-[11px] font-semibold text-text-muted mt-1 ml-4.5 truncate uppercase tracking-wider opacity-60">{subtitle}</p>
       </div>
-      <Button 
-        variant="outline"
-        size="sm"
-        icon={Download}
-        onClick={onExport}
-        className="h-8 rounded-xl px-4 text-[10px] font-black uppercase tracking-widest"
-      >
-        Export CSV
-      </Button>
+      <div className="flex gap-2">
+        {onExportPdf && (
+          <Button 
+            variant="secondary"
+            size="sm"
+            icon={Download}
+            onClick={onExportPdf}
+            className="h-9 rounded-2xl px-4 text-[10px] font-bold uppercase tracking-widest shadow-sm hover:shadow active:scale-95 transition-all"
+          >
+            PDF
+          </Button>
+        )}
+        <Button 
+          variant="secondary"
+          size="sm"
+          icon={FileSpreadsheet}
+          onClick={onExport}
+          className="h-9 rounded-2xl px-4 text-[10px] font-bold uppercase tracking-widest shadow-sm hover:shadow active:scale-95 transition-all"
+        >
+          CSV
+        </Button>
+      </div>
     </div>
-    <div className="p-4 sm:p-6 flex-1">{children}</div>
+    <div className="p-5 sm:p-6 flex-1">{children}</div>
   </div>
 )
 
 const PanelSkeleton = () => (
-  <div className="flex flex-col gap-4">
+  <div className="flex flex-col gap-4 h-full">
     {[...Array(5)].map((_, i) => (
-      <div key={i} className="h-12 rounded-xl bg-surface-raised animate-pulse" />
+      <div key={i} className="h-14 rounded-2xl bg-surface-raised animate-pulse" />
     ))}
   </div>
 )
 
 const EmptyPanel = ({ text, icon: Icon = TriangleAlert }) => (
-  <div className="border border-dashed rounded-2xl p-12 text-center flex flex-col items-center gap-4 bg-surface-raised/10" style={{ borderColor: 'var(--color-border)' }}>
-    <div className="h-12 w-12 rounded-full bg-surface-raised flex items-center justify-center text-text-muted/40">
-      <Icon size={24} />
+  <div className="border border-dashed rounded-[24px] p-12 text-center flex flex-col items-center gap-5 bg-surface-raised/10" style={{ borderColor: 'var(--color-border)' }}>
+    <div className="h-14 w-14 rounded-[22px] bg-surface-raised flex items-center justify-center text-text-muted/40 shadow-inner">
+      <Icon size={28} />
     </div>
-    <p className="text-sm font-bold text-text-secondary italic">{text}</p>
+    <p className="text-sm font-semibold text-text-secondary italic opacity-80">{text}</p>
   </div>
 )
 
 
 // ─────────────────────────────────────────────────────────────────────────────
-//  REPORT PANELS — logic identical to original
+//  REPORT PANELS
 // ─────────────────────────────────────────────────────────────────────────────
 
 const SummaryTable = ({ rows, threshold }) => {
   if (!rows.length) return <EmptyPanel text="No attendance records found for this range." />
   return (
-    <div className="overflow-x-auto -mx-4 sm:mx-0">
+    <div className="overflow-x-auto -mx-5 sm:mx-0">
       <table className="w-full text-left border-collapse">
         <thead>
           <tr className="border-b bg-surface-raised/10" style={{ borderColor: 'var(--color-border)' }}>
             {[
-              { label: 'Roll', width: '60px', align: 'center' },
-              { label: 'Student Information', width: 'auto', align: 'left' },
-              { label: 'Days', width: '60px', align: 'center' },
-              { label: 'Pres', width: '60px', align: 'center' },
-              { label: 'Abs', width: '60px', align: 'center' },
-              { label: '%', width: '80px', align: 'center' },
-              { label: 'Status', width: '90px', align: 'center' }
+              { label: 'Roll', width: '70px', align: 'center' },
+              { label: 'Student', width: 'auto', align: 'left' },
+              { label: 'Days', width: '70px', align: 'center' },
+              { label: 'Pres', width: '70px', align: 'center' },
+              { label: 'Abs', width: '70px', align: 'center' },
+              { label: '%', width: '90px', align: 'center' },
+              { label: 'Status', width: '100px', align: 'center' }
             ].map((col) => (
               <th 
                 key={col.label} 
                 className={cn(
-                  "px-3 py-3 text-[9px] font-black uppercase tracking-widest text-text-muted",
+                  "px-4 py-4 text-[10px] font-bold uppercase tracking-[0.15em] text-text-muted",
                   col.align === 'center' ? 'text-center' : 'text-left'
                 )}
                 style={{ width: col.width }}
@@ -110,33 +124,33 @@ const SummaryTable = ({ rows, threshold }) => {
         <tbody className="divide-y divide-border/30">
           {rows.map((row) => {
             const pct = Number(row.percentage || 0)
-            const sColor = pct >= threshold ? 'text-success' : pct >= threshold - 10 ? 'text-warning' : 'text-error'
-            const sBg    = pct >= threshold ? 'bg-green-100 text-green-700' : pct >= threshold - 10 ? 'bg-orange-100 text-orange-700' : 'bg-red-100 text-red-700'
+            const sColor = pct >= threshold ? 'text-emerald-600' : pct >= threshold - 10 ? 'text-amber-600' : 'text-rose-600'
+            const sBg    = pct >= threshold ? 'bg-emerald-50 text-emerald-700' : pct >= threshold - 10 ? 'bg-amber-50 text-amber-700' : 'bg-rose-50 text-rose-700'
             const sLabel = pct >= threshold ? 'Good' : pct >= threshold - 10 ? 'Warning' : 'Critical'
             return (
-              <tr key={row.enrollment_id} className="hover:bg-surface-raised/40 transition-colors group">
-                <td className="px-3 py-3 text-center text-xs font-mono font-bold text-text-muted">{row.roll_number || '--'}</td>
-                <td className="px-3 py-3">
+              <tr key={row.enrollment_id} className="hover:bg-surface-raised/40 transition-all duration-200 group">
+                <td className="px-4 py-4 text-center text-xs font-mono font-bold text-text-muted">{row.roll_number || '--'}</td>
+                <td className="px-4 py-4">
                   <div className="flex flex-col min-w-0">
                     <span className="text-sm font-bold text-text-primary group-hover:text-primary transition-colors truncate">
                       {row.first_name} {row.last_name}
                     </span>
-                    <span className="text-[10px] text-text-muted uppercase tracking-widest mt-0.5">ID: {row.student_id}</span>
+                    <span className="text-[10px] text-text-muted font-semibold uppercase tracking-widest mt-0.5 opacity-60">ID: {row.student_id}</span>
                   </div>
                 </td>
-                <td className="px-3 py-3 text-center text-xs font-bold text-text-secondary">{row.total_days || 0}</td>
-                <td className="px-3 py-3 text-center text-xs font-black text-green-600">{row.present || 0}</td>
-                <td className="px-3 py-3 text-center text-xs font-black text-red-500">{row.absent || 0}</td>
-                <td className="px-3 py-3 text-center">
-                  <div className="flex flex-col items-center gap-1">
-                    <span className={cn("text-xs font-black", sColor)}>{pct.toFixed(0)}%</span>
-                    <div className="h-1 w-12 rounded-full bg-surface-raised overflow-hidden">
-                      <div className="h-full rounded-full transition-all duration-700" style={{ width: `${Math.min(pct, 100)}%`, background: 'currentColor' }} className={sColor} />
+                <td className="px-4 py-4 text-center text-sm font-bold text-text-secondary">{row.total_days || 0}</td>
+                <td className="px-4 py-4 text-center text-sm font-bold text-emerald-600">{row.present || 0}</td>
+                <td className="px-4 py-4 text-center text-sm font-bold text-rose-500">{row.absent || 0}</td>
+                <td className="px-4 py-4 text-center">
+                  <div className="flex flex-col items-center gap-1.5">
+                    <span className={cn("text-xs font-bold", sColor)}>{pct.toFixed(0)}%</span>
+                    <div className="h-1.5 w-14 rounded-full bg-surface-raised overflow-hidden shadow-inner">
+                      <div className="h-full rounded-full transition-all duration-1000 ease-out" style={{ width: `${Math.min(pct, 100)}%`, background: 'currentColor' }} className={sColor} />
                     </div>
                   </div>
                 </td>
-                <td className="px-3 py-3 text-center">
-                  <span className={cn("text-[9px] font-black px-2 py-0.5 rounded-full uppercase tracking-wider", sBg)}>{sLabel}</span>
+                <td className="px-4 py-4 text-center">
+                  <span className={cn("text-[9px] font-bold px-3 py-1 rounded-full uppercase tracking-widest shadow-sm", sBg)}>{sLabel}</span>
                 </td>
               </tr>
             )
@@ -151,23 +165,23 @@ const DailySummaryPanel = ({ rows }) => {
   if (!rows.length) return <EmptyPanel text="No daily summary available for the selected range." icon={Activity} />
   const max = Math.max(...rows.map((row) => row.percentage), 1)
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-5 py-2">
       {rows.map((row) => {
-        const color = row.percentage >= 90 ? 'bg-green-500' : row.percentage >= 75 ? 'bg-primary' : row.percentage >= 60 ? 'bg-orange-500' : 'bg-red-500'
-        const textColor = row.percentage >= 90 ? 'text-green-600' : row.percentage >= 75 ? 'text-primary' : row.percentage >= 60 ? 'text-orange-600' : 'text-red-600'
+        const color = row.percentage >= 90 ? 'bg-emerald-500' : row.percentage >= 75 ? 'bg-primary' : row.percentage >= 60 ? 'bg-amber-500' : 'bg-rose-500'
+        const textColor = row.percentage >= 90 ? 'text-emerald-600' : row.percentage >= 75 ? 'text-primary' : row.percentage >= 60 ? 'text-amber-600' : 'text-rose-600'
         return (
           <div key={row.date} className="group">
-            <div className="flex justify-between items-end mb-1.5 px-1">
-              <span className="text-[10px] font-black text-text-muted uppercase tracking-widest bg-surface-raised px-2 py-0.5 rounded-md">{row.date}</span>
-              <span className={cn("text-xs font-black", textColor)}>
+            <div className="flex justify-between items-end mb-2 px-1">
+              <span className="text-[10px] font-bold text-text-muted uppercase tracking-[0.15em] bg-surface-raised px-3 py-1 rounded-lg shadow-sm">{row.date}</span>
+              <span className={cn("text-xs font-bold", textColor)}>
                 {row.present}/{row.total}
                 <span className="text-text-muted/30 font-normal mx-2">|</span>
                 {row.percentage.toFixed(0)}%
               </span>
             </div>
-            <div className="h-2 rounded-full bg-surface-raised overflow-hidden">
+            <div className="h-2.5 rounded-full bg-surface-raised overflow-hidden shadow-inner p-0.5">
               <div 
-                className={cn("h-full rounded-full transition-all duration-1000 ease-out", color)} 
+                className={cn("h-full rounded-full transition-all duration-1000 ease-out shadow-sm", color)} 
                 style={{ width: `${(row.percentage / max) * 100}%` }} 
               />
             </div>
@@ -182,26 +196,26 @@ const DailySummaryPanel = ({ rows }) => {
 const BelowThresholdTable = ({ rows, threshold }) => {
   if (!rows.length) return <EmptyPanel text={`All students meet the ${threshold}% target.`} icon={CheckCircle2} />
   return (
-    <div className="flex flex-col gap-3">
+    <div className="grid grid-cols-1 gap-4">
       {rows.map((row) => {
         const percentage = Number(row.percentage || 0)
         const totalDays = Number(row.total_days || 0)
         const effectivePresentDays = percentage * totalDays / 100
         const daysShort = percentage >= threshold ? 0 : Math.ceil((threshold * totalDays / 100) - effectivePresentDays)
         return (
-          <div key={row.enrollment_id} className="bg-surface-raised/30 border rounded-2xl p-4 relative overflow-hidden group hover:border-red-200 transition-all shadow-sm" style={{ borderColor: 'var(--color-border)' }}>
-            <div className="absolute top-0 left-0 bottom-0 pointer-events-none opacity-[0.03] bg-red-600" style={{ width: `${percentage}%` }} />
+          <div key={row.enrollment_id} className="bg-surface-raised/20 border rounded-[22px] p-5 relative overflow-hidden group hover:border-rose-200 transition-all shadow-sm" style={{ borderColor: 'var(--color-border)' }}>
+            <div className="absolute top-0 left-0 bottom-0 pointer-events-none opacity-[0.04] bg-rose-600 transition-all duration-1000" style={{ width: `${percentage}%` }} />
             <div className="flex items-center justify-between gap-4 relative z-10">
               <div className="min-w-0">
-                <p className="text-sm font-black text-text-primary truncate">{row.first_name} {row.last_name}</p>
-                <p className="text-[10px] font-bold text-text-muted mt-1 uppercase tracking-widest">Roll {row.roll_number || '--'} · {totalDays} Working Days</p>
-                <div className="mt-3 flex items-center gap-2 text-[10px] text-red-600 font-black uppercase tracking-widest">
-                  <TriangleAlert size={14} />
+                <p className="text-base font-bold text-text-primary truncate">{row.first_name} {row.last_name}</p>
+                <p className="text-[10px] font-semibold text-text-muted mt-1 uppercase tracking-widest opacity-70">Roll {row.roll_number || '--'} · {totalDays} Working Days</p>
+                <div className="mt-4 flex items-center gap-2 text-[10px] text-rose-600 font-bold uppercase tracking-widest bg-rose-50 w-fit px-3 py-1 rounded-lg border border-rose-100">
+                  <TriangleAlert size={14} strokeWidth={2.5} />
                   <span>{Math.max(0, daysShort)} days short of {threshold}%</span>
                 </div>
               </div>
-              <div className="text-3xl font-black text-red-600 leading-none tracking-tighter">
-                {percentage.toFixed(0)}<span className="text-sm ml-0.5 font-bold">%</span>
+              <div className="text-4xl font-bold text-rose-600 leading-none tracking-tighter">
+                {percentage.toFixed(0)}<span className="text-lg ml-0.5 font-semibold opacity-60">%</span>
               </div>
             </div>
           </div>
@@ -214,30 +228,30 @@ const BelowThresholdTable = ({ rows, threshold }) => {
 const ChronicAbsentees = ({ rows, onAlert }) => {
   if (!rows.length) return <EmptyPanel text="Excellent! No chronic absentees detected." icon={Users} />
   return (
-    <div className="flex flex-col gap-3">
+    <div className="grid grid-cols-1 gap-4">
       {rows.map((row) => (
-        <div key={row.enrollment_id} className="bg-surface-raised/30 border rounded-2xl p-4 transition-all hover:border-orange-200 shadow-sm" style={{ borderColor: 'var(--color-border)' }}>
-          <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
+        <div key={row.enrollment_id} className="bg-surface-raised/20 border rounded-[22px] p-5 transition-all hover:border-amber-200 shadow-sm" style={{ borderColor: 'var(--color-border)' }}>
+          <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-5">
             <div className="min-w-0 flex-1">
-              <div className="flex flex-wrap items-center gap-2 mb-3">
-                <p className="text-sm font-black text-text-primary truncate">{row.first_name} {row.last_name}</p>
-                <span className="text-[9px] font-black px-2 py-0.5 rounded-full bg-red-100 text-red-700 uppercase tracking-widest shadow-sm">
+              <div className="flex flex-wrap items-center gap-3 mb-4">
+                <p className="text-base font-bold text-text-primary truncate">{row.first_name} {row.last_name}</p>
+                <span className="text-[10px] font-bold px-3 py-1 rounded-full bg-rose-100 text-rose-700 uppercase tracking-widest shadow-sm border border-rose-200">
                   {row.consecutive_absent_days} Days Consecutive
                 </span>
               </div>
               
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-2">
-                <div className="flex items-center gap-2.5 text-xs font-bold text-text-secondary">
-                  <div className="h-6 w-6 rounded-lg bg-surface-raised flex items-center justify-center text-emerald-600 shrink-0">
-                    <PhoneCall size={12} />
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-3">
+                <div className="flex items-center gap-3 text-xs font-bold text-text-secondary">
+                  <div className="h-8 w-8 rounded-xl bg-emerald-50 flex items-center justify-center text-emerald-600 shrink-0 border border-emerald-100 shadow-sm">
+                    <PhoneCall size={14} />
                   </div>
-                  <span className="truncate">{row.father_phone || row.mother_phone || 'No Phone Number'}</span>
+                  <span className="truncate">{row.father_phone || row.mother_phone || 'No Contact Number'}</span>
                 </div>
-                <div className="sm:col-span-2 flex items-start gap-2.5 text-[10px] font-medium text-text-muted mt-1">
-                  <div className="h-6 w-6 rounded-lg bg-surface-raised flex items-center justify-center text-orange-500 shrink-0 mt-0.5">
-                    <BellRing size={12} />
+                <div className="sm:col-span-2 flex items-start gap-3 text-[11px] font-medium text-text-muted mt-1 bg-surface-raised/40 p-3 rounded-xl border border-border/30">
+                  <div className="h-8 w-8 rounded-xl bg-amber-50 flex items-center justify-center text-amber-500 shrink-0 mt-0.5 border border-amber-100 shadow-sm">
+                    <CalendarDays size={14} />
                   </div>
-                  <p className="line-clamp-2 leading-relaxed">{Array.isArray(row.dates) ? row.dates.join(', ') : 'No date records'}</p>
+                  <p className="line-clamp-2 leading-relaxed opacity-80">{Array.isArray(row.dates) ? row.dates.join(', ') : 'No date records'}</p>
                 </div>
               </div>
             </div>
@@ -245,15 +259,15 @@ const ChronicAbsentees = ({ rows, onAlert }) => {
             <div className="flex gap-2 shrink-0">
                <button 
                 onClick={() => (row.father_phone || row.mother_phone) && window.open(`tel:${row.father_phone || row.mother_phone}`, '_self')}
-                className="flex-1 sm:flex-none px-4 py-2 rounded-xl bg-emerald-500 text-white text-[11px] font-black uppercase tracking-widest hover:bg-emerald-600 active:scale-95 transition-all flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/20"
+                className="flex-1 sm:flex-none h-11 px-6 rounded-2xl bg-emerald-500 text-white text-[11px] font-bold uppercase tracking-widest hover:bg-emerald-600 active:scale-95 transition-all flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/20"
               >
-                <PhoneCall size={14} /> Call
+                <PhoneCall size={16} /> Call
               </button>
               <button 
                 onClick={onAlert}
-                className="flex-1 sm:flex-none px-4 py-2 rounded-xl bg-orange-500 text-white text-[11px] font-black uppercase tracking-widest hover:bg-orange-600 active:scale-95 transition-all flex items-center justify-center gap-2 shadow-lg shadow-orange-500/20"
+                className="flex-1 sm:flex-none h-11 px-6 rounded-2xl bg-amber-500 text-white text-[11px] font-bold uppercase tracking-widest hover:bg-amber-600 active:scale-95 transition-all flex items-center justify-center gap-2 shadow-lg shadow-amber-500/20"
               >
-                <BellRing size={14} /> Alert
+                <BellRing size={16} /> Alert
               </button>
             </div>
           </div>
@@ -265,7 +279,274 @@ const ChronicAbsentees = ({ rows, onAlert }) => {
 
 
 // ─────────────────────────────────────────────────────────────────────────────
-//  HELPERS — identical to original
+//  MAIN PAGE
+// ─────────────────────────────────────────────────────────────────────────────
+
+const AttendanceReports = () => {
+  usePageTitle('Attendance Reports')
+
+  const { toastError, toastInfo, toastSuccess } = useToast()
+  const { assignmentOptions, loadingAssignments, reportData, loadingReports, loadReports, loadRegister, registerData } = useAttendance()
+
+  const [assignmentKey, setAssignmentKey] = useState('')
+  const [fromDate,      setFromDate]      = useState(firstOfMonth())
+  const [toDate,        setToDate]        = useState(today())
+  const [threshold,     setThreshold]     = useState('75')
+  const [downloading,   setDownloading]   = useState(false)
+
+  const reportAssignments = useMemo(
+    () => dedupeAssignments(assignmentOptions),
+    [assignmentOptions]
+  )
+
+  useEffect(() => {
+    if (loadingAssignments || !reportAssignments.length) return
+
+    const exists = reportAssignments.some((o) => o.value === assignmentKey)
+    if (!assignmentKey || !exists) {
+      setAssignmentKey(reportAssignments[0].value)
+    }
+  }, [loadingAssignments, reportAssignments, assignmentKey])
+
+  const selectedSection = useMemo(() => {
+    if (!assignmentKey) return null
+    const [classId, sectionId] = assignmentKey.split(':')
+    return assignmentOptions.find((assignment) =>
+      String(assignment.class_id) === String(classId) &&
+      String(assignment.section_id) === String(sectionId)
+    ) || null
+  }, [assignmentKey, assignmentOptions])
+
+  useEffect(() => {
+    if (!selectedSection || !fromDate || !toDate) return
+
+    loadReports({
+      summaryParams: {
+        class_id: selectedSection.class_id,
+        section_id: selectedSection.section_id,
+        from: fromDate,
+        to: toDate,
+      },
+      thresholdParams: {
+        class_id: selectedSection.class_id,
+        section_id: selectedSection.section_id,
+        from: fromDate,
+        to: toDate,
+        threshold,
+      },
+      chronicParams: {
+        class_id: selectedSection.class_id,
+        section_id: selectedSection.section_id,
+        from: fromDate,
+        to: toDate,
+      },
+    }).catch((error) => {
+      toastError(error?.message || 'Failed to load attendance reports.')
+    })
+
+    loadRegister({
+      class_id: selectedSection.class_id,
+      section_id: selectedSection.section_id,
+      month: String(new Date(fromDate).getMonth() + 1),
+      year: String(new Date(fromDate).getFullYear()),
+    }).catch(() => {})
+  }, [selectedSection, fromDate, toDate, threshold, loadReports, loadRegister, toastError])
+
+  const dailySummary = useMemo(() => buildDailySummary(registerData?.students || []), [registerData])
+
+  // derived counts for stat strip
+  const avgAtt = reportData.summary.length
+    ? (reportData.summary.reduce((a, r) => a + Number(r.percentage), 0) / reportData.summary.length).toFixed(1)
+    : '—'
+
+  const handleDownloadSummary = async () => {
+    if (!registerData?.session_id || !selectedSection) return
+    setDownloading(true)
+    try {
+      const response = await downloadAttendanceSummaryPdf({
+        session_id: registerData.session_id,
+        class_id: selectedSection.class_id,
+        section_id: selectedSection.section_id,
+        from_date: fromDate,
+        to_date: toDate
+      })
+
+      const blob = response.data || response
+      if (blob.type === 'application/json') {
+        const text = await blob.text()
+        const errorData = JSON.parse(text)
+        throw new Error(errorData.message || 'Failed to generate PDF')
+      }
+
+      const url = window.URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.href = url
+      link.setAttribute('download', `Attendance_Summary_${selectedSection.class_name}_${selectedSection.section_name}_${fromDate}.pdf`)
+      document.body.appendChild(link)
+      link.click()
+      link.remove()
+      setTimeout(() => window.URL.revokeObjectURL(url), 1000)
+      toastSuccess('Summary report downloaded.')
+    } catch (err) {
+      toastError(err.message || 'Failed to download attendance summary.')
+    } finally {
+      setDownloading(false)
+    }
+  }
+
+  return (
+    <div className="space-y-6 pb-20 lg:pb-8">
+      {/* ── Header ── */}
+      <section 
+        className="rounded-[28px] border p-6 overflow-hidden" 
+        style={{ 
+          borderColor: 'var(--color-border)',
+          background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.12), rgba(139, 92, 246, 0.05) 55%, var(--color-surface) 100%)'
+        }}
+      >
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+          <div className="min-w-0">
+            <p className="text-sm font-semibold uppercase tracking-[0.18em]" style={{ color: '#4f46e5' }}>
+              Attendance Intelligence
+            </p>
+            <h1 className="mt-2 text-2xl font-bold leading-tight sm:text-3xl" style={{ color: 'var(--color-text-primary)' }}>
+              Attendance Reports
+            </h1>
+            <p className="mt-2 text-sm sm:text-base opacity-80" style={{ color: 'var(--color-text-secondary)' }}>
+              Summary, daily trends, below-threshold tracking, and chronic absentee alerts for your assigned sections.
+            </p>
+          </div>
+          <div className="flex gap-2">
+            <Button 
+              variant="primary" 
+              size="sm" 
+              icon={Download} 
+              onClick={handleDownloadSummary}
+              loading={downloading}
+              disabled={!registerData || loadingReports}
+              className="rounded-2xl font-semibold shadow-lg shadow-indigo-600/20 h-11 px-6"
+            >
+              Export PDF
+            </Button>
+          </div>
+        </div>
+
+        {/* filters */}
+        <div className="mt-8 grid grid-cols-1 gap-5 xl:grid-cols-6 items-end border-t border-dashed border-border pt-8">
+          <div className="space-y-2 xl:col-span-2">
+            <label className="text-sm font-semibold ml-1" style={{ color: 'var(--color-text-primary)' }}>Assigned Section</label>
+            <Select
+              value={assignmentKey}
+              onChange={(e) => setAssignmentKey(e.target.value)}
+              options={reportAssignments}
+              placeholder={loadingAssignments ? 'Loading…' : 'Select section'}
+              className="h-11 px-4 rounded-2xl bg-surface-raised border border-border/50 text-sm font-semibold focus:border-primary transition-all"
+            />
+          </div>
+          <div className="space-y-2 xl:col-span-1">
+            <label className="text-sm font-semibold ml-1" style={{ color: 'var(--color-text-primary)' }}>From Date</label>
+            <input 
+              type="date" 
+              className="w-full h-11 bg-surface-raised border border-border/50 rounded-2xl px-4 text-sm text-text-primary outline-none focus:border-primary font-semibold transition-all" 
+              value={fromDate} 
+              onChange={(e) => setFromDate(e.target.value)} 
+            />
+          </div>
+          <div className="space-y-2 xl:col-span-1">
+            <label className="text-sm font-semibold ml-1" style={{ color: 'var(--color-text-primary)' }}>To Date</label>
+            <input 
+              type="date" 
+              className="w-full h-11 bg-surface-raised border border-border/50 rounded-2xl px-4 text-sm text-text-primary outline-none focus:border-primary font-semibold transition-all" 
+              value={toDate} 
+              onChange={(e) => setToDate(e.target.value)} 
+            />
+          </div>
+          <div className="space-y-2 xl:col-span-2">
+            <label className="text-sm font-semibold ml-1" style={{ color: 'var(--color-text-primary)' }}>Threshold (%)</label>
+            <Select
+              value={threshold}
+              onChange={(e) => setThreshold(e.target.value)}
+              options={[
+                { value: '75', label: '75%' },
+                { value: '80', label: '80%' },
+                { value: '85', label: '85%' },
+              ]}
+              className="h-11 px-4 rounded-2xl bg-surface-raised border border-border/50 text-sm font-semibold focus:border-primary transition-all"
+            />
+          </div>
+        </div>
+      </section>
+
+      {/* ── STAT STRIP ── */}
+      <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+        <StatCard label="Class Size"    value={reportData.summary.length}          sub="In Selected Section"          color="#6366f1" icon={Users}      />
+        <StatCard label="Average Rate"  value={`${avgAtt}%`}                       sub="Across Date Range"            color="#10b981" icon={TrendingUp}  />
+        <StatCard label="Under Target"  value={reportData.belowThreshold.length}   sub={`Under ${threshold}% Target`} color="#ef4444" icon={AlertCircle} />
+        <StatCard label="Long Absents"  value={reportData.chronicAbsentees.length} sub="3+ Consecutive Days"          color="#f59e0b" icon={Activity}    />
+      </div>
+
+      {/* ── REPORT GRID ── */}
+      <section className="grid grid-cols-1 gap-6 xl:grid-cols-2">
+
+        <ReportCard
+          title="Student-wise Summary"
+          subtitle="Detailed attendance performance metrics"
+          accent="#6366f1"
+          onExport={() => exportSummaryCsv(reportData.summary)}
+          onExportPdf={handleDownloadSummary}
+        >
+          {loadingAssignments || loadingReports
+            ? <PanelSkeleton />
+            : <SummaryTable rows={reportData.summary} threshold={Number(threshold)} />}
+        </ReportCard>
+
+        <ReportCard
+          title="Daily Activity Heatmap"
+          subtitle="Day-wise class attendance trends"
+          accent="#10b981"
+          onExport={() => exportDailyCsv(dailySummary)}
+        >
+          {loadingAssignments || loadingReports
+            ? <PanelSkeleton />
+            : <DailySummaryPanel rows={dailySummary} />}
+        </ReportCard>
+
+        <ReportCard
+          title="Risk Analysis"
+          subtitle="Students below target percentage"
+          accent="#ef4444"
+          onExport={() => exportBelowThresholdCsv(reportData.belowThreshold, Number(threshold))}
+        >
+          {loadingAssignments || loadingReports
+            ? <PanelSkeleton />
+            : <BelowThresholdTable rows={reportData.belowThreshold} threshold={Number(threshold)} />}
+        </ReportCard>
+
+        <ReportCard
+          title="Chronic Absentee Log"
+          subtitle="High priority contact list"
+          accent="#f59e0b"
+          onExport={() => exportChronicCsv(reportData.chronicAbsentees)}
+        >
+          {loadingAssignments || loadingReports
+            ? <PanelSkeleton />
+            : (
+              <ChronicAbsentees
+                rows={reportData.chronicAbsentees}
+                onAlert={() => toastInfo('Alert will be sent via automated notification system.')}
+              />
+            )}
+        </ReportCard>
+
+      </section>
+    </div>
+  )
+}
+
+export default AttendanceReports
+
+// ─────────────────────────────────────────────────────────────────────────────
+//  HELPERS
 // ─────────────────────────────────────────────────────────────────────────────
 
 const firstOfMonth = () => {
@@ -383,214 +664,3 @@ const exportDailyCsv = (rows) => {
     ...rows.map((row) => [row.date, row.present, row.total, row.percentage.toFixed(2)]),
   ])
 }
-
-// ─────────────────────────────────────────────────────────────────────────────
-//  MAIN PAGE — logic identical to original
-// ─────────────────────────────────────────────────────────────────────────────
-
-const AttendanceReports = () => {
-  usePageTitle('Attendance Reports')
-
-  const { toastError, toastInfo } = useToast()
-  const { assignmentOptions, loadingAssignments, reportData, loadingReports, loadReports, loadRegister, registerData } = useAttendance()
-
-  const [assignmentKey, setAssignmentKey] = useState('')
-  const [fromDate,      setFromDate]      = useState(firstOfMonth())
-  const [toDate,        setToDate]        = useState(today())
-  const [threshold,     setThreshold]     = useState('75')
-
-  const reportAssignments = useMemo(
-    () => dedupeAssignments(assignmentOptions),
-    [assignmentOptions]
-  )
-
-  useEffect(() => {
-    if (loadingAssignments || !reportAssignments.length) return
-
-    const exists = reportAssignments.some((o) => o.value === assignmentKey)
-    if (!assignmentKey || !exists) {
-      setAssignmentKey(reportAssignments[0].value)
-    }
-  }, [loadingAssignments, reportAssignments, assignmentKey])
-
-  const selectedSection = useMemo(() => {
-    if (!assignmentKey) return null
-    const [classId, sectionId] = assignmentKey.split(':')
-    return assignmentOptions.find((assignment) =>
-      String(assignment.class_id) === String(classId) &&
-      String(assignment.section_id) === String(sectionId)
-    ) || null
-  }, [assignmentKey, assignmentOptions])
-
-  useEffect(() => {
-    if (!selectedSection || !fromDate || !toDate) return
-
-    loadReports({
-      summaryParams: {
-        class_id: selectedSection.class_id,
-        section_id: selectedSection.section_id,
-        from: fromDate,
-        to: toDate,
-      },
-      thresholdParams: {
-        class_id: selectedSection.class_id,
-        section_id: selectedSection.section_id,
-        from: fromDate,
-        to: toDate,
-        threshold,
-      },
-      chronicParams: {
-        class_id: selectedSection.class_id,
-        section_id: selectedSection.section_id,
-        from: fromDate,
-        to: toDate,
-      },
-    }).catch((error) => {
-      toastError(error?.message || 'Failed to load attendance reports.')
-    })
-
-    loadRegister({
-      class_id: selectedSection.class_id,
-      section_id: selectedSection.section_id,
-      month: String(new Date(fromDate).getMonth() + 1),
-      year: String(new Date(fromDate).getFullYear()),
-    }).catch(() => {})
-  }, [selectedSection, fromDate, toDate, threshold, loadReports, loadRegister, toastError])
-
-  const dailySummary = useMemo(() => buildDailySummary(registerData?.students || []), [registerData])
-
-  // derived counts for stat strip
-  const avgAtt = reportData.summary.length
-    ? (reportData.summary.reduce((a, r) => a + Number(r.percentage), 0) / reportData.summary.length).toFixed(1)
-    : '—'
-
-  return (
-    <div className="space-y-6">
-      {/* ── Header ── */}
-      <section className="rounded-2xl border p-5 sm:p-6" style={{ borderColor: 'var(--color-border)' }}>
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-          <div className="min-w-0">
-            <p className="text-[11px] font-semibold uppercase tracking-widest" style={{ color: '#0f766e' }}>
-              Attendance Management
-            </p>
-            <h1 className="mt-1.5 text-2xl font-bold sm:text-3xl" style={{ color: 'var(--color-text-primary)' }}>
-              Attendance Reports
-            </h1>
-            <p className="mt-1.5 max-w-xl text-sm leading-relaxed" style={{ color: 'var(--color-text-secondary)' }}>
-              Summary, daily trends, below-threshold tracking, and chronic absentee alerts for your assigned sections.
-            </p>
-          </div>
-        </div>
-
-        {/* filters — same fields, same logic as original */}
-        <div className="mt-5 grid grid-cols-1 gap-4 xl:grid-cols-6">
-          <div className="space-y-1.5 xl:col-span-2">
-            <label className="text-sm font-medium" style={{ color: 'var(--color-text-primary)' }}>Assigned Section</label>
-            <Select
-              value={assignmentKey}
-              onChange={(e) => setAssignmentKey(e.target.value)}
-              options={reportAssignments}
-              placeholder={loadingAssignments ? 'Loading…' : 'Select section'}
-              className="h-9 px-3 py-1 rounded-xl bg-surface-raised border border-border/50 text-xs font-semibold focus:border-primary"
-            />
-          </div>
-          <div className="space-y-1.5 xl:col-span-1">
-            <label className="text-sm font-medium" style={{ color: 'var(--color-text-primary)' }}>From Date</label>
-            <input 
-              type="date" 
-              className="w-full bg-surface-raised border border-border/50 rounded-xl px-3 py-1.5 text-xs text-text-primary outline-none focus:border-primary h-9 font-semibold" 
-              value={fromDate} 
-              onChange={(e) => setFromDate(e.target.value)} 
-            />
-          </div>
-          <div className="space-y-1.5 xl:col-span-1">
-            <label className="text-sm font-medium" style={{ color: 'var(--color-text-primary)' }}>To Date</label>
-            <input 
-              type="date" 
-              className="w-full bg-surface-raised border border-border/50 rounded-xl px-3 py-1.5 text-xs text-text-primary outline-none focus:border-primary h-9 font-semibold" 
-              value={toDate} 
-              onChange={(e) => setToDate(e.target.value)} 
-            />
-          </div>
-          <div className="space-y-1.5 xl:col-span-2">
-            <label className="text-sm font-medium" style={{ color: 'var(--color-text-primary)' }}>Threshold</label>
-            <Select
-              value={threshold}
-              onChange={(e) => setThreshold(e.target.value)}
-              options={[
-                { value: '75', label: '75%' },
-                { value: '80', label: '80%' },
-                { value: '85', label: '85%' },
-              ]}
-              className="h-9 px-3 py-1 rounded-xl bg-surface-raised border border-border/50 text-xs font-semibold focus:border-primary"
-            />
-          </div>
-        </div>
-      </section>
-
-      {/* ── STAT STRIP ── */}
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-        <StatCard label="Total Students"    value={reportData.summary.length}          sub="In Selected Section"          color="#7b6ef6" icon={Users}      />
-        <StatCard label="Avg Attendance"    value={`${avgAtt}%`}                       sub="Across Date Range"            color="#10b981" icon={TrendingUp}  />
-        <StatCard label="Below Target"      value={reportData.belowThreshold.length}   sub={`Under ${threshold}% Target`} color="#ef4444" icon={AlertCircle} />
-        <StatCard label="Chronic Absence"   value={reportData.chronicAbsentees.length} sub="3+ Consecutive Days"          color="#f59e0b" icon={Activity}    />
-      </div>
-
-      {/* ── REPORT GRID — same 4 cards as original ── */}
-      <section className="grid grid-cols-1 gap-6 xl:grid-cols-2 pb-10">
-
-        <ReportCard
-          title="Student Attendance Summary"
-          subtitle="Per-student attendance percentage, counts, and status."
-          accent="#7b6ef6"
-          onExport={() => exportSummaryCsv(reportData.summary)}
-        >
-          {loadingAssignments || loadingReports
-            ? <PanelSkeleton />
-            : <SummaryTable rows={reportData.summary} threshold={Number(threshold)} />}
-        </ReportCard>
-
-        <ReportCard
-          title="Daily Class Summary"
-          subtitle="Day-wise class attendance percentage to spot weak trends."
-          accent="#10b981"
-          onExport={() => exportDailyCsv(dailySummary)}
-        >
-          {loadingAssignments || loadingReports
-            ? <PanelSkeleton />
-            : <DailySummaryPanel rows={dailySummary} />}
-        </ReportCard>
-
-        <ReportCard
-          title="Below Threshold Report"
-          subtitle="Students under the target attendance percentage."
-          accent="#ef4444"
-          onExport={() => exportBelowThresholdCsv(reportData.belowThreshold, Number(threshold))}
-        >
-          {loadingAssignments || loadingReports
-            ? <PanelSkeleton />
-            : <BelowThresholdTable rows={reportData.belowThreshold} threshold={Number(threshold)} />}
-        </ReportCard>
-
-        <ReportCard
-          title="Chronic Absentees"
-          subtitle="Students absent for 3+ consecutive days."
-          accent="#f59e0b"
-          onExport={() => exportChronicCsv(reportData.chronicAbsentees)}
-        >
-          {loadingAssignments || loadingReports
-            ? <PanelSkeleton />
-            : (
-              <ChronicAbsentees
-                rows={reportData.chronicAbsentees}
-                onAlert={() => toastInfo('Parent alert functionality will be added in communication module.')}
-              />
-            )}
-        </ReportCard>
-
-      </section>
-    </div>
-  )
-}
-
-export default AttendanceReports

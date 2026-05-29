@@ -8,8 +8,8 @@ import { getStudents } from "../../api/studentsApi";
 import { getUsers } from '../../api/userManagementApi';
 import useToast from '../../hooks/useToast';
 
-const IssueBookModal = ({ isOpen, onClose, onSubmit, preSelectedBook = null, loading }) => {
-  const { toast } = useToast();
+const IssueBookModal = ({ open, onClose, onSubmit, preSelectedBook = null, loading }) => {
+  const { toastError, toastWarning } = useToast();
   const [borrowerType, setBorrowerType] = useState('student');
   const [borrowerSearch, setBorrowerSearch] = useState('');
   const [borrowers, setBorrowers] = useState([]);
@@ -32,7 +32,6 @@ const IssueBookModal = ({ isOpen, onClose, onSubmit, preSelectedBook = null, loa
       setDueDate(d.toISOString().split('T')[0]);
     } catch (err) {
       console.error('Failed to fetch library settings', err);
-      // Fallback
       const d = new Date();
       d.setDate(d.getDate() + 14);
       setDueDate(d.toISOString().split('T')[0]);
@@ -40,7 +39,7 @@ const IssueBookModal = ({ isOpen, onClose, onSubmit, preSelectedBook = null, loa
   };
 
   useEffect(() => {
-    if (isOpen) {
+    if (open) {
       fetchSettings();
       if (preSelectedBook) {
         setSelectedBookId(preSelectedBook.id);
@@ -53,16 +52,16 @@ const IssueBookModal = ({ isOpen, onClose, onSubmit, preSelectedBook = null, loa
       setBorrowerSearch('');
       setBorrowers([]);
     }
-  }, [isOpen, preSelectedBook]);
+  }, [open, preSelectedBook]);
 
   useEffect(() => {
     const delayDebounceFn = setTimeout(() => {
-      if (borrowerSearch.length >= 3) {
+      if (borrowerSearch.length >= 3 && !selectedBorrowerId) {
         searchBorrowers();
       }
     }, 500);
     return () => clearTimeout(delayDebounceFn);
-  }, [borrowerSearch, borrowerType]);
+  }, [borrowerSearch, borrowerType, selectedBorrowerId]);
 
   const searchBorrowers = async () => {
     setSearchingBorrowers(true);
@@ -77,13 +76,13 @@ const IssueBookModal = ({ isOpen, onClose, onSubmit, preSelectedBook = null, loa
       } else {
         const { data } = await getUsers({ search: borrowerSearch, limit: 10 });
         setBorrowers(data.users.map(u => ({
-          id: u.id,
+          id: u.source_id || u.id, // Use source_id for portal accounts
           name: u.name,
           identifier: u.email
         })));
       }
     } catch (err) {
-      toast.error('Failed to search borrowers');
+      toastError('Failed to search borrowers');
     } finally {
       setSearchingBorrowers(false);
     }
@@ -91,12 +90,12 @@ const IssueBookModal = ({ isOpen, onClose, onSubmit, preSelectedBook = null, loa
 
   useEffect(() => {
     const delayDebounceFn = setTimeout(() => {
-      if (bookSearch.length >= 3 && !preSelectedBook) {
+      if (bookSearch.length >= 3 && !preSelectedBook && !selectedBookId) {
         searchBooks();
       }
     }, 500);
     return () => clearTimeout(delayDebounceFn);
-  }, [bookSearch]);
+  }, [bookSearch, selectedBookId, preSelectedBook]);
 
   const searchBooks = async () => {
     setSearchingBooks(true);
@@ -104,7 +103,7 @@ const IssueBookModal = ({ isOpen, onClose, onSubmit, preSelectedBook = null, loa
       const { data } = await libraryApi.getBooks({ search: bookSearch, availability: 'available', limit: 10 });
       setBooks(data.books);
     } catch (err) {
-      toast.error('Failed to search books');
+      toastError('Failed to search books');
     } finally {
       setSearchingBooks(false);
     }
@@ -112,21 +111,21 @@ const IssueBookModal = ({ isOpen, onClose, onSubmit, preSelectedBook = null, loa
 
   const handleIssue = (e) => {
     e.preventDefault();
-    if (!selectedBookId) return toast.error('Please select a book');
-    if (!selectedBorrowerId) return toast.error('Please select a borrower');
-    if (!dueDate) return toast.error('Please select a due date');
+    if (!selectedBookId) return toastWarning('Please select a book');
+    if (!selectedBorrowerId) return toastWarning('Please select a borrower');
+    if (!dueDate) return toastWarning('Please select a due date');
 
     onSubmit({
-      book_id: selectedBookId,
+      book_id: parseInt(selectedBookId, 10),
       borrower_type: borrowerType,
-      borrower_id: selectedBorrowerId,
+      borrower_id: parseInt(selectedBorrowerId, 10),
       due_date: dueDate
     });
   };
 
   return (
     <Modal
-      isOpen={isOpen}
+      open={open}
       onClose={onClose}
       title="Issue Book"
       size="md"
@@ -186,8 +185,8 @@ const IssueBookModal = ({ isOpen, onClose, onSubmit, preSelectedBook = null, loa
               { label: 'Staff', value: 'staff' },
             ]}
             value={borrowerType}
-            onChange={(val) => {
-              setBorrowerType(val);
+            onChange={(e) => {
+              setBorrowerType(e.target.value);
               setSelectedBorrowerId('');
               setBorrowerSearch('');
               setBorrowers([]);

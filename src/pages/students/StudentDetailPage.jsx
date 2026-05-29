@@ -1,11 +1,12 @@
-import { useEffect, useState, useMemo } from 'react'
+import { useEffect, useState, useMemo, useRef } from 'react'
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom'
 import {
   AlertTriangle, ArrowLeft, Trash2, BookOpen, ScrollText,
   KeyRound, Copy, Mail, IdCard, CalendarCheck, GraduationCap, Wallet,
   Phone, Heart, User, ChevronLeft, ChevronRight as ChevronRIcon,
   ChevronDown, ChevronUp, Book, MapPin, Briefcase, Calendar, ShieldCheck,
-  History, LogOut, ArrowRightLeft, UserRound, CheckCircle2, Clock, Pencil
+  History, LogOut, ArrowRightLeft, UserRound, CheckCircle2, Clock, Pencil,
+  Users, Truck, Library, LayoutDashboard
 } from 'lucide-react'
 import useAdminStudentStore from '@/store/studentStore'
 import usePageTitle from '@/hooks/usePageTitle'
@@ -22,11 +23,12 @@ import useAuth from '@/hooks/useAuth'
 import TabAuditLog from './tabs/TabAuditLog'
 import TabResults from './tabs/TabResults'
 import TabFees from './tabs/TabFees'
-import TabIdentity from './tabs/TabIdentity'
-import TabProfile from './tabs/TabProfile'
 import TabDocuments from './tabs/TabDocuments'
 import TabEnrolledSubjects from './tabs/TabEnrolledSubjects'
 import TabHealth from './tabs/TabHealth'
+import TabFamily from './tabs/TabFamily'
+import TabServices from './tabs/TabServices'
+import TabSummary from './tabs/TabSummary'
 import useAttendanceStore from '@/store/attendanceStore'
 import StudentIDCardDownload from '@/components/pdf/StudentIDCardDownload'
 import TransferCertificateDownload from '@/components/pdf/TransferCertificateDownload'
@@ -34,18 +36,20 @@ import MarkAsLeftModal from '@/components/students/MarkAsLeftModal'
 import MarkAsGraduatedModal from '@/components/students/MarkAsGraduatedModal'
 import ReadmitModal from '@/components/students/ReadmitModal'
 import EnrollmentHistoryModal from '@/components/students/EnrollmentHistoryModal'
+import AttendanceCalendar from '@/components/attendance/AttendanceCalendar'
 
 /* ─── Tab config ─────────────────────────────────────────── */
 const TABS = [
-  { key: 'identity',   label: 'Identity',   icon: IdCard },
-  { key: 'profile',    label: 'Profile',    icon: User },
-  { key: 'parent',     label: 'Parents',    icon: Heart },
-  { key: 'health',     label: 'Health',     icon: Heart },
-  { key: 'subjects',   label: 'Subjects',   icon: Book },
-  { key: 'documents',  label: 'Documents',  icon: ScrollText },
+  { key: 'summary',    label: 'Summary',    icon: LayoutDashboard },
+  { key: 'personal',   label: 'Personal',   icon: User },
+  { key: 'family',     label: 'Family',     icon: Users },
+  { key: 'academic',   label: 'Academic',   icon: Book },
   { key: 'attendance', label: 'Attendance', icon: CalendarCheck },
   { key: 'results',    label: 'Results',    icon: GraduationCap },
   { key: 'fees',       label: 'Fees',       icon: Wallet },
+  { key: 'services',   label: 'Services',   icon: Truck },
+  { key: 'documents',  label: 'Documents',  icon: ScrollText },
+  { key: 'health',     label: 'Health',     icon: Heart },
   { key: 'audit',      label: 'Audit Log',  icon: ScrollText },
 ]
 
@@ -119,8 +123,9 @@ const StudentDetailPage = () => {
     isSaving,
   } = useAdminStudentStore()
 
-  const [activeTab, setActiveTab] = useState(searchParams.get('tab') || 'identity')
+  const [activeTab, setActiveTab] = useState(searchParams.get('tab') || 'summary')
   const [pageLoading, setPageLoading] = useState(true)
+  const tabScrollRef = useRef(null)
   
   /* Modals */
   const [editOpen, setEditOpen] = useState(false)
@@ -136,8 +141,11 @@ const StudentDetailPage = () => {
   /* Form States */
   const [confirmName, setConfirmName] = useState('')
   const [tempPassword, setTempPassword] = useState('')
+  const [parentTempPassword, setParentTempPassword] = useState('')
   const [resetResult, setResetResult] = useState(null)
+  const [parentResetResult, setParentResetResult] = useState(null)
   const [isResettingPass, setIsResettingPass] = useState(false)
+  const [isResettingParentPass, setIsResettingParentPass] = useState(false)
   const [editForm, setEditForm] = useState({})
 
   usePageTitle(student ? `${student.first_name} ${student.last_name}` : 'Student Detail')
@@ -155,9 +163,19 @@ const StudentDetailPage = () => {
     if (TABS.some(item => item.key === tab)) setActiveTab(tab)
   }, [searchParams])
 
+  // Auto-centering active tab
+  useEffect(() => {
+    if (tabScrollRef.current) {
+      const activeTabEl = tabScrollRef.current.querySelector(`[data-active="true"]`)
+      if (activeTabEl) {
+        activeTabEl.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' })
+      }
+    }
+  }, [activeTab])
+
   const handleTabChange = (tab) => {
     setActiveTab(tab)
-    setSearchParams(tab === 'identity' ? {} : { tab })
+    setSearchParams(tab === 'summary' ? {} : { tab })
   }
 
   const syncEditForm = () => {
@@ -179,6 +197,7 @@ const StudentDetailPage = () => {
       mother_name: student.mother_name || '',
       mother_phone: student.mother_phone || '',
       mother_email: student.mother_email || '',
+      parent_email: student.parent_email || '',
       father_occupation: student.father_occupation || '',
       emergency_contact: student.emergency_contact || '',
       medical_notes: student.medical_notes || '',
@@ -217,9 +236,21 @@ const StudentDetailPage = () => {
       const res = await studentApi.resetPassword(id, { new_password: tempPassword.trim() || undefined })
       setResetResult(res.data)
       setTempPassword('')
-      toastSuccess('Password reset')
+      toastSuccess('Student password reset')
     } catch (err) { toastError(err.message || 'Failed') }
     finally { setIsResettingPass(false) }
+  }
+
+  const handleResetParentPassword = async () => {
+    if (!student.parent_email) return toastWarning('No parent email associated with this student.')
+    setIsResettingParentPass(true)
+    try {
+      const res = await studentApi.resetParentPassword(id, { new_password: parentTempPassword.trim() || undefined })
+      setParentResetResult(res.data)
+      setParentTempPassword('')
+      toastSuccess('Parent password reset')
+    } catch (err) { toastError(err.message || 'Failed') }
+    finally { setIsResettingParentPass(false) }
   }
 
   const handleCopy = async (v) => {
@@ -280,71 +311,87 @@ const StudentDetailPage = () => {
         {/* actions */}
         <div className="flex flex-wrap gap-2 shrink-0">
           <Button variant="secondary" size="sm" icon={Pencil} onClick={() => { syncEditForm(); setEditOpen(true) }}>Edit</Button>
-          <Button variant="secondary" size="sm" icon={KeyRound} onClick={() => { setTempPassword(''); setResetResult(null); setPasswordOpen(true) }}>Credentials</Button>
+          <Button variant="secondary" size="sm" icon={KeyRound} onClick={() => { setTempPassword(''); setParentTempPassword(''); setResetResult(null); setParentResetResult(null); setPasswordOpen(true) }}>Credentials</Button>
           <Button variant="danger" size="sm" icon={Trash2} onClick={() => { setConfirmName(''); setDeleteOpen(true) }}>Delete</Button>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 gap-5 xl:grid-cols-[1fr_300px]">
+      <div className="grid grid-cols-1 gap-5 lg:grid-cols-[1fr_300px]">
         {/* ── Main Tabbed Content ── */}
-        <div className="space-y-5">
+        <div className="space-y-5 min-w-0">
           <div className="rounded-2xl overflow-hidden" style={css.card}>
-            <div className="flex overflow-x-auto no-scrollbar border-b" style={{ borderColor: 'var(--color-border)' }}>
+            <div 
+              ref={tabScrollRef}
+              className="sticky top-0 z-20 flex overflow-x-auto no-scrollbar border-b bg-white/90 backdrop-blur-md scroll-smooth touch-pan-x" 
+              style={{ borderColor: 'var(--color-border)' }}
+            >
               {TABS.map(tab => {
                 const active = activeTab === tab.key
                 return (
                   <button
                     key={tab.key}
+                    data-tab={tab.key}
+                    data-active={active}
                     onClick={() => handleTabChange(tab.key)}
-                    className="flex items-center gap-2 px-5 py-3.5 text-xs font-bold whitespace-nowrap border-b-2 transition-colors uppercase tracking-widest"
+                    className="flex items-center gap-2 px-6 py-4.5 text-[11px] font-black whitespace-nowrap border-b-2 transition-all uppercase tracking-[0.15em] shrink-0"
                     style={{
                       borderBottomColor: active ? 'var(--color-brand)' : 'transparent',
                       color: active ? 'var(--color-brand)' : 'var(--color-text-secondary)',
+                      background: active ? 'var(--color-brand)08' : 'transparent'
                     }}
                   >
-                    <tab.icon size={13} /> {tab.label}
+                    <tab.icon size={14} strokeWidth={active ? 3 : 2} /> {tab.label}
                   </button>
                 )
               })}
             </div>
 
-            <div className="p-6">
-              {activeTab === 'identity' && (
-                <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                  <Field icon={Calendar} label="Date of Birth" value={formatDate(student.date_of_birth, 'long')} />
-                  <Field icon={User}     label="Gender"        value={student.gender} />
-                  <Field icon={Heart}    label="Blood Group"   value={student.blood_group} />
-                  <Field icon={Clock}    label="Joining Date"  value={formatDate(student.joined_date, 'long')} />
-                  <Field icon={Briefcase}label="Joining Type"  value={student.joining_type} />
-                  <Field icon={Phone}    label="Emergency Contact" value={student.emergency_contact} />
-                  <Field icon={ScrollText} label="Medical Notes" value={student.medical_notes} full />
+            <div className="p-4 sm:p-6 lg:p-8">
+              {activeTab === 'summary' && <TabSummary student={student} onTabChange={handleTabChange} />}
+
+              {activeTab === 'personal' && (
+                <div className="space-y-8">
+                  <section>
+                    <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 mb-4 px-1">Identity Details</h4>
+                    <div className="grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+                      <Field icon={Calendar} label="Date of Birth" value={formatDate(student.date_of_birth, 'long')} />
+                      <Field icon={User}     label="Gender"        value={student.gender} />
+                      <Field icon={Heart}    label="Blood Group"   value={student.blood_group} />
+                      <Field icon={Clock}    label="Joining Date"  value={formatDate(student.joined_date, 'long')} />
+                      <Field icon={Briefcase}label="Joining Type"  value={student.joining_type} />
+                      <Field icon={Phone}    label="Emergency Contact" value={student.emergency_contact} />
+                      <Field icon={ScrollText} label="Medical Notes" value={student.medical_notes} full />
+                    </div>
+                  </section>
+                  <section>
+                    <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 mb-4 px-1">Contact & Address</h4>
+                    <div className="grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+                      <Field icon={Phone}    label="Student Phone" value={student.phone} />
+                      <Field icon={Mail}     label="Student Email" value={student.email} />
+                      <Field icon={MapPin}   label="City"          value={student.city} />
+                      <Field icon={MapPin}   label="State"         value={student.state} />
+                      <Field icon={IdCard}   label="Pincode"       value={student.pincode} />
+                      <Field icon={MapPin}   label="Address"       value={student.address} full />
+                    </div>
+                  </section>
+                  <section>
+                    <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 mb-4 px-1">Guardian Information</h4>
+                    <div className="grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+                      <Field icon={Mail}      label="Portal Login"  value={student.parent_email} />
+                      <Field icon={UserRound} label="Father Name"   value={student.father_name} />
+                      <Field icon={Phone}     label="Father Phone"  value={student.father_phone} />
+                      <Field icon={Briefcase} label="Father Job"    value={student.father_occupation} />
+                      <Field icon={UserRound} label="Mother Name"   value={student.mother_name} />
+                      <Field icon={Phone}     label="Mother Phone"  value={student.mother_phone} />
+                    </div>
+                  </section>
                 </div>
               )}
 
-              {activeTab === 'profile' && (
-                <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                  <Field icon={Phone}    label="Student Phone" value={student.phone} />
-                  <Field icon={Mail}     label="Student Email" value={student.email} />
-                  <Field icon={MapPin}   label="City"          value={student.city} />
-                  <Field icon={MapPin}   label="State"         value={student.state} />
-                  <Field icon={IdCard}   label="Pincode"       value={student.pincode} />
-                  <Field icon={MapPin}   label="Address"       value={student.address} full />
-                </div>
-              )}
-
-              {activeTab === 'parent' && (
-                <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                  <Field icon={UserRound} label="Father Name"   value={student.father_name} />
-                  <Field icon={Phone}     label="Father Phone"  value={student.father_phone} />
-                  <Field icon={Briefcase} label="Father Job"    value={student.father_occupation} />
-                  <Field icon={UserRound} label="Mother Name"   value={student.mother_name} />
-                  <Field icon={Phone}     label="Mother Phone"  value={student.mother_phone} />
-                  <Field icon={Mail}      label="Mother Email"  value={student.mother_email} />
-                </div>
-              )}
-
+              {activeTab === 'family'     && <TabFamily   student={student} />}
               {activeTab === 'health'     && <TabHealth   studentId={student.id} isAdmin={isAdmin} />}
-              {activeTab === 'subjects'   && <TabEnrolledSubjects studentId={student.id} isAdmin={isAdmin} />}
+              {activeTab === 'academic'   && <TabEnrolledSubjects studentId={student.id} isAdmin={isAdmin} />}
+              {activeTab === 'services'   && <TabServices   student={student} />}
               {activeTab === 'documents'  && <TabDocuments studentId={student.id} />}
               {activeTab === 'attendance' && <TabAttendance enrollmentId={enrollment?.id} />}
               {activeTab === 'results'    && <TabResults  studentId={student.id} />}
@@ -364,10 +411,15 @@ const StudentDetailPage = () => {
                 icon={IdCard}
                 loading={fetchingDocs.id}
                 onClick={async () => {
-                  setFetchingDocs(p => ({ ...p, id: true }))
-                  const res = await fetchIDCardData(student.id)
-                  setDocs(p => ({ ...p, id: res }))
-                  setFetchingDocs(p => ({ ...p, id: false }))
+                  try {
+                    setFetchingDocs(p => ({ ...p, id: true }))
+                    const res = await fetchIDCardData(student.id)
+                    setDocs(p => ({ ...p, id: res }))
+                  } catch (err) {
+                    toastError(err.message || 'Failed to fetch ID card data')
+                  } finally {
+                    setFetchingDocs(p => ({ ...p, id: false }))
+                  }
                 }}
                 download={docs.id ? <StudentIDCardDownload data={docs.id} fileName={`ID_${student.admission_no}.pdf`} /> : null}
               />
@@ -376,10 +428,15 @@ const StudentDetailPage = () => {
                 icon={ScrollText}
                 loading={fetchingDocs.tc}
                 onClick={async () => {
-                  setFetchingDocs(p => ({ ...p, tc: true }))
-                  const res = await fetchTCData(student.id)
-                  setDocs(p => ({ ...p, tc: res }))
-                  setFetchingDocs(p => ({ ...p, tc: false }))
+                  try {
+                    setFetchingDocs(p => ({ ...p, tc: true }))
+                    const res = await fetchTCData(student.id)
+                    setDocs(p => ({ ...p, tc: res }))
+                  } catch (err) {
+                    toastError(err.message || 'Failed to fetch TC data')
+                  } finally {
+                    setFetchingDocs(p => ({ ...p, tc: false }))
+                  }
                 }}
                 download={docs.tc ? <TransferCertificateDownload data={docs.tc} fileName={`TC_${student.admission_no}.pdf`} /> : null}
               />
@@ -417,16 +474,45 @@ const StudentDetailPage = () => {
         <EditForm form={editForm} setForm={setEditForm} />
       </Modal>
 
-      <Modal open={passwordOpen} onClose={() => setPasswordOpen(false)} title="Reset Student Credentials" size="sm" footer={<><Button variant="secondary" onClick={() => setPasswordOpen(false)}>Close</Button><Button icon={KeyRound} onClick={handleResetPassword} loading={isResettingPass}>Reset Access</Button></>}>
-        <div className="space-y-4">
-          <Input label="Temporary Password" value={tempPassword} onChange={e => setTempPassword(e.target.value)} placeholder="Leave blank for auto-gen" />
-          {resetResult && (
-            <div className="space-y-2 pt-2">
-              <div className="p-3 rounded-xl mb-2" style={css.successBg}><p className="text-xs font-bold text-emerald-700">Credentials reset successfully.</p></div>
-              <CredentialRow icon={Mail} label="Login Email" value={resetResult.email} onCopy={handleCopy} />
-              <CredentialRow icon={KeyRound} label="Temp Password" value={resetResult.generated_password} onCopy={handleCopy} />
+      <Modal open={passwordOpen} onClose={() => setPasswordOpen(false)} title="Reset Access Credentials" size="md">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-1">
+          {/* Student Portal */}
+          <div className="space-y-4 pr-0 md:pr-6 md:border-r border-gray-100">
+            <div>
+              <h4 className="text-xs font-black uppercase tracking-widest text-indigo-600 mb-1">Student Portal</h4>
+              <p className="text-[10px] text-gray-400 font-medium leading-tight mb-4">Reset login password for the student dashboard.</p>
             </div>
-          )}
+            
+            <Input label="New Password" value={tempPassword} onChange={e => setTempPassword(e.target.value)} placeholder="Leave blank for auto-gen" />
+            <Button icon={KeyRound} className="w-full" onClick={handleResetPassword} loading={isResettingPass}>Reset Student Password</Button>
+            
+            {resetResult && (
+              <div className="space-y-2 pt-4">
+                <div className="p-2.5 rounded-xl mb-2 bg-emerald-50 border border-emerald-100"><p className="text-[10px] font-black text-emerald-700 uppercase tracking-widest">Success: Student Portal</p></div>
+                <CredentialRow icon={Mail} label="Login Email" value={resetResult.email} onCopy={handleCopy} />
+                <CredentialRow icon={KeyRound} label="Temp Password" value={resetResult.generated_password} onCopy={handleCopy} />
+              </div>
+            )}
+          </div>
+
+          {/* Parent Portal */}
+          <div className="space-y-4">
+            <div>
+              <h4 className="text-xs font-black uppercase tracking-widest text-amber-600 mb-1">Parent Portal</h4>
+              <p className="text-[10px] text-gray-400 font-medium leading-tight mb-4">Reset login password for the parent mobile app & portal.</p>
+            </div>
+            
+            <Input label="New Password" value={parentTempPassword} onChange={e => setParentTempPassword(e.target.value)} placeholder="Leave blank for auto-gen" />
+            <Button variant="secondary" icon={KeyRound} className="w-full" onClick={handleResetParentPassword} loading={isResettingParentPass}>Reset Parent Password</Button>
+            
+            {parentResetResult && (
+              <div className="space-y-2 pt-4">
+                <div className="p-2.5 rounded-xl mb-2 bg-amber-50 border border-amber-100"><p className="text-[10px] font-black text-amber-700 uppercase tracking-widest">Success: Parent Portal</p></div>
+                <CredentialRow icon={Mail} label="Login Email" value={parentResetResult.parent_email} onCopy={handleCopy} />
+                <CredentialRow icon={KeyRound} label="Temp Password" value={parentResetResult.generated_password} onCopy={handleCopy} />
+              </div>
+            )}
+          </div>
         </div>
       </Modal>
 
@@ -477,6 +563,7 @@ const EditForm = ({ form, setForm }) => {
       <section className="space-y-3">
         <h4 className="text-[10px] font-bold uppercase tracking-widest text-gray-500">Parent Details</h4>
         <div className="grid gap-4 sm:grid-cols-2">
+          <Input label="Parent Portal Email" value={form.parent_email} onChange={e => update('parent_email', e.target.value)} help="This email is used for Parent Portal login." />
           <Input label="Father Name" value={form.father_name} onChange={e => update('father_name', e.target.value)} />
           <Input label="Mother Name" value={form.mother_name} onChange={e => update('mother_name', e.target.value)} />
           <Input label="Emergency Contact" value={form.emergency_contact} onChange={e => update('emergency_contact', e.target.value)} />
@@ -533,7 +620,14 @@ const TabAttendance = ({ enrollmentId }) => {
           <h3 className="text-sm font-bold uppercase tracking-widest">{MONTHS[month]} {year}</h3>
           <button onClick={() => month === 11 ? (setMonth(0), setYear(y => y + 1)) : setMonth(m => m + 1)} className="p-2 hover:bg-white rounded-lg transition-colors border"><ChevronRIcon size={16} /></button>
         </div>
-        <div className="text-center py-8 opacity-40 italic text-sm">Interactive calendar loading...</div>
+        
+        {isLoading ? (
+          <div className="flex items-center justify-center py-12">
+            <div className="h-8 w-8 animate-spin rounded-full border-4 border-indigo-500 border-t-transparent" />
+          </div>
+        ) : (
+          <AttendanceCalendar year={year} month={month} records={studentRecords} />
+        )}
       </div>
     </div>
   )

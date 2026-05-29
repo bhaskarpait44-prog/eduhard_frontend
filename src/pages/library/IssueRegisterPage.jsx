@@ -130,7 +130,7 @@ const IssueRegisterPage = () => {
               { label: 'Overdue', value: 'overdue' },
             ]}
             value={status}
-            onChange={setStatus}
+            onChange={(e) => setStatus(e.target.value)}
           />
           <Select
             options={[
@@ -139,7 +139,7 @@ const IssueRegisterPage = () => {
               { label: 'Staff', value: 'staff' },
             ]}
             value={borrowerType}
-            onChange={setBorrowerType}
+            onChange={(e) => setBorrowerType(e.target.value)}
           />
           <Input
             type="date"
@@ -233,7 +233,7 @@ const IssueRegisterPage = () => {
       </div>
 
       <ReturnBookModal
-        isOpen={isReturnModalOpen}
+        open={isReturnModalOpen}
         onClose={() => setIsReturnModalOpen(false)}
         onSubmit={handleReturn}
         issue={selectedIssue}

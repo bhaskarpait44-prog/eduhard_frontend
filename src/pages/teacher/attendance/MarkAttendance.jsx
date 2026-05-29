@@ -108,30 +108,36 @@ const MarkAttendance = () => {
   }, [todaySchedule, assignments, markingContext.class_id, markingContext.section_id])
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 pb-20 lg:pb-8">
       {/* ── Header ── */}
-      <section className="rounded-2xl border p-5 sm:p-6" style={{ borderColor: 'var(--color-border)' }}>
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+      <section 
+        className="rounded-[28px] border p-6 overflow-hidden" 
+        style={{ 
+          borderColor: 'var(--color-border)',
+          background: 'linear-gradient(135deg, rgba(13, 148, 136, 0.12), rgba(16, 185, 129, 0.05) 55%, var(--color-surface) 100%)'
+        }}
+      >
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
           <div className="min-w-0">
-            <p className="text-[11px] font-semibold uppercase tracking-widest" style={{ color: '#0f766e' }}>
+            <p className="text-sm font-semibold uppercase tracking-[0.18em]" style={{ color: '#0f766e' }}>
               Attendance Management
             </p>
-            <h1 className="mt-1.5 text-2xl font-bold sm:text-3xl" style={{ color: 'var(--color-text-primary)' }}>
+            <h1 className="mt-2 text-2xl font-bold leading-tight sm:text-3xl" style={{ color: 'var(--color-text-primary)' }}>
               Mark Attendance
             </h1>
-            <p className="mt-1.5 max-w-xl text-sm leading-relaxed" style={{ color: 'var(--color-text-secondary)' }}>
+            <p className="mt-2 text-sm sm:text-base opacity-80" style={{ color: 'var(--color-text-secondary)' }}>
               Record daily student attendance for your assigned sections. Ensure accuracy for session reports and parent notifications.
             </p>
           </div>
-          <div className="flex items-center gap-3 bg-surface-raised/50 px-4 py-2 rounded-2xl border border-border/50">
+          <div className="flex items-center gap-3 bg-white/50 backdrop-blur-sm px-5 py-3 rounded-2xl border border-white shadow-sm shrink-0">
             <div className="text-right">
-              <p className="text-[10px] font-black uppercase tracking-widest text-text-muted">Today</p>
-              <p className="text-sm font-black text-text-primary leading-tight mt-0.5">
-                {new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}
+              <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-text-muted">Today</p>
+              <p className="text-sm font-bold text-text-primary leading-tight mt-0.5">
+                {new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
               </p>
             </div>
-            <div className="h-9 w-9 flex items-center justify-center rounded-xl bg-primary/10 text-primary">
-              <CalendarDays size={18} />
+            <div className="h-10 w-10 flex items-center justify-center rounded-xl bg-teal-50 text-teal-600 border border-teal-100 shadow-inner">
+              <CalendarDays size={20} />
             </div>
           </div>
         </div>
@@ -170,10 +176,10 @@ const MarkAttendance = () => {
                 subject_id: markingContext.subject_id ? String(markingContext.subject_id) : undefined,
                 date: markingContext.date,
               })
-              toastSuccess('Submitted.')
+              toastSuccess('Attendance submitted successfully.')
               setShowNextPrompt(true)
             } catch (error) {
-              toastError(error?.message || 'Failed.')
+              toastError(error?.message || 'Failed to submit.')
             }
           }}
         />
@@ -181,24 +187,24 @@ const MarkAttendance = () => {
 
       {/* Next pending prompt */}
       {showNextPrompt && nextPending && (
-        <div className="rounded-2xl border border-emerald-100 bg-emerald-50 p-5 shadow-sm animate-in fade-in slide-in-from-bottom-2">
-          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+        <div className="rounded-[28px] border border-emerald-100 bg-emerald-50/50 p-6 shadow-sm animate-in fade-in slide-in-from-bottom-2">
+          <div className="flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
             <div className="flex items-center gap-4">
-              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-emerald-100 text-emerald-600">
-                <CheckCircle2 size={24} />
+              <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-[20px] bg-emerald-100 text-emerald-600 shadow-inner border border-emerald-200">
+                <CheckCircle2 size={28} />
               </div>
               <div>
-                <p className="text-sm font-black text-emerald-900 leading-tight">Great Work!</p>
-                <p className="text-xs font-bold text-emerald-700 mt-1">
-                  Attendance for <span className="underline">{nextPending.class_name}</span> is still pending.
+                <p className="text-base font-bold text-emerald-900 leading-tight">Great Work!</p>
+                <p className="text-sm font-medium text-emerald-700 mt-1">
+                  Attendance for <span className="font-bold underline">{nextPending.class_name}</span> is still pending.
                 </p>
               </div>
             </div>
-            <div className="flex gap-2">
+            <div className="flex gap-3">
               <button
                 type="button"
                 onClick={() => setShowNextPrompt(false)}
-                className="h-10 px-5 text-xs font-black uppercase tracking-widest text-emerald-700 hover:bg-emerald-100 rounded-xl transition-colors"
+                className="h-11 px-6 text-sm font-semibold text-emerald-700 hover:bg-emerald-100 rounded-2xl transition-all active:scale-95"
               >
                 Later
               </button>
@@ -214,9 +220,9 @@ const MarkAttendance = () => {
                   }))
                   setShowNextPrompt(false)
                 }}
-                className="inline-flex h-10 items-center gap-2 rounded-xl bg-emerald-600 px-5 text-xs font-black uppercase tracking-widest text-white shadow-lg shadow-emerald-600/20 active:scale-95 transition-all"
+                className="inline-flex h-11 items-center gap-2 rounded-2xl bg-emerald-600 px-6 text-sm font-semibold text-white shadow-lg shadow-emerald-600/20 active:scale-95 transition-all"
               >
-                Mark Now <ArrowRight size={16} />
+                Mark Now <ArrowRight size={18} />
               </button>
             </div>
           </div>
@@ -225,41 +231,46 @@ const MarkAttendance = () => {
 
       {!showNextPrompt && studentPayload?.students?.length > 0 && (
         <section
-          className="rounded-2xl border bg-surface p-5 sm:p-6 shadow-sm"
+          className="rounded-[28px] border bg-surface p-6 shadow-sm"
           style={{ borderColor: 'var(--color-border)' }}
         >
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-            <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-surface-raised text-text-secondary">
-                <Info size={20} />
+            <div className="flex items-center gap-4">
+              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-surface-raised text-text-secondary shadow-sm">
+                <Info size={24} />
               </div>
               <div>
-                <p className="text-sm font-black text-text-primary tracking-tight">Register & Reports</p>
-                <p className="text-xs font-medium text-text-muted mt-0.5">Quick access to management tools</p>
+                <p className="text-base font-bold text-text-primary tracking-tight">Register & Reports</p>
+                <p className="text-sm font-medium text-text-muted mt-0.5">Quick access to management tools</p>
               </div>
             </div>
-            <div className="flex gap-2">
+            <div className="flex gap-3">
               <button
                 type="button"
                 onClick={() => navigate(ROUTES.TEACHER_ATTENDANCE_REGISTER)}
-                className="h-10 rounded-xl bg-surface-raised border border-border/50 px-5 text-[11px] font-black uppercase tracking-widest text-text-primary hover:bg-border/20 transition-colors"
+                className="h-11 rounded-2xl bg-surface-raised border border-border/50 px-6 text-sm font-semibold text-text-primary hover:bg-border/20 transition-all active:scale-95 shadow-sm"
               >
-                Register
+                View Register
               </button>
               <button
                 type="button"
                 onClick={() => navigate(ROUTES.TEACHER_ATTENDANCE_REPORTS)}
-                className="h-10 rounded-xl bg-surface-raised border border-border/50 px-5 text-[11px] font-black uppercase tracking-widest text-text-primary hover:bg-border/20 transition-colors"
+                className="h-11 rounded-2xl bg-surface-raised border border-border/50 px-6 text-sm font-semibold text-text-primary hover:bg-border/20 transition-all active:scale-95 shadow-sm"
               >
-                Reports
+                Full Reports
               </button>
             </div>
           </div>
 
-          <div className="mt-6 grid grid-cols-3 gap-4 border-t border-dashed border-border pt-6">
-            <StatRow icon={Users} label="Student Count" value={studentPayload.students.length} />
-            <StatRow icon={Clock} label="Last Updated" value={new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })} />
-            <StatRow icon={ClipboardCheck} label="Filing Status" value={studentPayload.is_submitted ? 'Completed' : 'Draft Mode'} tone={studentPayload.is_submitted ? 'text-success' : 'text-orange-600'} />
+          <div className="mt-8 grid grid-cols-3 gap-6 border-t border-dashed border-border pt-8">
+            <StatRow icon={Users} label="Class Strength" value={studentPayload.students.length} />
+            <StatRow icon={Clock} label="Timestamp" value={new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })} />
+            <StatRow 
+              icon={ClipboardCheck} 
+              label="Record Status" 
+              value={studentPayload.is_submitted ? 'Published' : 'Draft'} 
+              tone={studentPayload.is_submitted ? 'text-emerald-600' : 'text-amber-600'} 
+            />
           </div>
         </section>
       )}
@@ -268,13 +279,13 @@ const MarkAttendance = () => {
 }
 
 const StatRow = ({ icon: Icon, label, value, tone = 'text-text-primary' }) => (
-  <div className="flex flex-col items-center gap-2">
-    <div className="h-8 w-8 rounded-full bg-surface-raised flex items-center justify-center text-text-muted">
-      <Icon size={14} />
+  <div className="flex flex-col items-center gap-3">
+    <div className="h-10 w-10 rounded-2xl bg-surface-raised flex items-center justify-center text-text-muted shadow-sm">
+      <Icon size={18} />
     </div>
     <div className="text-center">
-      <p className="text-[9px] font-black uppercase tracking-widest text-text-muted">{label}</p>
-      <p className={`text-xs font-black mt-0.5 ${tone}`}>{value}</p>
+      <p className="text-[10px] font-semibold uppercase tracking-[0.15em] text-text-muted">{label}</p>
+      <p className={`text-base font-bold mt-1 ${tone}`}>{value}</p>
     </div>
   </div>
 )

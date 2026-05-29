@@ -120,7 +120,7 @@ const FineCollectionPage = () => {
               { label: 'Waived', value: 'waived' },
             ]}
             value={fineStatus}
-            onChange={setFineStatus}
+            onChange={(e) => { setFineStatus(e.target.value); setPage(1); }}
           />
           <Button type="submit" variant="secondary">Search</Button>
         </form>
@@ -193,7 +193,7 @@ const FineCollectionPage = () => {
       </div>
 
       <Modal
-        isOpen={isActionModalOpen}
+        open={isActionModalOpen}
         onClose={() => setIsActionModalOpen(false)}
         title="Fine Action"
         size="sm"
@@ -212,7 +212,7 @@ const FineCollectionPage = () => {
               { label: 'Mark as Waived', value: 'waived' },
             ]}
             value={actionStatus}
-            onChange={setActionStatus}
+            onChange={(e) => setActionStatus(e.target.value)}
           />
 
           <Textarea
