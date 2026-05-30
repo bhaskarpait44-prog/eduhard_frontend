@@ -275,7 +275,9 @@ const ExamsListPage = ({ onNavigate }) => {
   useEffect(() => { fetchSessions().catch(() => {}) }, [fetchSessions])
 
   useEffect(() => {
-    if (currentSession && !sessionId) setSessionId(String(currentSession.id))
+    if (currentSession && !sessionId) {
+      setSessionId(String(currentSession.id))
+    }
   }, [currentSession, sessionId])
 
   useEffect(() => {
@@ -371,7 +373,10 @@ const ExamsListPage = ({ onNavigate }) => {
           label="Academic session"
           value={sessionId}
           onChange={e => setSessionId(e.target.value)}
-          options={(sessions || []).map(s => ({ value: String(s.id), label: s.name }))}
+          options={(sessions || []).map(s => ({ 
+            value: String(s.id), 
+            label: `${s.name}${s.is_current ? ' (Current)' : ''}` 
+          }))}
           containerClassName="flex-1"
         />
         <Button icon={Plus} onClick={() => { setPrefillClass(null); setCreateOpen(true) }}>

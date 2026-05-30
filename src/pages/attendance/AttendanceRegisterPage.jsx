@@ -198,7 +198,10 @@ const AttendanceRegisterPage = ({ mode = 'register' }) => {
             label="Session"
             value={sessionId}
             onChange={(event) => setSessionId(event.target.value)}
-            options={(sessions || []).map((session) => ({ value: String(session.id), label: session.name }))}
+            options={(sessions || []).map((session) => ({ 
+              value: String(session.id), 
+              label: `${session.name}${session.is_current ? ' (Current)' : ''}` 
+            }))}
           />
           <Select
             label="Class"

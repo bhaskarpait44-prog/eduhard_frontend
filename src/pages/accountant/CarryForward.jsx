@@ -70,11 +70,19 @@ const CarryForward = () => {
         <div className="mt-4 grid gap-4 md:grid-cols-2">
           <select value={fromSessionId} onChange={(event) => setFromSessionId(event.target.value)} className="rounded-2xl border px-4 py-3 text-sm" style={{ backgroundColor: 'var(--color-bg)', borderColor: 'var(--color-border)', color: 'var(--color-text-primary)' }}>
             <option value="">From Session</option>
-            {(sessions || []).map((session) => <option key={session.id} value={session.id}>{session.name}</option>)}
+            {(sessions || []).map((session) => (
+              <option key={session.id} value={session.id}>
+                {session.name}{session.is_current ? ' (Current)' : ''}
+              </option>
+            ))}
           </select>
           <select value={toSessionId} onChange={(event) => setToSessionId(event.target.value)} className="rounded-2xl border px-4 py-3 text-sm" style={{ backgroundColor: 'var(--color-bg)', borderColor: 'var(--color-border)', color: 'var(--color-text-primary)' }}>
             <option value="">To Session</option>
-            {(sessions || []).map((session) => <option key={session.id} value={session.id}>{session.name}</option>)}
+            {(sessions || []).map((session) => (
+              <option key={session.id} value={session.id}>
+                {session.name}{session.is_current ? ' (Current)' : ''}
+              </option>
+            ))}
           </select>
         </div>
       </div>

@@ -23,7 +23,7 @@ const DAYS = [
 ]
 
 const schema = z.object({
-  name      : z.string().min(1, 'Session name is required').max(20, 'Max 20 characters'),
+  name      : z.string().min(1, 'Session name is required').max(100, 'Max 100 characters'),
   start_date: z.string().min(1, 'Start date is required'),
   end_date  : z.string().min(1, 'End date is required'),
   working_days: z.object({

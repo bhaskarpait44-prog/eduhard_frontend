@@ -124,7 +124,10 @@ const CarryForwardModal = ({ open, onClose, student, pendingInvoices, onSuccess 
           required
           value={toSessionId}
           onChange={e => setToSessionId(e.target.value)}
-          options={availableSessions.map(s => ({ value: String(s.id), label: `${s.name} (${s.status})` }))}
+          options={availableSessions.map(s => ({ 
+            value: String(s.id), 
+            label: `${s.name}${s.is_current ? ' (Current)' : ''}` 
+          }))}
           placeholder="Select target session…"
           hint="Student must already be enrolled in the target session"
         />

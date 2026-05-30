@@ -11,12 +11,13 @@ const useSessionStore = create((set, get) => ({
   error          : null,
 
   // ── Fetch all sessions ──────────────────────────────────────────────
-  fetchSessions: async (params) => {
+  fetchSessions: async (params = {}) => {
     set({ isLoading: true, error: null })
     try {
-      const res = await api.getSessions(params)
-      const sessions = Array.isArray(res.data) ? res.data : []
-      const currentSession = sessions.find((session) => session.is_current || session.status === 'active') || null
+      const fetchParams = { limit: 100, ...params }
+      const res = await api.getSessions(fetchParams)
+      const sessions = Array.isArray(res.data) ? res.data : (res.data?.sessions || [])
+      const currentSession = sessions.find((session) => session.is_current === true) || null
       set({ sessions, currentSession, isLoading: false })
       return res.data
     } catch (err) {
@@ -38,7 +39,7 @@ const useSessionStore = create((set, get) => ({
 
   // ── Fetch single session ────────────────────────────────────────────
   fetchSession: async (id) => {
-    set({ isLoading: true, error: null })
+    set({ isLoading: true, error: null, sessionStats: null })
     try {
       const res = await api.getSession(id)
       set({ selectedSession: res.data, isLoading: false })
@@ -46,6 +47,17 @@ const useSessionStore = create((set, get) => ({
     } catch (err) {
       set({ error: err.message, isLoading: false })
       throw err
+    }
+  },
+
+  // ── Fetch session stats ─────────────────────────────────────────────
+  fetchSessionStats: async (id) => {
+    try {
+      const res = await api.getSessionStats(id)
+      set({ sessionStats: res.data })
+      return { success: true, data: res.data }
+    } catch (err) {
+      return { success: false, message: err.message }
     }
   },
 
@@ -57,6 +69,23 @@ const useSessionStore = create((set, get) => ({
       // Prepend to list
       set(s => ({ sessions: [res.data, ...s.sessions], isSaving: false }))
       return { success: true, data: res.data }
+    } catch (err) {
+      set({ isSaving: false })
+      return { success: false, message: err.message }
+    }
+  },
+
+  // ── Update session ──────────────────────────────────────────────────
+  updateSession: async (id, data) => {
+    set({ isSaving: true })
+    try {
+      await api.updateSession(id, data)
+      set(s => ({
+        isSaving: false,
+        sessions: s.sessions.map(sess => sess.id === id ? { ...sess, ...data } : sess),
+        selectedSession: s.selectedSession?.id === id ? { ...s.selectedSession, ...data } : s.selectedSession,
+      }))
+      return { success: true }
     } catch (err) {
       set({ isSaving: false })
       return { success: false, message: err.message }
@@ -88,19 +117,94 @@ const useSessionStore = create((set, get) => ({
     }
   },
 
+  // ── Lock session ────────────────────────────────────────────────────
+  lockSession: async (id) => {
+    set({ isSaving: true })
+    try {
+      const res = await api.lockSession(id)
+      set(s => ({
+        isSaving       : false,
+        sessions       : s.sessions.map(sess => (sess.id === id ? res.data : sess)),
+        selectedSession: s.selectedSession?.id === id ? res.data : s.selectedSession,
+      }))
+      return { success: true }
+    } catch (err) {
+      set({ isSaving: false })
+      return { success: false, message: err.message }
+    }
+  },
+
+  // ── Archive session ─────────────────────────────────────────────────
+  archiveSession: async (id) => {
+    set({ isSaving: true })
+    try {
+      await api.archiveSession(id)
+      set(s => ({
+        isSaving       : false,
+        sessions       : s.sessions.map(sess => (sess.id === id ? { ...sess, status: 'archived' } : sess)),
+        selectedSession: s.selectedSession?.id === id ? { ...s.selectedSession, status: 'archived' } : s.selectedSession,
+      }))
+      return { success: true }
+    } catch (err) {
+      set({ isSaving: false })
+      return { success: false, message: err.message }
+    }
+  },
+
   // ── Add holiday ─────────────────────────────────────────────────────
   addHoliday: async (sessionId, data) => {
     set({ isSaving: true })
     try {
       const res = await api.addHoliday(sessionId, data)
-      // Append holiday to selected session
+      // res.data is { holiday: {...}, retroactive: {...} }
+      const newHoliday = res.data?.holiday
+      
       set(s => ({
         isSaving       : false,
-        selectedSession: s.selectedSession
+        selectedSession: s.selectedSession?.id === Number(sessionId)
           ? {
               ...s.selectedSession,
-              holidays: [...(s.selectedSession.holidays || []), res.data?.holiday],
+              holidays: [...(s.selectedSession.holidays || []).filter(Boolean), newHoliday],
             }
+          : s.selectedSession,
+      }))
+      return { success: true, data: res.data }
+    } catch (err) {
+      set({ isSaving: false })
+      return { success: false, message: err.message }
+    }
+  },
+
+  // ── Remove holiday ──────────────────────────────────────────────────
+  removeHoliday: async (sessionId, holidayId) => {
+    set({ isSaving: true })
+    try {
+      await api.removeHoliday(sessionId, holidayId)
+      set(s => ({
+        isSaving       : false,
+        selectedSession: s.selectedSession?.id === Number(sessionId)
+          ? {
+              ...s.selectedSession,
+              holidays: (s.selectedSession.holidays || []).filter(h => h && h.id !== Number(holidayId)),
+            }
+          : s.selectedSession,
+      }))
+      return { success: true }
+    } catch (err) {
+      set({ isSaving: false })
+      return { success: false, message: err.message }
+    }
+  },
+
+  // ── Update working days ─────────────────────────────────────────────
+  updateWorkingDays: async (sessionId, workingDays) => {
+    set({ isSaving: true })
+    try {
+      await api.updateWorkingDays(sessionId, workingDays)
+      set(s => ({
+        isSaving       : false,
+        selectedSession: s.selectedSession?.id === Number(sessionId)
+          ? { ...s.selectedSession, ...workingDays, working_days: workingDays }
           : s.selectedSession,
       }))
       return { success: true }

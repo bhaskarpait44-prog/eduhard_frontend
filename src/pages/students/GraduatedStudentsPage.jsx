@@ -6,6 +6,7 @@ import useToast from '@/hooks/useToast'
 import * as leavingApi from '@/api/studentLeavingApi'
 import { getClasses } from '@/api/classApi'
 import { getSessions } from '@/api/sessionsApi'
+import useSessionStore from '@/store/sessionStore'
 import Button from '@/components/ui/Button'
 import Select from '@/components/ui/Select'
 import Badge from '@/components/ui/Badge'
@@ -19,6 +20,7 @@ export default function GraduatedStudentsPage() {
   usePageTitle('Graduated Students')
   const { toastError, toastSuccess } = useToast()
   const navigate = useNavigate()
+  const { currentSession, fetchCurrentSession } = useSessionStore()
 
   const [students, setStudents] = useState([])
   const [pagination, setPagination] = useState({ total: 0, page: 1, totalPages: 1 })
@@ -34,9 +36,17 @@ export default function GraduatedStudentsPage() {
   const [sessions, setSessions] = useState([])
   const [readmitTarget, setReadmitTarget] = useState(null)
 
+  /* auto-select current session */
+  useEffect(() => {
+    if (!filters.session_id && currentSession?.id) {
+      setFilters((p) => ({ ...p, session_id: String(currentSession.id) }))
+    }
+  }, [currentSession, filters.session_id])
+
   const fetchMeta = async () => {
     try {
       const [clsRes, sessRes] = await Promise.all([getClasses(), getSessions()])
+      fetchCurrentSession().catch(() => {})
       // clsRes.data is { classes: [...], stats: {...} }
       // sessRes.data is [...]
       setClasses((clsRes.data?.classes || []).map(c => ({ value: String(c.id), label: c.name })))

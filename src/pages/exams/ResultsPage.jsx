@@ -168,7 +168,10 @@ const ResultsPage = () => {
           label="Session"
           value={sessionId}
           onChange={e => setSessionId(e.target.value)}
-          options={(sessions || []).map(s => ({ value: String(s.id), label: s.name }))}
+          options={(sessions || []).map(s => ({ 
+            value: String(s.id), 
+            label: `${s.name}${s.is_current ? ' (Current)' : ''}` 
+          }))}
           containerClassName="flex-1"
         />
         <Select

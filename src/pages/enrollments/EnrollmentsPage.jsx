@@ -208,7 +208,12 @@ export default function EnrollmentsPage() {
   }, [filters.class_id, toastError])
 
   /* derived */
-  const sessionOptions = useMemo(() => sessions.map((s) => ({ value: String(s.id), label: s.name })), [sessions])
+  const sessionOptions = useMemo(() => (
+    sessions.map((s) => ({ 
+      value: String(s.id), 
+      label: `${s.name}${s.is_current ? ' (Current)' : ''}` 
+    }))
+  ), [sessions])
   const classOptions   = useMemo(() => classes.map((c)  => ({ value: String(c.id),  label: c.display_name || c.name })), [classes])
   const activeCount    = students.filter((s) => s.current_enrollment?.id).length
   const grouped        = useMemo(() => groupByClass(students), [students])

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { ArrowRightLeft, CheckCircle2, FileCheck2, GraduationCap, RefreshCw, Users, Download } from 'lucide-react'
-import { getClasses, getClassList } from '@/api/classApi'
+import { getClasses, getClassOptions } from '@/api/classApi'
 import { getPromotionCandidates, processPromotions, downloadPromotionSummaryPdf } from '@/api/enrollmentsApi'
 import { getSessions } from '@/api/sessionsApi'
 import usePageTitle from '@/hooks/usePageTitle'
@@ -86,7 +86,7 @@ const AdminPromotionPage = () => {
   const [saving, setSaving] = useState(false)
   const [downloading, setDownloading] = useState(false)
   const [sessions, setSessions] = useState([])
-  const [classes, setClasses] = useState([])
+  const [classOptions, setClassOptions] = useState([])
   const [sourceSessionId, setSourceSessionId] = useState('')
   const [targetSessionId, setTargetSessionId] = useState('')
   const [classId, setClassId] = useState('')
@@ -102,16 +102,16 @@ const AdminPromotionPage = () => {
       try {
         const [sessionRes, classRes] = await Promise.all([
           getSessions(),
-          getClasses(),
+          getClasses({ is_active: true }),
         ])
 
         const sessionRows = Array.isArray(sessionRes?.data) ? sessionRes.data : (sessionRes?.data?.sessions || [])
-        const classRows = getClassList(classRes)
+        const classOpts = getClassOptions(classRes)
         const currentSession = sessionRows.find((row) => row.is_current) || sessionRows[0] || null
         const fallbackTarget = sessionRows.find((row) => String(row.id) !== String(currentSession?.id)) || null
 
         setSessions(sessionRows)
-        setClasses(classRows)
+        setClassOptions(classOpts)
         setSourceSessionId(currentSession ? String(currentSession.id) : '')
         setTargetSessionId(fallbackTarget ? String(fallbackTarget.id) : '')
       } catch (error) {
@@ -123,10 +123,6 @@ const AdminPromotionPage = () => {
 
     loadMeta()
   }, [])
-
-  const classOptions = useMemo(() => (
-    classes.map((row) => ({ value: String(row.id), label: row.name }))
-  ), [classes])
 
   const sessionOptions = useMemo(() => (
     sessions.map((row) => ({
@@ -278,6 +274,15 @@ const AdminPromotionPage = () => {
     setSelectedStudents(nextSelected)
   }
 
+  const handleSetAllResults = (outcome) => {
+    const nextResults = { ...boardResults }
+    students.forEach((s) => {
+      nextResults[s.enrollment_id] = outcome
+    })
+    setBoardResults(nextResults)
+    toastInfo(`All students set to ${outcome.toUpperCase()}`)
+  }
+
   return (
     <div className="space-y-5 pb-20">
       <section
@@ -377,10 +382,16 @@ const AdminPromotionPage = () => {
 
           {promotionMeta?.class ? (
             <div className="flex flex-wrap items-center gap-2">
-              <Badge variant="blue">{promotionMeta.class.name}</Badge>
+              <Badge variant="blue">
+                {promotionMeta.class.name}
+                {promotionMeta.class.stream && promotionMeta.class.stream !== 'regular' && ` - ${promotionMeta.class.stream.charAt(0).toUpperCase()}${promotionMeta.class.stream.slice(1)}`}
+              </Badge>
               <Badge variant="grey">{promotionMeta.source_session?.name || '--'}</Badge>
               {promotionMeta.next_class ? (
-                <Badge variant="green">Next: {promotionMeta.next_class.name}</Badge>
+                <Badge variant="green">
+                  Next: {promotionMeta.next_class.name}
+                  {promotionMeta.next_class.stream && promotionMeta.next_class.stream !== 'regular' && ` - ${promotionMeta.next_class.stream.charAt(0).toUpperCase()}${promotionMeta.next_class.stream.slice(1)}`}
+                </Badge>
               ) : (
                 <Badge variant="yellow">Last class graduation flow</Badge>
               )}
@@ -402,6 +413,14 @@ const AdminPromotionPage = () => {
 
           {students.length > 0 ? (
             <div className="flex flex-wrap gap-2">
+              {resultSource === 'board_result' && (
+                <div className="mr-2 flex flex-wrap gap-2 border-r pr-4" style={{ borderColor: 'var(--color-border)' }}>
+                  <Button variant="outline" size="sm" onClick={() => handleSetAllResults('pass')} className="text-green-600 border-green-200 hover:bg-green-50">All Pass</Button>
+                  <Button variant="outline" size="sm" onClick={() => handleSetAllResults('fail')} className="text-red-600 border-red-200 hover:bg-red-50">All Fail</Button>
+                  <Button variant="outline" size="sm" onClick={() => handleSetAllResults('compartment')} className="text-yellow-600 border-yellow-200 hover:bg-yellow-50">All Comp.</Button>
+                  <Button variant="outline" size="sm" onClick={() => handleSetAllResults('detained')} className="text-orange-600 border-orange-200 hover:bg-orange-50">All Detain</Button>
+                </div>
+              )}
               <Button variant="secondary" onClick={toggleAll}>
                 {allSelected ? 'Clear Selection' : 'Select All'}
               </Button>

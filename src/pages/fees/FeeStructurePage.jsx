@@ -277,7 +277,10 @@ const FeeStructurePage = ({ apiMode = 'default' }) => {
             label="Academic Session"
             value={sessionId}
             onChange={e => setSessionId(e.target.value)}
-            options={(sessions || []).map(s => ({ value: String(s.id), label: s.name }))}
+            options={(sessions || []).map(s => ({ 
+              value: String(s.id), 
+              label: `${s.name}${s.is_current ? ' (Current)' : ''}` 
+            }))}
           />
         </div>
         <div className="md:col-span-3">

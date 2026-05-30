@@ -310,7 +310,10 @@ const EnterMarksPage = () => {
           label="Academic session"
           value={sessionId}
           onChange={e => setSessionId(e.target.value)}
-          options={(sessions || []).map(s => ({ value: String(s.id), label: s.name }))}
+          options={(sessions || []).map(s => ({ 
+            value: String(s.id), 
+            label: `${s.name}${s.is_current ? ' (Current)' : ''}` 
+          }))}
           placeholder="Select session"
         />
         <FilterSelect
