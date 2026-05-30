@@ -35,6 +35,7 @@ export const ROUTES = {
   // Student Portal
   STUDENT_ROOT: '/student',
   STUDENT_DASHBOARD: '/student/dashboard',
+  STUDENT_CALENDAR: '/student/calendar',
   STUDENT_ATTENDANCE: '/student/attendance',
   STUDENT_RESULTS: '/student/results',
   STUDENT_REPORT_CARD: '/student/results/report-card',
@@ -105,6 +106,7 @@ export const ROUTES = {
   // Audit
   AUDIT: '/audit',
   FEEDBACK: '/feedback',
+  ACADEMIC_CALENDAR: '/academic-calendar',
 
   // Library Portal
   LIBRARY_ROOT: '/library',
@@ -219,3 +221,4 @@ export const PAGINATION = {
   DEFAULT_PER_PAGE: 20,
   PER_PAGE_OPTIONS: [10, 20, 50, 100],
 }
+

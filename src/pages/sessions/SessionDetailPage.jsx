@@ -6,6 +6,7 @@ import {
   UmbrellaOff, Plus, Trash2, Calendar
 } from 'lucide-react'
 import useSessionStore from '@/store/sessionStore'
+import useAcademicCalendarStore from '@/store/academicCalendarStore'
 import useToast from '@/hooks/useToast'
 import usePageTitle from '@/hooks/usePageTitle'
 import Button from '@/components/ui/Button'
@@ -296,6 +297,11 @@ const SessionDetailPage = () => {
               )}
             </div>
           )}
+
+          {/* Calendar tab */}
+          {activeTab === 'calendar' && (
+            <CalendarTab sessionId={id} />
+          )}
         </div>
       </div>
 
@@ -318,6 +324,70 @@ const SessionDetailPage = () => {
         sessionId={id}
         existingHolidays={holidays}
       />
+    </div>
+  )
+}
+
+// ── Calendar Tab Component ────────────────────────────────────────────────
+const CalendarTab = ({ sessionId }) => {
+  const { events, isLoading, fetchEvents } = useAcademicCalendarStore()
+  const navigate = useNavigate()
+
+  useEffect(() => {
+    fetchEvents(sessionId)
+  }, [sessionId])
+
+  if (isLoading) return <div className="p-8 text-center text-sm text-[var(--color-text-muted)]">Loading events...</div>
+
+  return (
+    <div className="p-4 sm:p-6 space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
+      <div className="flex items-center justify-between mb-2">
+        <h3 className="text-xs font-bold uppercase tracking-wider text-[var(--color-text-muted)]">Session Events</h3>
+        <Button 
+          variant="ghost" size="sm" icon={Calendar}
+          onClick={() => navigate(ROUTES.ACADEMIC_CALENDAR)}
+        >
+          Full Calendar
+        </Button>
+      </div>
+
+      {events.length === 0 ? (
+        <EmptyState
+          title="No events yet"
+          description="Plan your academic year by adding events to the calendar."
+          className="border-0 py-10"
+        />
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          {events.slice(0, 10).map(event => (
+            <div 
+              key={event.id}
+              className="p-3 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface-raised)]"
+            >
+              <div className="flex items-start gap-3">
+                <div 
+                  className="w-1 h-8 rounded-full shrink-0 mt-1"
+                  style={{ backgroundColor: event.color || '#64748b' }}
+                />
+                <div className="min-w-0">
+                  <p className="text-sm font-bold truncate text-[var(--color-text-primary)]">{event.title}</p>
+                  <p className="text-[11px] text-[var(--color-text-muted)] mt-0.5">
+                    {formatDate(event.start_date)} {event.is_all_day ? '(All Day)' : `• ${event.start_time}`}
+                  </p>
+                </div>
+              </div>
+            </div>
+          ))}
+          {events.length > 10 && (
+            <button 
+              onClick={() => navigate(ROUTES.ACADEMIC_CALENDAR)}
+              className="col-span-full text-center text-xs font-bold text-[var(--color-brand)] p-2 hover:underline"
+            >
+              + {events.length - 10} more events. View all →
+            </button>
+          )}
+        </div>
+      )}
     </div>
   )
 }

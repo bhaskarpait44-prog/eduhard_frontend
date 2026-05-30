@@ -69,7 +69,13 @@ export const PERMISSION = {
   NOTICES_ALL_CLASSES : 'notices.all_classes',
   NOTICES_EDIT        : 'notices.edit',
   NOTICES_DELETE      : 'notices.delete',
-}
+
+  // Calendar
+  CALENDAR_VIEW   : 'calendar.view',
+  CALENDAR_CREATE : 'calendar.create',
+  CALENDAR_EDIT   : 'calendar.edit',
+  };
+
 
 // Roles with full access — bypass permission checks in UI
 const ADMIN_ROLES = ['admin']

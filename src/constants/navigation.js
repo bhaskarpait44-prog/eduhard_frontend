@@ -47,6 +47,12 @@ export const NAV_GROUPS = [
         path        : ROUTES.EXAMS,
         allowedRoles: [ROLES.ADMIN, ROLES.TEACHER],
       },
+      {
+        label       : 'Academic Calendar',
+        icon        : 'Calendar',
+        path        : ROUTES.ACADEMIC_CALENDAR,
+        allowedRoles: [ROLES.ADMIN, ROLES.TEACHER, ROLES.ACCOUNTANT, ROLES.RECEPTIONIST],
+      },
     ],
   },
   {

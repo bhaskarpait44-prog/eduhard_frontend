@@ -175,10 +175,11 @@ const getNavGroups = (user) => {
       ],
     },
     {
-      label: 'Students',
+      label: 'Academics',
       items: [
         { label: 'Classes',       icon: 'School',         path: ROUTES.CLASSES,      roles: [ROLES.ADMIN, ROLES.TEACHER] },
         { label: 'Students',      icon: 'Users',          path: ROUTES.STUDENTS,     roles: [ROLES.ADMIN, ROLES.TEACHER] },
+        { label: 'Academic Calendar', icon: 'Calendar',   path: ROUTES.ACADEMIC_CALENDAR, roles: [ROLES.ADMIN, ROLES.TEACHER, ROLES.ACCOUNTANT, ROLES.RECEPTIONIST] },
         { label: 'Enrollment',    icon: 'BookOpenCheck',  path: ROUTES.ENROLLMENTS,  roles: [ROLES.ADMIN, ROLES.TEACHER] },
         { label: 'Alumni & Leavers', icon: 'LogOut',        path: ROUTES.STUDENTS_LEFT, roles: [ROLES.ADMIN, ROLES.TEACHER] },
         { label: 'Graduated',     icon: 'GraduationCap', path: ROUTES.STUDENTS_GRADUATED, roles: [ROLES.ADMIN, ROLES.TEACHER] },
@@ -543,59 +544,6 @@ const SidebarContent = ({ collapsed, toggleCollapsed, user, initials, navGroups,
       ))}
     </nav>
 
-    {/* User card */}
-    <div
-      className="shrink-0 p-3"
-      style={{ borderTop: '1px solid var(--color-sidebar-border)' }}
-    >
-      {collapsed && !isMobile ? (
-        <div
-          className="w-9 h-9 rounded-xl flex items-center justify-center mx-auto text-xs font-bold text-white cursor-default"
-          style={{
-            background: user?.role === ROLES.TEACHER
-              ? 'linear-gradient(135deg,#0f766e 0%,#10b981 100%)'
-              : 'linear-gradient(135deg,var(--color-brand) 0%,var(--color-brand-light) 100%)',
-            boxShadow: '0 4px 12px rgba(16,185,129,0.2)',
-          }}
-          title={user?.name}
-        >
-          {initials}
-        </div>
-      ) : (
-        <div
-          className="flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-150"
-          style={{
-            backgroundColor : 'var(--color-sidebar-card)',
-            border          : '1px solid var(--color-sidebar-border)',
-          }}
-        >
-          <div
-            className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 text-xs font-bold text-white"
-            style={{
-              background: user?.role === ROLES.TEACHER
-                ? 'linear-gradient(135deg,#0f766e 0%,#10b981 100%)'
-                : 'linear-gradient(135deg,var(--color-brand) 0%,var(--color-brand-light) 100%)',
-            }}
-          >
-            {initials}
-          </div>
-          <div className="flex-1 min-w-0">
-            <p
-              className="text-sm font-semibold truncate leading-tight tracking-[-0.01em]"
-              style={{ color: 'var(--color-text-primary)' }}
-            >
-              {user?.name || 'User'}
-            </p>
-            <p
-              className="text-[10px] uppercase tracking-[0.12em] truncate leading-tight mt-0.5"
-              style={{ color: 'var(--color-sidebar-muted)' }}
-            >
-              {user?.role || 'staff'}
-            </p>
-          </div>
-        </div>
-      )}
-    </div>
   </div>
 )
 

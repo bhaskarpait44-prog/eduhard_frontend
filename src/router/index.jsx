@@ -140,6 +140,8 @@ const CorrectionRequest = lazy(() => import('@/pages/student/profile/CorrectionR
 const ChangePassword = lazy(() => import('@/pages/student/profile/ChangePassword'))
 const AcademicHistory = lazy(() => import('@/pages/student/AcademicHistory'))
 const StudyMaterials = lazy(() => import('@/pages/student/StudyMaterials'))
+const AcademicCalendarPage = lazy(() => import('@/pages/academicCalendar/AcademicCalendarPage'))
+const StudentCalendarPage = lazy(() => import('@/pages/student/StudentCalendarPage'))
 
 const PageLoader = () => (
   <div className="flex min-h-[50vh] items-center justify-center">
@@ -637,6 +639,14 @@ const router = createBrowserRouter([
         element: (
           <ProtectedRoute roles={[ROLES.ADMIN]}>
             <Lazy component={UpiConfirmationsPage} />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: ROUTES.ACADEMIC_CALENDAR,
+        element: (
+          <ProtectedRoute roles={[ROLES.ADMIN, ROLES.TEACHER, ROLES.ACCOUNTANT, ROLES.RECEPTIONIST]}>
+            <Lazy component={AcademicCalendarPage} />
           </ProtectedRoute>
         ),
       },

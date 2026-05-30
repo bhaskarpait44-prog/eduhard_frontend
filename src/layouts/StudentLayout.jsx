@@ -32,6 +32,7 @@ const studentMenu = [
       { label: 'Dashboard', icon: LayoutDashboard, path: ROUTES.STUDENT_DASHBOARD },
       { label: 'My Attendance', icon: CalendarDays, path: ROUTES.STUDENT_ATTENDANCE },
       { label: 'My Timetable', icon: BookMarked, path: ROUTES.STUDENT_TIMETABLE },
+      { label: 'Academic Calendar', icon: CalendarDays, path: ROUTES.STUDENT_CALENDAR },
       { label: 'Teacher Chat', icon: MessageSquare, path: ROUTES.STUDENT_CHAT },
       { label: 'Notice Board', icon: Bell, path: ROUTES.STUDENT_NOTICES },
     ],
