@@ -10,7 +10,8 @@ import {
   isSameDay, isToday, parseISO
 } from 'date-fns'
 import useAcademicCalendarStore from '@/store/academicCalendarStore'
-import { useStudentStore } from '@/store/useStudentStore'
+import useStudentStore from '@/store/useStudentStore'
+import useSessionStore from '@/store/sessionStore'
 import { cn } from '@/utils/helpers'
 import Card from '@/components/ui/Card'
 import Badge from '@/components/ui/Badge'
@@ -29,17 +30,28 @@ const EVENT_TYPES = {
 
 const StudentCalendarPage = () => {
   const { events, isLoading, fetchStudentEvents } = useAcademicCalendarStore()
-  const { studentData } = useStudentStore()
+  const { dashboard, fetchDashboard } = useStudentStore()
+  const { currentSession, fetchCurrentSession } = useSessionStore()
   
   const [viewDate, setViewDate] = useState(new Date())
   const [selectedDate, setSelectedDate] = useState(new Date())
   const [viewMode, setViewDateMode] = useState('grid') // 'grid' | 'list'
 
   useEffect(() => {
-    if (studentData?.current_session_id) {
-      fetchStudentEvents(studentData.current_session_id)
+    if (!dashboard) {
+      fetchDashboard().catch(() => {})
     }
-  }, [studentData])
+    if (!currentSession) {
+      fetchCurrentSession().catch(() => {})
+    }
+  }, [])
+
+  useEffect(() => {
+    const sessionId = dashboard?.student?.current_session_id || currentSession?.id
+    if (sessionId) {
+      fetchStudentEvents(sessionId)
+    }
+  }, [dashboard, currentSession])
 
   const monthStart = startOfMonth(viewDate)
   const monthEnd = endOfMonth(monthStart)
