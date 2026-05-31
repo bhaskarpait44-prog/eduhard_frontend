@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
   Plus, Search, CalendarDays, Eye, Zap,
-  ChevronRight, ChevronLeft, Filter, Trash2
+  ChevronRight, ChevronLeft, Filter, Trash2, Lock
 } from 'lucide-react'
 import useSessionStore from '@/store/sessionStore'
 import useToast from '@/hooks/useToast'
@@ -33,12 +33,13 @@ const SessionsPage = () => {
   usePageTitle('Academic Sessions')
   const navigate = useNavigate()
   const { toastSuccess, toastError } = useToast()
-  const { sessions, pagination, isLoading, isSaving, fetchSessions, activateSession, deleteSession } = useSessionStore()
+  const { sessions, pagination, isLoading, isSaving, fetchSessions, activateSession, lockSession, deleteSession } = useSessionStore()
 
   const [search,       setSearch]       = useState('')
   const [statusFilter, setStatusFilter] = useState('all')
   const [deleteTarget, setDeleteTarget] = useState(null)
   const [activateTarget, setActivateTarget] = useState(null)
+  const [lockTarget,     setLockTarget]     = useState(null)
   const [page,         setPage]         = useState(1)
 
   // Fetch with server-side filters
@@ -64,8 +65,21 @@ const SessionsPage = () => {
     if (result.success) {
       toastSuccess(`Session "${activateTarget.name}" activated successfully`)
       setActivateTarget(null)
+      fetchSessions({ page, search, status: statusFilter, limit: 20 })
     } else {
       toastError(result.message || 'Failed to activate session')
+    }
+  }
+
+  const handleLock = async () => {
+    if (!lockTarget) return
+    const result = await lockSession(lockTarget.id)
+    if (result.success) {
+      toastSuccess(`Session "${lockTarget.name}" locked successfully`)
+      setLockTarget(null)
+      fetchSessions({ page, search, status: statusFilter, limit: 20 })
+    } else {
+      toastError(result.message || 'Failed to lock session')
     }
   }
 
@@ -252,6 +266,17 @@ const SessionsPage = () => {
                               Activate
                             </Button>
                           )}
+                          {session.status === 'active' && (
+                            <Button
+                              variant="outline"
+                              size="xs"
+                              icon={Lock}
+                              className="text-amber-600 border-amber-200 hover:bg-amber-50"
+                              onClick={() => setLockTarget(session)}
+                            >
+                              Lock
+                            </Button>
+                          )}
                           {!session.is_current && (
                             <Button
                               variant="ghost"
@@ -378,6 +403,18 @@ const SessionsPage = () => {
         description={`This will activate "${activateTarget?.name}" and mark it as the current session. Any previously active session will be closed. This action cannot be undone.`}
         confirmLabel="Yes, Activate"
         variant="primary"
+        loading={isSaving}
+      />
+
+      {/* ── Confirm lock dialog ─────────────────────────────────────────── */}
+      <ConfirmDialog
+        open={!!lockTarget}
+        onClose={() => setLockTarget(null)}
+        onConfirm={handleLock}
+        title="Lock Session?"
+        description={`This will lock "${lockTarget?.name}". Once locked, attendance, fees, and results for this session cannot be modified. This action cannot be undone.`}
+        confirmLabel="Yes, Lock Session"
+        variant="warning"
         loading={isSaving}
       />
 

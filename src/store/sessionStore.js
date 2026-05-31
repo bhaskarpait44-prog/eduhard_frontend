@@ -70,8 +70,19 @@ const useSessionStore = create((set, get) => ({
     set({ isSaving: true })
     try {
       const res = await api.createSession(data)
-      // Prepend to list
-      set(s => ({ sessions: [res.data, ...s.sessions], isSaving: false }))
+      // Prepend to list and update pagination totals
+      set(s => {
+        const newTotal = s.pagination.total + 1
+        return {
+          sessions: [res.data, ...s.sessions],
+          pagination: {
+            ...s.pagination,
+            total: newTotal,
+            totalPages: Math.ceil(newTotal / s.pagination.limit),
+          },
+          isSaving: false
+        }
+      })
       return { success: true, data: res.data }
     } catch (err) {
       set({ isSaving: false })
@@ -103,17 +114,18 @@ const useSessionStore = create((set, get) => ({
     set({ isSaving: true })
     try {
       const res = await api.activateSession(id)
+      const activated = res.data
       // Update in list + set as current
       set(s => ({
         isSaving       : false,
-        currentSession : res.data,
+        currentSession : activated,
         sessions       : s.sessions.map(sess =>
-          sess.id === id
-            ? { ...sess, status: 'active', is_current: true }
+          sess.id === Number(id)
+            ? activated
             : { ...sess, is_current: false, status: sess.status === 'active' ? 'closed' : sess.status }
         ),
-        selectedSession: s.selectedSession?.id === id
-          ? { ...s.selectedSession, status: 'active', is_current: true }
+        selectedSession: s.selectedSession?.id === Number(id)
+          ? activated
           : s.selectedSession,
       }))
       return { success: true }
@@ -128,10 +140,11 @@ const useSessionStore = create((set, get) => ({
     set({ isSaving: true })
     try {
       const res = await api.lockSession(id)
+      const locked = res.data
       set(s => ({
         isSaving       : false,
-        sessions       : s.sessions.map(sess => (sess.id === id ? res.data : sess)),
-        selectedSession: s.selectedSession?.id === id ? res.data : s.selectedSession,
+        sessions       : s.sessions.map(sess => (sess.id === Number(id) ? locked : sess)),
+        selectedSession: s.selectedSession?.id === Number(id) ? locked : s.selectedSession,
       }))
       return { success: true }
     } catch (err) {
@@ -163,18 +176,24 @@ const useSessionStore = create((set, get) => ({
     set({ isSaving: true })
     try {
       const res = await api.addHoliday(sessionId, data)
-      // res.data is { holiday: {...}, retroactive: {...} }
       const newHoliday = res.data?.holiday
       
-      set(s => ({
-        isSaving       : false,
-        selectedSession: s.selectedSession?.id === Number(sessionId)
-          ? {
-              ...s.selectedSession,
-              holidays: [...(s.selectedSession.holidays || []).filter(Boolean), newHoliday],
-            }
-          : s.selectedSession,
-      }))
+      set(s => {
+        if (s.selectedSession?.id !== Number(sessionId)) {
+          return { isSaving: false }
+        }
+
+        const updatedHolidays = [...(s.selectedSession.holidays || []).filter(Boolean), newHoliday]
+          .sort((a, b) => new Date(a.holiday_date) - new Date(b.holiday_date))
+
+        return {
+          isSaving: false,
+          selectedSession: {
+            ...s.selectedSession,
+            holidays: updatedHolidays,
+          }
+        }
+      })
       return { success: true, data: res.data }
     } catch (err) {
       set({ isSaving: false })
@@ -226,11 +245,19 @@ const useSessionStore = create((set, get) => ({
     set({ isSaving: true })
     try {
       await api.deleteSession(id)
-      set(s => ({
-        isSaving: false,
-        sessions: s.sessions.filter(sess => sess.id !== id),
-        selectedSession: s.selectedSession?.id === id ? null : s.selectedSession,
-      }))
+      set(s => {
+        const newTotal = Math.max(0, s.pagination.total - 1)
+        return {
+          isSaving: false,
+          sessions: s.sessions.filter(sess => sess.id !== id),
+          selectedSession: s.selectedSession?.id === id ? null : s.selectedSession,
+          pagination: {
+            ...s.pagination,
+            total: newTotal,
+            totalPages: Math.ceil(newTotal / s.pagination.limit),
+          },
+        }
+      })
       return { success: true }
     } catch (err) {
       set({ isSaving: false })

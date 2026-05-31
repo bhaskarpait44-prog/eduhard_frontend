@@ -78,6 +78,7 @@ const SessionDetailPage = () => {
     const result = await activateSession(id)
     if (result.success) {
       toastSuccess(`Session activated successfully`)
+      fetchSession(id)
     } else {
       toastError(result.message || 'Failed to activate session')
     }
@@ -88,6 +89,7 @@ const SessionDetailPage = () => {
     const result = await lockSession(id)
     if (result.success) {
       toastSuccess(`Session locked successfully. It is now read-only.`)
+      fetchSession(id)
     } else {
       toastError(result.message || 'Failed to lock session')
     }
@@ -325,7 +327,7 @@ const SessionDetailPage = () => {
                 <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>
                   Days marked as working days are counted in attendance calculations.
                 </p>
-                {session.status !== 'locked' && !session.is_locked && (
+                {!session.is_locked && session.status === 'active' && (
                   isEditingWD ? (
                     <div className="flex gap-2">
                       <Button size="sm" variant="secondary" onClick={() => setIsEditingWD(false)}>Cancel</Button>
@@ -383,7 +385,7 @@ const SessionDetailPage = () => {
                 <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>
                   Holidays are excluded from attendance calculations.
                 </p>
-                {session.status !== 'locked' && !session.is_locked && (
+                {!session.is_locked && session.status === 'active' && (
                   <Button
                     size="sm"
                     icon={Plus}
@@ -445,7 +447,7 @@ const SessionDetailPage = () => {
                             </p>
                           </div>
 
-                          {session.status !== 'locked' && !session.is_locked && (
+                          {!session.is_locked && session.status === 'active' && (
                             <button
                               onClick={() => setDeleteHolidayTarget(holiday)}
                               className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 rounded-lg transition-all opacity-0 group-hover:opacity-100"
