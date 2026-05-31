@@ -15,7 +15,7 @@ const useSessionStore = create((set, get) => ({
   fetchSessions: async (params = {}) => {
     set({ isLoading: true, error: null })
     try {
-      const fetchParams = { limit: 20, ...params }
+      const fetchParams = { limit: 20, page: 1, search: '', status: 'all', ...params }
       const res = await api.getSessions(fetchParams)
       
       const sessions = res.data?.sessions || []
@@ -83,13 +83,15 @@ const useSessionStore = create((set, get) => ({
   updateSession: async (id, data) => {
     set({ isSaving: true })
     try {
-      await api.updateSession(id, data)
+      const res = await api.updateSession(id, data)
+      const updated = res.data
+      
       set(s => ({
         isSaving: false,
-        sessions: s.sessions.map(sess => sess.id === id ? { ...sess, ...data } : sess),
-        selectedSession: s.selectedSession?.id === id ? { ...s.selectedSession, ...data } : s.selectedSession,
+        sessions: s.sessions.map(sess => sess.id === id ? updated : sess),
+        selectedSession: s.selectedSession?.id === id ? updated : s.selectedSession,
       }))
-      return { success: true }
+      return { success: true, data: updated }
     } catch (err) {
       set({ isSaving: false })
       return { success: false, message: err.message }
@@ -142,13 +144,14 @@ const useSessionStore = create((set, get) => ({
   archiveSession: async (id) => {
     set({ isSaving: true })
     try {
-      await api.archiveSession(id)
+      const res = await api.archiveSession(id)
+      const updated = res.data
       set(s => ({
         isSaving       : false,
-        sessions       : s.sessions.map(sess => (sess.id === id ? { ...sess, status: 'archived' } : sess)),
-        selectedSession: s.selectedSession?.id === id ? { ...s.selectedSession, status: 'archived' } : s.selectedSession,
+        sessions       : s.sessions.map(sess => (sess.id === id ? updated : sess)),
+        selectedSession: s.selectedSession?.id === id ? updated : s.selectedSession,
       }))
-      return { success: true }
+      return { success: true, data: updated }
     } catch (err) {
       set({ isSaving: false })
       return { success: false, message: err.message }
@@ -204,14 +207,14 @@ const useSessionStore = create((set, get) => ({
   updateWorkingDays: async (sessionId, workingDays) => {
     set({ isSaving: true })
     try {
-      await api.updateWorkingDays(sessionId, workingDays)
+      const res = await api.updateWorkingDays(sessionId, workingDays)
+      const updated = res.data
       set(s => ({
         isSaving       : false,
-        selectedSession: s.selectedSession?.id === Number(sessionId)
-          ? { ...s.selectedSession, ...workingDays, working_days: workingDays }
-          : s.selectedSession,
+        sessions       : s.sessions.map(sess => (sess.id === Number(sessionId) ? updated : sess)),
+        selectedSession: s.selectedSession?.id === Number(sessionId) ? updated : s.selectedSession,
       }))
-      return { success: true }
+      return { success: true, data: updated }
     } catch (err) {
       set({ isSaving: false })
       return { success: false, message: err.message }

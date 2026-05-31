@@ -1,5 +1,5 @@
 // src/pages/sessions/SessionsPage.jsx
-import { useEffect, useState, useMemo } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
   Plus, Search, CalendarDays, Eye, Zap,
@@ -31,7 +31,6 @@ const StatusBadge = ({ status }) => {
 
 const SessionsPage = () => {
   usePageTitle('Academic Sessions')
-
   const navigate = useNavigate()
   const { toastSuccess, toastError } = useToast()
   const { sessions, pagination, isLoading, isSaving, fetchSessions, activateSession, deleteSession } = useSessionStore()
@@ -42,9 +41,11 @@ const SessionsPage = () => {
   const [activateTarget, setActivateTarget] = useState(null)
   const [page,         setPage]         = useState(1)
 
+  // Fetch with server-side filters
   useEffect(() => {
-    fetchSessions({ page, limit: 20 }).catch(() => toastError('Failed to load sessions'))
-  }, [page])
+    fetchSessions({ page, search, status: statusFilter, limit: 20 })
+      .catch(() => toastError('Failed to load sessions'))
+  }, [page, search, statusFilter])
 
   const handleDelete = async () => {
     if (!deleteTarget) return
@@ -68,14 +69,8 @@ const SessionsPage = () => {
     }
   }
 
-  // Client-side filter (applied to the current page's results)
-  const filtered = useMemo(() => {
-    return sessions.filter(s => {
-      const matchName   = s.name.toLowerCase().includes(search.toLowerCase())
-      const matchStatus = statusFilter === 'all' || s.status === statusFilter
-      return matchName && matchStatus
-    })
-  }, [sessions, search, statusFilter])
+  // Current page sessions
+  const filtered = sessions
 
   return (
     <div className="space-y-6">
