@@ -4,6 +4,7 @@ import * as api from '@/api/sessionsApi'
 
 const useSessionStore = create((set, get) => ({
   sessions       : [],
+  pagination     : { total: 0, page: 1, limit: 20, totalPages: 0 },
   currentSession : null,
   selectedSession: null,
   isLoading      : false,
@@ -14,11 +15,14 @@ const useSessionStore = create((set, get) => ({
   fetchSessions: async (params = {}) => {
     set({ isLoading: true, error: null })
     try {
-      const fetchParams = { limit: 100, ...params }
+      const fetchParams = { limit: 20, ...params }
       const res = await api.getSessions(fetchParams)
-      const sessions = Array.isArray(res.data) ? res.data : (res.data?.sessions || [])
+      
+      const sessions = res.data?.sessions || []
+      const pagination = res.data?.pagination || { total: sessions.length, page: 1, limit: 20, totalPages: 1 }
+      
       const currentSession = sessions.find((session) => session.is_current === true) || null
-      set({ sessions, currentSession, isLoading: false })
+      set({ sessions, pagination, currentSession, isLoading: false })
       return res.data
     } catch (err) {
       set({ error: err.message, isLoading: false })
@@ -206,6 +210,23 @@ const useSessionStore = create((set, get) => ({
         selectedSession: s.selectedSession?.id === Number(sessionId)
           ? { ...s.selectedSession, ...workingDays, working_days: workingDays }
           : s.selectedSession,
+      }))
+      return { success: true }
+    } catch (err) {
+      set({ isSaving: false })
+      return { success: false, message: err.message }
+    }
+  },
+
+  // ── Delete session ─────────────────────────────────────────────────
+  deleteSession: async (id) => {
+    set({ isSaving: true })
+    try {
+      await api.deleteSession(id)
+      set(s => ({
+        isSaving: false,
+        sessions: s.sessions.filter(sess => sess.id !== id),
+        selectedSession: s.selectedSession?.id === id ? null : s.selectedSession,
       }))
       return { success: true }
     } catch (err) {

@@ -14,3 +14,4 @@ export const updateWorkingDays = (id, data) => api.patch(`/sessions/${id}/workin
 export const addHoliday        = (id, data) => api.post(`/sessions/${id}/holidays`, data)
 export const getHolidays       = (id)     => api.get(`/sessions/${id}/holidays`)
 export const removeHoliday     = (id, holidayId) => api.delete(`/sessions/${id}/holidays/${holidayId}`)
+export const deleteSession     = (id)     => api.delete(`/sessions/${id}`)

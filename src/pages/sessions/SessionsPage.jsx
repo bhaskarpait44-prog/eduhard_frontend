@@ -3,7 +3,7 @@ import { useEffect, useState, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
   Plus, Search, CalendarDays, Eye, Zap,
-  ChevronRight, Filter
+  ChevronRight, ChevronLeft, Filter, Trash2
 } from 'lucide-react'
 import useSessionStore from '@/store/sessionStore'
 import useToast from '@/hooks/useToast'
@@ -11,6 +11,7 @@ import usePageTitle from '@/hooks/usePageTitle'
 import Button from '@/components/ui/Button'
 import Badge from '@/components/ui/Badge'
 import EmptyState from '@/components/ui/EmptyState'
+import ConfirmDialog from '@/components/ui/ConfirmDialog'
 import { formatDate } from '@/utils/helpers'
 import { ROUTES } from '@/constants/app'
 
@@ -32,17 +33,42 @@ const SessionsPage = () => {
   usePageTitle('Academic Sessions')
 
   const navigate = useNavigate()
-  const { toastError } = useToast()
-  const { sessions, isLoading, fetchSessions } = useSessionStore()
+  const { toastSuccess, toastError } = useToast()
+  const { sessions, pagination, isLoading, isSaving, fetchSessions, activateSession, deleteSession } = useSessionStore()
 
   const [search,       setSearch]       = useState('')
   const [statusFilter, setStatusFilter] = useState('all')
+  const [deleteTarget, setDeleteTarget] = useState(null)
+  const [activateTarget, setActivateTarget] = useState(null)
+  const [page,         setPage]         = useState(1)
 
   useEffect(() => {
-    fetchSessions().catch(() => toastError('Failed to load sessions'))
-  }, [])
+    fetchSessions({ page, limit: 20 }).catch(() => toastError('Failed to load sessions'))
+  }, [page])
 
-  // Client-side filter
+  const handleDelete = async () => {
+    if (!deleteTarget) return
+    const result = await deleteSession(deleteTarget.id)
+    if (result.success) {
+      toastSuccess('Session deleted successfully')
+      setDeleteTarget(null)
+    } else {
+      toastError(result.message || 'Failed to delete session')
+    }
+  }
+
+  const handleActivate = async () => {
+    if (!activateTarget) return
+    const result = await activateSession(activateTarget.id)
+    if (result.success) {
+      toastSuccess(`Session "${activateTarget.name}" activated successfully`)
+      setActivateTarget(null)
+    } else {
+      toastError(result.message || 'Failed to activate session')
+    }
+  }
+
+  // Client-side filter (applied to the current page's results)
   const filtered = useMemo(() => {
     return sessions.filter(s => {
       const matchName   = s.name.toLowerCase().includes(search.toLowerCase())
@@ -94,7 +120,7 @@ const SessionsPage = () => {
             type="text"
             placeholder="Search sessions…"
             value={search}
-            onChange={e => setSearch(e.target.value)}
+            onChange={e => { setSearch(e.target.value); setPage(1); }}
             className="w-full pl-9 pr-4 py-2 rounded-xl text-sm outline-none"
             style={{
               backgroundColor : 'var(--color-bg)',
@@ -115,7 +141,7 @@ const SessionsPage = () => {
           />
           <select
             value={statusFilter}
-            onChange={e => setStatusFilter(e.target.value)}
+            onChange={e => { setStatusFilter(e.target.value); setPage(1); }}
             className="pl-8 pr-8 py-2 rounded-xl text-sm outline-none appearance-none cursor-pointer"
             style={{
               backgroundColor : 'var(--color-bg)',
@@ -226,10 +252,19 @@ const SessionsPage = () => {
                               variant="outline"
                               size="xs"
                               icon={Zap}
-                              onClick={() => navigate(`${ROUTES.SESSIONS}/${session.id}`)}
+                              onClick={() => setActivateTarget(session)}
                             >
                               Activate
                             </Button>
+                          )}
+                          {!session.is_current && (
+                            <Button
+                              variant="ghost"
+                              size="xs"
+                              icon={Trash2}
+                              className="text-red-500 hover:bg-red-50"
+                              onClick={() => setDeleteTarget(session)}
+                            />
                           )}
                         </div>
                       </td>
@@ -277,12 +312,91 @@ const SessionsPage = () => {
         )}
       </div>
 
-      {/* Results count */}
-      {!isLoading && filtered.length > 0 && (
-        <p className="text-xs text-right" style={{ color: 'var(--color-text-muted)' }}>
-          Showing {filtered.length} of {sessions.length} session{sessions.length !== 1 ? 's' : ''}
-        </p>
+      {/* Results count and Pagination */}
+      {!isLoading && (
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+          <p className="text-xs" style={{ color: 'var(--color-text-muted)' }}>
+            Showing {filtered.length} of {pagination.total} session{pagination.total !== 1 ? 's' : ''}
+          </p>
+
+          {pagination.totalPages > 1 && (
+            <div className="flex items-center gap-2">
+              <button
+                disabled={pagination.page <= 1}
+                onClick={() => setPage(p => p - 1)}
+                className="p-2 rounded-lg border disabled:opacity-50 transition-colors"
+                style={{
+                  borderColor     : 'var(--color-border)',
+                  backgroundColor : 'var(--color-surface)',
+                  color           : 'var(--color-text-primary)'
+                }}
+              >
+                <ChevronLeft size={16} />
+              </button>
+              
+              <div className="flex items-center gap-1">
+                {Array.from({ length: Math.min(5, pagination.totalPages) }, (_, i) => {
+                  const p = pagination.page <= 3 ? i + 1 : pagination.page + i - 2
+                  if (p < 1 || p > pagination.totalPages) return null
+                  const active = p === pagination.page
+                  return (
+                    <button
+                      key={p}
+                      onClick={() => setPage(p)}
+                      className="w-9 h-9 rounded-lg text-xs font-bold transition-all"
+                      style={{
+                        backgroundColor : active ? 'var(--color-brand)' : 'var(--color-surface)',
+                        color           : active ? 'white' : 'var(--color-text-primary)',
+                        border          : active ? 'none' : '1px solid var(--color-border)',
+                        boxShadow       : active ? '0 4px 12px rgba(var(--color-brand-rgb), 0.3)' : 'none'
+                      }}
+                    >
+                      {p}
+                    </button>
+                  )
+                })}
+              </div>
+
+              <button
+                disabled={pagination.page >= pagination.totalPages}
+                onClick={() => setPage(p => p + 1)}
+                className="p-2 rounded-lg border disabled:opacity-50 transition-colors"
+                style={{
+                  borderColor     : 'var(--color-border)',
+                  backgroundColor : 'var(--color-surface)',
+                  color           : 'var(--color-text-primary)'
+                }}
+              >
+                <ChevronRight size={16} />
+              </button>
+            </div>
+          )}
+        </div>
       )}
+
+      {/* ── Confirm activate dialog ─────────────────────────────────────── */}
+      <ConfirmDialog
+        open={!!activateTarget}
+        onClose={() => setActivateTarget(null)}
+        onConfirm={handleActivate}
+        title="Activate Session?"
+        description={`This will activate "${activateTarget?.name}" and mark it as the current session. Any previously active session will be closed. This action cannot be undone.`}
+        confirmLabel="Yes, Activate"
+        variant="primary"
+        loading={isSaving}
+      />
+
+      {/* ── Confirm delete dialog ──────────────────────────────────────── */}
+      <ConfirmDialog
+        open={!!deleteTarget}
+        onClose={() => setDeleteTarget(null)}
+        onConfirm={handleDelete}
+        title="Delete Session?"
+        description={`This will permanently delete "${deleteTarget?.name}". All associated data including enrollments, attendance, and results will be lost. This action cannot be undone.`}
+        confirmLabel="Yes, Delete Session"
+        variant="danger"
+        loading={isSaving}
+      />
     </div>
   )
 }

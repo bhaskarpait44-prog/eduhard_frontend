@@ -42,7 +42,7 @@ const SessionDetailPage = () => {
     sessionStats,
     isLoading, isSaving,
     fetchSession, fetchSessionStats, activateSession, lockSession, archiveSession,
-    removeHoliday, updateWorkingDays,
+    removeHoliday, updateWorkingDays, deleteSession,
   } = useSessionStore()
 
   usePageTitle(session ? `Session: ${session.name}` : 'Session Detail')
@@ -51,6 +51,7 @@ const SessionDetailPage = () => {
   const [confirmOpen, setConfirmOpen] = useState(false)
   const [lockOpen,    setLockOpen]    = useState(false)
   const [archiveOpen, setArchiveOpen] = useState(false)
+  const [deleteOpen,  setDeleteOpen]  = useState(false)
   const [editOpen,    setEditOpen]    = useState(false)
   const [holidayModal,setHolidayModal]= useState(false)
   const [deleteHolidayTarget, setDeleteHolidayTarget] = useState(null)
@@ -123,6 +124,17 @@ const SessionDetailPage = () => {
     }
   }
 
+  const handleDeleteSession = async () => {
+    setDeleteOpen(false)
+    const result = await deleteSession(id)
+    if (result.success) {
+      toastSuccess('Session deleted successfully')
+      navigate(ROUTES.SESSIONS)
+    } else {
+      toastError(result.message || 'Failed to delete session')
+    }
+  }
+
   if (isLoading || !session) {
     return <DetailSkeleton />
   }
@@ -167,6 +179,17 @@ const SessionDetailPage = () => {
               loading={isSaving}
             >
               Edit
+            </Button>
+          )}
+          {!session.is_current && (
+            <Button
+              variant="ghost"
+              icon={Trash2}
+              className="text-red-500 hover:bg-red-50"
+              onClick={() => setDeleteOpen(true)}
+              loading={isSaving}
+            >
+              Delete
             </Button>
           )}
           {session.status === 'upcoming' && (
@@ -270,6 +293,7 @@ const SessionDetailPage = () => {
           {[
             { key: 'working_days', label: 'Working Days', icon: CalendarCheck },
             { key: 'holidays',     label: `Holidays (${holidays.length})`, icon: UmbrellaOff },
+            { key: 'calendar',     label: 'Calendar', icon: Calendar },
           ].map(tab => (
             <button
               key={tab.key}
@@ -498,6 +522,18 @@ const SessionDetailPage = () => {
         description={`This will move "${session.name}" to the archive. It will no longer appear in active filters, but historical data will be preserved.`}
         confirmLabel="Yes, Archive"
         variant="warning"
+        loading={isSaving}
+      />
+
+      {/* ── Confirm delete session dialog ────────────────────────────────── */}
+      <ConfirmDialog
+        open={deleteOpen}
+        onClose={() => setDeleteOpen(false)}
+        onConfirm={handleDeleteSession}
+        title="Delete Session?"
+        description={`This will permanently delete "${session.name}". All associated data including enrollments, attendance, and results will be lost. This action cannot be undone.`}
+        confirmLabel="Yes, Delete Session"
+        variant="danger"
         loading={isSaving}
       />
 
