@@ -53,7 +53,7 @@ export const studentUpdateSchema = studentProfileSchema.extend({
   first_name: z.string().trim().min(1, 'First name is required'),
   last_name: z.string().trim().min(1, 'Last name is required'),
   parent_email: z.string().trim().email('Valid parent email is required'),
-  change_reason: z.string().trim().min(5, 'Reason for change is required (min 5 chars)'),
+  change_reason: z.string().trim().min(10, 'Reason for change is required (min 10 chars)'),
 })
 
 // ── Teacher ───────────────────────────────────────────────────────────────

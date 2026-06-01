@@ -29,6 +29,8 @@ import TabHealth from './tabs/TabHealth'
 import TabFamily from './tabs/TabFamily'
 import TabServices from './tabs/TabServices'
 import TabSummary from './tabs/TabSummary'
+import TabIdentity from './tabs/TabIdentity'
+import TabProfile from './tabs/TabProfile'
 import useAttendanceStore from '@/store/attendanceStore'
 import StudentIDCardDownload from '@/components/pdf/StudentIDCardDownload'
 import TransferCertificateDownload from '@/components/pdf/TransferCertificateDownload'
@@ -41,7 +43,8 @@ import AttendanceCalendar from '@/components/attendance/AttendanceCalendar'
 /* ─── Tab config ─────────────────────────────────────────── */
 const TABS = [
   { key: 'summary',    label: 'Summary',    icon: LayoutDashboard },
-  { key: 'personal',   label: 'Personal',   icon: User },
+  { key: 'identity',   label: 'Identity',   icon: IdCard },
+  { key: 'profile',    label: 'Profile',    icon: User },
   { key: 'family',     label: 'Family',     icon: Users },
   { key: 'academic',   label: 'Academic',   icon: Book },
   { key: 'attendance', label: 'Attendance', icon: CalendarCheck },
@@ -65,18 +68,6 @@ const css = {
 }
 
 /* ─── Components ─────────────────────────────────────────── */
-const Field = ({ icon: Icon, label, value, full = false }) => (
-  <div className={`rounded-xl p-4 ${full ? 'sm:col-span-2 lg:col-span-3' : ''}`} style={css.raised}>
-    <p className="text-[10px] font-semibold uppercase tracking-[0.14em] flex items-center gap-1.5 mb-2" style={css.muted}>
-      <Icon size={11} strokeWidth={2.2} />
-      {label}
-    </p>
-    <p className="text-sm font-medium leading-snug" style={value ? css.primary : css.muted}>
-      {value || 'Not provided'}
-    </p>
-  </div>
-)
-
 const StatPill = ({ icon: Icon, label, value, color = '#4338ca', bg = '#eef2ff' }) => (
   <div className="flex items-center gap-3 rounded-xl px-4 py-3" style={{ background: bg, border: `1px solid ${bg === '#eef2ff' ? '#c7d2fe' : 'transparent'}` }}>
     <div className="flex h-9 w-9 items-center justify-center rounded-lg shrink-0" style={{ background: color + '18' }}>
@@ -119,7 +110,6 @@ const StudentDetailPage = () => {
     toggleStatus,
     fetchIDCardData,
     fetchTCData,
-    updateIdentity,
     isSaving,
   } = useAdminStudentStore()
 
@@ -128,7 +118,6 @@ const StudentDetailPage = () => {
   const tabScrollRef = useRef(null)
   
   /* Modals */
-  const [editOpen, setEditOpen] = useState(false)
   const [deleteOpen, setDeleteOpen] = useState(false)
   const [passwordOpen, setPasswordOpen] = useState(false)
   const [historyOpen, setHistoryOpen] = useState(false)
@@ -146,7 +135,6 @@ const StudentDetailPage = () => {
   const [parentResetResult, setParentResetResult] = useState(null)
   const [isResettingPass, setIsResettingPass] = useState(false)
   const [isResettingParentPass, setIsResettingParentPass] = useState(false)
-  const [editForm, setEditForm] = useState({})
 
   usePageTitle(student ? `${student.first_name} ${student.last_name}` : 'Student Detail')
 
@@ -176,62 +164,6 @@ const StudentDetailPage = () => {
   const handleTabChange = (tab) => {
     setActiveTab(tab)
     setSearchParams(tab === 'summary' ? {} : { tab })
-  }
-
-  const syncEditForm = () => {
-    if (!student) return
-    setEditForm({
-      first_name: student.first_name || '',
-      last_name: student.last_name || '',
-      gender: student.gender || 'male',
-      date_of_birth: student.date_of_birth ? String(student.date_of_birth).slice(0, 10) : '',
-      blood_group: student.blood_group || '',
-      phone: student.phone || '',
-      email: student.email || '',
-      address: student.address || '',
-      city: student.city || '',
-      state: student.state || '',
-      pincode: student.pincode || '',
-      father_name: student.father_name || '',
-      father_phone: student.father_phone || '',
-      mother_name: student.mother_name || '',
-      mother_phone: student.mother_phone || '',
-      mother_email: student.mother_email || '',
-      parent_email: student.parent_email || '',
-      father_occupation: student.father_occupation || '',
-      emergency_contact: student.emergency_contact || '',
-      medical_notes: student.medical_notes || '',
-    })
-  }
-
-  const handleSaveEdit = async () => {
-    const phoneRegex = /^[6-9]\d{9}$/
-    const pincodeRegex = /^\d{6}$/
-
-    if (editForm.phone && !phoneRegex.test(editForm.phone)) {
-      return toastError('Enter a valid 10-digit mobile number')
-    }
-    if (editForm.pincode && !pincodeRegex.test(editForm.pincode)) {
-      return toastError('Enter a valid 6-digit pincode')
-    }
-    if (editForm.father_phone && !phoneRegex.test(editForm.father_phone)) {
-      return toastError("Enter a valid 10-digit mobile number for Father's phone")
-    }
-    if (editForm.mother_phone && !phoneRegex.test(editForm.mother_phone)) {
-      return toastError("Enter a valid 10-digit mobile number for Mother's phone")
-    }
-    if (editForm.emergency_contact && !phoneRegex.test(editForm.emergency_contact)) {
-      return toastError('Enter a valid 10-digit mobile number for Emergency contact')
-    }
-
-    try {
-      await updateIdentity(id, editForm)
-      toastSuccess('Student updated successfully')
-      setEditOpen(false)
-      await fetchStudent(id)
-    } catch (err) {
-      toastError(err.message || 'Failed to update student')
-    }
   }
 
   const handleDelete = async () => {
@@ -329,7 +261,6 @@ const StudentDetailPage = () => {
 
         {/* actions */}
         <div className="flex flex-wrap gap-2 shrink-0">
-          <Button variant="secondary" size="sm" icon={Pencil} onClick={() => { syncEditForm(); setEditOpen(true) }}>Edit</Button>
           <Button variant="secondary" size="sm" icon={KeyRound} onClick={() => { setTempPassword(''); setParentTempPassword(''); setResetResult(null); setParentResetResult(null); setPasswordOpen(true) }}>Credentials</Button>
           <Button variant="danger" size="sm" icon={Trash2} onClick={() => { setConfirmName(''); setDeleteOpen(true) }}>Delete</Button>
         </div>
@@ -367,46 +298,8 @@ const StudentDetailPage = () => {
 
             <div className="p-4 sm:p-6 lg:p-8">
               {activeTab === 'summary' && <TabSummary student={student} onTabChange={handleTabChange} />}
-
-              {activeTab === 'personal' && (
-                <div className="space-y-8">
-                  <section>
-                    <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 mb-4 px-1">Identity Details</h4>
-                    <div className="grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
-                      <Field icon={Calendar} label="Date of Birth" value={formatDate(student.date_of_birth, 'long')} />
-                      <Field icon={User}     label="Gender"        value={student.gender} />
-                      <Field icon={Heart}    label="Blood Group"   value={student.blood_group} />
-                      <Field icon={Clock}    label="Joining Date"  value={formatDate(student.joined_date, 'long')} />
-                      <Field icon={Briefcase}label="Joining Type"  value={student.joining_type} />
-                      <Field icon={Phone}    label="Emergency Contact" value={student.emergency_contact} />
-                      <Field icon={ScrollText} label="Medical Notes" value={student.medical_notes} full />
-                    </div>
-                  </section>
-                  <section>
-                    <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 mb-4 px-1">Contact & Address</h4>
-                    <div className="grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
-                      <Field icon={Phone}    label="Student Phone" value={student.phone} />
-                      <Field icon={Mail}     label="Student Email" value={student.email} />
-                      <Field icon={MapPin}   label="City"          value={student.city} />
-                      <Field icon={MapPin}   label="State"         value={student.state} />
-                      <Field icon={IdCard}   label="Pincode"       value={student.pincode} />
-                      <Field icon={MapPin}   label="Address"       value={student.address} full />
-                    </div>
-                  </section>
-                  <section>
-                    <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 mb-4 px-1">Guardian Information</h4>
-                    <div className="grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
-                      <Field icon={Mail}      label="Portal Login"  value={student.parent_email} />
-                      <Field icon={UserRound} label="Father Name"   value={student.father_name} />
-                      <Field icon={Phone}     label="Father Phone"  value={student.father_phone} />
-                      <Field icon={Briefcase} label="Father Job"    value={student.father_occupation} />
-                      <Field icon={UserRound} label="Mother Name"   value={student.mother_name} />
-                      <Field icon={Phone}     label="Mother Phone"  value={student.mother_phone} />
-                    </div>
-                  </section>
-                </div>
-              )}
-
+              {activeTab === 'identity' && <TabIdentity student={student} studentId={student.id} />}
+              {activeTab === 'profile' && <TabProfile student={student} studentId={student.id} />}
               {activeTab === 'family'     && <TabFamily   student={student} />}
               {activeTab === 'health'     && <TabHealth   studentId={student.id} isAdmin={isAdmin} />}
               {activeTab === 'academic'   && <TabEnrolledSubjects studentId={student.id} isAdmin={isAdmin} />}
@@ -489,10 +382,6 @@ const StudentDetailPage = () => {
       </div>
 
       {/* ── Modals ── */}
-      <Modal open={editOpen} onClose={() => !isSaving && setEditOpen(false)} title="Edit Student Details" size="lg" footer={<><Button variant="secondary" onClick={() => setEditOpen(false)}>Cancel</Button><Button icon={Pencil} onClick={handleSaveEdit} loading={isSaving}>Save Changes</Button></>}>
-        <EditForm form={editForm} setForm={setEditForm} />
-      </Modal>
-
       <Modal open={passwordOpen} onClose={() => setPasswordOpen(false)} title="Reset Access Credentials" size="md">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-1">
           {/* Student Portal */}
@@ -549,45 +438,6 @@ const StudentDetailPage = () => {
       <MarkAsLeftModal open={leftOpen} student={student} onClose={() => setLeftOpen(false)} onSuccess={() => { setLeftOpen(false); fetchStudent(id) }} />
       <MarkAsGraduatedModal open={graduatedOpen} student={student} onClose={() => setGraduatedOpen(false)} onSuccess={() => { setGraduatedOpen(false); fetchStudent(id) }} />
       <ReadmitModal open={readmitOpen} student={student} onClose={() => setReadmitOpen(false)} onSuccess={() => { setReadmitOpen(false); fetchStudent(id) }} />
-    </div>
-  )
-}
-
-const EditForm = ({ form, setForm }) => {
-  const update = (k, v) => setForm(p => ({ ...p, [k]: v }))
-  return (
-    <div className="space-y-6">
-      <section className="space-y-3">
-        <h4 className="text-[10px] font-bold uppercase tracking-widest text-gray-500">Identity & Contact</h4>
-        <div className="grid gap-4 sm:grid-cols-2">
-          <Input label="First Name" value={form.first_name} onChange={e => update('first_name', e.target.value)} />
-          <Input label="Last Name" value={form.last_name} onChange={e => update('last_name', e.target.value)} />
-          <Select label="Gender" value={form.gender} onChange={e => update('gender', e.target.value)} options={[{value:'male',label:'Male'},{value:'female',label:'Female'},{value:'other',label:'Other'}]} />
-          <Input label="DOB" type="date" value={form.date_of_birth} onChange={e => update('date_of_birth', e.target.value)} />
-          <Input label="Phone" value={form.phone} onChange={e => update('phone', e.target.value)} />
-          <Input label="Email" value={form.email} onChange={e => update('email', e.target.value)} />
-        </div>
-      </section>
-      <section className="space-y-3">
-        <h4 className="text-[10px] font-bold uppercase tracking-widest text-gray-500">Contact Address</h4>
-        <div className="grid gap-4 sm:grid-cols-2">
-           <Input label="City" value={form.city} onChange={e => update('city', e.target.value)} />
-           <Input label="State" value={form.state} onChange={e => update('state', e.target.value)} />
-           <Input label="Pincode" value={form.pincode} onChange={e => update('pincode', e.target.value)} />
-           <div className="sm:col-span-2">
-             <Input label="Full Address" value={form.address} onChange={e => update('address', e.target.value)} />
-           </div>
-        </div>
-      </section>
-      <section className="space-y-3">
-        <h4 className="text-[10px] font-bold uppercase tracking-widest text-gray-500">Parent Details</h4>
-        <div className="grid gap-4 sm:grid-cols-2">
-          <Input label="Parent Portal Email" value={form.parent_email} onChange={e => update('parent_email', e.target.value)} help="This email is used for Parent Portal login." />
-          <Input label="Father Name" value={form.father_name} onChange={e => update('father_name', e.target.value)} />
-          <Input label="Mother Name" value={form.mother_name} onChange={e => update('mother_name', e.target.value)} />
-          <Input label="Emergency Contact" value={form.emergency_contact} onChange={e => update('emergency_contact', e.target.value)} />
-        </div>
-      </section>
     </div>
   )
 }

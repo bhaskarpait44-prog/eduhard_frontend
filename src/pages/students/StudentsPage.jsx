@@ -22,6 +22,7 @@ import BulkIDCardsDownload from '@/components/pdf/BulkIDCardsDownload'
 import { formatDate, getInitials, debounce } from '@/utils/helpers'
 import { ROUTES } from '@/constants/app'
 import { downloadSimpleClassStudentsPdf } from '@/api/classApi'
+import { downloadBlob } from '@/utils/downloadBlob'
 import useAuth from '@/hooks/useAuth'
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -364,28 +365,10 @@ const StudentsPage = () => {
         section_id: downloadFilters.section_id
       })
       
-      const blob = response instanceof Blob
-        ? response
-        : response?.data instanceof Blob
-          ? response.data
-          : new Blob([response], { type: 'application/pdf' })
-      
-      if (blob.type === 'application/json') {
-        const text = await blob.text()
-        const errorData = JSON.parse(text)
-        throw new Error(errorData.message || 'Failed to generate PDF')
-      }
-
-      const finalBlob = blob instanceof Blob ? blob : new Blob([blob], { type: 'application/pdf' })
-      const url = window.URL.createObjectURL(finalBlob)
-      const link = document.createElement('a')
       const clsName = classes.find(c => String(c.id) === String(downloadFilters.class_id))?.name || 'Students'
-      link.href = url
-      link.download = `${clsName.replace(/[^a-z0-9-_]+/gi, '-')}-student-list.pdf`
-      document.body.appendChild(link)
-      link.click()
-      link.remove()
-      window.URL.revokeObjectURL(url)
+      const fileName = `${clsName.replace(/[^a-z0-9-_]+/gi, '-')}-student-list.pdf`
+      
+      downloadBlob(response, fileName)
       setDownloadModal(false)
       toastSuccess('Student list downloaded.')
     } catch (err) {
