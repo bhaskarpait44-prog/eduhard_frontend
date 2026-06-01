@@ -355,26 +355,32 @@ const SessionsPage = () => {
               </button>
               
               <div className="flex items-center gap-1">
-                {Array.from({ length: Math.min(5, pagination.totalPages) }, (_, i) => {
-                  const p = pagination.page <= 3 ? i + 1 : pagination.page + i - 2
-                  if (p < 1 || p > pagination.totalPages) return null
-                  const active = p === pagination.page
-                  return (
-                    <button
-                      key={p}
-                      onClick={() => setPage(p)}
-                      className="w-9 h-9 rounded-lg text-xs font-bold transition-all"
-                      style={{
-                        backgroundColor : active ? 'var(--color-brand)' : 'var(--color-surface)',
-                        color           : active ? 'white' : 'var(--color-text-primary)',
-                        border          : active ? 'none' : '1px solid var(--color-border)',
-                        boxShadow       : active ? '0 4px 12px rgba(var(--color-brand-rgb), 0.3)' : 'none'
-                      }}
-                    >
-                      {p}
-                    </button>
-                  )
-                })}
+                {(() => {
+                  const windowSize = 5;
+                  const start = Math.min(
+                    Math.max(1, pagination.page - 2),
+                    Math.max(1, pagination.totalPages - (windowSize - 1))
+                  );
+                  return Array.from({ length: Math.min(windowSize, pagination.totalPages) }, (_, i) => {
+                    const p = start + i;
+                    const active = p === pagination.page
+                    return (
+                      <button
+                        key={p}
+                        onClick={() => setPage(p)}
+                        className="w-9 h-9 rounded-lg text-xs font-bold transition-all"
+                        style={{
+                          backgroundColor : active ? 'var(--color-brand)' : 'var(--color-surface)',
+                          color           : active ? 'white' : 'var(--color-text-primary)',
+                          border          : active ? 'none' : '1px solid var(--color-border)',
+                          boxShadow       : active ? '0 4px 12px rgba(var(--color-brand-rgb), 0.3)' : 'none'
+                        }}
+                      >
+                        {p}
+                      </button>
+                    )
+                  })
+                })()}
               </div>
 
               <button

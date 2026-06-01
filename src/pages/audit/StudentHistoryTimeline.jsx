@@ -4,7 +4,7 @@
 
 import { useEffect, useState } from 'react'
 import { Filter, ArrowRight, User, MapPin, Monitor, ScrollText } from 'lucide-react'
-import useAuditStore from '@/store/auditStore'
+import * as auditApi from '@/api/auditApi'
 import { OldValue, NewValue } from '@/components/ui/ValueDiff'
 import Select from '@/components/ui/Select'
 import EmptyState from '@/components/ui/EmptyState'
@@ -26,21 +26,36 @@ const FIELD_LABELS = {
 }
 
 const StudentHistoryTimeline = ({ studentId, tableName = 'students' }) => {
-  const { recordHistory, isLoading, fetchRecordHistory } = useAuditStore()
+  const [history, setHistory] = useState([])
+  const [isLoading, setIsLoading] = useState(false)
   const [fieldFilter, setFieldFilter] = useState('')
 
   useEffect(() => {
+    let isMounted = true
     if (studentId) {
-      fetchRecordHistory(tableName, studentId).catch(() => {})
+      setIsLoading(true)
+      setHistory([]) // Clear previous data
+      auditApi.getRecordHistory(tableName, studentId)
+        .then(res => {
+          if (isMounted) {
+            const logs = res.data?.logs || res.data || []
+            setHistory(logs)
+          }
+        })
+        .catch(() => {})
+        .finally(() => {
+          if (isMounted) setIsLoading(false)
+        })
     }
+    return () => { isMounted = false }
   }, [studentId, tableName])
 
-  const fieldOptions = [...new Set(recordHistory.map(l => l.field_name))]
+  const fieldOptions = [...new Set(history.map(l => l.field_name))]
     .map(f => ({ value: f, label: FIELD_LABELS[f] || f }))
 
   const filtered = fieldFilter
-    ? recordHistory.filter(l => l.field_name === fieldFilter)
-    : recordHistory
+    ? history.filter(l => l.field_name === fieldFilter)
+    : history
 
   const formatTs = (ts) => {
     if (!ts) return '—'
@@ -167,7 +182,7 @@ const StudentHistoryTimeline = ({ studentId, tableName = 'students' }) => {
                           {(log.changed_by_name || 'S')[0]?.toUpperCase()}
                         </div>
                         <span className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>
-                          {log.changed_by_name || `User #${log.changed_by}`}
+                          {log.changed_by_name || log.admin_name || (log.changed_by ? `User #${log.changed_by}` : 'System')}
                         </span>
                       </div>
 

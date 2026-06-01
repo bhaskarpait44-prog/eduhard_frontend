@@ -1,9 +1,10 @@
 // src/pages/audit/AdminActivityPage.jsx
 import { useEffect, useState } from 'react'
-import { Activity, BarChart3, Clock } from 'lucide-react'
+import { Activity, BarChart3, Clock, ChevronLeft, ChevronRight } from 'lucide-react'
 import useAuditStore from '@/store/auditStore'
 import useToast from '@/hooks/useToast'
 import Select from '@/components/ui/Select'
+import Button from '@/components/ui/Button'
 import DateRangePicker from '@/components/ui/DateRangePicker'
 import StatCard from '@/components/ui/StatCard'
 import EmptyState from '@/components/ui/EmptyState'
@@ -19,6 +20,10 @@ const TABLE_LABELS = {
   attendance       : 'Attendance',
   fee_invoices     : 'Fees',
   sessions         : 'Sessions',
+  fee_structures   : 'Fee Setup',
+  classes          : 'Classes',
+  subjects         : 'Subjects',
+  exam_results     : 'Exam Marks',
 }
 
 const BAR_COLORS = [
@@ -33,22 +38,27 @@ const AdminActivityPage = () => {
   const [adminId,  setAdminId]  = useState('')
   const [fromDate, setFromDate] = useState('')
   const [toDate,   setToDate]   = useState('')
+  const [page,     setPage]     = useState(1)
+
+  const dateError = fromDate && toDate && new Date(fromDate) > new Date(toDate)
 
   useEffect(() => {
     fetchAdmins().catch(() => {})
   }, [])
 
   useEffect(() => {
-    if (!adminId) return
+    if (!adminId || dateError) return
     fetchAdminActivity(adminId, {
       from  : fromDate || undefined,
       to    : toDate   || undefined,
-      limit : 100,
+      page,
+      limit : 50,
     }).catch(() => toastError('Failed to load admin activity'))
-  }, [adminId, fromDate, toDate])
+  }, [adminId, fromDate, toDate, page, dateError])
 
-  const logs  = adminActivity?.logs  || (Array.isArray(adminActivity) ? adminActivity : [])
-  const total = adminActivity?.total || logs.length
+  const logs  = adminActivity?.logs  || []
+  const total = adminActivity?.total || 0
+  const meta  = adminActivity?.meta  || { page: 1, totalPages: 1 }
   const admin = admins.find(a => String(a.id) === adminId)
 
   // Build per-table breakdown
@@ -71,6 +81,11 @@ const AdminActivityPage = () => {
     })
   }
 
+  const handleAdminChange = (e) => {
+    setAdminId(e.target.value)
+    setPage(1)
+  }
+
   return (
     <div className="space-y-6">
       {/* Filters */}
@@ -81,17 +96,25 @@ const AdminActivityPage = () => {
         <Select
           label="Select Admin"
           value={adminId}
-          onChange={e => setAdminId(e.target.value)}
+          onChange={handleAdminChange}
           options={(admins || []).map(a => ({ value: String(a.id), label: `${a.name} (${a.role})` }))}
           placeholder="Choose an admin…"
           containerClassName="min-w-56"
         />
         <DateRangePicker
           fromDate={fromDate} toDate={toDate}
-          onFromChange={setFromDate}
-          onToChange={setToDate}
+          onFromChange={v => { setFromDate(v); setPage(1) }}
+          onToChange={v => { setToDate(v); setPage(1) }}
         />
       </div>
+
+      {dateError && (
+        <div className="p-4 rounded-2xl bg-red-50 border border-red-100">
+          <p className="text-sm font-medium text-red-600">
+            Invalid date range: "From" date cannot be later than "To" date.
+          </p>
+        </div>
+      )}
 
       {/* No admin selected */}
       {!adminId && (
@@ -145,7 +168,7 @@ const AdminActivityPage = () => {
               <div className="flex items-center gap-2 mb-4">
                 <BarChart3 size={16} style={{ color: 'var(--color-brand)' }} />
                 <p className="text-sm font-semibold" style={{ color: 'var(--color-text-primary)' }}>
-                  Changes by Table
+                  Changes by Table (Current Page)
                 </p>
               </div>
               <div className="space-y-3">
@@ -197,12 +220,12 @@ const AdminActivityPage = () => {
                 className="ml-auto text-xs px-2 py-0.5 rounded-full font-medium"
                 style={{ backgroundColor: 'var(--color-surface-raised)', color: 'var(--color-text-muted)' }}
               >
-                {logs.length} records
+                {logs.length} of {total} records
               </span>
             </div>
 
             {isLoading ? (
-              <TableSkeleton cols={5} rows={6} />
+              <TableSkeleton cols={6} rows={6} />
             ) : logs.length === 0 ? (
               <EmptyState
                 icon={Activity}
@@ -263,7 +286,7 @@ const AdminActivityPage = () => {
                           </div>
                         </td>
                         <td className="px-4 py-3 max-w-40">
-                          <p className="text-xs italic" style={{ color: 'var(--color-text-muted)' }}>
+                          <p className="text-xs italic truncate" style={{ color: 'var(--color-text-muted)' }}>
                             {log.reason ? `"${truncate(log.reason, 40)}"` : '—'}
                           </p>
                         </td>
@@ -274,6 +297,25 @@ const AdminActivityPage = () => {
               </div>
             )}
           </div>
+
+          {/* Pagination Controls */}
+          {!isLoading && meta.totalPages > 1 && (
+            <div className="flex items-center justify-center gap-2 mt-4">
+              <Button
+                variant="secondary" size="sm" icon={ChevronLeft}
+                disabled={meta.page <= 1}
+                onClick={() => setPage(p => p - 1)}
+              />
+              <span className="text-sm font-medium" style={{ color: 'var(--color-text-secondary)' }}>
+                Page {meta.page} of {meta.totalPages}
+              </span>
+              <Button
+                variant="secondary" size="sm" icon={ChevronRight}
+                disabled={meta.page >= meta.totalPages}
+                onClick={() => setPage(p => p + 1)}
+              />
+            </div>
+          )}
         </>
       )}
     </div>

@@ -2,18 +2,35 @@
 // Replace the existing file with this — adds the timeline view
 import { useEffect, useState } from 'react'
 import { ScrollText, List, GitBranch } from 'lucide-react'
-import useAdminStudentStore from '@/store/studentStore'
+import * as studentsApi from '@/api/studentsApi'
 import EmptyState from '@/components/ui/EmptyState'
 import { OldValue, NewValue } from '@/components/ui/ValueDiff'
 import StudentHistoryTimeline from '@/pages/audit/StudentHistoryTimeline'
 import { truncate } from '@/utils/helpers'
 
 const TabAuditLog = ({ studentId }) => {
-  const { auditLogs, isLoading, fetchAuditLog } = useAdminStudentStore()
+  const [logs, setLogs] = useState([])
+  const [isLoading, setIsLoading] = useState(false)
   const [view, setView] = useState('timeline')   // 'timeline' | 'table'
 
   useEffect(() => {
-    fetchAuditLog('students', studentId).catch(() => {})
+    let isMounted = true
+    if (studentId) {
+      setIsLoading(true)
+      setLogs([])
+      studentsApi.getAuditLog('students', studentId)
+        .then(res => {
+          if (isMounted) {
+            const data = res.data?.logs || res.data || []
+            setLogs(data)
+          }
+        })
+        .catch(() => {})
+        .finally(() => {
+          if (isMounted) setIsLoading(false)
+        })
+    }
+    return () => { isMounted = false }
   }, [studentId])
 
   return (
@@ -62,14 +79,14 @@ const TabAuditLog = ({ studentId }) => {
                 <div key={i} className="h-20 rounded-xl" style={{ backgroundColor: 'var(--color-surface-raised)' }} />
               ))}
             </div>
-          ) : auditLogs.length === 0 ? (
+          ) : logs.length === 0 ? (
             <EmptyState icon={ScrollText} title="No audit records"
               description="Changes to this student's identity will appear here."
               className="border-0 py-10"
             />
           ) : (
             <div className="space-y-2">
-              {auditLogs.map((log, i) => (
+              {logs.map((log, i) => (
                 <div
                   key={i}
                   className="p-4 rounded-xl"
@@ -99,11 +116,9 @@ const TabAuditLog = ({ studentId }) => {
                     </p>
                   )}
                   <div className="flex items-center gap-3 mt-1.5">
-                    {log.changed_by_name && (
-                      <p className="text-xs" style={{ color: 'var(--color-text-muted)' }}>
-                        By <strong>{log.changed_by_name}</strong>
-                      </p>
-                    )}
+                    <p className="text-xs" style={{ color: 'var(--color-text-muted)' }}>
+                      By <strong>{log.changed_by_name || log.admin_name || (log.changed_by ? `User #${log.changed_by}` : 'System')}</strong>
+                    </p>
                     {log.ip_address && (
                       <p className="text-xs" style={{ color: 'var(--color-text-muted)' }}>
                         IP: {log.ip_address}

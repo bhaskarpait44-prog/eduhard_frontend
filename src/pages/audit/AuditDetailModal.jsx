@@ -71,7 +71,7 @@ const AuditDetailModal = ({ open, log, onClose }) => {
           <DetailItem
             icon={User}
             label="Changed By"
-            value={log.changed_by_name || log.admin_name || `User #${log.changed_by}` || 'System'}
+            value={log.changed_by_name || log.admin_name || (log.changed_by ? `User #${log.changed_by}` : 'System')}
           />
           <DetailItem
             icon={MapPin}

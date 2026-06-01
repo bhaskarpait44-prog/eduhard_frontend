@@ -13,18 +13,22 @@ import AuditDetailModal from './AuditDetailModal'
 import { formatDate, debounce, truncate } from '@/utils/helpers'
 
 const TABLE_OPTIONS = [
-  { value: 'students',         label: 'Students'         },
-  { value: 'student_profiles', label: 'Student Profiles' },
-  { value: 'student_results',  label: 'Results'          },
-  { value: 'enrollments',      label: 'Enrollments'      },
-  { value: 'attendance',       label: 'Attendance'       },
-  { value: 'fee_invoices',     label: 'Fee Invoices'     },
-  { value: 'sessions',         label: 'Sessions'         },
+  { value: 'students',         label: 'Students'          },
+  { value: 'student_profiles', label: 'Student Profiles'  },
+  { value: 'classes',          label: 'Classes'           },
+  { value: 'subjects',         label: 'Subjects'          },
+  { value: 'enrollments',      label: 'Enrollments'       },
+  { value: 'attendance',       label: 'Attendance'        },
+  { value: 'exam_results',     label: 'Exam Marks'        },
+  { value: 'student_results',  label: 'Final Results'     },
+  { value: 'fee_structures',   label: 'Fee Structures'    },
+  { value: 'fee_invoices',     label: 'Fee Invoices'      },
+  { value: 'sessions',         label: 'Sessions'          },
 ]
 
 const AuditLogListPage = () => {
-  const { toastError } = useToast()
-  const { logs, pagination, admins, isLoading, fetchLogs, fetchAdmins } = useAuditStore()
+  const { toastError, toastSuccess } = useToast()
+  const { logs, pagination, admins, isLoading, fetchLogs, fetchAdmins, exportLogs } = useAuditStore()
 
   const [fromDate,   setFromDate]   = useState('')
   const [toDate,     setToDate]     = useState('')
@@ -33,14 +37,17 @@ const AuditLogListPage = () => {
   const [recordId,   setRecordId]   = useState('')
   const [page,       setPage]       = useState(1)
   const [detail,     setDetail]     = useState(null)
+  const [isExporting, setIsExporting] = useState(false)
+
+  const dateError = fromDate && toDate && new Date(fromDate) > new Date(toDate)
 
   useEffect(() => {
     fetchAdmins().catch(() => {})
   }, [])
 
-  const buildParams = useCallback(() => ({
-    page,
-    limit     : 30,
+  const buildParams = useCallback((isExport = false) => ({
+    page      : isExport ? 1 : page,
+    limit     : isExport ? 5000 : 30,
     from      : fromDate   || undefined,
     to        : toDate     || undefined,
     admin_id  : adminId    || undefined,
@@ -49,9 +56,10 @@ const AuditLogListPage = () => {
   }), [page, fromDate, toDate, adminId, tableName, recordId])
 
   useEffect(() => {
+    if (dateError) return
     fetchLogs(buildParams())
       .catch(() => toastError('Failed to load audit logs'))
-  }, [page, fromDate, toDate, adminId, tableName, recordId])
+  }, [page, fromDate, toDate, adminId, tableName, recordId, dateError])
 
   const clearFilters = () => {
     setFromDate(''); setToDate(''); setAdminId('')
@@ -60,32 +68,49 @@ const AuditLogListPage = () => {
 
   const hasFilters = fromDate || toDate || adminId || tableName || recordId
 
-  const handleExport = () => {
-    // Build CSV from current logs
-    const headers = ['Timestamp','Admin','Table','Record ID','Field','Old Value','New Value','Reason','IP']
-    const rows = logs.map(log => [
-      new Date(log.created_at).toISOString(),
-      log.changed_by_name || log.changed_by || '—',
-      log.table_name,
-      log.record_id,
-      log.field_name,
-      log.old_value || '',
-      log.new_value || '',
-      log.reason    || '',
-      log.ip_address|| '',
-    ])
+  const handleExport = async () => {
+    setIsExporting(true)
+    try {
+      const allLogs = await exportLogs(buildParams(true))
+      
+      if (allLogs.length === 0) {
+        toastError('No logs found matching your filters')
+        return
+      }
 
-    const csv = [headers, ...rows]
-      .map(row => row.map(c => `"${String(c).replace(/"/g,'""')}"`).join(','))
-      .join('\n')
+      // Build CSV from fetched logs
+      const headers = ['Timestamp','Admin','Table','Record ID','Field','Old Value','New Value','Reason','IP']
+      const rows = allLogs.map(log => [
+        new Date(log.created_at).toISOString(),
+        log.changed_by_name || log.admin_name || log.changed_by || '—',
+        log.table_name,
+        log.record_id,
+        log.field_name,
+        log.old_value || '',
+        log.new_value || '',
+        log.reason    || '',
+        log.ip_address|| '',
+      ])
 
-    const blob = new Blob([csv], { type: 'text/csv' })
-    const url  = URL.createObjectURL(blob)
-    const a    = document.createElement('a')
-    a.href     = url
-    a.download = `audit-logs-${new Date().toISOString().split('T')[0]}.csv`
-    a.click()
-    URL.revokeObjectURL(url)
+      const csv = [headers, ...rows]
+        .map(row => row.map(c => `"${String(c ?? '').replace(/"/g,'""')}"`).join(','))
+        .join('\n')
+
+      const blob = new Blob([csv], { type: 'text/csv' })
+      const url  = URL.createObjectURL(blob)
+      const a    = document.createElement('a')
+      a.href     = url
+      a.download = `audit-logs-${new Date().toISOString().split('T')[0]}.csv`
+      a.click()
+      URL.revokeObjectURL(url)
+      
+      toastSuccess(`Exported ${allLogs.length} records successfully`)
+    } catch (err) {
+      toastError('Failed to export audit logs')
+      console.error(err)
+    } finally {
+      setIsExporting(false)
+    }
   }
 
   const formatTimestamp = (ts) => {
@@ -125,7 +150,13 @@ const AuditLogListPage = () => {
                 <X size={13} /> Clear
               </button>
             )}
-            <Button variant="secondary" size="sm" icon={FileSpreadsheet} onClick={handleExport}>
+            <Button
+              variant="secondary"
+              size="sm"
+              icon={FileSpreadsheet}
+              onClick={handleExport}
+              loading={isExporting}
+            >
               Export CSV
             </Button>
           </div>
@@ -169,6 +200,12 @@ const AuditLogListPage = () => {
             />
           </div>
         </div>
+
+        {dateError && (
+          <p className="text-xs font-medium text-red-500 bg-red-50 p-2 rounded-lg border border-red-100">
+            Invalid date range: "From" date cannot be later than "To" date.
+          </p>
+        )}
 
         {/* Active filter chips */}
         {hasFilters && (
@@ -264,7 +301,7 @@ const AuditLogListPage = () => {
                           {(log.changed_by_name || log.admin_name || 'S')[0]?.toUpperCase()}
                         </div>
                         <span className="text-xs font-medium whitespace-nowrap" style={{ color: 'var(--color-text-primary)' }}>
-                          {log.changed_by_name || log.admin_name || `User #${log.changed_by}`}
+                          {log.changed_by_name || log.admin_name || (log.changed_by ? `User #${log.changed_by}` : 'System')}
                         </span>
                       </div>
                     </td>
@@ -331,25 +368,30 @@ const AuditLogListPage = () => {
             disabled={pagination.page <= 1}
             onClick={() => setPage(p => p - 1)}
           />
-          {Array.from({ length: Math.min(7, pagination.totalPages) }, (_, i) => {
-            const offset = Math.max(0, pagination.page - 4)
-            const p = i + 1 + offset
-            if (p > pagination.totalPages) return null
-            return (
-              <button
-                key={p}
-                onClick={() => setPage(p)}
-                className="w-8 h-8 rounded-lg text-sm font-medium transition-colors"
-                style={{
-                  backgroundColor: p === pagination.page ? 'var(--color-brand)' : 'var(--color-surface)',
-                  color          : p === pagination.page ? '#fff' : 'var(--color-text-secondary)',
-                  border         : '1px solid var(--color-border)',
-                }}
-              >
-                {p}
-              </button>
-            )
-          })}
+          {(() => {
+            const start = Math.min(
+              Math.max(1, pagination.page - 3),
+              Math.max(1, pagination.totalPages - 6)
+            );
+            return Array.from({ length: Math.min(7, pagination.totalPages) }, (_, i) => {
+              const p = start + i;
+              if (p > pagination.totalPages) return null;
+              return (
+                <button
+                  key={p}
+                  onClick={() => setPage(p)}
+                  className="w-8 h-8 rounded-lg text-sm font-medium transition-colors"
+                  style={{
+                    backgroundColor: p === pagination.page ? 'var(--color-brand)' : 'var(--color-surface)',
+                    color          : p === pagination.page ? '#fff' : 'var(--color-text-secondary)',
+                    border         : '1px solid var(--color-border)',
+                  }}
+                >
+                  {p}
+                </button>
+              )
+            })
+          })()}
           <Button
             variant="secondary" size="sm" icon={ChevronRight}
             disabled={pagination.page >= pagination.totalPages}

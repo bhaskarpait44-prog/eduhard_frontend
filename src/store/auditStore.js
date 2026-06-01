@@ -5,7 +5,6 @@ import * as api from '@/api/auditApi'
 const useAuditStore = create((set, get) => ({
   logs          : [],
   selectedLog   : null,
-  recordHistory : [],
   adminActivity : null,
   admins        : [],
   pagination    : { page: 1, perPage: 30, total: 0, totalPages: 1 },
@@ -52,19 +51,6 @@ const useAuditStore = create((set, get) => ({
     }
   },
 
-  // ── Fetch history for one record (student, invoice, etc.) ───────────
-  fetchRecordHistory: async (table, recordId) => {
-    set({ isLoading: true, recordHistory: [] })
-    try {
-      const res  = await api.getRecordHistory(table, recordId)
-      const logs = res.data?.logs || res.data || []
-      set({ recordHistory: logs, isLoading: false })
-      return logs
-    } catch (err) {
-      set({ isLoading: false }); throw err
-    }
-  },
-
   // ── Fetch admin activity ────────────────────────────────────────────
   fetchAdminActivity: async (adminId, params = {}) => {
     set({ isLoading: true, adminActivity: null })
@@ -88,6 +74,17 @@ const useAuditStore = create((set, get) => ({
   },
 
   clearSelected: () => set({ selectedLog: null }),
+
+  // ── Export all matching logs ────────────────────────────────────────
+  exportLogs: async (params = {}) => {
+    try {
+      const res = await api.getAuditLogs({ ...params, export: 'true' })
+      const data = res.data
+      return Array.isArray(data) ? data : (data?.logs || data?.data || [])
+    } catch (err) {
+      throw err
+    }
+  },
 }))
 
 export default useAuditStore

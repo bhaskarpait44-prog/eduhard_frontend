@@ -6,7 +6,6 @@ const useAdminStudentStore = create((set, get) => ({
   // ── State ──────────────────────────────────────────────────────────────
   students      : [],
   selectedStudent: null,
-  auditLogs     : [],
   history       : null,
   pagination    : { page: 1, perPage: 20, total: 0, totalPages: 1 },
   isLoading     : false,
@@ -147,20 +146,6 @@ const useAdminStudentStore = create((set, get) => ({
     }
   },
 
-  // ── Fetch audit log ─────────────────────────────────────────────────────
-  fetchAuditLog: async (table, id) => {
-    set({ isLoading: true })
-    try {
-      const res = await studentsApi.getAuditLog(table, id)
-      const logs = res.data?.logs || res.data || []
-      set({ auditLogs: logs, isLoading: false })
-      return logs
-    } catch (err) {
-      set({ isLoading: false })
-      throw err
-    }
-  },
-
   fetchIDCardData: async (id) => {
     try {
       const res = await studentsApi.getIDCardData(id)
@@ -213,7 +198,7 @@ const useAdminStudentStore = create((set, get) => ({
     }
   },
 
-  clearSelected: () => set({ selectedStudent: null, history: null, auditLogs: [] }),
+  clearSelected: () => set({ selectedStudent: null, history: null }),
 }))
 
 export default useAdminStudentStore
