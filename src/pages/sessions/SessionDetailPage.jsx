@@ -61,8 +61,16 @@ const SessionDetailPage = () => {
   const [tempWD, setTempWD] = useState({})
 
   useEffect(() => {
-    fetchSession(id).catch(() => toastError('Failed to load session'))
-    fetchSessionStats(id).catch(() => console.error('Failed to load session stats'))
+    const loadData = async () => {
+      try {
+        await fetchSession(id)
+        // Only fetch stats after session is loaded to ensure UI consistency
+        fetchSessionStats(id).catch(() => console.error('Failed to load session stats'))
+      } catch (err) {
+        toastError('Failed to load session')
+      }
+    }
+    loadData()
   }, [id])
 
   useEffect(() => {
