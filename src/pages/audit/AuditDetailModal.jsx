@@ -10,10 +10,6 @@ const TABLE_ROUTE_MAP = {
   students         : ROUTES.STUDENTS,
   student_profiles : ROUTES.STUDENTS,
   student_results  : ROUTES.STUDENTS,
-  enrollments      : ROUTES.ENROLLMENTS,
-  sessions         : ROUTES.SESSIONS,
-  fee_invoices     : ROUTES.FEES,
-  attendance       : ROUTES.ATTENDANCE,
 }
 
 const AuditDetailModal = ({ open, log, onClose }) => {

@@ -113,7 +113,6 @@ const StudentHistoryTimeline = ({ studentId, tableName = 'students' }) => {
           <div className="space-y-4">
             {filtered.map((log, i) => {
               const ts = formatTs(log.created_at)
-              const isLast = i === filtered.length - 1
 
               return (
                 <div key={log.id} className="flex gap-6 relative">

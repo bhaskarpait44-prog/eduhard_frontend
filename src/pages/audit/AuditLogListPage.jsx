@@ -211,22 +211,22 @@ const AuditLogListPage = () => {
         {hasFilters && (
           <div className="flex flex-wrap gap-2 pt-1">
             {tableName && (
-              <FilterChip label={`Table: ${tableName}`} onRemove={() => setTableName('')} />
+              <FilterChip label={`Table: ${tableName}`} onRemove={() => { setTableName(''); setPage(1) }} />
             )}
             {adminId && (
               <FilterChip
                 label={`Admin: ${admins.find(a => String(a.id) === adminId)?.name || adminId}`}
-                onRemove={() => setAdminId('')}
+                onRemove={() => { setAdminId(''); setPage(1) }}
               />
             )}
             {(fromDate || toDate) && (
               <FilterChip
                 label={`${fromDate || '…'} to ${toDate || '…'}`}
-                onRemove={() => { setFromDate(''); setToDate('') }}
+                onRemove={() => { setFromDate(''); setToDate(''); setPage(1) }}
               />
             )}
             {recordId && (
-              <FilterChip label={`Record: #${recordId}`} onRemove={() => setRecordId('')} />
+              <FilterChip label={`Record: #${recordId}`} onRemove={() => { setRecordId(''); setPage(1) }} />
             )}
           </div>
         )}
