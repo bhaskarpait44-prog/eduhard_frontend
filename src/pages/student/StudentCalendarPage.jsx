@@ -35,7 +35,7 @@ const StudentCalendarPage = () => {
   
   const [viewDate, setViewDate] = useState(new Date())
   const [selectedDate, setSelectedDate] = useState(new Date())
-  const [viewMode, setViewDateMode] = useState('grid') // 'grid' | 'list'
+  const [viewMode, setViewMode] = useState('grid') // 'grid' | 'list'
 
   useEffect(() => {
     if (!dashboard) {
@@ -62,9 +62,15 @@ const StudentCalendarPage = () => {
   const eventsByDate = useMemo(() => {
     const map = {}
     events.forEach(event => {
-      const dateKey = format(parseISO(event.start_date), 'yyyy-MM-dd')
-      if (!map[dateKey]) map[dateKey] = []
-      map[dateKey].push(event)
+      const start = parseISO(event.start_date)
+      const end = parseISO(event.end_date || event.start_date)
+      const days = eachDayOfInterval({ start, end })
+
+      days.forEach(day => {
+        const dateKey = format(day, 'yyyy-MM-dd')
+        if (!map[dateKey]) map[dateKey] = []
+        map[dateKey].push(event)
+      })
     })
     return map
   }, [events])
@@ -85,7 +91,7 @@ const StudentCalendarPage = () => {
 
         <div className="flex items-center gap-2 rounded-2xl bg-[var(--color-surface)] p-1 border border-[var(--color-border)] shadow-sm">
           <button
-            onClick={() => setViewDateMode('grid')}
+            onClick={() => setViewMode('grid')}
             className={cn(
               "flex h-9 w-9 items-center justify-center rounded-xl transition-all",
               viewMode === 'grid' ? "bg-[var(--color-brand)] text-white shadow-md shadow-violet-500/20" : "text-[var(--color-text-muted)] hover:bg-[var(--color-surface-raised)]"
@@ -94,7 +100,7 @@ const StudentCalendarPage = () => {
             <LayoutGrid size={18} />
           </button>
           <button
-            onClick={() => setViewDateMode('list')}
+            onClick={() => setViewMode('list')}
             className={cn(
               "flex h-9 w-9 items-center justify-center rounded-xl transition-all",
               viewMode === 'list' ? "bg-[var(--color-brand)] text-white shadow-md shadow-violet-500/20" : "text-[var(--color-text-muted)] hover:bg-[var(--color-surface-raised)]"

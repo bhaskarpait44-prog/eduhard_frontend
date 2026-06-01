@@ -90,9 +90,15 @@ const AcademicCalendarPage = () => {
   const eventsByDate = useMemo(() => {
     const map = {}
     filteredEvents.forEach(event => {
-      const dateKey = format(parseISO(event.start_date), 'yyyy-MM-dd')
-      if (!map[dateKey]) map[dateKey] = []
-      map[dateKey].push(event)
+      const start = parseISO(event.start_date)
+      const end = parseISO(event.end_date || event.start_date)
+      const days = eachDayOfInterval({ start, end })
+
+      days.forEach(day => {
+        const dateKey = format(day, 'yyyy-MM-dd')
+        if (!map[dateKey]) map[dateKey] = []
+        map[dateKey].push(event)
+      })
     })
     return map
   }, [filteredEvents])
@@ -142,7 +148,10 @@ const AcademicCalendarPage = () => {
     if (!selectedSessionId) return
     setIsDownloading(true)
     try {
-      const blob = await downloadPdf(selectedSessionId, filterType)
+      // Pass the currently viewed month and year to the PDF download
+      const month = viewDate.getMonth() + 1
+      const year = viewDate.getFullYear()
+      const blob = await downloadPdf(selectedSessionId, filterType, month, year)
       const sessionName = sessions.find(s => String(s.id) === String(selectedSessionId))?.name || 'Calendar'
       downloadBlob(blob, `Academic_Calendar_${sessionName.replace(/\s+/g, '_')}.pdf`)
       toast.success('PDF generated successfully')

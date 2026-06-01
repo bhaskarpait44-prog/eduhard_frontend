@@ -12,7 +12,7 @@ const useAcademicCalendarStore = create((set, get) => ({
   filterType  : null, // 'exam' | 'holiday' | ... | null (show all)
 
   fetchEvents: async (sessionId, month, year) => {
-    set({ isLoading: true, error: null })
+    set({ isLoading: true, error: null, filterType: null })
     try {
       const params = { session_id: sessionId }
       if (month && year) {
@@ -29,7 +29,7 @@ const useAcademicCalendarStore = create((set, get) => ({
   },
 
   fetchStudentEvents: async (sessionId, month, year) => {
-    set({ isLoading: true, error: null })
+    set({ isLoading: true, error: null, filterType: null })
     try {
       const params = { session_id: sessionId }
       if (month && year) {
@@ -105,12 +105,14 @@ const useAcademicCalendarStore = create((set, get) => ({
     }
   },
 
-  downloadPdf: async (sessionId, filterType) => {
+  downloadPdf: async (sessionId, filterType, month, year) => {
     try {
       const params = { session_id: sessionId }
       if (filterType) params.event_type = filterType
+      if (month) params.month = month
+      if (year) params.year = year
       const blob = await api.downloadCalendarPdf(params)
-      return blob
+      return blob.data
     } catch (err) {
       console.error('PDF Download error:', err)
       throw err
