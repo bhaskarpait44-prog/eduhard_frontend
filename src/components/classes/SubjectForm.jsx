@@ -1,6 +1,6 @@
 // src/pages/classes/components/SubjectForm.jsx
 import { useEffect, useMemo } from 'react'
-import { useForm, Controller, useWatch } from 'react-hook-form'
+import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import {
@@ -16,50 +16,6 @@ const optionalPositiveNumber = (label) => z.preprocess(
   },
   z.number().positive(`${label} must be greater than 0`).optional().nullable()
 )
-
-// ── Zod schema ────────────────────────────────────────────────────────────
-const schema = z
-  .object({
-    name         : z.string().min(1, 'Subject name is required').max(150),
-    code         : z.string().min(1, 'Subject code is required').max(30)
-                    .regex(/^[A-Z0-9\-]+$/i, 'Only letters, numbers and hyphens'),
-    subject_type : z.enum(['theory', 'practical', 'both']),
-    is_core      : z.boolean(),
-    order_number : z.coerce.number().int().min(1, 'Order number required'),
-    description  : z.string().max(1000).optional().nullable(),
-
-    theory_total_marks      : optionalPositiveNumber('Theory total marks'),
-    theory_passing_marks    : optionalPositiveNumber('Theory passing marks'),
-    practical_total_marks   : optionalPositiveNumber('Practical total marks'),
-    practical_passing_marks : optionalPositiveNumber('Practical passing marks'),
-    reason                  : z.string().optional(),
-  })
-  .superRefine((d, ctx) => {
-    // Theory marks required when type is theory or both
-    if (['theory', 'both'].includes(d.subject_type)) {
-      if (!d.theory_total_marks) {
-        ctx.addIssue({ code: 'custom', path: ['theory_total_marks'], message: 'Theory total marks required' })
-      }
-      if (!d.theory_passing_marks) {
-        ctx.addIssue({ code: 'custom', path: ['theory_passing_marks'], message: 'Theory passing marks required' })
-      }
-      if (d.theory_passing_marks && d.theory_total_marks && d.theory_passing_marks >= d.theory_total_marks) {
-        ctx.addIssue({ code: 'custom', path: ['theory_passing_marks'], message: 'Must be less than total marks' })
-      }
-    }
-    // Practical marks required when type is practical or both
-    if (['practical', 'both'].includes(d.subject_type)) {
-      if (!d.practical_total_marks) {
-        ctx.addIssue({ code: 'custom', path: ['practical_total_marks'], message: 'Practical total marks required' })
-      }
-      if (!d.practical_passing_marks) {
-        ctx.addIssue({ code: 'custom', path: ['practical_passing_marks'], message: 'Practical passing marks required' })
-      }
-      if (d.practical_passing_marks && d.practical_total_marks && d.practical_passing_marks >= d.practical_total_marks) {
-        ctx.addIssue({ code: 'custom', path: ['practical_passing_marks'], message: 'Must be less than total marks' })
-      }
-    }
-  })
 
 // ── Type option card ──────────────────────────────────────────────────────
 const TypeCard = ({ value, selected, onSelect, icon: Icon, label, helper }) => (
@@ -121,6 +77,51 @@ const SubjectForm = ({
   isEdit   = false,
   nextOrderNumber = 1,
 }) => {
+  const schema = z
+    .object({
+      name         : z.string().min(1, 'Subject name is required').max(150),
+      code         : z.string().min(1, 'Subject code is required').max(30)
+                      .regex(/^[A-Z0-9\-]+$/i, 'Only letters, numbers and hyphens'),
+      subject_type : z.enum(['theory', 'practical', 'both']),
+      is_core      : z.boolean(),
+      order_number : z.coerce.number().int().min(1, 'Order number required'),
+      description  : z.string().max(1000).optional().nullable(),
+
+      theory_total_marks      : optionalPositiveNumber('Theory total marks'),
+      theory_passing_marks    : optionalPositiveNumber('Theory passing marks'),
+      practical_total_marks   : optionalPositiveNumber('Practical total marks'),
+      practical_passing_marks : optionalPositiveNumber('Practical passing marks'),
+      reason                  : isEdit
+        ? z.string().min(10, 'Reason must be at least 10 characters').max(500)
+        : z.string().optional(),
+    })
+    .superRefine((d, ctx) => {
+      // Theory marks required when type is theory or both
+      if (['theory', 'both'].includes(d.subject_type)) {
+        if (!d.theory_total_marks) {
+          ctx.addIssue({ code: 'custom', path: ['theory_total_marks'], message: 'Theory total marks required' })
+        }
+        if (!d.theory_passing_marks) {
+          ctx.addIssue({ code: 'custom', path: ['theory_passing_marks'], message: 'Theory passing marks required' })
+        }
+        if (d.theory_passing_marks && d.theory_total_marks && d.theory_passing_marks >= d.theory_total_marks) {
+          ctx.addIssue({ code: 'custom', path: ['theory_passing_marks'], message: 'Must be less than total marks' })
+        }
+      }
+      // Practical marks required when type is practical or both
+      if (['practical', 'both'].includes(d.subject_type)) {
+        if (!d.practical_total_marks) {
+          ctx.addIssue({ code: 'custom', path: ['practical_total_marks'], message: 'Practical total marks required' })
+        }
+        if (!d.practical_passing_marks) {
+          ctx.addIssue({ code: 'custom', path: ['practical_passing_marks'], message: 'Practical passing marks required' })
+        }
+        if (d.practical_passing_marks && d.practical_total_marks && d.practical_passing_marks >= d.practical_total_marks) {
+          ctx.addIssue({ code: 'custom', path: ['practical_passing_marks'], message: 'Must be less than total marks' })
+        }
+      }
+    })
+
   const {
     register,
     handleSubmit,
@@ -148,7 +149,6 @@ const SubjectForm = ({
   })
 
   const subjectType = watch('subject_type')
-  const isCore      = watch('is_core')
 
   // Watch marks for combined calculation
   const theoryTotal      = watch('theory_total_marks')
@@ -180,7 +180,7 @@ const SubjectForm = ({
         : parts.map(w => w[0]).join('').toUpperCase()
       setValue('code', auto, { shouldValidate: false })
     }
-  }, [nameValue, isEdit])
+  }, [nameValue, isEdit, defaultValues.code, setValue])
 
   const handleFormSubmit = (data) => {
     // Clear unused mark fields based on type

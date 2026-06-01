@@ -32,7 +32,6 @@ const SectionForm = ({
     defaultValues: {
       name            : '',
       capacity        : 40,
-      class_teacher_id: '',
       is_active       : true,
       ...defaultValues,
       // Ensure class_teacher_id is a string for the select field

@@ -11,6 +11,7 @@ import usePageTitle from '@/hooks/usePageTitle'
 import ClassForm from '@/components/classes/ClassForm'
 import { ROUTES } from '@/constants/app'
 import { downloadClassStudentsPdf, getSections } from '@/api/classApi'
+import { downloadBlob } from '@/utils/downloadBlob'
 import useToast from '@/hooks/useToast'
 import useSessionStore from '@/store/sessionStore'
 import Modal from '@/components/ui/Modal'
@@ -399,20 +400,9 @@ const ClassListPage = () => {
         session_id: currentSession.id,
         ...(downloadSectionId ? { section_id: downloadSectionId } : {}),
       })
-      const blob = response instanceof Blob
-        ? response
-        : response?.data instanceof Blob
-          ? response.data
-          : new Blob([response], { type: 'application/pdf' })
-      const url = window.URL.createObjectURL(blob)
-      const link = document.createElement('a')
       const className = classes.find((cls) => String(cls.id) === String(downloadClassId))?.name || 'class'
-      link.href = url
-      link.download = `${className.replace(/[^a-z0-9-_]+/gi, '-')}-students.pdf`
-      document.body.appendChild(link)
-      link.click()
-      link.remove()
-      window.setTimeout(() => window.URL.revokeObjectURL(url), 5000)
+      downloadBlob(response, `${className.replace(/[^a-z0-9-_]+/gi, '-')}-students.pdf`)
+      
       setDownloadModal(false)
       toastSuccess('Class PDF downloaded successfully.')
     } catch (err) {

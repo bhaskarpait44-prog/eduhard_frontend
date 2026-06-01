@@ -6,6 +6,7 @@ import useSubjects from '@/hooks/useSubjects'
 import usePageTitle from '@/hooks/usePageTitle'
 import { getStudents } from '@/api/studentsApi'
 import { downloadClassStudentsPdf } from '@/api/classApi'
+import { downloadBlob } from '@/utils/downloadBlob'
 import useToast from '@/hooks/useToast'
 import useSessionStore from '@/store/sessionStore'
 import SectionForm from '@/components/classes/SectionForm'
@@ -285,19 +286,8 @@ const ClassDetailPage=()=>{
     setDownloadingPdf(true)
     try {
       const response = await downloadClassStudentsPdf(id, { session_id: currentSession.id })
-      const blob = response instanceof Blob
-        ? response
-        : response?.data instanceof Blob
-          ? response.data
-          : new Blob([response], { type: 'application/pdf' })
-      const url = window.URL.createObjectURL(blob)
-      const link = document.createElement('a')
-      link.href = url
-      link.download = `${(cls?.name || 'class').replace(/[^a-z0-9-_]+/gi, '-')}-students.pdf`
-      document.body.appendChild(link)
-      link.click()
-      link.remove()
-      window.setTimeout(() => window.URL.revokeObjectURL(url), 5000)
+      const fileName = `${(cls?.name || 'class').replace(/[^a-z0-9-_]+/gi, '-')}-students.pdf`
+      downloadBlob(response, fileName)
       toastSuccess('Class student list PDF downloaded.')
     } catch (err) {
       toastError(err.message || 'Failed to download class student PDF.')
