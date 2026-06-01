@@ -364,7 +364,12 @@ const StudentsPage = () => {
         section_id: downloadFilters.section_id
       })
       
-      const blob = response.data || response
+      const blob = response instanceof Blob
+        ? response
+        : response?.data instanceof Blob
+          ? response.data
+          : new Blob([response], { type: 'application/pdf' })
+      
       if (blob.type === 'application/json') {
         const text = await blob.text()
         const errorData = JSON.parse(text)

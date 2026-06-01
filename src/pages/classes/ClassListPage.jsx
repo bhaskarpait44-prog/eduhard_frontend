@@ -399,7 +399,11 @@ const ClassListPage = () => {
         session_id: currentSession.id,
         ...(downloadSectionId ? { section_id: downloadSectionId } : {}),
       })
-      const blob = response instanceof Blob ? response : new Blob([response], { type: 'application/pdf' })
+      const blob = response instanceof Blob
+        ? response
+        : response?.data instanceof Blob
+          ? response.data
+          : new Blob([response], { type: 'application/pdf' })
       const url = window.URL.createObjectURL(blob)
       const link = document.createElement('a')
       const className = classes.find((cls) => String(cls.id) === String(downloadClassId))?.name || 'class'

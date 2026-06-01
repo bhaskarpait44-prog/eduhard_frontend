@@ -214,7 +214,11 @@ const SubjectsPage = () => {
     setDownloadingPdf(true)
     try {
       const response = await subjectApi.downloadSubjectsPdf(selectedClass.id)
-      const blob = response instanceof Blob ? response : new Blob([response], { type: 'application/pdf' })
+      const blob = response instanceof Blob
+        ? response
+        : response?.data instanceof Blob
+          ? response.data
+          : new Blob([response], { type: 'application/pdf' })
       const url = window.URL.createObjectURL(blob)
       const link = document.createElement('a')
       link.href = url

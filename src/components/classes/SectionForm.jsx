@@ -4,22 +4,7 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { AlertCircle } from 'lucide-react'
-
-const schema = z.object({
-  name            : z.string().min(1, 'Section name is required').max(10),
-  capacity        : z.coerce.number().int().min(1, 'Minimum capacity is 1').max(200, 'Maximum capacity is 200'),
-})
-
-const inputCls = (hasError) => `
-  w-full px-3 py-2.5 rounded-lg text-sm border outline-none transition-all
-  bg-white dark:bg-gray-800
-  text-gray-900 dark:text-gray-100
-  placeholder:text-gray-400 dark:placeholder:text-gray-500
-  ${hasError
-    ? 'border-red-400 dark:border-red-500 focus:ring-2 focus:ring-red-400/30'
-    : 'border-gray-300 dark:border-gray-600 focus:border-indigo-500 dark:focus:border-indigo-400 focus:ring-2 focus:ring-indigo-500/20'
-  }
-`
+import { getClassTeachers } from '@/api/classApi'
 
 const SectionForm = ({
   defaultValues = {},
@@ -28,6 +13,16 @@ const SectionForm = ({
   isSaving = false,
   isEdit   = false,
 }) => {
+  const [teachers, setTeachers] = useState([])
+  const [loadingTeachers, setLoadingTeachers] = useState(false)
+
+  const schema = z.object({
+    name            : z.string().min(1, 'Section name is required').max(10),
+    capacity        : z.coerce.number().int().min(1, 'Minimum capacity is 1').max(200, 'Maximum capacity is 200'),
+    class_teacher_id: z.string().optional().nullable().or(z.literal('')),
+    is_active       : z.boolean().optional(),
+  })
+
   const {
     register,
     handleSubmit,
@@ -37,12 +32,50 @@ const SectionForm = ({
     defaultValues: {
       name            : '',
       capacity        : 40,
-      ...defaultValues
+      class_teacher_id: '',
+      is_active       : true,
+      ...defaultValues,
+      // Ensure class_teacher_id is a string for the select field
+      class_teacher_id: defaultValues.class_teacher_id ? String(defaultValues.class_teacher_id) : '',
     },
   })
 
+  useEffect(() => {
+    const fetchTeachers = async () => {
+      setLoadingTeachers(true)
+      try {
+        const res = await getClassTeachers()
+        setTeachers(res?.data || [])
+      } catch (err) {
+        console.error('Failed to fetch teachers:', err)
+      } finally {
+        setLoadingTeachers(false)
+      }
+    }
+    fetchTeachers()
+  }, [])
+
+  const handleFormSubmit = (data) => {
+    const formattedData = {
+      ...data,
+      class_teacher_id: data.class_teacher_id ? Number(data.class_teacher_id) : null,
+    }
+    onSubmit(formattedData)
+  }
+
+  const inputCls = (hasError) => `
+    w-full px-3 py-2.5 rounded-lg text-sm border outline-none transition-all
+    bg-white dark:bg-gray-800
+    text-gray-900 dark:text-gray-100
+    placeholder:text-gray-400 dark:placeholder:text-gray-500
+    ${hasError
+      ? 'border-red-400 dark:border-red-500 focus:ring-2 focus:ring-red-400/30'
+      : 'border-gray-300 dark:border-gray-600 focus:border-indigo-500 dark:focus:border-indigo-400 focus:ring-2 focus:ring-indigo-500/20'
+    }
+  `
+
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+    <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-4">
 
       <div className="flex flex-col gap-1.5">
         <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
@@ -82,6 +115,41 @@ const SectionForm = ({
           </p>
         )}
       </div>
+
+      <div className="flex flex-col gap-1.5">
+        <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+          Class Teacher
+        </label>
+        <select
+          {...register('class_teacher_id')}
+          className={inputCls(!!errors.class_teacher_id)}
+          disabled={loadingTeachers}
+        >
+          <option value="">No Teacher Assigned</option>
+          {teachers.map(teacher => (
+            <option key={teacher.id} value={teacher.id}>
+              {teacher.name} ({teacher.employee_id || 'No ID'})
+            </option>
+          ))}
+        </select>
+        <p className="text-xs text-gray-500 dark:text-gray-400">
+          Assign a teacher to be responsible for this section
+        </p>
+      </div>
+
+      {isEdit && (
+        <div className="flex items-center gap-2 py-1">
+          <input
+            {...register('is_active')}
+            type="checkbox"
+            id="is_active"
+            className="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
+          />
+          <label htmlFor="is_active" className="text-sm font-medium text-gray-700 dark:text-gray-300">
+            Section is Active
+          </label>
+        </div>
+      )}
 
       <div className="flex items-center justify-end gap-3 pt-2 border-t border-gray-100 dark:border-gray-700">
         <button

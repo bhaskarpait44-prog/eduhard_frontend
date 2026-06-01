@@ -4,21 +4,6 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { AlertCircle } from 'lucide-react'
 
-const schema = z
-  .object({
-    name         : z.string().min(1, 'Class name is required').max(100),
-    order_number : z.coerce.number().int().min(1, 'Order number required'),
-    stream       : z.enum(['regular', 'arts', 'commerce', 'science']).optional().or(z.literal('')),
-    min_age      : z.coerce.number().int().min(1).max(25).optional().nullable().or(z.literal('')),
-    max_age      : z.coerce.number().int().min(1).max(30).optional().nullable().or(z.literal('')),
-    description  : z.string().max(1000).optional().nullable(),
-    reason       : z.string().optional(),
-  })
-  .refine(d => {
-    if (d.min_age && d.max_age) return parseInt(d.max_age) > parseInt(d.min_age)
-    return true
-  }, { message: 'Max age must be greater than min age', path: ['max_age'] })
-
 const STREAM_OPTIONS = [
   { value: 'regular', label: 'Regular' },
   { value: 'arts', label: 'Arts' },
@@ -61,6 +46,24 @@ const ClassForm = ({
   isSaving = false,
   isEdit   = false,
 }) => {
+  const schema = z
+    .object({
+      name         : z.string().min(1, 'Class name is required').max(100),
+      display_name : z.string().max(100).optional().nullable().or(z.literal('')),
+      order_number : z.coerce.number().int().min(1, 'Order number required'),
+      stream       : z.enum(['regular', 'arts', 'commerce', 'science']).optional().or(z.literal('')),
+      min_age      : z.coerce.number().int().min(1).max(25).optional().nullable().or(z.literal('')),
+      max_age      : z.coerce.number().int().min(1).max(30).optional().nullable().or(z.literal('')),
+      description  : z.string().max(1000).optional().nullable(),
+      reason       : isEdit
+        ? z.string().min(10, 'Reason must be at least 10 characters').max(500)
+        : z.string().optional(),
+    })
+    .refine(d => {
+      if (d.min_age && d.max_age) return parseInt(d.max_age) > parseInt(d.min_age)
+      return true
+    }, { message: 'Max age must be greater than min age', path: ['max_age'] })
+
   const {
     register,
     handleSubmit,
@@ -104,6 +107,19 @@ const ClassForm = ({
           {...register('name')}
           placeholder="Class 1"
           className={inputCls(!!errors.name)}
+        />
+      </Field>
+
+      {/* Display Name */}
+      <Field
+        label="Display Name"
+        error={errors.display_name?.message}
+        hint="Optional custom label (e.g. 'Class 1 - A' or 'Primary 1')"
+      >
+        <input
+          {...register('display_name')}
+          placeholder="e.g. Primary 1"
+          className={inputCls(!!errors.display_name)}
         />
       </Field>
 

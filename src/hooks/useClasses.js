@@ -105,14 +105,16 @@ const useClasses = () => {
   const toggleClassStatus = useCallback(async (id) => {
     try {
       const res = await classApi.toggleClassActive(id)
-      store.updateClass(id, { is_active: res.data.is_active })
+      store.updateClass(id, res.data)
       toastSuccess(`Class ${res.data.is_active ? 'activated' : 'deactivated'}`)
+      // Refresh classes to sync stats (total active counts etc)
+      fetchClasses().catch(() => {})
       return { success: true }
     } catch (err) {
       toastError(err.message || 'Failed to toggle class status')
       return { success: false }
     }
-  }, [])
+  }, [fetchClasses])
 
   // ── Teachers for selection ─────────────────────────────────────────────
   const fetchTeachers = useCallback(async () => {
@@ -177,10 +179,23 @@ const useClasses = () => {
       toastSuccess('Section removed successfully')
       return { success: true }
     } catch (err) {
-      toastError(err.message || 'Failed to delete section')
-      return { success: false, message: err.message }
+      const msg = err.message || 'Failed to delete section'
+      toastError(msg)
+      return { success: false, message: msg }
     } finally {
       store.setSaving(false)
+    }
+  }, [])
+
+  const toggleSectionStatus = useCallback(async (classId, sectionId, currentStatus) => {
+    try {
+      const res = await classApi.updateSection(classId, sectionId, { is_active: !currentStatus })
+      store.updateSection(sectionId, { is_active: res.data.is_active })
+      toastSuccess(`Section ${res.data.is_active ? 'activated' : 'deactivated'}`)
+      return { success: true }
+    } catch (err) {
+      toastError(err.message || 'Failed to toggle section status')
+      return { success: false }
     }
   }, [])
 
@@ -205,6 +220,7 @@ const useClasses = () => {
     createSection,
     updateSection,
     deleteSection,
+    toggleSectionStatus,
   }
 }
 

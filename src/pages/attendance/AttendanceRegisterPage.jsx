@@ -147,13 +147,18 @@ const AttendanceRegisterPage = ({ mode = 'register' }) => {
         month: month + 1,
         year,
       })
-      const blob = response.data || response
+      const blob = response instanceof Blob
+        ? response
+        : response?.data instanceof Blob
+          ? response.data
+          : new Blob([response], { type: 'application/pdf' })
+
       if (blob.type === 'application/json') {
         const text = await blob.text()
         const data = JSON.parse(text)
         throw new Error(data.message || 'Server returned an error')
       }
-      const url = window.URL.createObjectURL(new Blob([blob], { type: 'application/pdf' }))
+      const url = window.URL.createObjectURL(blob)
       const link = document.createElement('a')
       link.href = url
       link.setAttribute('download', `Attendance_Register_${selectedClassLabel.replace(/\s+/g, '_')}_${monthName.replace(/\s+/g, '_')}.pdf`)

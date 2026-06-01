@@ -84,15 +84,23 @@ const MyAttendance = () => {
 
   const handleExport = async () => {
     try {
-      const blob = await exportAttendance()
-      if (!blob) return
-      const url = window.URL.createObjectURL(new Blob([blob]))
+      const response = await exportAttendance()
+      if (!response) return
+      
+      const blob = response instanceof Blob
+        ? response
+        : response?.data instanceof Blob
+          ? response.data
+          : new Blob([response], { type: 'application/pdf' })
+          
+      const url = window.URL.createObjectURL(blob)
       const link = document.createElement('a')
       link.href = url
       link.setAttribute('download', `Attendance_Report_${selectedMonth.label.replace(' ', '_')}.pdf`)
       document.body.appendChild(link)
       link.click()
-      link.parentNode.removeChild(link)
+      link.remove()
+      window.setTimeout(() => window.URL.revokeObjectURL(url), 1000)
       toastSuccess('Attendance report downloaded.')
     } catch (err) {
       toastError('Failed to export attendance report')

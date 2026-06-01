@@ -1,11 +1,15 @@
-export function downloadBlob(blob, filename) {
-  if (!blob) {
+export function downloadBlob(response, filename) {
+  if (!response) {
     console.error('[Download] No blob provided')
     return
   }
   
   // Create blob if not already one
-  const blobData = (blob instanceof Blob) ? blob : new Blob([blob], { type: 'application/pdf' })
+  const blobData = response instanceof Blob
+    ? response
+    : response?.data instanceof Blob
+      ? response.data
+      : new Blob([response], { type: 'application/pdf' })
   
   // Debug size
   console.log(`[Download] Starting download: ${filename} (${blobData.size} bytes)`)

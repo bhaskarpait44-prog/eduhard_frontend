@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { ArrowLeft, Plus, Pencil, Trash2, BookOpen, FlaskConical, Layers, Users, GripVertical, AlertCircle, Download } from 'lucide-react'
+import { ArrowLeft, Plus, Pencil, Trash2, BookOpen, FlaskConical, Layers, Users, GripVertical, AlertCircle, Download, ToggleLeft, ToggleRight } from 'lucide-react'
 import useClasses  from '@/hooks/useClasses'
 import useSubjects from '@/hooks/useSubjects'
 import usePageTitle from '@/hooks/usePageTitle'
@@ -40,7 +40,7 @@ const CapBar=({enrolled,capacity})=>{
   )
 }
 
-const SectionsTab=({classId,sections,isSaving,onCreate,onUpdate,onDelete,addOpen,setAddOpen})=>{
+const SectionsTab=({classId,sections,isSaving,onCreate,onUpdate,onDelete,onToggle,addOpen,setAddOpen})=>{
   const [editT,setEditT]=useState(null)
   const [delT,setDelT]=useState(null)
   const handleAdd=async d=>{const r=await onCreate(classId,d);if(r.success)setAddOpen(false)}
@@ -74,6 +74,9 @@ const SectionsTab=({classId,sections,isSaving,onCreate,onUpdate,onDelete,addOpen
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-1">
                       <button onClick={()=>setEditT(sec)} className="p-1.5 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-950/30 rounded-lg transition-colors" title="Edit"><Pencil size={13}/></button>
+                      <button onClick={()=>onToggle(classId,sec.id,sec.is_active)} className="p-1.5 text-gray-400 hover:text-amber-500 hover:bg-amber-50 dark:hover:bg-amber-950/30 rounded-lg transition-colors" title={sec.is_active?'Deactivate':'Activate'}>
+                        {sec.is_active ? <ToggleRight size={15} className="text-green-500" /> : <ToggleLeft size={15} />}
+                      </button>
                       {Number(sec.enrolled_count || 0)===0
                         ?<button onClick={()=>setDelT(sec)} className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 rounded-lg transition-colors" title="Delete"><Trash2 size={13}/></button>
                         :<span title="Cannot delete — students enrolled" className="p-1.5 text-gray-200 dark:text-gray-700 cursor-not-allowed"><Trash2 size={13}/></span>}
@@ -227,7 +230,7 @@ const ClassDetailPage=()=>{
   const [enrolledStudents,setEnrolledStudents]=useState([])
   const [studentsLoading,setStudentsLoading]=useState(false)
   const [downloadingPdf,setDownloadingPdf]=useState(false)
-  const {selectedClass,sections,isLoading,isSaving,fetchClassById,createSection,updateSection,deleteSection}=useClasses()
+  const {selectedClass,sections,isLoading,isSaving,fetchClassById,createSection,updateSection,deleteSection,toggleSectionStatus}=useClasses()
   const {subjects,fetchSubjects,createSubject,updateSubject,deleteSubject,reorderSubjects}=useSubjects()
   const { toastError, toastSuccess } = useToast()
   const { currentSession } = useSessionStore()
@@ -282,7 +285,11 @@ const ClassDetailPage=()=>{
     setDownloadingPdf(true)
     try {
       const response = await downloadClassStudentsPdf(id, { session_id: currentSession.id })
-      const blob = response instanceof Blob ? response : new Blob([response], { type: 'application/pdf' })
+      const blob = response instanceof Blob
+        ? response
+        : response?.data instanceof Blob
+          ? response.data
+          : new Blob([response], { type: 'application/pdf' })
       const url = window.URL.createObjectURL(blob)
       const link = document.createElement('a')
       link.href = url
@@ -345,7 +352,7 @@ const ClassDetailPage=()=>{
           ))}
         </div>
         <div className="p-5">
-          {tab==='sections'&&<SectionsTab classId={id} sections={sections} isSaving={isSaving} onCreate={createSection} onUpdate={updateSection} onDelete={deleteSection} addOpen={sectionAddOpen} setAddOpen={setSectionAddOpen}/>}
+          {tab==='sections'&&<SectionsTab classId={id} sections={sections} isSaving={isSaving} onCreate={createSection} onUpdate={updateSection} onDelete={deleteSection} onToggle={toggleSectionStatus} addOpen={sectionAddOpen} setAddOpen={setSectionAddOpen}/>}
           {tab==='subjects'&&<SubjectsTab classId={id} subjects={subjects} isSaving={isSaving} onCreate={createSubject} onUpdate={updateSubject} onDelete={deleteSubject} onReorder={reorderSubjects} addOpen={subjectAddOpen} setAddOpen={setSubjectAddOpen}/>}
           {tab==='students'&&(
             <div className="space-y-4">
