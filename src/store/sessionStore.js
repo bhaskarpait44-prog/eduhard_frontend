@@ -43,7 +43,15 @@ const useSessionStore = create((set, get) => ({
 
   // ── Fetch single session ────────────────────────────────────────────
   fetchSession: async (id) => {
-    set({ isLoading: true, error: null, sessionStats: null })
+    const currentSelected = get().selectedSession
+    // Only clear stats if we're switching sessions to avoid flicker on re-nav
+    const shouldClearStats = !currentSelected || currentSelected.id !== Number(id)
+    
+    set({ 
+      isLoading: true, 
+      error: null, 
+      ...(shouldClearStats ? { sessionStats: null } : {}) 
+    })
     try {
       const res = await api.getSession(id)
       set({ selectedSession: res.data, isLoading: false })
