@@ -63,7 +63,7 @@ const MarkAttendancePage = () => {
       .catch(() => {})
   }, [classId])
 
-  const loadStudents = async () => {
+  const loadStudents = async (isAutoReload = false) => {
     if (!sectionId) return
     if (!currentSession?.id) {
       toastError('No active session found. Please activate a session first.')
@@ -72,8 +72,12 @@ const MarkAttendancePage = () => {
 
     setLoadingStudents(true)
     setStudents([])
-    setAlreadyMarked(false)
-    setSubmitted(false)
+    
+    // Only reset feedback flags if this is a fresh manual load
+    if (!isAutoReload) {
+      setAlreadyMarked(false)
+      setSubmitted(false)
+    }
 
     try {
       const classAttendanceRes = await getClassAttendance({
@@ -145,7 +149,7 @@ const MarkAttendancePage = () => {
       toastSuccess(`Attendance marked for ${students.length} students`)
       setSubmitted(true)
       setAlreadyMarked(true)
-      loadStudents()
+      loadStudents(true)
     } else {
       toastError(result.message || 'Failed to submit attendance')
     }
