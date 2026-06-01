@@ -196,23 +196,14 @@ const useExamStore = create((set, get) => ({
     try {
       const res  = await api.getExamSubjects(examId)
       const data = Array.isArray(res.data) ? res.data : (res.data?.subjects || [])
-      set(s => ({ examSubjects: { ...s.examSubjects, [examId]: data }, subjects: data.map((row) => ({
-        id: row.subject_id || row.id,
-        name: row.name,
-        code: row.code,
-        subject_type: row.subject_type,
-        total_marks: row.combined_total_marks,
-        passing_marks: row.combined_passing_marks,
-        combined_total_marks: row.combined_total_marks,
-        combined_passing_marks: row.combined_passing_marks,
-        theory_total_marks: row.theory_total_marks,
-        theory_passing_marks: row.theory_passing_marks,
-        practical_total_marks: row.practical_total_marks,
-        practical_passing_marks: row.practical_passing_marks,
-      })) }))
+      set(s => ({ 
+        examSubjects: { ...s.examSubjects, [examId]: data } 
+      }))
       return data
     } catch {
-      set(s => ({ examSubjects: { ...s.examSubjects, [examId]: [] }, subjects: [] }))
+      set(s => ({ 
+        examSubjects: { ...s.examSubjects, [examId]: [] } 
+      }))
       return []
     }
   },

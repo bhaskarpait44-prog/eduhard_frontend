@@ -108,7 +108,7 @@ const useMarksEntry = () => {
       configuredSubjects = []
     }
 
-    if (!configuredSubjects.length) return assignedSubjects
+    if (!configuredSubjects.length) return []
 
     const configuredMap = new Map(
       configuredSubjects.map((subject) => [
@@ -128,11 +128,9 @@ const useMarksEntry = () => {
       ])
     )
 
-    const filteredAssignedSubjects = assignedSubjects
+    return assignedSubjects
       .filter((subject) => configuredMap.has(Number(subject.id)))
-      .map((subject) => configuredMap.get(Number(subject.id)) || subject)
-
-    return filteredAssignedSubjects.length ? filteredAssignedSubjects : assignedSubjects
+      .map((subject) => configuredMap.get(Number(subject.id)))
   }, [getExamConfiguredSubjects, subjectAssignments])
 
   const loadEntry = useCallback(async (params) => {
