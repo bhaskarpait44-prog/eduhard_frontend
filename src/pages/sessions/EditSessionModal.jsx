@@ -97,6 +97,7 @@ export default function EditSessionModal({ open, onClose, session }) {
             label="Session Name"
             placeholder="e.g. Academic Year 2024-25"
             error={errors.name?.message}
+            required
             {...register('name')}
           />
           <div className="grid grid-cols-2 gap-4">
@@ -104,12 +105,14 @@ export default function EditSessionModal({ open, onClose, session }) {
               type="date"
               label="Start Date"
               error={errors.start_date?.message}
+              required
               {...register('start_date')}
             />
             <Input
               type="date"
               label="End Date"
               error={errors.end_date?.message}
+              required
               {...register('end_date')}
             />
           </div>

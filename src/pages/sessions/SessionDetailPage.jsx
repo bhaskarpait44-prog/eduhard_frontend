@@ -402,9 +402,11 @@ const SessionDetailPage = () => {
                   title="No holidays declared"
                   description="Add national, regional, or school holidays for this session."
                   action={
-                    <Button size="sm" icon={Plus} onClick={() => setHolidayModal(true)}>
-                      Add First Holiday
-                    </Button>
+                    !session.is_locked && session.status === 'active' ? (
+                      <Button size="sm" icon={Plus} onClick={() => setHolidayModal(true)}>
+                        Add First Holiday
+                      </Button>
+                    ) : null
                   }
                   className="border-0 py-10"
                 />

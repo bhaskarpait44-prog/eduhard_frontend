@@ -99,8 +99,8 @@ const useSessionStore = create((set, get) => ({
       
       set(s => ({
         isSaving: false,
-        sessions: s.sessions.map(sess => sess.id === id ? updated : sess),
-        selectedSession: s.selectedSession?.id === id ? updated : s.selectedSession,
+        sessions: s.sessions.map(sess => sess.id === Number(id) ? updated : sess),
+        selectedSession: s.selectedSession?.id === Number(id) ? updated : s.selectedSession,
       }))
       return { success: true, data: updated }
     } catch (err) {
@@ -122,7 +122,7 @@ const useSessionStore = create((set, get) => ({
         sessions       : s.sessions.map(sess =>
           sess.id === Number(id)
             ? activated
-            : { ...sess, is_current: false, status: sess.status === 'active' ? 'closed' : sess.status }
+            : { ...sess, is_current: false, is_locked: false, status: sess.status === 'active' ? 'closed' : sess.status }
         ),
         selectedSession: s.selectedSession?.id === Number(id)
           ? activated
@@ -161,8 +161,8 @@ const useSessionStore = create((set, get) => ({
       const updated = res.data
       set(s => ({
         isSaving       : false,
-        sessions       : s.sessions.map(sess => (sess.id === id ? updated : sess)),
-        selectedSession: s.selectedSession?.id === id ? updated : s.selectedSession,
+        sessions       : s.sessions.map(sess => (sess.id === Number(id) ? updated : sess)),
+        selectedSession: s.selectedSession?.id === Number(id) ? updated : s.selectedSession,
       }))
       return { success: true, data: updated }
     } catch (err) {
@@ -249,8 +249,8 @@ const useSessionStore = create((set, get) => ({
         const newTotal = Math.max(0, s.pagination.total - 1)
         return {
           isSaving: false,
-          sessions: s.sessions.filter(sess => sess.id !== id),
-          selectedSession: s.selectedSession?.id === id ? null : s.selectedSession,
+          sessions: s.sessions.filter(sess => sess.id !== Number(id)),
+          selectedSession: s.selectedSession?.id === Number(id) ? null : s.selectedSession,
           pagination: {
             ...s.pagination,
             total: newTotal,
