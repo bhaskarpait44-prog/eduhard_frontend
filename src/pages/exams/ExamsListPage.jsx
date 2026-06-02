@@ -424,6 +424,7 @@ const ExamsListPage = ({ onNavigate }) => {
               onDelete={setDeleteTarget}
               onCreateForClass={handleCreateForClass}
               onDownloadTimetable={handleDownloadTimetable}
+              onDownloadClassTimetable={handleDownloadClassTimetable}
             />
           ))}
         </div>

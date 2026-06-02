@@ -7,6 +7,7 @@ import useSessionStore from '@/store/sessionStore'
 import useAuthStore from '@/store/authStore'
 import useToast from '@/hooks/useToast'
 import Button from '@/components/ui/Button'
+import ConfirmDialog from '@/components/ui/ConfirmDialog'
 import { getClasses, getClassOptions, getSections } from '@/api/classApi'
 import { getSessionReport } from '@/api/attendanceApi'
 import { downloadExamTimetablePdf, downloadClassTimetablePdf } from '@/api/examsApi'
@@ -82,7 +83,8 @@ const EnterMarksPage = () => {
   const { toastSuccess, toastError } = useToast()
   const { 
     exams, subjects, examSubjects, isSaving, 
-    fetchExams, fetchExamSubjects, enterMarks, approveAllExamSubjects 
+    fetchExams, fetchExamSubjects, enterMarks, approveAllExamSubjects,
+    fetchSubjects
   } = useExamStore()
   const { sessions, currentSession, fetchSessions } = useSessionStore()
   const { user } = useAuthStore()
@@ -99,6 +101,7 @@ const EnterMarksPage = () => {
   const [loading, setLoading] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [finalizing, setFinalizing] = useState(false)
+  const [confirmOpen, setConfirmOpen] = useState(false)
   const [bulkOpen, setBulkOpen] = useState(false)
   const autoSaveTimers = useRef({})
 
@@ -130,6 +133,11 @@ const EnterMarksPage = () => {
   }, [classId])
 
   useEffect(() => {
+    if (!classId) return
+    fetchSubjects(classId).catch(() => {})
+  }, [classId, fetchSubjects])
+
+  useEffect(() => {
     if (!examId) return
     fetchExamSubjects(examId).catch(() => {})
   }, [examId, fetchExamSubjects])
@@ -140,7 +148,7 @@ const EnterMarksPage = () => {
   }, [exams, classId])
 
   useEffect(() => {
-    if (!examId || !classId || !sectionId || !sessionId) { setStudents([]); return }
+    if (!examId || !classId || !sectionId || !sessionId || subjects.length === 0) { setStudents([]); return }
     setLoading(true)
     getSessionReport(sessionId, { class_id: classId, section_id: sectionId })
       .then(r => {
@@ -156,14 +164,18 @@ const EnterMarksPage = () => {
       })
       .catch(() => toastError('Failed to load students'))
       .finally(() => setLoading(false))
-  }, [examId, classId, sectionId, sessionId, toastError])
+  }, [examId, classId, sectionId, sessionId, subjects, toastError])
+
+  const marksRef = useRef(marks)
+  useEffect(() => { marksRef.current = marks }, [marks])
 
   const autoSaveCell = useCallback(
     debounce(async (enrollmentId, examId) => {
       if (!examId) return
+      const currentMarks = marksRef.current
       const studentResults = subjects
         .map(sub => {
-          const cell = marks[`${enrollmentId}-${sub.id}`]
+          const cell = currentMarks[`${enrollmentId}-${sub.id}`]
           if (!cell) return null
           return { subject_id: sub.id, marks_obtained: cell.isAbsent ? null : parseFloat(cell.marks || 0), is_absent: cell.isAbsent }
         })
@@ -175,7 +187,7 @@ const EnterMarksPage = () => {
         setTimeout(() => setSaved(prev => { const n = { ...prev }; delete n[enrollmentId]; return n }), 2000)
       }
     }, 1500),
-    [marks, subjects, enterMarks]
+    [subjects, enterMarks]
   )
 
   const updateCell = (enrollmentId, subjectId, field, value) => {
@@ -206,17 +218,20 @@ const EnterMarksPage = () => {
   }
 
   const handleFinalize = async () => {
-    if (!window.confirm('This will save all current marks and APPROVE these subjects for final results. Continue?')) return
+    setConfirmOpen(true)
+  }
+
+  const onConfirmFinalize = async () => {
+    setConfirmOpen(false)
     setFinalizing(true)
     try {
       // 1. Save everything first
       const result = await handleSubmitAll()
       
       if (result.failed > 0) {
-        if (!window.confirm(`Warning: Marks for ${result.failed} students failed to save. Proceed with finalization anyway?`)) {
-          setFinalizing(false)
-          return
-        }
+        toastError(`Failed to save marks for ${result.failed} students. Finalization aborted.`)
+        setFinalizing(false)
+        return
       }
 
       // 2. Approve all subjects for this exam
@@ -686,6 +701,16 @@ const EnterMarksPage = () => {
         onClose={() => setBulkOpen(false)}
         examId={examId}
         subjects={subjects}
+      />
+
+      <ConfirmDialog
+        open={confirmOpen}
+        onClose={() => setConfirmOpen(false)}
+        onConfirm={onConfirmFinalize}
+        title="Finalize Marks"
+        message="This will save all current marks and APPROVE these subjects for final results. This action cannot be easily undone. Continue?"
+        confirmText="Yes, Finalize"
+        variant="primary"
       />
     </div>
   )

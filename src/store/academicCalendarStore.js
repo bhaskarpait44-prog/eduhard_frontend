@@ -112,7 +112,7 @@ const useAcademicCalendarStore = create((set, get) => ({
       if (month) params.month = month
       if (year) params.year = year
       const blob = await api.downloadCalendarPdf(params)
-      return blob.data
+      return blob
     } catch (err) {
       console.error('PDF Download error:', err)
       throw err

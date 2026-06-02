@@ -145,7 +145,7 @@ const ResultsPage = () => {
     setDownloading(true)
     try {
       const res = await downloadClassResultSheetPdf({ session_id: sessionId, class_id: classId })
-      const className = classes.find(c => c.value === classId)?.label || 'Class'
+      const className = classes.find(c => String(c.value) === String(classId))?.label || 'Class'
       downloadBlob(res, `Result_Sheet_${className.replace(/\s+/g, '_')}.pdf`)
     } catch (err) {
       toastError('Failed to download result sheet')
@@ -341,7 +341,7 @@ const ResultsPage = () => {
                        <Button 
                          variant="secondary" size="sm" className="flex-1"
                          onClick={() => row.result && setReportTarget(row)}
-                         disabled={!row.result || row.is_withheld}
+                         disabled={!row.result || row.is_withheld || (parseFloat(row.pending_balance) > 0 && !row.release_result)}
                        >
                          Report
                        </Button>
@@ -438,7 +438,7 @@ const ResultsPage = () => {
                             <Button
                               variant="ghost" size="xs"
                               onClick={() => row.result && setReportTarget(row)}
-                              disabled={!row.result || row.is_withheld}
+                              disabled={!row.result || row.is_withheld || (parseFloat(row.pending_balance) > 0 && !row.release_result)}
                             >
                               Report
                             </Button>
