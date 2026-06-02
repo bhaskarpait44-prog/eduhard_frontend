@@ -205,6 +205,7 @@ export const ROUTES = {
 
   // Settings
   SETTINGS: '/settings',
+  ADMISSIONS: '/apply',
 }
 
 // ── API response status ───────────────────────────────────────────────────

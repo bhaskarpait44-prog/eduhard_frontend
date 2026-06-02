@@ -1,0 +1,628 @@
+/* src/pages/public/AdmissionsPortal.css */
+
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&family=DM+Serif+Display:ital@0;1&family=JetBrains+Mono:ital,wght@0,100..800;1,100..800&display=swap');
+
+.admissions-portal {
+  --primary: #1B4F72;
+  --primary-light: #2E86C1;
+  --accent: #E67E22;
+  --accent-soft: #FEF5E7;
+  --surface: #FFFFFF;
+  --surface-alt: #F8FAFB;
+  --border: #DDE3EA;
+  --text-primary: #1A202C;
+  --text-secondary: #4A5568;
+  --text-muted: #9AA5B1;
+  --success: #27AE60;
+  --error: #E74C3C;
+
+  min-height: 100vh;
+  background-color: var(--surface-alt);
+  font-family: 'DM Sans', sans-serif;
+  color: var(--text-primary);
+  display: flex;
+  flex-direction: column;
+}
+
+/* Typography */
+.admissions-portal h1,
+.admissions-portal h2,
+.admissions-portal h3,
+.admissions-portal .font-serif {
+  font-family: 'DM Serif Display', serif;
+}
+
+.admissions-portal .font-mono {
+  font-family: 'JetBrains Mono', monospace;
+}
+
+/* Header */
+.admissions-header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 64px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 24px;
+  z-index: 100;
+}
+
+.admissions-header .logo-group {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.admissions-header .school-logo {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+}
+
+.admissions-header .school-name {
+  font-size: 20px;
+  color: var(--primary);
+  margin: 0;
+}
+
+.admissions-header .badge {
+  background: var(--accent-soft);
+  color: var(--accent);
+  padding: 4px 12px;
+  border-radius: 99px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.admissions-header .track-link {
+  color: var(--text-secondary);
+  font-size: 14px;
+  text-decoration: none;
+  font-weight: 500;
+  transition: color 0.2s;
+}
+
+.admissions-header .track-link:hover {
+  color: var(--primary);
+}
+
+/* Hero Strip */
+.admissions-hero {
+  margin-top: 64px;
+  background: var(--primary);
+  height: 120px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  color: white;
+}
+
+.admissions-hero h1 {
+  font-size: 28px;
+  margin: 0 0 4px 0;
+  font-weight: 400;
+}
+
+.admissions-hero p {
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.7);
+  margin: 0;
+}
+
+/* Progress Bar */
+.admissions-progress-wrapper {
+  position: sticky;
+  top: 64px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  z-index: 90;
+  padding: 16px 0;
+}
+
+.admissions-progress {
+  max-width: 760px;
+  margin: 0 auto;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 20px;
+  position: relative;
+}
+
+.admissions-progress::before {
+  content: '';
+  position: absolute;
+  top: 15px;
+  left: 40px;
+  right: 40px;
+  height: 2px;
+  background: var(--border);
+  z-index: 1;
+}
+
+.progress-fill {
+  position: absolute;
+  top: 15px;
+  left: 40px;
+  height: 2px;
+  background: var(--accent);
+  z-index: 2;
+  transition: width 0.35s ease;
+}
+
+.step-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  position: relative;
+  z-index: 3;
+  width: 80px;
+}
+
+.step-circle {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--surface);
+  border: 2px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-muted);
+  transition: all 0.3s;
+}
+
+.step-item.active .step-circle {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: white;
+  box-shadow: 0 0 0 4px var(--accent-soft);
+}
+
+.step-item.completed .step-circle {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: white;
+}
+
+.step-label {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-muted);
+  text-align: center;
+  white-space: nowrap;
+}
+
+.step-item.active .step-label {
+  color: var(--accent);
+  font-weight: 700;
+}
+
+/* Main Content */
+.admissions-content {
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 32px 16px 80px 16px;
+  flex: 1;
+}
+
+.step-container {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.admissions-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 28px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.07);
+  animation: cardEnter 0.4s ease-out both;
+}
+
+@keyframes cardEnter {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.card-label {
+  display: block;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--primary);
+  margin-bottom: 4px;
+}
+
+.card-title {
+  font-size: 22px;
+  margin: 0 0 4px 0;
+  color: var(--text-primary);
+}
+
+.card-subtitle {
+  font-size: 13px;
+  color: var(--text-muted);
+  margin-bottom: 24px;
+}
+
+/* Grid System */
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  gap: 20px;
+}
+
+.col-12 { grid-column: span 12; }
+.col-8 { grid-column: span 8; }
+.col-7 { grid-column: span 7; }
+.col-6 { grid-column: span 6; }
+.col-5 { grid-column: span 5; }
+.col-4 { grid-column: span 4; }
+
+/* Form Fields */
+.form-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.form-field label {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
+.form-field label span.required {
+  color: var(--accent);
+  margin-left: 2px;
+}
+
+.form-field input,
+.form-field select,
+.form-field textarea {
+  height: 44px;
+  border: 1.5px solid var(--border);
+  border-radius: 10px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 14px;
+  padding: 0 14px;
+  background: white;
+  transition: all 0.15s;
+  color: var(--text-primary);
+  outline: none;
+}
+
+.form-field textarea {
+  height: auto;
+  padding: 12px 14px;
+}
+
+.form-field input:focus,
+.form-field select:focus,
+.form-field textarea:focus {
+  border-color: var(--primary-light);
+  box-shadow: 0 0 0 3px rgba(46, 134, 193, 0.15);
+}
+
+.form-field.error input,
+.form-field.error select,
+.form-field.error textarea {
+  border-color: var(--error);
+  box-shadow: 0 0 0 3px rgba(231, 76, 60, 0.12);
+}
+
+.error-message {
+  font-size: 12px;
+  color: var(--error);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 2px;
+}
+
+.form-field input:read-only {
+  background: var(--surface-alt);
+  color: var(--text-secondary);
+  cursor: not-allowed;
+}
+
+/* Info Banner */
+.info-banner {
+  background: var(--accent-soft);
+  border: 1px solid rgba(230, 126, 34, 0.2);
+  border-radius: 10px;
+  padding: 12px 16px;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.info-banner .icon { color: var(--accent); }
+.info-banner p {
+  font-size: 13px;
+  color: var(--text-secondary);
+  margin: 0;
+  line-height: 1.4;
+}
+
+/* Document Checklist */
+.checklist-card {
+  background: #EBF5FB;
+  border: 1px solid #AED6F1;
+}
+
+.checklist-items {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.checklist-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 14px;
+  color: var(--primary);
+}
+
+.check-box {
+  width: 18px;
+  height: 18px;
+  border-radius: 4px;
+  border: 1.5px solid var(--primary-light);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: white;
+}
+
+/* Footer Navigation */
+.admissions-footer {
+  margin-top: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.step-info {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.nav-buttons {
+  display: flex;
+  gap: 12px;
+}
+
+.btn-back {
+  height: 44px;
+  padding: 0 24px;
+  border-radius: 10px;
+  border: 1.5px solid var(--border);
+  background: transparent;
+  color: var(--text-secondary);
+  font-weight: 500;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-back:hover {
+  background: var(--surface-alt);
+  border-color: var(--text-muted);
+}
+
+.btn-continue {
+  height: 44px;
+  padding: 0 32px;
+  border-radius: 10px;
+  background: var(--accent);
+  color: white;
+  font-weight: 600;
+  font-size: 14px;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s;
+  box-shadow: 0 2px 4px rgba(230, 126, 34, 0.2);
+}
+
+.btn-continue:hover {
+  background: #D35400;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(230, 126, 34, 0.3);
+}
+
+.btn-continue:active {
+  transform: scale(0.97);
+}
+
+.btn-submit {
+  width: 100%;
+  height: 52px;
+  font-size: 16px;
+}
+
+/* Success Screen */
+.success-screen {
+  max-width: 520px;
+  margin: 60px auto;
+  text-align: center;
+}
+
+.checkmark-wrapper {
+  width: 80px;
+  height: 80px;
+  background: var(--primary);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  margin: 0 auto 24px auto;
+  animation: checkmarkPop 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+@keyframes checkmarkPop {
+  from { transform: scale(0); }
+  to { transform: scale(1); }
+}
+
+.success-screen h1 {
+  font-size: 32px;
+  color: var(--primary);
+  margin-bottom: 12px;
+}
+
+.success-screen p {
+  color: var(--text-secondary);
+  font-size: 15px;
+  line-height: 1.6;
+  margin-bottom: 32px;
+}
+
+.reference-box {
+  background: #EBF5FB;
+  border: 2px dashed var(--primary);
+  border-radius: 12px;
+  padding: 24px;
+  margin-bottom: 32px;
+  position: relative;
+}
+
+.ref-label {
+  display: block;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  margin-bottom: 8px;
+}
+
+.ref-value {
+  font-size: 24px;
+  color: var(--primary);
+  font-weight: 700;
+}
+
+.copy-btn {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: white;
+  border: 1px solid var(--border);
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: var(--text-secondary);
+  transition: all 0.2s;
+}
+
+.copy-btn:hover {
+  border-color: var(--primary-light);
+  color: var(--primary);
+}
+
+.divider {
+  height: 1px;
+  background: var(--border);
+  margin: 32px 0;
+}
+
+.success-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.btn-ghost {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px;
+  color: var(--text-secondary);
+  text-decoration: none;
+  font-weight: 500;
+  font-size: 14px;
+  transition: color 0.2s;
+}
+
+.btn-ghost:hover {
+  color: var(--primary);
+}
+
+/* Transitions */
+.step-enter {
+  opacity: 0;
+  transform: translateX(20px);
+}
+.step-enter-active {
+  opacity: 1;
+  transform: translateX(0);
+  transition: opacity 220ms ease-out, transform 220ms ease-out;
+}
+.step-exit {
+  opacity: 1;
+  transform: translateX(0);
+}
+.step-exit-active {
+  opacity: 0;
+  transform: translateX(-20px);
+  transition: opacity 180ms ease-in, transform 180ms ease-in;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .admissions-header { padding: 0 16px; }
+  .admissions-header .school-name { font-size: 18px; }
+  .admissions-header .badge { display: none; }
+  
+  .admissions-hero { height: 80px; }
+  .admissions-hero h1 { font-size: 22px; }
+  
+  .admissions-progress-wrapper { top: 64px; }
+  .step-label { display: none; }
+  .step-item.active .step-label {
+    display: block;
+    position: absolute;
+    top: 40px;
+    left: 50%;
+    transform: translateX(-50%);
+  }
+  
+  .admissions-content { padding: 24px 16px; }
+  .admissions-card { padding: 20px; }
+  
+  .form-grid { grid-template-columns: 1fr; }
+  .col-12, .col-8, .col-7, .col-6, .col-5, .col-4 { grid-column: span 1; }
+  
+  .nav-buttons { flex-direction: column; width: 100%; }
+  .btn-back, .btn-continue { width: 100%; }
+  .admissions-footer { flex-direction: column-reverse; gap: 20px; }
+}
