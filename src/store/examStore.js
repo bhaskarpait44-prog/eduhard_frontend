@@ -73,6 +73,7 @@ const useExamStore = create((set, get) => ({
   },
 
   fetchSubjects: async (classId) => {
+    set({ subjects: [] })
     try {
       const res  = await api.getSubjects(classId)
       const data = Array.isArray(res.data) ? res.data : (res.data?.subjects || res.data?.data || [])

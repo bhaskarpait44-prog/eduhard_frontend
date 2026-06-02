@@ -606,8 +606,8 @@ const StudentsPage = () => {
         title="Delete Student"
         description={`Are you sure you want to delete ${confirmDelete?.first_name} ${confirmDelete?.last_name}? This action cannot be undone.`}
         variant="danger"
-        confirmText="Delete"
-        isLoading={isSaving}
+        confirmLabel="Delete"
+        loading={isSaving}
       />
 
       <Modal 

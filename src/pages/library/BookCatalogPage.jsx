@@ -431,9 +431,9 @@ const BookCatalogPage = () => {
         onClose={() => setIsDeleteDialogOpen(false)}
         onConfirm={handleDelete}
         title="Delete Book"
-        message={`Are you sure you want to delete "${bookToDelete?.title}"? This will hide it from the catalog but won't affect past issue records.`}
+        description={`Are you sure you want to delete "${bookToDelete?.title}"? This will hide it from the catalog but won't affect past issue records.`}
         loading={deleteLoading}
-        type="danger"
+        variant="danger"
       />
     </div>
   );

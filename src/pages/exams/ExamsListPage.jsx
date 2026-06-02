@@ -165,6 +165,13 @@ const ClassCard = ({ className, exams, onReview, onMarks, onTimetable, onAdmitCa
         </div>
 
         <div className="flex items-center gap-2">
+          <ActionBtn 
+            icon={Download} 
+            onClick={() => onDownloadClassTimetable(className)}
+            title="Download Class Timetable"
+          >
+            Class Timetable
+          </ActionBtn>
           {pending > 0 && (
             <span
               className="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-semibold"

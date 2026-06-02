@@ -916,7 +916,7 @@ const CertificatesPage = () => {
         onConfirm={confirmRevoke}
         title="Revoke Certificate"
         description="This action will mark the certificate as Revoked. This is permanent and cannot be undone. The certificate will remain in the register for audit purposes but will be visually grayed out and downloads will be disabled."
-        confirmText="Yes, Revoke Certificate"
+        confirmLabel="Yes, Revoke Certificate"
         variant="danger"
         icon={AlertTriangle}
       />

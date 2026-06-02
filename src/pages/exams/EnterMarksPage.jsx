@@ -11,7 +11,7 @@ import ConfirmDialog from '@/components/ui/ConfirmDialog'
 import { getClasses, getClassOptions, getSections } from '@/api/classApi'
 import { getSessionReport } from '@/api/attendanceApi'
 import { downloadExamTimetablePdf, downloadClassTimetablePdf } from '@/api/examsApi'
-import { cn, debounce } from '@/utils/helpers'
+import { debounce } from '@/utils/helpers'
 import { ROLES } from '@/constants/app'
 import { downloadBlob } from '@/utils/downloadBlob'
 
@@ -170,7 +170,7 @@ const EnterMarksPage = () => {
   useEffect(() => { marksRef.current = marks }, [marks])
 
   const autoSaveCell = useCallback(
-    debounce(async (enrollmentId, examId) => {
+    async (enrollmentId, examId) => {
       if (!examId) return
       const currentMarks = marksRef.current
       const studentResults = subjects
@@ -186,7 +186,7 @@ const EnterMarksPage = () => {
         setSaved(prev => ({ ...prev, [enrollmentId]: true }))
         setTimeout(() => setSaved(prev => { const n = { ...prev }; delete n[enrollmentId]; return n }), 2000)
       }
-    }, 1500),
+    },
     [subjects, enterMarks]
   )
 
@@ -708,8 +708,8 @@ const EnterMarksPage = () => {
         onClose={() => setConfirmOpen(false)}
         onConfirm={onConfirmFinalize}
         title="Finalize Marks"
-        message="This will save all current marks and APPROVE these subjects for final results. This action cannot be easily undone. Continue?"
-        confirmText="Yes, Finalize"
+        description="This will save all current marks and APPROVE these subjects for final results. This action cannot be easily undone. Continue?"
+        confirmLabel="Yes, Finalize"
         variant="primary"
       />
     </div>
