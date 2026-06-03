@@ -15,6 +15,7 @@ import NotFoundPage from '@/pages/NotFoundPage'
 const ForgotPasswordPage = lazy(() => import('@/pages/ForgotPasswordPage'))
 const ResetPasswordPage = lazy(() => import('@/pages/ResetPasswordPage'))
 const AdmissionsPortal = lazy(() => import('@/pages/public/AdmissionsPortal'))
+const AdmissionStatus = lazy(() => import('@/pages/public/AdmissionStatus'))
 
 const DashboardPage = lazy(() => import('@/pages/DashboardPage'))
 const AdminDashboard = DashboardPage
@@ -211,6 +212,7 @@ const router = createBrowserRouter([
   { path: ROUTES.FORGOT_PASSWORD, element: <Lazy component={ForgotPasswordPage} /> },
   { path: ROUTES.RESET_PASSWORD, element: <Lazy component={ResetPasswordPage} /> },
   { path: ROUTES.ADMISSIONS, element: <Lazy component={AdmissionsPortal} /> },
+  { path: ROUTES.ADMISSION_STATUS, element: <Lazy component={AdmissionStatus} /> },
 
   {
     path: ROUTES.STUDENT_ROOT,

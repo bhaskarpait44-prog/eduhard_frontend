@@ -2,8 +2,9 @@ import { useState, useEffect, useCallback } from 'react'
 import { 
   ClipboardList, Search, Filter, Eye, CheckCircle, XCircle, 
   Calendar, User, BookOpen, GraduationCap, ArrowRight,
-  Info, AlertTriangle, Loader2
+  Info, AlertTriangle, Loader2, Mail
 } from 'lucide-react'
+import api from '@/api/axios'
 import { getApplications, updateApplicationStatus } from '@/api/applicationsApi'
 import { getClasses } from '@/api/classApi'
 import PageHeader from '@/components/ui/PageHeader'
@@ -22,6 +23,8 @@ const AdmissionsManagementPage = () => {
   const [meta, setMeta] = useState({})
   const [loading, setLoading] = useState(true)
   const [classes, setClasses] = useState([])
+  const [sections, setSections] = useState([])
+  const [loadingSections, setLoadingSections] = useState(false)
   
   const [filters, setFilters] = useState({
     status: 'pending',
@@ -41,6 +44,11 @@ const AdmissionsManagementPage = () => {
     roll_number: ''
   })
 
+  // Email State
+  const [emailModal, setEmailModal] = useState(false)
+  const [sendingEmail, setSendingEmail] = useState(false)
+  const [emailData, setEmailData] = useState({ subject: '', message: '' })
+
   const fetchApplications = useCallback(async () => {
     setLoading(true)
     try {
@@ -53,6 +61,19 @@ const AdmissionsManagementPage = () => {
       setLoading(false)
     }
   }, [filters])
+
+  const fetchSections = async (classId) => {
+    if (!classId) return
+    setLoadingSections(true)
+    try {
+      const res = await api.get(`/classes/${classId}/sections`)
+      setSections(res.data || [])
+    } catch (err) {
+      toastError('Failed to load sections for this class')
+    } finally {
+      setLoadingSections(false)
+    }
+  }
 
   useEffect(() => {
     fetchApplications()
@@ -71,6 +92,7 @@ const AdmissionsManagementPage = () => {
         section_id: '',
         roll_number: ''
       })
+      fetchSections(app.class_id)
       setApprovalModal(true)
       return
     }
@@ -101,6 +123,21 @@ const AdmissionsManagementPage = () => {
       toastError(err.response?.data?.message || 'Approval failed')
     } finally {
       setApproving(false)
+    }
+  }
+
+  const handleSendEmail = async (e) => {
+    e.preventDefault()
+    setSendingEmail(true)
+    try {
+      await api.post(`/api/applications/${selectedApp.id}/email`, emailData)
+      toastSuccess('Email sent to applicant!')
+      setEmailModal(false)
+      setEmailData({ subject: '', message: '' })
+    } catch (err) {
+      toastError(err.response?.data?.message || 'Failed to send email')
+    } finally {
+      setSendingEmail(false)
     }
   }
 
@@ -148,6 +185,13 @@ const AdmissionsManagementPage = () => {
       className: 'text-right',
       render: (_, row) => (
         <div className="flex justify-end gap-2">
+          <Button 
+            variant="ghost" 
+            size="xs" 
+            icon={Mail} 
+            onClick={() => { setSelectedApp(row); setEmailModal(true); }}
+            title="Send Email"
+          />
           {row.status === 'pending' && (
             <>
               <Button 
@@ -183,7 +227,8 @@ const AdmissionsManagementPage = () => {
         subtitle="Manage public online applications"
         icon={ClipboardList}
       />
-
+      
+      {/* ... filters ... */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 bg-surface p-4 rounded-xl border border-border">
         <Input 
           placeholder="Search ref, name, email..." 
@@ -227,7 +272,7 @@ const AdmissionsManagementPage = () => {
 
       {/* Detail Modal */}
       <Modal 
-        open={!!selectedApp && !approvalModal} 
+        open={!!selectedApp && !approvalModal && !emailModal} 
         onClose={() => setSelectedApp(null)}
         title="Application Details"
         size="lg"
@@ -283,16 +328,71 @@ const AdmissionsManagementPage = () => {
                 <InfoRow label="School" value={selectedApp.student_data.prev_school_name} colSpan="col-span-2" />
                 <InfoRow label="Last Class" value={selectedApp.student_data.prev_class} />
               </Section>
+
+              {selectedApp.student_data.documents && (
+                <Section title="Documents" icon={ClipboardList}>
+                  {Object.entries(selectedApp.student_data.documents).map(([key, path]) => (
+                    <div key={key} className="col-span-2 flex items-center justify-between p-2 bg-surface rounded-lg border border-border">
+                      <span className="text-xs font-bold text-text-muted capitalize">{key.replace(/_/g, ' ')}</span>
+                      <a href={`/${path}`} target="_blank" rel="noreferrer" className="text-xs text-primary font-bold hover:underline flex items-center gap-1">
+                        View <ArrowRight size={12} />
+                      </a>
+                    </div>
+                  ))}
+                </Section>
+              )}
             </div>
 
-            {selectedApp.status === 'pending' && (
-              <div className="flex justify-end gap-3 pt-4 border-t border-border">
-                <Button variant="danger" onClick={() => handleStatusUpdate(selectedApp.id, 'rejected')}>Reject</Button>
-                <Button variant="success" onClick={() => handleStatusUpdate(selectedApp.id, 'approved')}>Approve & Admit</Button>
-              </div>
-            )}
+            <div className="flex justify-end gap-3 pt-4 border-t border-border">
+              <Button variant="ghost" icon={Mail} onClick={() => setEmailModal(true)}>Message</Button>
+              {selectedApp.status === 'pending' && (
+                <>
+                  <Button variant="danger" onClick={() => handleStatusUpdate(selectedApp.id, 'rejected')}>Reject</Button>
+                  <Button variant="success" onClick={() => handleStatusUpdate(selectedApp.id, 'approved')}>Approve & Admit</Button>
+                </>
+              )}
+            </div>
           </div>
         )}
+      </Modal>
+
+      {/* Email Modal */}
+      <Modal
+        open={emailModal}
+        onClose={() => setEmailModal(false)}
+        title="Send Email to Applicant"
+        size="md"
+      >
+        <form onSubmit={handleSendEmail} className="flex flex-col gap-6">
+          <div className="flex flex-col gap-4">
+            <p className="text-sm text-text-secondary">
+              To: <span className="font-bold">{selectedApp?.student_data.first_name} {selectedApp?.student_data.last_name}</span> ({selectedApp?.student_data.email})
+            </p>
+            <Input 
+              label="Subject"
+              required
+              value={emailData.subject}
+              onChange={(e) => setEmailData(d => ({ ...d, subject: e.target.value }))}
+              placeholder="e.g. Interview Schedule"
+            />
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs font-bold text-text-muted uppercase tracking-wider">Message</label>
+              <textarea 
+                className="w-full p-4 bg-surface border border-border rounded-xl focus:ring-2 focus:ring-primary outline-none min-h-[150px] text-sm"
+                required
+                value={emailData.message}
+                onChange={(e) => setEmailData(d => ({ ...d, message: e.target.value }))}
+                placeholder="Type your message here..."
+              />
+            </div>
+          </div>
+          <div className="flex justify-end gap-3 pt-4 border-t border-border">
+            <Button variant="ghost" onClick={() => setEmailModal(false)}>Cancel</Button>
+            <Button type="submit" variant="primary" loading={sendingEmail} icon={Mail}>
+              Send Email
+            </Button>
+          </div>
+        </form>
       </Modal>
 
       {/* Approval & Admission Modal */}
@@ -324,11 +424,12 @@ const AdmissionsManagementPage = () => {
               required
               value={approvalData.section_id}
               onChange={(e) => setApprovalData(d => ({ ...d, section_id: e.target.value }))}
-              options={classes.find(c => c.id === selectedApp?.class_id)?.sections?.map(s => ({
+              options={sections.map(s => ({
                 label: `${s.name} (${s.enrolled_count}/${s.capacity})`,
                 value: s.id
-              })) || []}
-              placeholder="Select section"
+              }))}
+              placeholder={loadingSections ? 'Loading sections...' : 'Select section'}
+              disabled={loadingSections}
             />
 
             <Input 

@@ -9,12 +9,13 @@ import useAuthStore from '@/store/authStore'
 import useSessionStore from '@/store/sessionStore'
 import usePageTitle from '@/hooks/usePageTitle'
 import useToast from '@/hooks/useToast'
-import { complianceApi } from '@/api'
+import { complianceApi, settingsApi } from '@/api'
 import { formatCurrency, formatPercent, cn } from '@/utils/helpers'
 
 import Button from '@/components/ui/Button'
 import Badge from '@/components/ui/Badge'
 import Select from '@/components/ui/Select'
+import ComplianceReportDownload from '@/components/pdf/ComplianceReportDownload'
 
 const ComplianceReportPage = () => {
   usePageTitle('Accreditation & Compliance Report')
@@ -24,6 +25,7 @@ const ComplianceReportPage = () => {
   
   const [selectedSessionId, setSelectedSessionId] = useState('')
   const [report, setReport] = useState(null)
+  const [school, setSchool] = useState(null)
   const [isLoading, setIsLoading] = useState(false)
 
   useEffect(() => {
@@ -31,6 +33,28 @@ const ComplianceReportPage = () => {
       fetchSessions().catch(console.error)
     }
   }, [sessions.length, fetchSessions])
+
+  useEffect(() => {
+    const fetchSchool = async () => {
+      try {
+        const res = await settingsApi.getSettings()
+        if (res.data?.data) {
+          const d = res.data.data
+          setSchool({
+            name: d.school_name,
+            address: d.school_address,
+            phone: d.school_phone,
+            email: d.school_email,
+            logo_url: d.logo_url,
+            principal_name: d.principal_name
+          })
+        }
+      } catch (err) {
+        console.error('Failed to fetch school settings', err)
+      }
+    }
+    fetchSchool()
+  }, [])
 
   useEffect(() => {
     if (currentSession && !selectedSessionId) {
@@ -137,13 +161,23 @@ const ComplianceReportPage = () => {
           >
             Generate
           </Button>
-          <Button 
-            variant="primary" 
-            icon={Printer} 
-            onClick={() => window.print()}
-          >
-            Print PDF
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button 
+              variant="secondary" 
+              icon={Printer} 
+              onClick={() => window.print()}
+            >
+              Print
+            </Button>
+            {report && (
+              <ComplianceReportDownload
+                report={report}
+                school={school}
+                userName={user?.name}
+                overallScore={overallScore}
+              />
+            )}
+          </div>
         </div>
       </div>
 
@@ -369,7 +403,7 @@ const ComplianceReportPage = () => {
               </div>
               <div className="bg-surface-raised p-3 rounded-2xl border border-border-base">
                 <p className="text-[10px] font-bold text-text-muted uppercase mb-1">Most Modified Module</p>
-                <div className="text-sm font-bold text-text-primary capitalize">{report.audit.most_modified_table.replace(/_/g, ' ')}</div>
+                <div className="text-sm font-bold text-text-primary capitalize">{(report.audit.most_modified_table || 'N/A').replace(/_/g, ' ')}</div>
               </div>
             </SectionCard>
 

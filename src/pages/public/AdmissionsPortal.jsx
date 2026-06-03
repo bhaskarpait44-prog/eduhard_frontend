@@ -71,6 +71,13 @@ const AdmissionsPortal = () => {
   const [apiError, setApiError] = useState(null)
   const [isClosed, setIsClosed] = useState(false)
   const [loading, setLoading] = useState(true)
+  
+  // File state
+  const [files, setFiles] = useState({
+    photo: null,
+    birth_certificate: null,
+    marksheet: null
+  })
 
   const {
     register,
@@ -163,11 +170,27 @@ const AdmissionsPortal = () => {
     window.scrollTo(0, 0)
   }
 
+  const handleFileChange = (e) => {
+    const { name, files: selectedFiles } = e.target
+    if (selectedFiles && selectedFiles[0]) {
+      setFiles(prev => ({ ...prev, [name]: selectedFiles[0] }))
+    }
+  }
+
   const onSubmit = async (data) => {
     setIsSubmitting(true)
     setApiError(null)
     try {
-      const res = await axios.post('/api/applications', data)
+      const formData = new FormData()
+      formData.append('student_data', JSON.stringify(data))
+      
+      if (files.photo) formData.append('photo', files.photo)
+      if (files.birth_certificate) formData.append('birth_certificate', files.birth_certificate)
+      if (files.marksheet) formData.append('marksheet', files.marksheet)
+
+      const res = await axios.post('/api/applications', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      })
       const reference = res.data?.data?.reference_no || `APP-2025-${Math.floor(1000 + Math.random() * 9000)}`
       setSubmittedData({ ...data, reference })
       window.scrollTo(0, 0)
@@ -524,16 +547,32 @@ const AdmissionsPortal = () => {
               </div>
 
               <div className="admissions-card checklist-card" style={{ animationDelay: '80ms' }}>
-                <span className="card-label">Required Documents</span>
-                <h2 className="card-title font-serif" style={{ color: 'var(--primary)' }}>Document Checklist</h2>
-                <p className="card-subtitle" style={{ color: 'var(--primary-light)' }}>Please bring original and copies of these documents during your campus visit.</p>
+                <span className="card-label">Upload Documents</span>
+                <h2 className="card-title font-serif" style={{ color: 'var(--primary)' }}>Digital Submission</h2>
+                <p className="card-subtitle" style={{ color: 'var(--primary-light)' }}>Upload clear copies of the following documents (Max 5MB each, Image or PDF).</p>
                 
+                <div className="form-grid mt-6">
+                  <div className="form-field col-12">
+                    <label>Passport Photo {files.photo && <span className="text-success ml-2">✓ Selected</span>}</label>
+                    <input type="file" name="photo" onChange={handleFileChange} accept="image/*" className="file-input" />
+                  </div>
+                  <div className="form-field col-12">
+                    <label>Birth Certificate {files.birth_certificate && <span className="text-success ml-2">✓ Selected</span>}</label>
+                    <input type="file" name="birth_certificate" onChange={handleFileChange} accept="image/*,application/pdf" className="file-input" />
+                  </div>
+                  <div className="form-field col-12">
+                    <label>Previous Marksheet {files.marksheet && <span className="text-success ml-2">✓ Selected</span>}</label>
+                    <input type="file" name="marksheet" onChange={handleFileChange} accept="image/*,application/pdf" className="file-input" />
+                  </div>
+                </div>
+
+                <div className="divider my-6" />
+                
+                <span className="card-label">Physical Checklist</span>
+                <p className="text-xs text-primary-light mb-4">Please also bring these originals during your visit:</p>
                 <div className="checklist-items">
                   {[
-                    'Birth Certificate',
-                    'Previous Marksheet / Report Card',
                     'Transfer Certificate (Original)',
-                    'Passport Photo (2 copies)',
                     'Aadhar Card (Student + Both Parents)'
                   ].map((item, i) => (
                     <div key={i} className="checklist-item">
