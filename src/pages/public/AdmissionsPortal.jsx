@@ -6,7 +6,7 @@ import axios from 'axios'
 import { 
   User, Users, BookOpen, CheckCircle2, ChevronRight, 
   ChevronLeft, AlertCircle, Info, Copy, Check, ExternalLink,
-  MapPin, Phone, Mail, Heart, Calendar, GraduationCap
+  MapPin, Phone, Mail, Heart, Calendar, GraduationCap, Loader2
 } from 'lucide-react'
 import { APP_NAME } from '@/constants/app'
 import './AdmissionsPortal.css'
@@ -69,6 +69,8 @@ const AdmissionsPortal = () => {
   const [submittedData, setSubmittedData] = useState(null)
   const [copied, setCopied] = useState(false)
   const [apiError, setApiError] = useState(null)
+  const [isClosed, setIsClosed] = useState(false)
+  const [loading, setLoading] = useState(true)
 
   const {
     register,
@@ -92,31 +94,38 @@ const AdmissionsPortal = () => {
   useEffect(() => {
     // Fetch sessions and classes
     const fetchData = async () => {
+      setLoading(true)
       try {
         const [sessionRes, classesRes] = await Promise.all([
           axios.get('/api/public/sessions/current'),
           axios.get('/api/public/classes')
         ])
-        setSessions(sessionRes.data?.data ? [sessionRes.data.data] : [])
+        
+        const sessionData = sessionRes.data?.data
+        if (sessionData) {
+          setSessions([sessionData])
+          if (!sessionData.online_admission_open) {
+            setIsClosed(true)
+          }
+        } else {
+          setIsClosed(true)
+        }
+
         setClasses(classesRes.data?.data || [])
       } catch (err) {
         console.error('Failed to fetch initial data:', err)
-        // Set mock data for development if needed, or just leave empty
-        setSessions([{ id: 1, name: '2025–26' }])
-        setClasses([
-          { id: 1, name: 'Class 1' },
-          { id: 2, name: 'Class 2' },
-          { id: 3, name: 'Class 3' },
-          { id: 4, name: 'Class 4' },
-          { id: 5, name: 'Class 5' },
-          { id: 6, name: 'Class 6' },
-          { id: 7, name: 'Class 7' },
-          { id: 8, name: 'Class 8' },
-          { id: 9, name: 'Class 9' },
-          { id: 10, name: 'Class 10' },
-          { id: 11, name: 'Class 11' },
-          { id: 12, name: 'Class 12' },
-        ])
+        // Mock data for development if needed, but in production we should show closed
+        if (import.meta.env.MODE === 'development') {
+          setSessions([{ id: 1, name: '2025–26', online_admission_open: true }])
+          setClasses([
+            { id: 1, name: 'Class 1' },
+            { id: 2, name: 'Class 2' },
+          ])
+        } else {
+          setIsClosed(true)
+        }
+      } finally {
+        setLoading(false)
       }
     }
     fetchData()
@@ -174,6 +183,45 @@ const AdmissionsPortal = () => {
     navigator.clipboard.writeText(submittedData.reference)
     setCopied(true)
     setTimeout(() => setCopied(false), 2000)
+  }
+
+  if (loading) {
+    return (
+      <div className="admissions-portal flex items-center justify-center">
+        <Loader2 className="animate-spin text-primary" size={48} />
+      </div>
+    )
+  }
+
+  if (isClosed) {
+    return (
+      <div className="admissions-portal">
+        <header className="admissions-header">
+          <div className="logo-group">
+            <div className="school-logo"><GraduationCap size={24} /></div>
+            <h1 className="school-name">{APP_NAME}</h1>
+            <span className="badge">Admissions Closed</span>
+          </div>
+        </header>
+
+        <main className="admissions-content flex flex-col items-center justify-center text-center py-20">
+          <div className="h-20 w-20 rounded-full bg-accent-soft flex items-center justify-center text-accent mb-6">
+            <AlertCircle size={40} />
+          </div>
+          <h1 className="font-serif text-3xl mb-4 text-primary">Admissions are Currently Closed</h1>
+          <p className="text-text-secondary max-w-md leading-relaxed mb-8">
+            Thank you for your interest in {APP_NAME}. Online applications for the upcoming academic session are not being accepted at this moment.
+          </p>
+          <div className="p-6 bg-surface border border-border rounded-2xl shadow-sm max-w-sm">
+            <p className="text-sm font-bold text-text-muted uppercase tracking-wider mb-2">Contact Us</p>
+            <p className="text-sm text-text-secondary">Please visit our campus or contact the administration office for more information about the next admission cycle.</p>
+          </div>
+          <a href="/" className="btn-ghost mt-10">
+            Back to School Website
+          </a>
+        </main>
+      </div>
+    )
   }
 
   if (submittedData) {

@@ -25,7 +25,8 @@ import {
   ShieldCheck,
   AlertCircle,
   IndianRupee,
-  QrCode
+  QrCode,
+  ClipboardList
 } from 'lucide-react'
 import usePageTitle from '@/hooks/usePageTitle'
 import useToast from '@/hooks/useToast'
@@ -45,6 +46,7 @@ const DEFAULT_SETTINGS = {
   upi_id: '',
   upi_name: '',
   upi_enabled: true,
+  online_admission_open: false,
   timezone: 'Asia/Kolkata',
   attendanceReminder: true,
   feeReminder: true,
@@ -170,6 +172,7 @@ const SettingsPage = () => {
         school_email: settings.schoolEmail,
         school_phone: settings.schoolPhone,
         school_address: settings.schoolAddress,
+        online_admission_open: settings.online_admission_open,
       })
       localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(settings))
       toastSuccess('Server settings saved successfully')
@@ -392,6 +395,38 @@ const SettingsPage = () => {
                   <p className="mt-3 text-[11px] font-medium text-brand">{settings.upi_id}</p>
                 </div>
               )}
+            </div>
+          </SettingsCard>
+
+          <SettingsCard
+            icon={ClipboardList}
+            title="Admission Settings"
+            description="Control public admission portal status (Saved to school database)."
+            action={
+              <button
+                onClick={handleSave}
+                disabled={isLoading}
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold text-white transition-opacity hover:opacity-90 disabled:opacity-50"
+                style={{ backgroundColor: 'var(--color-brand)' }}
+              >
+                <Save size={15} />
+                {isLoading ? 'Saving...' : 'Save to DB'}
+              </button>
+            }
+          >
+            <div className="space-y-4">
+              <ToggleRow
+                title="Online Admission Portal"
+                description="When enabled, anyone can visit /apply and submit an admission application. When disabled, the page will show a 'Closed' message."
+                checked={settings.online_admission_open}
+                onToggle={() => handleChange('online_admission_open', !settings.online_admission_open)}
+              />
+              <div className="flex items-center gap-3 p-4 rounded-2xl bg-brand/5 border border-brand/10">
+                <AlertCircle size={20} className="text-brand shrink-0" />
+                <p className="text-xs leading-relaxed" style={{ color: 'var(--color-text-secondary)' }}>
+                  Current Public URL: <span className="font-mono text-brand font-bold">{window.location.origin}/apply</span>
+                </p>
+              </div>
             </div>
           </SettingsCard>
 

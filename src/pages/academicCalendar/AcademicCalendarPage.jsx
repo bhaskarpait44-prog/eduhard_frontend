@@ -49,6 +49,7 @@ const AcademicCalendarPage = () => {
   const [selectedSessionId, setSelectedSessionId] = useState(null)
   const [selectedDate, setSelectedDate] = useState(new Date())
   const [viewDate, setViewDate] = useState(new Date())
+  const [filterAudience, setFilterAudience] = useState(null)
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [editingEvent, setEditingEvent] = useState(null)
   const [deletingId, setDeletingId] = useState(null)
@@ -84,8 +85,9 @@ const AcademicCalendarPage = () => {
   const filteredEvents = useMemo(() => {
     let list = events
     if (filterType) list = list.filter(e => e.event_type === filterType)
+    if (filterAudience) list = list.filter(e => e.audience === filterAudience)
     return list
-  }, [events, filterType])
+  }, [events, filterType, filterAudience])
 
   const eventsByDate = useMemo(() => {
     const map = {}
@@ -214,7 +216,7 @@ const AcademicCalendarPage = () => {
             !filterType ? "bg-[var(--color-brand)] text-white border-[var(--color-brand)]" : "bg-[var(--color-surface)] text-[var(--color-text-secondary)] border-[var(--color-border)] hover:bg-[var(--color-surface-raised)]"
           )}
         >
-          All
+          All Types
         </button>
         {EVENT_TYPES.map(type => (
           <button
@@ -228,6 +230,33 @@ const AcademicCalendarPage = () => {
             )}
           >
             {type.label}
+          </button>
+        ))}
+      </div>
+
+      <div className="flex flex-wrap items-center gap-2 overflow-x-auto pb-2 border-t border-[var(--color-border)] pt-2">
+        <Users size={16} className="text-[var(--color-text-muted)]" />
+        <button
+          onClick={() => setFilterAudience(null)}
+          className={cn(
+            "rounded-full px-4 py-1.5 text-xs font-semibold transition-colors border",
+            !filterAudience ? "bg-slate-700 text-white border-slate-700" : "bg-[var(--color-surface)] text-[var(--color-text-secondary)] border-[var(--color-border)] hover:bg-[var(--color-surface-raised)]"
+          )}
+        >
+          All Audiences
+        </button>
+        {['everyone', 'students', 'teachers', 'parents', 'staff'].map(aud => (
+          <button
+            key={aud}
+            onClick={() => setFilterAudience(aud)}
+            className={cn(
+              "rounded-full px-4 py-1.5 text-xs font-semibold transition-colors border capitalize",
+              filterAudience === aud 
+                ? "bg-slate-700 text-white border-slate-700" 
+                : "bg-[var(--color-surface)] text-[var(--color-text-secondary)] border-[var(--color-border)] hover:bg-[var(--color-surface-raised)]"
+            )}
+          >
+            {aud}
           </button>
         ))}
       </div>

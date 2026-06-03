@@ -226,6 +226,7 @@ const getNavGroups = (user) => {
         label: 'Administration',
       items: [
         { label: 'Sessions',   icon: 'CalendarDays',       path: ROUTES.SESSIONS,          roles: [ROLES.ADMIN] },
+        { label: 'Online Admissions', icon: 'ClipboardList', path: '/admin/admissions',     roles: [ROLES.ADMIN] },
         { label: 'Families',   icon: 'Users',              path: ROUTES.ADMIN_FAMILIES,    roles: [ROLES.ADMIN, ROLES.ACCOUNTANT] },
         { label: 'Inventory',  icon: 'Package',            path: ROUTES.ADMIN_INVENTORY,   roles: [ROLES.ADMIN, ROLES.ACCOUNTANT] },
         { label: 'Transport',  icon: 'Bus',                path: ROUTES.ADMIN_TRANSPORT,   roles: [ROLES.ADMIN, ROLES.ACCOUNTANT] },
