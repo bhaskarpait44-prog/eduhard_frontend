@@ -2,16 +2,16 @@ import { useState, useEffect, useCallback, useMemo } from 'react'
 import { 
   FileCheck, Users, CalendarCheck, GraduationCap, 
   Wallet, BookOpen, ShieldCheck, Award, 
-  Printer, Download, RefreshCw, AlertCircle, CheckCircle2, XCircle
+  Printer, RefreshCw, AlertCircle, CheckCircle2, XCircle
 } from 'lucide-react'
 
+import useAuthStore from '@/store/authStore'
 import useSessionStore from '@/store/sessionStore'
 import usePageTitle from '@/hooks/usePageTitle'
 import useToast from '@/hooks/useToast'
-import { complianceApi, sessionsApi } from '@/api'
+import { complianceApi } from '@/api'
 import { formatCurrency, formatPercent, cn } from '@/utils/helpers'
 
-import StatCard from '@/components/ui/StatCard'
 import Button from '@/components/ui/Button'
 import Badge from '@/components/ui/Badge'
 import Select from '@/components/ui/Select'
@@ -19,6 +19,7 @@ import Select from '@/components/ui/Select'
 const ComplianceReportPage = () => {
   usePageTitle('Accreditation & Compliance Report')
   const { toastError, toastSuccess } = useToast()
+  const { user } = useAuthStore()
   const { currentSession, sessions, fetchSessions } = useSessionStore()
   
   const [selectedSessionId, setSelectedSessionId] = useState('')
@@ -55,7 +56,7 @@ const ComplianceReportPage = () => {
     if (selectedSessionId) {
       fetchReport()
     }
-  }, [selectedSessionId]) // Trigger on session change
+  }, [selectedSessionId, fetchReport])
 
   const sessionOptions = useMemo(() => 
     sessions.map(s => ({ value: s.id.toString(), label: s.name })), 
@@ -147,7 +148,10 @@ const ComplianceReportPage = () => {
       </div>
 
       {report && (
-        <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
+        <div className={cn(
+          "space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700",
+          isLoading && "opacity-50 pointer-events-none transition-opacity"
+        )}>
           
           {/* Summary Panel */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -208,7 +212,7 @@ const ComplianceReportPage = () => {
                 </div>
               </div>
               <p className="mt-6 text-sm text-text-secondary leading-relaxed italic">
-                This report aggregates institutional performance data for the period {new Date(report.session.start_date).toLocaleDateString()} to {new Date(report.session.end_date).toLocaleDateString()}. 
+                This report aggregates institutional performance data for the session <strong>{report.session.name}</strong> ({new Date(report.session.start_date).toLocaleDateString()} to {new Date(report.session.end_date).toLocaleDateString()}). 
                 Values are calculated based on live system records.
               </p>
             </div>
@@ -283,18 +287,33 @@ const ComplianceReportPage = () => {
               <div className="grid grid-cols-2 gap-4 mb-6">
                 <MiniStat label="Exams Conducted" value={report.academic.exams_conducted} />
                 <MiniStat label="Pass Rate" value={formatPercent(report.academic.pass_rate)} />
-                <MiniStat label="Avg Marks" value={Number(report.academic.avg_marks || 0).toFixed(1)} />
-                <MiniStat label="Grades Logged" value={report.academic.grade_distribution.reduce((s,g) => s+g.count, 0)} />
               </div>
-              <div className="space-y-4">
-                <p className="text-[10px] font-bold text-text-muted uppercase">Top Subjects Pass Rate</p>
-                <div className="grid grid-cols-2 gap-2">
-                  {report.academic.subject_wise.slice(0, 4).map(s => (
-                    <div key={s.subject_name} className="flex items-center justify-between text-xs p-2 bg-surface-raised rounded-lg border border-border-base">
-                      <span className="truncate mr-2">{s.subject_name}</span>
-                      <span className="font-bold">{Math.round(s.pass_rate)}%</span>
-                    </div>
-                  ))}
+              <div className="grid grid-cols-2 gap-6">
+                <div className="space-y-3">
+                  <p className="text-[10px] font-bold text-text-muted uppercase tracking-wider">Subject Pass Rates</p>
+                  <div className="space-y-1.5 max-h-40 overflow-y-auto custom-scrollbar pr-1">
+                    {report.academic.subject_wise.slice(0, 10).map(s => (
+                      <div key={s.subject_name} className="flex items-center justify-between text-[11px] p-2 bg-surface-raised rounded-lg border border-border-base">
+                        <span className="truncate mr-2 font-medium">{s.subject_name}</span>
+                        <span className={cn("font-bold", s.pass_rate < 60 ? "text-red-500" : "text-emerald-600")}>{Math.round(s.pass_rate)}%</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+                <div className="space-y-3">
+                  <p className="text-[10px] font-bold text-text-muted uppercase tracking-wider">Grade Distribution</p>
+                  <div className="space-y-1.5">
+                    {report.academic.grade_distribution.length > 0 ? report.academic.grade_distribution.map(g => (
+                      <div key={g.grade} className="flex items-center justify-between text-[11px] p-2 bg-surface-raised rounded-lg border border-border-base">
+                        <span className="font-bold text-brand">{g.grade}</span>
+                        <span className="font-semibold">{g.count} <span className="text-text-muted font-normal ml-0.5">stu.</span></span>
+                      </div>
+                    )) : (
+                      <div className="text-center py-4 text-xs text-text-muted italic bg-surface-raised rounded-xl border border-dashed border-border-base">
+                        No grades logged
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
             </SectionCard>
@@ -350,7 +369,7 @@ const ComplianceReportPage = () => {
               </div>
               <div className="bg-surface-raised p-3 rounded-2xl border border-border-base">
                 <p className="text-[10px] font-bold text-text-muted uppercase mb-1">Most Modified Module</p>
-                <div className="text-sm font-bold text-text-primary capitalize">{report.audit.most_modified_table.replace('_', ' ')}</div>
+                <div className="text-sm font-bold text-text-primary capitalize">{report.audit.most_modified_table.replace(/_/g, ' ')}</div>
               </div>
             </SectionCard>
 
@@ -369,7 +388,7 @@ const ComplianceReportPage = () => {
           {/* Footer - Only for Print */}
           <div className="hidden print:block pt-10 mt-10 border-t border-border-base text-center">
             <p className="text-xs text-text-muted">
-              Computer-generated report. Printed on {new Date().toLocaleString()} by {localStorage.getItem('user_name') || 'Administrator'}.
+              Computer-generated report. Printed on {new Date().toLocaleString()} by {user?.name || 'Administrator'}.
             </p>
             <p className="text-[10px] text-text-muted mt-2">© EduHard School Management System</p>
           </div>
@@ -395,7 +414,6 @@ const ComplianceReportPage = () => {
           .print\\:hidden { display: none !important; }
           .hidden { display: none !important; }
           .print\\:block { display: block !important; }
-          /* Ensure charts/icons print */
           svg, i, .lucide { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
           .bg-brand\\/5 { background-color: #f5f3ff !important; }
           .text-brand { color: #6d28d9 !important; }
