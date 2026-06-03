@@ -233,6 +233,7 @@ const getNavGroups = (user) => {
         { label: 'Certificates', icon: 'Award',            path: ROUTES.ADMIN_CERTIFICATES, roles: [ROLES.ADMIN] },
         { label: 'Staff Attendance', icon: 'UserCheck',    path: ROUTES.STAFF_ATTENDANCE,  roles: [ROLES.ADMIN, ROLES.ACCOUNTANT] },
         { label: 'Notices',    icon: 'BellRing',           path: ROUTES.ADMIN_NOTICES,     roles: [ROLES.ADMIN] },
+        { label: 'Compliance Report', icon: 'FileCheck', path: ROUTES.COMPLIANCE_REPORT, roles: [ROLES.ADMIN] },
         { label: 'Promotions', icon: 'ArrowUpWideNarrow',  path: ROUTES.ADMIN_PROMOTIONS,  roles: [ROLES.ADMIN] },
         { label: 'Users',      icon: 'UserCog',            path: ROUTES.USERS,             roles: [ROLES.ADMIN] },
         { label: 'Audit Logs', icon: 'ScrollText',         path: ROUTES.AUDIT,             roles: [ROLES.ADMIN] },

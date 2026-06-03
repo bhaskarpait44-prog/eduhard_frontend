@@ -107,6 +107,7 @@ export const ROUTES = {
   AUDIT: '/audit',
   FEEDBACK: '/feedback',
   ACADEMIC_CALENDAR: '/academic-calendar',
+  COMPLIANCE_REPORT: '/compliance-report',
 
   // Library Portal
   LIBRARY_ROOT: '/library',

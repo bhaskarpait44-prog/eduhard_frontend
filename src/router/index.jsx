@@ -143,6 +143,7 @@ const ChangePassword = lazy(() => import('@/pages/student/profile/ChangePassword
 const AcademicHistory = lazy(() => import('@/pages/student/AcademicHistory'))
 const StudyMaterials = lazy(() => import('@/pages/student/StudyMaterials'))
 const AcademicCalendarPage = lazy(() => import('@/pages/academicCalendar/AcademicCalendarPage'))
+const ComplianceReportPage = lazy(() => import('@/pages/compliance/ComplianceReportPage'))
 const StudentCalendarPage = lazy(() => import('@/pages/student/StudentCalendarPage'))
 
 const PageLoader = () => (
@@ -618,6 +619,14 @@ const router = createBrowserRouter([
         element: (
           <ProtectedRoute roles={[ROLES.ADMIN]}>
             <Lazy component={AuditPage} />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: ROUTES.COMPLIANCE_REPORT,
+        element: (
+          <ProtectedRoute roles={[ROLES.ADMIN]}>
+            <Lazy component={ComplianceReportPage} />
           </ProtectedRoute>
         ),
       },
