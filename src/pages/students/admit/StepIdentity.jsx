@@ -52,6 +52,11 @@ const StepIdentity = ({ defaultValues, onNext }) => {
           />
         </div>
 
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <Input label="Aadhar No." placeholder="12-digit number" maxLength={12} error={errors.aadhar_no?.message} {...register('aadhar_no')} />
+          <div className="hidden sm:block" />
+        </div>
+
         <div>
           <label className="block text-sm font-medium mb-1.5" style={{ color: 'var(--color-text-primary)' }}>
             Admission Number <span style={{ color: '#dc2626' }}>*</span>
@@ -84,9 +89,9 @@ const StepIdentity = ({ defaultValues, onNext }) => {
 }
 
 export const SectionHeading = ({ title, subtitle }) => (
-  <div className="pb-2" style={{ borderBottom: '1px solid var(--color-border)' }}>
-    <h3 className="text-sm font-semibold" style={{ color: 'var(--color-text-primary)' }}>{title}</h3>
-    {subtitle && <p className="text-xs mt-0.5" style={{ color: 'var(--color-text-muted)' }}>{subtitle}</p>}
+  <div className="pb-2 border-b border-border mb-4 mt-2">
+    <h3 className="text-base font-extrabold uppercase tracking-tight" style={{ color: 'var(--color-text-primary)' }}>{title}</h3>
+    {subtitle && <p className="text-xs mt-0.5" style={{ color: 'var(--color-text-secondary)' }}>{subtitle}</p>}
   </div>
 )
 

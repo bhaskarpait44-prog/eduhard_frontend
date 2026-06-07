@@ -2,7 +2,7 @@ import { useEffect, useCallback, useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import {
   Users, CalendarCheck, IndianRupee, ClipboardList,
-  Plus, RefreshCw, ClipboardCheck,
+  Plus, RefreshCw, ClipboardCheck, RefreshCcw,
   UserPlus, Wallet, LogOut, GraduationCap,
   ArrowRight, Search, Clock, ArrowRightLeft
 } from 'lucide-react'
@@ -61,6 +61,14 @@ const DashboardPage = () => {
       setIsRefreshing(false)
     }
   }, [currentSession?.id, fetchAll, fetchSessions, toastInfo])
+
+  const handleHardReload = useCallback(() => {
+    if (window.triggerLightning) {
+      window.triggerLightning()
+    } else {
+      window.location.reload()
+    }
+  }, [])
 
   useEffect(() => {
     loadData()
@@ -142,6 +150,15 @@ const DashboardPage = () => {
             size="sm"
           >
             Refresh
+          </Button>
+          <Button 
+            variant="secondary" 
+            icon={RefreshCcw} 
+            onClick={handleHardReload}
+            size="sm"
+            title="Perform a full page reload with lighting effect"
+          >
+            Hard Reload
           </Button>
           <Button 
             variant="primary" 

@@ -10,9 +10,11 @@ import { format } from 'date-fns'
 
 const VisitorLog = () => {
   const [visitors, setVisitors] = useState([])
+  const [pagination, setPagination] = useState({ page: 1, total: 0, pages: 1 })
   const [loading, setLoading] = useState(true)
   const [date, setDate] = useState(format(new Date(), 'yyyy-MM-dd'))
   const [search, setSearch] = useState('')
+  const [status, setStatus] = useState('all') // 'all' or 'inside'
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [formData, setFormData] = useState({
@@ -24,11 +26,19 @@ const VisitorLog = () => {
 
   const { toast } = useToast()
 
-  const fetchVisitors = async () => {
+  const fetchVisitors = async (pageNum = 1) => {
     try {
       setLoading(true)
-      const res = await listVisitors({ date, search })
+      const res = await listVisitors({ 
+        start_date: date, 
+        end_date: date, 
+        search, 
+        status: status === 'inside' ? 'inside' : 'all',
+        page: pageNum,
+        limit: 50
+      })
       setVisitors(res.data.visitors)
+      setPagination(res.data.pagination)
     } catch (err) {
       toast.error('Failed to load visitors')
     } finally {
@@ -37,8 +47,8 @@ const VisitorLog = () => {
   }
 
   useEffect(() => {
-    fetchVisitors()
-  }, [date, search])
+    fetchVisitors(1)
+  }, [date, search, status])
 
   const handleLogVisitor = async (e) => {
     e.preventDefault()
@@ -107,19 +117,34 @@ const VisitorLog = () => {
             onChange={(e) => setSearch(e.target.value)}
           />
         </div>
-        <div className="relative">
-          <Calendar className="absolute left-3 top-1/2 -translate-y-1/2" size={16} style={{ color: 'var(--color-text-muted)' }} />
-          <input
-            type="date"
-            className="pl-10 pr-4 py-2 rounded-xl text-sm outline-none transition-all"
+        <div className="flex gap-2">
+          <select
+            className="pl-4 pr-10 py-2 rounded-xl text-sm outline-none transition-all appearance-none cursor-pointer"
             style={{ 
               backgroundColor: 'var(--color-surface-raised)',
               border: '1px solid var(--color-border)',
               color: 'var(--color-text-primary)'
             }}
-            value={date}
-            onChange={(e) => setDate(e.target.value)}
-          />
+            value={status}
+            onChange={(e) => setStatus(e.target.value)}
+          >
+            <option value="all">All Visitors</option>
+            <option value="inside">Currently Inside</option>
+          </select>
+          <div className="relative">
+            <Calendar className="absolute left-3 top-1/2 -translate-y-1/2" size={16} style={{ color: 'var(--color-text-muted)' }} />
+            <input
+              type="date"
+              className="pl-10 pr-4 py-2 rounded-xl text-sm outline-none transition-all"
+              style={{ 
+                backgroundColor: 'var(--color-surface-raised)',
+                border: '1px solid var(--color-border)',
+                color: 'var(--color-text-primary)'
+              }}
+              value={date}
+              onChange={(e) => setDate(e.target.value)}
+            />
+          </div>
         </div>
       </div>
 
@@ -189,7 +214,7 @@ const VisitorLog = () => {
         </div>
 
         {/* Desktop View: Table */}
-        <div className="hidden sm:block rounded-2xl overflow-hidden border border-border bg-surface shadow-sm">
+        <div className="hidden sm:block rounded-2xl border border-border bg-surface shadow-sm">
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
@@ -242,13 +267,40 @@ const VisitorLog = () => {
                 ) : (
                   <tr>
                     <td colSpan="7" className="px-6 py-12 text-center text-text-muted">
-                      {loading ? 'Loading visitors...' : 'No visitors found for the selected date.'}
+                      {loading ? 'Loading visitors...' : 'No visitors found.'}
                     </td>
                   </tr>
                 )}
               </tbody>
             </table>
           </div>
+
+          {/* Pagination */}
+          {pagination.pages > 1 && (
+            <div className="px-6 py-4 border-t border-border flex items-center justify-between bg-surface-raised">
+              <p className="text-xs text-text-muted">
+                Showing {visitors.length} of {pagination.total} visitors
+              </p>
+              <div className="flex gap-2">
+                <Button 
+                  size="sm" 
+                  variant="ghost" 
+                  disabled={pagination.page <= 1}
+                  onClick={() => fetchVisitors(pagination.page - 1)}
+                >
+                  Previous
+                </Button>
+                <Button 
+                  size="sm" 
+                  variant="ghost" 
+                  disabled={pagination.page >= pagination.pages}
+                  onClick={() => fetchVisitors(pagination.page + 1)}
+                >
+                  Next
+                </Button>
+              </div>
+            </div>
+          )}
         </div>
       </div>
 

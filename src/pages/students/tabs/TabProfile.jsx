@@ -1,95 +1,35 @@
-// src/pages/students/tabs/TabProfile.jsx
 import { useEffect, useMemo, useState } from 'react'
 import { Pencil, Clock, KeyRound, ShieldCheck } from 'lucide-react'
-import { zodResolver } from '@hookform/resolvers/zod'
-import { z } from 'zod'
+import { useNavigate } from 'react-router-dom'
 import { formatDate } from '@/utils/helpers'
 import Button from '@/components/ui/Button'
 import Modal from '@/components/ui/Modal'
 import Input from '@/components/ui/Input'
-import Select from '@/components/ui/Select'
-import Textarea from '@/components/ui/Textarea'
 import useAdminStudentStore from '@/store/studentStore'
 import useToast from '@/hooks/useToast'
-import { useForm } from 'react-hook-form'
-import { studentUpdateSchema } from '@/utils/validations'
-
-const BLOOD_GROUPS = ['A+','A-','B+','B-','AB+','AB-','O+','O-','unknown']
-  .map(v => ({ value: v, label: v }))
+import { ROUTES } from '@/constants/app'
 
 const formatStream = (stream) => {
   if (!stream) return ''
   return `${stream.charAt(0).toUpperCase()}${stream.slice(1)}`
 }
 
-const PROFILE_FIELDS = [
-  'first_name',
-  'last_name',
-  'address',
-  'city',
-  'state',
-  'pincode',
-  'phone',
-  'email',
-  'parent_email',
-  'father_name',
-  'father_phone',
-  'mother_name',
-  'mother_phone',
-  'emergency_contact',
-  'blood_group',
-  'medical_notes',
-]
-
 const InfoRow = ({ label, value }) => (
   <div className="py-2.5" style={{ borderBottom: '1px solid var(--color-border)' }}>
     <p className="text-xs mb-0.5" style={{ color: 'var(--color-text-muted)' }}>{label}</p>
-    <p className="text-sm" style={{ color: value ? 'var(--color-text-primary)' : 'var(--color-text-muted)' }}>
+    <p className="text-sm font-semibold" style={{ color: value ? 'var(--color-text-primary)' : 'var(--color-text-muted)' }}>
       {value || '—'}
     </p>
   </div>
 )
 
 const TabProfile = ({ student, studentId }) => {
-  const [editOpen,     setEditOpen]     = useState(false)
+  const navigate = useNavigate()
   const [historyOpen,  setHistoryOpen]  = useState(false)
   const [resetModal,   setResetModal]   = useState(null) // 'student' or 'parent'
   const [newPass,      setNewPass]      = useState('')
-  const { updateProfile, resetPassword, resetParentPassword, isSaving } = useAdminStudentStore()
+  const { resetPassword, resetParentPassword, isSaving } = useAdminStudentStore()
   const { toastSuccess, toastError, toastWarning } = useToast()
-
-  const defaultValues = useMemo(
-    () => PROFILE_FIELDS.reduce((acc, field) => {
-      acc[field] = student?.[field] ?? ''
-      return acc
-    }, { change_reason: '' }),
-    [student]
-  )
-
-  const { register, handleSubmit, reset, formState: { errors } } = useForm({ 
-    defaultValues,
-    resolver: zodResolver(studentUpdateSchema)
-  })
-
-  useEffect(() => {
-    reset(defaultValues)
-  }, [defaultValues, reset])
-
-  const onSave = async (data) => {
-    const { change_reason, ...profileData } = data
-    const sanitizedProfileData = PROFILE_FIELDS.reduce((acc, field) => {
-      acc[field] = profileData[field] ?? ''
-      return acc
-    }, {})
-
-    const result = await updateProfile(studentId, { ...sanitizedProfileData, change_reason })
-    if (result.success) {
-      toastSuccess('Profile updated')
-      setEditOpen(false)
-    } else {
-      toastError(result.message || 'Failed to update profile')
-    }
-  }
 
   const handleResetPassword = async () => {
     const data = newPass ? { new_password: newPass } : {}
@@ -103,10 +43,6 @@ const TabProfile = ({ student, studentId }) => {
 
     if (result.success) {
       toastSuccess(`${resetModal === 'student' ? 'Student' : 'Parent'} portal password reset successfully`)
-      if (result.data?.generated_password) {
-        // In a real app, maybe show a temporary success modal with the password
-        console.log('Generated Password:', result.data.generated_password)
-      }
       setResetModal(null)
       setNewPass('')
     } else {
@@ -119,10 +55,10 @@ const TabProfile = ({ student, studentId }) => {
       <div className="flex items-center justify-between">
         <div>
           <h3 className="text-sm font-semibold" style={{ color: 'var(--color-text-primary)' }}>
-            Current Profile
+            Profile Snapshot
           </h3>
           <p className="text-xs" style={{ color: 'var(--color-text-muted)' }}>
-            Version active since {formatDate(student.valid_from || student.created_at)}
+            Last updated {formatDate(student.updated_at || student.created_at)}
           </p>
         </div>
         <div className="flex gap-2">
@@ -130,26 +66,14 @@ const TabProfile = ({ student, studentId }) => {
             variant="ghost"
             size="sm"
             icon={Clock}
-            onClick={() => {
-              if (student.is_active === false) {
-                toastWarning('Please activate the student to view history.');
-                return;
-              }
-              setHistoryOpen(true);
-            }}
+            onClick={() => setHistoryOpen(true)}
           >
-            History
+            Version History
           </Button>
           <Button
             size="sm"
             icon={Pencil}
-            onClick={() => {
-              if (student.is_active === false) {
-                toastWarning('Please activate the student to edit profile.');
-                return;
-              }
-              setEditOpen(true);
-            }}
+            onClick={() => navigate(`${ROUTES.STUDENTS}/${studentId}/edit`)}
           >
             Edit Profile
           </Button>
@@ -158,20 +82,18 @@ const TabProfile = ({ student, studentId }) => {
 
       {/* Profile grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8">
-        <InfoRow label="Class Name"       value={student.current_enrollment?.class} />
-        <InfoRow label="Section"          value={student.current_enrollment?.section} />
-        <InfoRow label="Stream"           value={formatStream(student.current_enrollment?.stream)} />
+        <InfoRow label="Aadhar Number"    value={student.aadhar_no} />
+        <InfoRow label="Nationality"      value={student.nationality} />
+        <InfoRow label="Religion"         value={student.religion} />
+        <InfoRow label="Caste / Category" value={`${student.caste || ''} ${student.category ? `(${student.category})` : ''}`} />
         <InfoRow label="Address"          value={[student.address, student.city, student.state, student.pincode].filter(Boolean).join(', ')} />
         <InfoRow label="Phone"            value={student.phone} />
         <InfoRow label="Student Email"    value={student.email} />
-        <InfoRow label="Emergency Contact"value={student.emergency_contact} />
+        <InfoRow label="Mother tongue"    value={student.mother_tongue} />
         <InfoRow label="Father's Name"    value={student.father_name} />
-        <InfoRow label="Father's Phone"   value={student.father_phone} />
         <InfoRow label="Mother's Name"    value={student.mother_name} />
-        <InfoRow label="Mother's Phone"   value={student.mother_phone} />
         <InfoRow label="Parent Login Email" value={student.parent_email} />
         <InfoRow label="Blood Group"      value={student.blood_group} />
-        <InfoRow label="Medical Notes"    value={student.medical_notes} />
       </div>
 
       <div className="pt-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -211,59 +133,6 @@ const TabProfile = ({ student, studentId }) => {
           </Button>
         </div>
       </div>
-
-      {/* Edit profile modal */}
-      <Modal
-        open={editOpen}
-        onClose={() => setEditOpen(false)}
-        title="Edit Profile"
-        size="lg"
-        footer={
-          <>
-            <Button variant="secondary" onClick={() => setEditOpen(false)} disabled={isSaving}>Cancel</Button>
-            <Button onClick={handleSubmit(onSave)} loading={isSaving}>Save Profile</Button>
-          </>
-        }
-      >
-        <form className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
-            <Input label="First Name" error={errors.first_name?.message} {...register('first_name')} />
-            <Input label="Last Name"  error={errors.last_name?.message}  {...register('last_name')} />
-          </div>
-          <Textarea label="Address" rows={2} {...register('address')} />
-          <div className="grid grid-cols-2 gap-4">
-            <Input label="City"    {...register('city')} />
-            <Input label="State"   {...register('state')} />
-            <Input label="Pincode" error={errors.pincode?.message} {...register('pincode')} />
-            <Input label="Phone"   error={errors.phone?.message} {...register('phone')} />
-          </div>
-          <div className="grid grid-cols-2 gap-4">
-            <Input label="Student Email" type="email" error={errors.email?.message} {...register('email')} />
-            <Input label="Parent Login Email" type="email" error={errors.parent_email?.message} {...register('parent_email')} />
-          </div>
-          <div className="grid grid-cols-2 gap-4">
-            <Input label="Father Name"  {...register('father_name')} />
-            <Input label="Father Phone" error={errors.father_phone?.message} {...register('father_phone')} />
-            <Input label="Mother Name"  {...register('mother_name')} />
-            <Input label="Mother Phone" error={errors.mother_phone?.message} {...register('mother_phone')} />
-          </div>
-          <div className="grid grid-cols-2 gap-4">
-            <Input label="Emergency Contact" error={errors.emergency_contact?.message} {...register('emergency_contact')} />
-            <Select label="Blood Group" options={BLOOD_GROUPS} {...register('blood_group')} />
-          </div>
-          <Textarea label="Medical Notes" rows={2} {...register('medical_notes')} />
-          <div style={{ borderTop: '1px solid var(--color-border)', paddingTop: 16 }}>
-            <Textarea
-              label="Reason for change"
-              placeholder="Why is this profile being updated? (required)"
-              rows={2}
-              required
-              error={errors.change_reason?.message}
-              {...register('change_reason')}
-            />
-          </div>
-        </form>
-      </Modal>
 
       {/* Reset password modal */}
       <Modal

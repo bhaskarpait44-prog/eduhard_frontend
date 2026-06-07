@@ -56,7 +56,9 @@ const AdmitStudentPage = lazy(() => import('@/pages/students/AdmitStudentPage'))
 const AdmissionsManagementPage = lazy(() => import('@/pages/students/AdmissionsManagementPage'))
 const BulkAdmissionPage = lazy(() => import('@/pages/students/BulkAdmissionPage'))
 const StudentDetailPage = lazy(() => import('@/pages/students/StudentDetailPage'))
-const LeftStudentsPage = lazy(() => import('@/pages/students/LeftStudentsPage'))
+const EditStudentPage    = lazy(() => import('@/pages/students/EditStudentPage'))
+const StudentFullDetailsPage = lazy(() => import('@/pages/students/StudentFullDetailsPage'))
+const LeftStudentsPage   = lazy(() => import('@/pages/students/LeftStudentsPage'))
 const GraduatedStudentsPage = lazy(() => import('@/pages/students/GraduatedStudentsPage'))
 const SubjectsPage = lazy(() => import('@/pages/subjects/SubjectsPage'))
 const EnrollmentsPage = lazy(() => import('@/pages/enrollments/EnrollmentsPage'))
@@ -464,10 +466,26 @@ const router = createBrowserRouter([
         ),
       },
       {
+        path: ROUTES.STUDENT_FULL_DETAILS,
+        element: (
+          <ProtectedRoute roles={[ROLES.ADMIN, ROLES.TEACHER]}>
+            <Lazy component={StudentFullDetailsPage} />
+          </ProtectedRoute>
+        ),
+      },
+      {
         path: ROUTES.STUDENT_DETAIL,
         element: (
           <ProtectedRoute roles={[ROLES.ADMIN, ROLES.TEACHER]}>
             <Lazy component={StudentDetailPage} />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: ROUTES.STUDENT_EDIT,
+        element: (
+          <ProtectedRoute roles={[ROLES.ADMIN]}>
+            <Lazy component={EditStudentPage} />
           </ProtectedRoute>
         ),
       },
@@ -867,4 +885,3 @@ const router = createBrowserRouter([
 ])
 
 export default router
-

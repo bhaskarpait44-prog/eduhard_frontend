@@ -1,7 +1,8 @@
 // src/pages/students/admit/StepSuccess.jsx
-import { CheckCircle2, Copy, Eye, Plus } from 'lucide-react'
+import { CheckCircle2, Copy, Eye, Plus, FileDown } from 'lucide-react'
 import { useState } from 'react'
 import Button from '@/components/ui/Button'
+import axios from 'axios'
 
 const CredentialRow = ({ label, value, onCopy }) => (
   <div
@@ -28,6 +29,7 @@ const CredentialRow = ({ label, value, onCopy }) => (
 
 const StepSuccess = ({ student, onViewStudent, onAdmitAnother }) => {
   const [copiedField, setCopiedField] = useState('')
+  const [isDownloading, setIsDownloading] = useState(false)
   const credentials = student?.login_credentials || {}
 
   const handleCopy = async (value, label) => {
@@ -37,6 +39,28 @@ const StepSuccess = ({ student, onViewStudent, onAdmitAnother }) => {
       window.setTimeout(() => setCopiedField(''), 1800)
     } catch {
       setCopiedField('')
+    }
+  }
+
+  const downloadPDF = async () => {
+    if (!student?.id) return
+    setIsDownloading(true)
+    try {
+      const response = await axios.get(`/api/students/${student.id}/admission-form`, {
+        responseType: 'blob'
+      })
+      const url = window.URL.createObjectURL(new Blob([response.data]))
+      const link = document.createElement('a')
+      link.href = url
+      link.setAttribute('download', `AdmissionForm_${student.admission_no || 'Student'}.pdf`)
+      document.body.appendChild(link)
+      link.click()
+      link.remove()
+      window.URL.revokeObjectURL(url)
+    } catch (err) {
+      console.error('Download failed', err)
+    } finally {
+      setIsDownloading(false)
     }
   }
 
@@ -124,7 +148,10 @@ const StepSuccess = ({ student, onViewStudent, onAdmitAnother }) => {
       </div>
 
       <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
-        <Button icon={Eye} onClick={onViewStudent}>View Student Profile</Button>
+        <Button icon={Eye} onClick={onViewStudent}>View Profile</Button>
+        <Button variant="secondary" icon={FileDown} onClick={downloadPDF} loading={isDownloading}>
+          Download Form (PDF)
+        </Button>
         <Button variant="secondary" icon={Plus} onClick={onAdmitAnother}>Admit Another</Button>
       </div>
     </div>

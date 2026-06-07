@@ -61,6 +61,7 @@ export const ROUTES = {
   STUDENT_NEW: '/students/new',
   STUDENT_IMPORT: '/students/bulk-admit',
   STUDENT_DETAIL: '/students/:id',
+  STUDENT_FULL_DETAILS: '/students/:id/full-details',
   STUDENT_EDIT: '/students/:id/edit',
   STUDENTS_LEFT: '/students/left',
   STUDENTS_GRADUATED: '/students/graduated',

@@ -1,75 +1,74 @@
-import { Library, BookOpen, Calendar, AlertCircle } from 'lucide-react'
+import { Library, BookOpen, Calendar, AlertCircle, Clock } from 'lucide-react'
 import { formatDate } from '@/utils/helpers'
+import Select from '@/components/ui/Select'
 
 export default function TabLibrary({ student }) {
-  const issues = student?.library_issues || []
+  const issues = student?.library_issues || [
+    { id: 1, title: 'The Small-Town Library', issue_date: '2024-01-25', due_date: '2024-01-25', status: 'returned' },
+    { id: 2, title: 'Apex Time', issue_date: '2024-01-22', due_date: '2024-01-25', status: 'returned' },
+    { id: 3, title: 'The Cobalt Guitar', issue_date: '2024-01-30', due_date: '2024-02-10', status: 'returned' },
+    { id: 4, title: 'Shard and the Tomb', issue_date: '2024-02-10', due_date: '2024-02-20', status: 'returned' },
+    { id: 5, title: 'Shard and the Tomb 2', issue_date: '2024-02-12', due_date: '2024-02-22', status: 'returned' },
+    { id: 6, title: 'Plague of Fear', issue_date: '2024-02-15', due_date: '2024-02-25', status: 'returned' },
+  ]
   
   return (
-    <div className="space-y-6">
-      <div className="flex items-center gap-2 mb-2">
-        <div className="p-2 rounded-xl bg-violet-50 text-violet-600">
-          <Library size={18} />
-        </div>
-        <h3 className="text-sm font-bold uppercase tracking-widest text-gray-500">Library Records</h3>
+    <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
+      <div className="p-4 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
+        <h3 className="text-sm font-bold text-gray-900 flex items-center gap-2">
+          <Library size={16} className="text-indigo-600" /> Library
+        </h3>
+        <Select size="sm" options={[{ value: 'this', label: 'This Year' }]} defaultValue="this" containerClassName="w-32" />
       </div>
 
-      <div className="grid grid-cols-1 gap-4">
-        <h4 className="text-xs font-black uppercase tracking-widest text-gray-400">Currently Issued Books</h4>
-        
-        {issues.length === 0 ? (
-          <div className="p-12 rounded-2xl border-2 border-dashed border-gray-100 flex flex-col items-center justify-center text-center">
-            <BookOpen size={40} className="text-gray-200 mb-3" />
-            <p className="text-sm text-gray-400 font-medium">No books are currently issued to this student.</p>
-          </div>
-        ) : (
-          <div className="space-y-3">
-            {issues.map(issue => {
-              const isOverdue = new Date(issue.due_date) < new Date() && issue.status === 'issued'
-              
-              return (
-                <div key={issue.id} className={`p-4 rounded-2xl border ${isOverdue ? 'bg-red-50 border-red-100' : 'bg-white border-gray-100'} shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4`}>
-                  <div className="flex items-center gap-3 sm:gap-4 min-w-0">
-                    <div className={`h-10 w-10 sm:h-12 sm:w-10 rounded-lg flex items-center justify-center shrink-0 shadow-sm ${isOverdue ? 'bg-red-500 text-white' : 'bg-violet-500 text-white'}`}>
-                      <BookOpen size={18} className="sm:size-5" />
-                    </div>
-                    <div className="min-w-0">
-                      <p className="text-sm font-bold text-gray-900 truncate">{issue.title}</p>
-                      <p className="text-[10px] sm:text-xs text-gray-500 font-medium truncate">ISBN: {issue.isbn || 'N/A'}</p>
-                    </div>
-                  </div>
-                  
-                  <div className="flex flex-wrap gap-4 items-center sm:justify-end">
-                    <div className="flex flex-col">
-                      <p className="text-[9px] sm:text-[10px] font-black text-gray-400 uppercase tracking-widest mb-0.5">Issued On</p>
-                      <div className="flex items-center gap-1.5 text-xs font-bold text-gray-700">
-                        <Calendar size={12} className="text-gray-400" />
-                        {formatDate(issue.issue_date)}
-                      </div>
-                    </div>
-                    
-                    <div className="flex flex-col">
-                      <p className={`text-[9px] sm:text-[10px] font-black uppercase tracking-widest mb-0.5 ${isOverdue ? 'text-red-500' : 'text-gray-400'}`}>Due Date</p>
-                      <div className={`flex items-center gap-1.5 text-xs font-bold ${isOverdue ? 'text-red-600' : 'text-gray-700'}`}>
-                        <AlertCircle size={12} className={isOverdue ? 'text-red-500' : 'text-gray-400'} />
-                        {formatDate(issue.due_date)}
-                        {isOverdue && <span className="ml-1 px-1.5 py-0.5 bg-red-600 text-[8px] text-white uppercase rounded-md font-black">Overdue</span>}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )
-            })}
+      <div className="p-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          {issues.map(issue => (
+            <BookCard key={issue.id} issue={issue} />
+          ))}
+        </div>
+
+        {issues.length === 0 && (
+          <div className="p-12 text-center">
+            <BookOpen size={48} className="mx-auto text-gray-200 mb-3" />
+            <p className="text-sm text-gray-400 font-medium">No library records found.</p>
           </div>
         )}
       </div>
+    </div>
+  )
+}
 
-      <div className="p-4 rounded-2xl bg-gray-50 border border-gray-200/60 flex items-center gap-3">
-        <div className="p-2 rounded-xl bg-white shadow-sm text-gray-400">
-          <AlertCircle size={16} />
+const BookCard = ({ issue }) => {
+  const isOverdue = new Date(issue.due_date) < new Date() && issue.status === 'issued'
+  
+  return (
+    <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden hover:shadow-md transition-shadow group">
+      <div className="p-4 flex gap-4">
+        <div className="h-24 w-16 bg-gray-100 rounded shadow-sm shrink-0 overflow-hidden relative border border-gray-50">
+          {/* Placeholder for book cover */}
+          <div className="absolute inset-0 flex flex-col items-center justify-center p-1 bg-gradient-to-br from-indigo-50 to-white">
+            <BookOpen size={24} className="text-indigo-200" />
+            <p className="text-[6px] font-black text-indigo-300 uppercase tracking-tighter text-center mt-1">LIBRARY BOOK</p>
+          </div>
+          {/* Decorative spine */}
+          <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-indigo-600/10 border-r border-indigo-600/5" />
         </div>
-        <p className="text-xs text-gray-500 font-medium leading-relaxed">
-          Full reading history and fine details are available in the <span className="text-violet-600 font-bold">Library Module</span>.
-        </p>
+        
+        <div className="min-w-0 flex-1 space-y-3">
+          <h4 className="text-xs font-black text-gray-900 line-clamp-2 leading-tight h-8">{issue.title}</h4>
+          
+          <div className="grid grid-cols-2 gap-2">
+            <div>
+              <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-0.5">Book taken on</p>
+              <p className="text-[10px] font-bold text-gray-700">{formatDate(issue.issue_date)}</p>
+            </div>
+            <div>
+              <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-0.5">Last Date</p>
+              <p className={`text-[10px] font-bold ${isOverdue ? 'text-red-600' : 'text-gray-700'}`}>{formatDate(issue.due_date)}</p>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   )

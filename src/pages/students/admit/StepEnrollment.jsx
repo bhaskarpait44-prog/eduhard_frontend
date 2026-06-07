@@ -17,6 +17,10 @@ const schema = z.object({
   joined_date: z.string().min(1, 'Joining date is required'),
   roll_number: z.string().optional(),
   subject_ids: z.array(z.string()).optional(),
+  medium: z.enum(['English', 'Assamese']).optional(),
+  is_hostel: z.boolean().optional(),
+  distance_km: z.preprocess((val) => (val === '' || val === null ? undefined : Number(val)), z.number().nonnegative().optional()),
+  prev_attendance_days: z.preprocess((val) => (val === '' || val === null ? undefined : Number(val)), z.number().int().nonnegative().optional()),
 })
 
 const JOINING_TYPES = [
@@ -155,6 +159,14 @@ const StepEnrollment = ({ defaultValues, currentSession, onSubmit, onBack }) => 
             {...register('stream')}
           />
           <Select
+            label="Medium"
+            options={[
+              { value: 'English', label: 'English' },
+              { value: 'Assamese', label: 'Assamese' },
+            ]}
+            {...register('medium')}
+          />
+          <Select
             label="Joining Type"
             required
             error={errors.joining_type?.message}
@@ -168,12 +180,32 @@ const StepEnrollment = ({ defaultValues, currentSession, onSubmit, onBack }) => 
             error={errors.joined_date?.message}
             {...register('joined_date')}
           />
+          <Select
+            label="Hostel Required"
+            options={[
+              { value: 'false', label: 'No' },
+              { value: 'true', label: 'Yes' },
+            ]}
+            {...register('is_hostel', { setValueAs: v => v === 'true' })}
+          />
+          <Input
+            label="Distance from School (km)"
+            type="number"
+            step="0.1"
+            placeholder="0.0"
+            {...register('distance_km')}
+          />
+          <Input
+            label="Prev. Year Attendance (Days)"
+            type="number"
+            placeholder="0"
+            {...register('prev_attendance_days')}
+          />
           <Input
             label="Roll Number"
             placeholder="Leave blank for auto-assign"
             hint="Auto-assigned sequentially if left blank"
             {...register('roll_number')}
-            containerClassName="sm:col-span-2"
           />
         </div>
 

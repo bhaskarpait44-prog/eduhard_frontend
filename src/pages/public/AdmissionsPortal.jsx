@@ -5,60 +5,94 @@ import * as z from 'zod'
 import axios from 'axios'
 import { 
   User, Users, BookOpen, CheckCircle2, ChevronRight, 
-  ChevronLeft, AlertCircle, Info, Copy, Check, ExternalLink,
-  MapPin, Phone, Mail, Heart, Calendar, GraduationCap, Loader2
+  ChevronLeft, AlertCircle, GraduationCap, Loader2,
+  Camera, FileText, Upload, Copy, Check, ExternalLink,
+  ShieldCheck, Info, Mail, Phone, ArrowRight
 } from 'lucide-react'
 import { APP_NAME } from '@/constants/app'
 import './AdmissionsPortal.css'
 
 // ── Validation Schema ───────────────────────────────────────────────────────
 const applicationSchema = z.object({
-  // Step 1: Student Info
-  first_name: z.string().min(2, 'First name is required'),
-  last_name: z.string().min(2, 'Last name is required'),
-  date_of_birth: z.string().min(1, 'Date of birth is required'),
-  gender: z.string().min(1, 'Please select a gender'),
-  class_id: z.string().min(1, 'Please select a class'),
-  stream: z.string().min(1, 'Please select a stream'),
-  joining_type: z.string().min(1, 'Please select joining type'),
+  first_name: z.string().min(2, 'Required'),
+  last_name: z.string().min(2, 'Required'),
+  date_of_birth: z.string().min(1, 'Required'),
+  gender: z.string().min(1, 'Required'),
+  aadhar_no: z.string().optional(),
+  nationality: z.string().min(2, 'Required').default('Indian'),
+  religion: z.string().min(2, 'Required'),
+  caste: z.string().min(1, 'Required'),
+  mother_tongue: z.string().min(2, 'Required'),
+  identification_marks: z.string().optional(),
+  medium: z.string().min(1, 'Required'),
+  pen_no: z.string().optional(),
+  apaar_id: z.string().optional(),
 
-  // Step 2: Family & Contact
-  address: z.string().min(10, 'Complete address is required'),
-  city: z.string().min(2, 'City is required'),
-  state: z.string().min(2, 'State is required'),
-  pincode: z.string().regex(/^\d{6}$/, 'Invalid pincode (6 digits)'),
-  phone: z.string().regex(/^\d{10}$/, 'Invalid phone number (10 digits)'),
-  email: z.string().email('Invalid email address'),
-  
-  father_name: z.string().min(2, 'Father\'s name is required'),
-  father_phone: z.string().regex(/^\d{10}$/, 'Invalid phone number (10 digits)'),
-  father_email: z.string().email('Invalid email address').optional().or(z.literal('')),
-  
-  mother_name: z.string().min(2, 'Mother\'s name is required'),
-  mother_phone: z.string().regex(/^\d{10}$/, 'Invalid phone number (10 digits)'),
-  mother_email: z.string().email('Invalid email address').optional().or(z.literal('')),
-  
-  blood_group: z.string().min(1, 'Please select blood group'),
-  emergency_contact: z.string().regex(/^\d{10}$/, 'Invalid emergency contact'),
-  medical_notes: z.string().optional(),
+  class_id: z.string().min(1, 'Required'),
+  stream: z.string().min(1, 'Required'),
+  joining_type: z.string().min(1, 'Required'),
+  is_hostel: z.string().optional(),
+  distance_km: z.string().optional(),
+  prev_attendance_days: z.string().optional(),
 
-  // Step 3: Academic Details
-  prev_school_name: z.string().min(2, 'Previous school name is required'),
-  prev_class: z.string().min(1, 'Last class attended is required'),
-  academic_notes: z.string().optional(),
-  preferred_section: z.string().optional(),
+  address: z.string().min(10, 'Too short'),
+  village: z.string().optional(),
+  police_station: z.string().optional(),
+  post_office: z.string().optional(),
+  district: z.string().optional(),
+  state: z.string().min(2, 'Required'),
+  pincode: z.string().regex(/^\d{6}$/, 'Invalid'),
 
-  // Step 4: Final
+  // Permanent Address
+  is_permanent_same: z.boolean().optional().default(false),
+  perm_address: z.string().optional(),
+  perm_village: z.string().optional(),
+  perm_police_station: z.string().optional(),
+  perm_post_office: z.string().optional(),
+  perm_district: z.string().optional(),
+  perm_state: z.string().optional(),
+  perm_pincode: z.string().optional(),
+
+  phone: z.string().regex(/^\d{10}$/, 'Invalid'),
+  whatsapp_no: z.string().optional(),
+  email: z.string().email('Invalid'),
+
+  father_name: z.string().min(2, 'Required'),
+  father_phone: z.string().regex(/^\d{10}$/, 'Invalid'),
+  father_qualification: z.string().optional(),
+  father_aadhar: z.string().optional(),
+  father_annual_income: z.string().optional(),
+
+  mother_name: z.string().min(2, 'Required'),
+  mother_phone: z.string().regex(/^\d{10}$/, 'Invalid'),
+  mother_qualification: z.string().optional(),
+  mother_aadhar: z.string().optional(),
+  mother_annual_income: z.string().optional(),
+
+  guardian_name: z.string().optional(),
+  guardian_phone: z.string().optional(),
+  guardian_relation: z.string().optional(),
+  guardian_qualification: z.string().optional(),
+  guardian_occupation: z.string().optional(),
+  guardian_aadhar: z.string().optional(),
+  guardian_annual_income: z.string().optional(),
+
+  blood_group: z.string().min(1, 'Required'),
+  emergency_contact: z.string().regex(/^\d{10}$/, 'Invalid'),
+
+  prev_school_name: z.string().optional(),
+  prev_class: z.string().optional(),
+
   terms_accepted: z.literal(true, {
-    errorMap: () => ({ message: 'You must accept the terms and conditions' }),
+    errorMap: () => ({ message: 'Please accept terms' }),
   }),
 })
 
 const STEPS = [
-  { id: 1, title: 'Student Info', icon: User },
-  { id: 2, title: 'Family & Contact', icon: Users },
-  { id: 3, title: 'Academic Details', icon: BookOpen },
-  { id: 4, title: 'Review', icon: CheckCircle2 },
+  { id: 1, title: 'Identity' },
+  { id: 2, title: 'Family' },
+  { id: 3, title: 'Academic' },
+  { id: 4, title: 'Review' },
 ]
 
 const AdmissionsPortal = () => {
@@ -67,39 +101,47 @@ const AdmissionsPortal = () => {
   const [classes, setClasses] = useState([])
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [submittedData, setSubmittedData] = useState(null)
-  const [copied, setCopied] = useState(false)
   const [apiError, setApiError] = useState(null)
   const [isClosed, setIsClosed] = useState(false)
   const [loading, setLoading] = useState(true)
   
-  // File state
   const [files, setFiles] = useState({
-    photo: null,
-    birth_certificate: null,
-    marksheet: null
+    photo: null, birth_certificate: null, marksheet: null, transfer_certificate: null,
+    admit_card: null, pass_certificate: null, registration_certificate: null,
+    character_certificate: null, prc: null, caste_certificate: null,
+    blood_group_doc: null, aadhar_student: null, aadhar_father: null, aadhar_mother: null
   })
 
   const {
-    register,
-    handleSubmit,
-    trigger,
-    watch,
-    getValues,
+    register, handleSubmit, trigger, watch, setValue,
     formState: { errors },
   } = useForm({
     resolver: zodResolver(applicationSchema),
     defaultValues: {
-      gender: '',
-      class_id: '',
-      stream: 'Regular',
-      joining_type: 'New Admission',
-      blood_group: '',
-      terms_accepted: false
+      gender: '', class_id: '', stream: 'Regular', nationality: 'Indian',
+      joining_type: 'New Admission', blood_group: '', terms_accepted: false,
+      medium: 'English', caste: 'Gen', is_permanent_same: false
     }
   })
 
+  const formData = watch()
+  const isPermanentSame = watch('is_permanent_same')
+  const currentAddress = watch(['address', 'village', 'police_station', 'post_office', 'district', 'state', 'pincode'])
+
+  // Sync permanent address if toggle is active
   useEffect(() => {
-    // Fetch sessions and classes
+    if (isPermanentSame) {
+      setValue('perm_address', currentAddress[0])
+      setValue('perm_village', currentAddress[1])
+      setValue('perm_police_station', currentAddress[2])
+      setValue('perm_post_office', currentAddress[3])
+      setValue('perm_district', currentAddress[4])
+      setValue('perm_state', currentAddress[5])
+      setValue('perm_pincode', currentAddress[6])
+    }
+  }, [isPermanentSame, ...currentAddress, setValue])
+
+  useEffect(() => {
     const fetchData = async () => {
       setLoading(true)
       try {
@@ -107,27 +149,18 @@ const AdmissionsPortal = () => {
           axios.get('/api/public/sessions/current'),
           axios.get('/api/public/classes')
         ])
-        
         const sessionData = sessionRes.data?.data
         if (sessionData) {
           setSessions([sessionData])
-          if (!sessionData.online_admission_open) {
-            setIsClosed(true)
-          }
+          if (!sessionData.online_admission_open) setIsClosed(true)
         } else {
           setIsClosed(true)
         }
-
         setClasses(classesRes.data?.data || [])
       } catch (err) {
-        console.error('Failed to fetch initial data:', err)
-        // Mock data for development if needed, but in production we should show closed
         if (import.meta.env.MODE === 'development') {
           setSessions([{ id: 1, name: '2025–26', online_admission_open: true }])
-          setClasses([
-            { id: 1, name: 'Class 1' },
-            { id: 2, name: 'Class 2' },
-          ])
+          setClasses([{ id: 1, name: 'Class 1' }, { id: 2, name: 'Class 2' }])
         } else {
           setIsClosed(true)
         }
@@ -138,36 +171,17 @@ const AdmissionsPortal = () => {
     fetchData()
   }, [])
 
-  useEffect(() => {
-    const stepTitles = {
-      1: 'Student Info',
-      2: 'Family & Contact',
-      3: 'Academic Details',
-      4: 'Review & Submit'
-    }
-    document.title = `Step ${currentStep} – ${stepTitles[currentStep]} | ${APP_NAME} Admissions`
-  }, [currentStep])
-
   const nextStep = async () => {
-    let fieldsToValidate = []
-    if (currentStep === 1) {
-      fieldsToValidate = ['first_name', 'last_name', 'date_of_birth', 'gender', 'class_id', 'stream', 'joining_type']
-    } else if (currentStep === 2) {
-      fieldsToValidate = ['address', 'city', 'state', 'pincode', 'phone', 'email', 'father_name', 'father_phone', 'mother_name', 'mother_phone', 'blood_group', 'emergency_contact']
-    } else if (currentStep === 3) {
-      fieldsToValidate = ['prev_school_name', 'prev_class']
-    }
+    let fields = []
+    if (currentStep === 1) fields = ['first_name', 'last_name', 'date_of_birth', 'gender', 'class_id', 'stream', 'joining_type', 'nationality', 'religion', 'caste', 'mother_tongue', 'medium']
+    if (currentStep === 2) fields = ['address', 'state', 'pincode', 'phone', 'email', 'father_name', 'father_phone', 'mother_name', 'mother_phone', 'blood_group', 'emergency_contact']
+    if (currentStep === 3) fields = ['prev_school_name', 'prev_class']
 
-    const isValid = await trigger(fieldsToValidate)
+    const isValid = await trigger(fields)
     if (isValid) {
       setCurrentStep(prev => Math.min(prev + 1, 4))
       window.scrollTo(0, 0)
     }
-  }
-
-  const prevStep = () => {
-    setCurrentStep(prev => Math.max(prev - 1, 1))
-    window.scrollTo(0, 0)
   }
 
   const handleFileChange = (e) => {
@@ -181,156 +195,65 @@ const AdmissionsPortal = () => {
     setIsSubmitting(true)
     setApiError(null)
     try {
-      const formData = new FormData()
-      formData.append('student_data', JSON.stringify(data))
-      
-      if (files.photo) formData.append('photo', files.photo)
-      if (files.birth_certificate) formData.append('birth_certificate', files.birth_certificate)
-      if (files.marksheet) formData.append('marksheet', files.marksheet)
-
-      const res = await axios.post('/api/applications', formData, {
+      const payload = new FormData()
+      payload.append('student_data', JSON.stringify(data))
+      Object.keys(files).forEach(key => { if (files[key]) payload.append(key, files[key]) })
+      const res = await axios.post('/api/applications', payload, {
         headers: { 'Content-Type': 'multipart/form-data' }
       })
-      const reference = res.data?.data?.reference_no || `APP-2025-${Math.floor(1000 + Math.random() * 9000)}`
-      setSubmittedData({ ...data, reference })
-      window.scrollTo(0, 0)
+      setSubmittedData({ ...data, reference: res.data?.data?.reference_no })
     } catch (err) {
-      setApiError(err.response?.data?.message || 'Failed to submit application. Please try again.')
+      setApiError(err.response?.data?.message || 'Submission failed.')
     } finally {
       setIsSubmitting(false)
     }
   }
 
-  const copyToClipboard = () => {
-    if (!submittedData?.reference) return
-    navigator.clipboard.writeText(submittedData.reference)
-    setCopied(true)
-    setTimeout(() => setCopied(false), 2000)
-  }
+  if (loading) return <div className="admissions-portal flex items-center justify-center p-20 font-bold">Loading...</div>
 
-  if (loading) {
-    return (
-      <div className="admissions-portal flex items-center justify-center">
-        <Loader2 className="animate-spin text-primary" size={48} />
+  if (isClosed && !submittedData) return (
+    <div className="admissions-portal flex items-center justify-center p-6">
+      <div className="max-w-md w-full text-center">
+        <h1 className="text-2xl font-bold mb-4">Admissions Closed</h1>
+        <p className="text-slate-500 mb-8">Please check back later or contact the school office.</p>
+        <a href="/status" className="font-bold text-blue-600 underline">Track existing application</a>
       </div>
-    )
-  }
+    </div>
+  )
 
-  if (isClosed) {
-    return (
-      <div className="admissions-portal">
-        <header className="admissions-header">
-          <div className="logo-group">
-            <div className="school-logo"><GraduationCap size={24} /></div>
-            <h1 className="school-name">{APP_NAME}</h1>
-            <span className="badge">Admissions Closed</span>
-          </div>
-        </header>
-
-        <main className="admissions-content flex flex-col items-center justify-center text-center py-20">
-          <div className="h-20 w-20 rounded-full bg-accent-soft flex items-center justify-center text-accent mb-6">
-            <AlertCircle size={40} />
-          </div>
-          <h1 className="font-serif text-3xl mb-4 text-primary">Admissions are Currently Closed</h1>
-          <p className="text-text-secondary max-w-md leading-relaxed mb-8">
-            Thank you for your interest in {APP_NAME}. Online applications for the upcoming academic session are not being accepted at this moment.
-          </p>
-          <div className="p-6 bg-surface border border-border rounded-2xl shadow-sm max-w-sm">
-            <p className="text-sm font-bold text-text-muted uppercase tracking-wider mb-2">Contact Us</p>
-            <p className="text-sm text-text-secondary">Please visit our campus or contact the administration office for more information about the next admission cycle.</p>
-          </div>
-          <a href="/" className="btn-ghost mt-10">
-            Back to School Website
-          </a>
-        </main>
+  if (submittedData) return (
+    <div className="admissions-portal">
+      <div className="success-minimal">
+        <CheckCircle2 className="success-icon mx-auto" size={64} />
+        <h1 className="text-3xl font-bold">Application Received</h1>
+        <p className="mt-4 text-slate-500">Your reference number for future tracking:</p>
+        <div className="ref-code">{submittedData.reference}</div>
+        <div className="flex flex-col gap-4">
+          <button className="btn-primary-clean" onClick={() => window.location.href = '/'}>Back to Home</button>
+          <a href="/status" className="text-sm font-bold text-slate-400">TRACK STATUS</a>
+        </div>
       </div>
-    )
-  }
-
-  if (submittedData) {
-    return (
-      <div className="admissions-portal">
-        <header className="admissions-header">
-          <div className="logo-group">
-            <div className="school-logo"><GraduationCap size={24} /></div>
-            <h1 className="school-name">{APP_NAME}</h1>
-            <span className="badge">Admissions 2025–26</span>
-          </div>
-        </header>
-
-        <main className="admissions-content">
-          <div className="success-screen">
-            <div className="checkmark-wrapper">
-              <Check size={48} strokeWidth={3} />
-            </div>
-            <h1 className="font-serif">Application Submitted!</h1>
-            <p>
-              We've received your application for <strong>{submittedData.first_name} {submittedData.last_name}</strong> and will contact you at <strong>{submittedData.email}</strong> within 3–5 working days.
-            </p>
-
-            <div className="reference-box">
-              <span className="ref-label">Your Application Reference</span>
-              <div className="ref-value font-mono">{submittedData.reference}</div>
-              <button className="copy-btn" onClick={copyToClipboard} title="Copy to clipboard">
-                {copied ? <Check size={18} className="text-success" /> : <Copy size={18} />}
-              </button>
-            </div>
-
-            <div className="divider" />
-
-            <div className="success-actions">
-              <button onClick={() => window.location.reload()} className="btn-ghost">
-                Submit Another Application
-              </button>
-              <a href="/" className="btn-ghost">
-                Back to School Website <ExternalLink size={14} />
-              </a>
-            </div>
-          </div>
-        </main>
-      </div>
-    )
-  }
+    </div>
+  )
 
   return (
     <div className="admissions-portal">
       <header className="admissions-header">
         <div className="logo-group">
-          <div className="school-logo"><GraduationCap size={24} /></div>
+          <GraduationCap size={24} className="text-blue-600" />
           <h1 className="school-name">{APP_NAME}</h1>
-          <span className="badge">Admissions 2025–26</span>
         </div>
-        <a href="/status" className="track-link">Already applied? Track Status →</a>
+        <a href="/status" className="track-link">TRACK STATUS</a>
       </header>
 
-      <div className="admissions-hero">
-        <h1 className="font-serif">Online Admission Application</h1>
-        <p>Step-by-step. Takes under 5 minutes.</p>
-      </div>
-
-      <div className="admissions-progress-wrapper">
+      <div className="admissions-progress-container">
         <div className="admissions-progress">
-          <div 
-            className="progress-fill" 
-            style={{ width: `${((currentStep - 1) / (STEPS.length - 1)) * 100}%` }}
-          />
-          {STEPS.map((step) => {
-            const Icon = step.icon
-            const isCompleted = currentStep > step.id
-            const isActive = currentStep === step.id
-            
-            return (
-              <div 
-                key={step.id} 
-                className={`step-item ${isActive ? 'active' : ''} ${isCompleted ? 'completed' : ''}`}
-              >
-                <div className="step-circle">
-                  {isCompleted ? <Check size={16} /> : step.id}
-                </div>
-                <span className="step-label">{step.title}</span>
-              </div>
-            )
-          })}
+          {STEPS.map((step) => (
+            <div key={step.id} className={`step-item ${currentStep === step.id ? 'active' : ''} ${currentStep > step.id ? 'completed' : ''}`}>
+              <div className="step-circle">{currentStep > step.id ? <Check size={18} /> : step.id}</div>
+              <span className="step-label">{step.title}</span>
+            </div>
+          ))}
         </div>
       </div>
 
@@ -338,61 +261,97 @@ const AdmissionsPortal = () => {
         <form onSubmit={handleSubmit(onSubmit)}>
           {currentStep === 1 && (
             <div className="step-container">
-              <div className="admissions-card" style={{ animationDelay: '0ms' }}>
-                <span className="card-label">Basic Identity</span>
-                <h2 className="card-title font-serif">Student Information</h2>
-                <p className="card-subtitle">Please enter the student's legal name as per birth certificate.</p>
-                
-                <div className="form-grid">
-                  <div className={`form-field col-6 ${errors.first_name ? 'error' : ''}`}>
-                    <label>First Name <span className="required">*</span></label>
-                    <input {...register('first_name')} placeholder="Enter first name" />
-                    {errors.first_name && <span className="error-message"><AlertCircle size={12} /> {errors.first_name.message}</span>}
+              <div className="admissions-card">
+                <div className="card-header-simple">
+                  <h2 className="card-title-simple text-blue-600">01. Student Identity</h2>
+                  <p className="card-subtitle-simple">Basic identification and personal details</p>
+                </div>
+                <div className="form-grid-horizontal">
+                  <div className="form-field">
+                    <label>Name of pupil (In capital letters)</label>
+                    <input {...register('first_name')} placeholder="First name" className="uppercase" />
+                    {errors.first_name && <span className="error-message">{errors.first_name.message}</span>}
                   </div>
-                  <div className={`form-field col-6 ${errors.last_name ? 'error' : ''}`}>
-                    <label>Last Name <span className="required">*</span></label>
-                    <input {...register('last_name')} placeholder="Enter last name" />
-                    {errors.last_name && <span className="error-message"><AlertCircle size={12} /> {errors.last_name.message}</span>}
+                  <div className="form-field">
+                    <label>Last Name (Surname)</label>
+                    <input {...register('last_name')} placeholder="Last name" className="uppercase" />
                   </div>
-                  <div className={`form-field col-6 ${errors.date_of_birth ? 'error' : ''}`}>
-                    <label>Date of Birth <span className="required">*</span></label>
+                  <div className="form-field">
+                    <label>Date of Birth</label>
                     <input type="date" {...register('date_of_birth')} />
-                    {errors.date_of_birth && <span className="error-message"><AlertCircle size={12} /> {errors.date_of_birth.message}</span>}
                   </div>
-                  <div className={`form-field col-6 ${errors.gender ? 'error' : ''}`}>
-                    <label>Gender <span className="required">*</span></label>
+                  <div className="form-field">
+                    <label>Aadhar No.</label>
+                    <input {...register('aadhar_no')} maxLength={12} placeholder="12-digit number" />
+                  </div>
+                  <div className="form-field">
+                    <label>Gender</label>
                     <select {...register('gender')}>
-                      <option value="">Select Gender</option>
+                      <option value="">Select</option>
                       <option value="male">Male</option>
                       <option value="female">Female</option>
                       <option value="other">Other</option>
                     </select>
-                    {errors.gender && <span className="error-message"><AlertCircle size={12} /> {errors.gender.message}</span>}
+                  </div>
+                  <div className="form-field">
+                    <label>Nationality</label>
+                    <input {...register('nationality')} />
+                  </div>
+                  <div className="form-field">
+                    <label>Religion</label>
+                    <select {...register('religion')}>
+                      <option value="">Select Religion</option>
+                      <option value="Hindu">Hindu</option>
+                      <option value="Muslim">Muslim</option>
+                      <option value="Christian">Christian</option>
+                      <option value="Sikh">Sikh</option>
+                      <option value="Buddhist">Buddhist</option>
+                      <option value="Jain">Jain</option>
+                      <option value="Others">Others</option>
+                    </select>
+                  </div>
+                  <div className="form-field">
+                    <label>Caste</label>
+                    <select {...register('caste')}>
+                      <option value="Gen">General</option>
+                      <option value="OBC">OBC</option>
+                      <option value="ST">ST</option>
+                      <option value="SC">SC</option>
+                    </select>
+                  </div>
+                  <div className="form-field">
+                    <label>Mother Tongue</label>
+                    <input {...register('mother_tongue')} />
+                  </div>
+                  <div className="form-field">
+                    <label>Identification Marks</label>
+                    <input {...register('identification_marks')} placeholder="e.g. Mole on left cheek" />
+                  </div>
+                  <div className="form-field">
+                    <label>PEN No.</label>
+                    <input {...register('pen_no')} />
+                  </div>
+                  <div className="form-field">
+                    <label>APAAR ID</label>
+                    <input {...register('apaar_id')} />
                   </div>
                 </div>
               </div>
 
-              <div className="admissions-card" style={{ animationDelay: '100ms' }}>
-                <span className="card-label">Applying For</span>
-                <h2 className="card-title font-serif">Admission Details</h2>
-                
-                <div className="form-grid">
-                  <div className="form-field col-6">
-                    <label>Academic Session</label>
-                    <input value={sessions[0]?.name || '2025–26'} readOnly />
-                  </div>
-                  <div className={`form-field col-6 ${errors.class_id ? 'error' : ''}`}>
-                    <label>Class Applying For <span className="required">*</span></label>
+              <div className="admissions-card">
+                <div className="card-header-simple">
+                  <h2 className="card-title-simple text-blue-600">02. Academic Program</h2>
+                </div>
+                <div className="form-grid-horizontal">
+                  <div className="form-field">
+                    <label>Admission Sought For Class</label>
                     <select {...register('class_id')}>
                       <option value="">Select Class</option>
-                      {classes.map(c => (
-                        <option key={c.id} value={c.id}>{c.name}</option>
-                      ))}
+                      {classes.map(c => <option key={c.id} value={String(c.id)}>{c.name}</option>)}
                     </select>
-                    {errors.class_id && <span className="error-message"><AlertCircle size={12} /> {errors.class_id.message}</span>}
                   </div>
-                  <div className={`form-field col-6 ${errors.stream ? 'error' : ''}`}>
-                    <label>Stream <span className="required">*</span></label>
+                  <div className="form-field">
+                    <label>Stream / Category</label>
                     <select {...register('stream')}>
                       <option value="Regular">Regular</option>
                       <option value="Science">Science</option>
@@ -400,11 +359,18 @@ const AdmissionsPortal = () => {
                       <option value="Arts">Arts</option>
                     </select>
                   </div>
-                  <div className={`form-field col-6 ${errors.joining_type ? 'error' : ''}`}>
-                    <label>Joining Type <span className="required">*</span></label>
-                    <select {...register('joining_type')}>
-                      <option value="New Admission">New Admission</option>
-                      <option value="Transfer">Transfer</option>
+                  <div className="form-field">
+                    <label>Medium</label>
+                    <select {...register('medium')}>
+                      <option value="English">English</option>
+                      <option value="Assamese">Assamese</option>
+                    </select>
+                  </div>
+                  <div className="form-field">
+                    <label>Hostel Facility</label>
+                    <select {...register('is_hostel')}>
+                      <option value="no">No</option>
+                      <option value="yes">Yes</option>
                     </select>
                   </div>
                 </div>
@@ -414,107 +380,144 @@ const AdmissionsPortal = () => {
 
           {currentStep === 2 && (
             <div className="step-container">
-              <div className="admissions-card" style={{ animationDelay: '0ms' }}>
-                <span className="card-label">Guardian Contact</span>
-                <h2 className="card-title font-serif">Address & Contact</h2>
-                
-                <div className="form-grid">
-                  <div className={`form-field col-12 ${errors.address ? 'error' : ''}`}>
-                    <label>Current Address <span className="required">*</span></label>
-                    <textarea {...register('address')} rows={2} placeholder="Full street address, locality" />
-                    {errors.address && <span className="error-message"><AlertCircle size={12} /> {errors.address.message}</span>}
+              <div className="admissions-card">
+                <div className="card-header-simple">
+                  <h2 className="card-title-simple text-blue-600">03. Current Address</h2>
+                </div>
+                <div className="form-grid-horizontal">
+                  <div className="form-field full-width">
+                    <label>Village/Town/Street</label>
+                    <input {...register('address')} placeholder="Vill/Locality" />
                   </div>
-                  <div className={`form-field col-6 ${errors.city ? 'error' : ''}`}>
-                    <label>City <span className="required">*</span></label>
-                    <input {...register('city')} />
+                  <div className="form-field">
+                    <label>Police Station (P.S.)</label>
+                    <input {...register('police_station')} />
                   </div>
-                  <div className={`form-field col-6 ${errors.state ? 'error' : ''}`}>
-                    <label>State <span className="required">*</span></label>
+                  <div className="form-field">
+                    <label>Post Office (P.O.)</label>
+                    <input {...register('post_office')} />
+                  </div>
+                  <div className="form-field">
+                    <label>District</label>
+                    <input {...register('district')} />
+                  </div>
+                  <div className="form-field">
+                    <label>State</label>
                     <input {...register('state')} />
                   </div>
-                  <div className={`form-field col-4 ${errors.pincode ? 'error' : ''}`}>
-                    <label>Pincode <span className="required">*</span></label>
+                  <div className="form-field">
+                    <label>PIN Code</label>
                     <input {...register('pincode')} maxLength={6} />
                   </div>
-                  <div className={`form-field col-8 ${errors.phone ? 'error' : ''}`}>
-                    <label>Phone Number <span className="required">*</span></label>
+                </div>
+
+                <div className="mt-8">
+                  <div className="card-header-simple px-0">
+                    <h2 className="card-title-simple text-blue-600">04. Permanent Address</h2>
+                  </div>
+                  <div className="flex items-center gap-2 mb-4 bg-slate-50 p-3 rounded-lg border border-slate-200">
+                    <input type="checkbox" id="is_permanent_same" {...register('is_permanent_same')} className="h-4 w-4 rounded border-slate-300 text-blue-600" />
+                    <label htmlFor="is_permanent_same" className="text-sm font-semibold text-slate-700 cursor-pointer">Same as Current Address</label>
+                  </div>
+
+                  {!isPermanentSame && (
+                    <div className="form-grid-horizontal animate-in fade-in slide-in-from-top-2 duration-300">
+                      <div className="form-field full-width">
+                        <label>Village/Town/Street</label>
+                        <input {...register('perm_address')} placeholder="Vill/Locality" />
+                      </div>
+                      <div className="form-field">
+                        <label>Police Station (P.S.)</label>
+                        <input {...register('perm_police_station')} />
+                      </div>
+                      <div className="form-field">
+                        <label>Post Office (P.O.)</label>
+                        <input {...register('perm_post_office')} />
+                      </div>
+                      <div className="form-field">
+                        <label>District</label>
+                        <input {...register('perm_district')} />
+                      </div>
+                      <div className="form-field">
+                        <label>State</label>
+                        <input {...register('perm_state')} />
+                      </div>
+                      <div className="form-field">
+                        <label>PIN Code</label>
+                        <input {...register('perm_pincode')} maxLength={6} />
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                <div className="form-grid-horizontal mt-8 pt-6 border-t border-slate-100">
+                  <div className="form-field">
+                    <label>Contact No.</label>
                     <input {...register('phone')} maxLength={10} />
                   </div>
-                  <div className={`form-field col-12 ${errors.email ? 'error' : ''}`}>
-                    <label>Student/Primary Email <span className="required">*</span></label>
-                    <input {...register('email')} placeholder="email@example.com" />
-                    {errors.email && <span className="error-message"><AlertCircle size={12} /> {errors.email.message}</span>}
+                  <div className="form-field">
+                    <label>WhatsApp No.</label>
+                    <input {...register('whatsapp_no')} maxLength={10} />
                   </div>
-                </div>
-              </div>
-
-              <div className="admissions-card" style={{ animationDelay: '80ms' }}>
-                <span className="card-label">Father's Details</span>
-                <h2 className="card-title font-serif">Father's Information</h2>
-                <div className="form-grid">
-                  <div className={`form-field col-6 ${errors.father_name ? 'error' : ''}`}>
-                    <label>Father Name <span className="required">*</span></label>
-                    <input {...register('father_name')} />
+                  <div className="form-field">
+                    <label>Email Address</label>
+                    <input {...register('email')} type="email" placeholder="For updates" />
                   </div>
-                  <div className={`form-field col-6 ${errors.father_phone ? 'error' : ''}`}>
-                    <label>Father Phone <span className="required">*</span></label>
-                    <input {...register('father_phone')} maxLength={10} />
-                  </div>
-                  <div className={`form-field col-12 ${errors.father_email ? 'error' : ''}`}>
-                    <label>Father Email</label>
-                    <input {...register('father_email')} />
-                  </div>
-                </div>
-              </div>
-
-              <div className="admissions-card" style={{ animationDelay: '160ms' }}>
-                <span className="card-label">Mother's Details</span>
-                <h2 className="card-title font-serif">Mother's Information</h2>
-                <div className="form-grid">
-                  <div className={`form-field col-6 ${errors.mother_name ? 'error' : ''}`}>
-                    <label>Mother Name <span className="required">*</span></label>
-                    <input {...register('mother_name')} />
-                  </div>
-                  <div className={`form-field col-6 ${errors.mother_phone ? 'error' : ''}`}>
-                    <label>Mother Phone <span className="required">*</span></label>
-                    <input {...register('mother_phone')} maxLength={10} />
-                  </div>
-                  <div className={`form-field col-12 ${errors.mother_email ? 'error' : ''}`}>
-                    <label>Mother Email</label>
-                    <input {...register('mother_email')} />
-                  </div>
-                </div>
-                <div className="info-banner">
-                  <Info size={18} className="icon" />
-                  <p>At least one parent email is required for portal access and future communication.</p>
-                </div>
-              </div>
-
-              <div className="admissions-card" style={{ animationDelay: '240ms' }}>
-                <span className="card-label">Health & Emergency</span>
-                <h2 className="card-title font-serif">Medical Information</h2>
-                <div className="form-grid">
-                  <div className={`form-field col-4 ${errors.blood_group ? 'error' : ''}`}>
-                    <label>Blood Group <span className="required">*</span></label>
+                  <div className="form-field">
+                    <label>Blood Group</label>
                     <select {...register('blood_group')}>
                       <option value="">Select</option>
-                      <option value="A+">A+</option>
-                      <option value="A-">A-</option>
-                      <option value="B+">B+</option>
-                      <option value="B-">B-</option>
-                      <option value="O+">O+</option>
-                      <option value="O-">O-</option>
-                      <option value="AB+">AB+</option>
-                      <option value="AB-">AB-</option>
+                      <option value="A+">A+</option><option value="A-">A-</option>
+                      <option value="B+">B+</option><option value="B-">B-</option>
+                      <option value="O+">O+</option><option value="O-">O-</option>
+                      <option value="AB+">AB+</option><option value="AB-">AB-</option>
                     </select>
                   </div>
-                  <div className={`form-field col-8 ${errors.emergency_contact ? 'error' : ''}`}>
-                    <label>Emergency Contact <span className="required">*</span></label>
+                  <div className="form-field">
+                    <label>Emergency Contact</label>
                     <input {...register('emergency_contact')} maxLength={10} />
                   </div>
-                  <div className="form-field col-12">
-                    <label>Medical Notes (Optional)</label>
-                    <textarea {...register('medical_notes')} rows={2} placeholder="Any allergies, medications, or chronic conditions" />
+                </div>
+              </div>
+
+              <div className="admissions-card">
+                <div className="card-header-simple">
+                  <h2 className="card-title-simple text-blue-600">05. Parents' Profile</h2>
+                </div>
+                <div className="form-grid-horizontal border-b pb-4 mb-4">
+                  <div className="form-field">
+                    <label>Mother's Name</label>
+                    <input {...register('mother_name')} />
+                  </div>
+                  <div className="form-field">
+                    <label>Mother's Qualification</label>
+                    <input {...register('mother_qualification')} />
+                  </div>
+                  <div className="form-field">
+                    <label>Mother's Phone</label>
+                    <input {...register('mother_phone')} maxLength={10} />
+                  </div>
+                  <div className="form-field">
+                    <label>Mother's Aadhar</label>
+                    <input {...register('mother_aadhar')} maxLength={12} />
+                  </div>
+                </div>
+                <div className="form-grid-horizontal">
+                  <div className="form-field">
+                    <label>Father's Name</label>
+                    <input {...register('father_name')} />
+                  </div>
+                  <div className="form-field">
+                    <label>Father's Qualification</label>
+                    <input {...register('father_qualification')} />
+                  </div>
+                  <div className="form-field">
+                    <label>Father's Phone</label>
+                    <input {...register('father_phone')} maxLength={10} />
+                  </div>
+                  <div className="form-field">
+                    <label>Father's Aadhar</label>
+                    <input {...register('father_aadhar')} maxLength={12} />
                   </div>
                 </div>
               </div>
@@ -523,63 +526,33 @@ const AdmissionsPortal = () => {
 
           {currentStep === 3 && (
             <div className="step-container">
-              <div className="admissions-card" style={{ animationDelay: '0ms' }}>
-                <span className="card-label">Previous Education</span>
-                <h2 className="card-title font-serif">Academic Background</h2>
-                <div className="form-grid">
-                  <div className={`form-field col-7 ${errors.prev_school_name ? 'error' : ''}`}>
-                    <label>Previous School Name <span className="required">*</span></label>
+              <div className="admissions-card">
+                <div className="card-header-simple">
+                  <h2 className="card-title-simple text-blue-600">06. Previous Academic Record</h2>
+                </div>
+                <div className="form-grid-horizontal">
+                  <div className="form-field full-width">
+                    <label>Name of the previous school & location</label>
                     <input {...register('prev_school_name')} />
                   </div>
-                  <div className={`form-field col-5 ${errors.prev_class ? 'error' : ''}`}>
-                    <label>Last Class Attended <span className="required">*</span></label>
+                  <div className="form-field">
+                    <label>Class</label>
                     <input {...register('prev_class')} />
-                  </div>
-                  <div className="form-field col-12">
-                    <label>Additional Notes</label>
-                    <textarea {...register('academic_notes')} rows={3} placeholder="Achievements, special interests, or any gaps in education" />
-                  </div>
-                  <div className="form-field col-6">
-                    <label>Preferred Section (Optional)</label>
-                    <input {...register('preferred_section')} />
                   </div>
                 </div>
               </div>
 
-              <div className="admissions-card checklist-card" style={{ animationDelay: '80ms' }}>
-                <span className="card-label">Upload Documents</span>
-                <h2 className="card-title font-serif" style={{ color: 'var(--primary)' }}>Digital Submission</h2>
-                <p className="card-subtitle" style={{ color: 'var(--primary-light)' }}>Upload clear copies of the following documents (Max 5MB each, Image or PDF).</p>
-                
-                <div className="form-grid mt-6">
-                  <div className="form-field col-12">
-                    <label>Passport Photo {files.photo && <span className="text-success ml-2">✓ Selected</span>}</label>
-                    <input type="file" name="photo" onChange={handleFileChange} accept="image/*" className="file-input" />
-                  </div>
-                  <div className="form-field col-12">
-                    <label>Birth Certificate {files.birth_certificate && <span className="text-success ml-2">✓ Selected</span>}</label>
-                    <input type="file" name="birth_certificate" onChange={handleFileChange} accept="image/*,application/pdf" className="file-input" />
-                  </div>
-                  <div className="form-field col-12">
-                    <label>Previous Marksheet {files.marksheet && <span className="text-success ml-2">✓ Selected</span>}</label>
-                    <input type="file" name="marksheet" onChange={handleFileChange} accept="image/*,application/pdf" className="file-input" />
-                  </div>
+              <div className="admissions-card">
+                <div className="card-header-simple">
+                  <h2 className="card-title-simple text-blue-600">07. Documents to be Submitted</h2>
                 </div>
-
-                <div className="divider my-6" />
-                
-                <span className="card-label">Physical Checklist</span>
-                <p className="text-xs text-primary-light mb-4">Please also bring these originals during your visit:</p>
-                <div className="checklist-items">
-                  {[
-                    'Transfer Certificate (Original)',
-                    'Aadhar Card (Student + Both Parents)'
-                  ].map((item, i) => (
-                    <div key={i} className="checklist-item">
-                      <div className="check-box"><Check size={12} /></div>
-                      {item}
-                    </div>
-                  ))}
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-6">
+                  <FileField label="Latest Passport Photo" name="photo" files={files} onChange={handleFileChange} />
+                  <FileField label="Birth Certificate" name="birth_certificate" files={files} onChange={handleFileChange} />
+                  <FileField label="HSLC Mark Sheet" name="marksheet" files={files} onChange={handleFileChange} />
+                  <FileField label="PRC" name="prc" files={files} onChange={handleFileChange} />
+                  <FileField label="Caste Certificate" name="caste_certificate" files={files} onChange={handleFileChange} />
+                  <FileField label="Student Aadhar Card" name="aadhar_student" files={files} onChange={handleFileChange} />
                 </div>
               </div>
             </div>
@@ -587,120 +560,74 @@ const AdmissionsPortal = () => {
 
           {currentStep === 4 && (
             <div className="step-container">
-              <div className="admissions-card" style={{ animationDelay: '0ms' }}>
-                <div className="flex items-center justify-between mb-6">
-                  <div>
-                    <span className="card-label">Review Step 1</span>
-                    <h2 className="card-title font-serif">Student Info</h2>
-                  </div>
-                  <button type="button" onClick={() => setCurrentStep(1)} className="btn-ghost">Edit</button>
+              <div className="admissions-card">
+                <div className="card-header-simple">
+                  <h2 className="card-title-simple text-blue-600">08. Review & Submit</h2>
                 </div>
-                <div className="form-grid">
-                  <SummaryItem label="Full Name" value={`${watch('first_name')} ${watch('last_name')}`} />
-                  <SummaryItem label="Gender" value={watch('gender')} />
-                  <SummaryItem label="DOB" value={watch('date_of_birth')} />
-                  <SummaryItem label="Applying For" value={classes.find(c => c.id == watch('class_id'))?.name || '--'} />
-                  <SummaryItem label="Stream" value={watch('stream')} />
-                  <SummaryItem label="Joining Type" value={watch('joining_type')} />
+                <div className="summary-list mt-6 grid grid-cols-1 sm:grid-cols-2 gap-x-8">
+                  <SummaryRow label="Student" value={`${formData.first_name} ${formData.last_name}`} />
+                  <SummaryRow label="Class" value={classes.find(c => String(c.id) === formData.class_id)?.name} />
+                  <SummaryRow label="Gender" value={formData.gender} />
+                  <SummaryRow label="DOB" value={formData.date_of_birth} />
+                  <SummaryRow label="Aadhar" value={formData.aadhar_no} />
+                  <SummaryRow label="Address" value={`${formData.address}, ${formData.district}, ${formData.state}`} />
+                  <SummaryRow label="Father" value={formData.father_name} />
+                  <SummaryRow label="Mother" value={formData.mother_name} />
                 </div>
+                
+                <div className="mt-10 pt-6 border-t border-slate-100 bg-slate-50 p-6 rounded-xl">
+                  <h3 className="font-bold text-slate-800 mb-2">DECLARATION</h3>
+                  <label className="flex items-center gap-3 cursor-pointer">
+                    <input type="checkbox" {...register('terms_accepted')} className="h-4 w-4 rounded border-slate-300 text-blue-600" />
+                    <span className="text-sm font-semibold text-slate-700">I acknowledge and accept the declaration.</span>
+                  </label>
+                  {errors.terms_accepted && <p className="text-red-500 text-xs mt-2 font-bold">{errors.terms_accepted.message}</p>}
+                </div>
+                {apiError && <p className="mt-4 p-3 bg-red-50 text-red-600 rounded text-sm font-bold border border-red-100">{apiError}</p>}
               </div>
-
-              <div className="admissions-card" style={{ animationDelay: '80ms' }}>
-                <div className="flex items-center justify-between mb-6">
-                  <div>
-                    <span className="card-label">Review Step 2</span>
-                    <h2 className="card-title font-serif">Family & Contact</h2>
-                  </div>
-                  <button type="button" onClick={() => setCurrentStep(2)} className="btn-ghost">Edit</button>
-                </div>
-                <div className="form-grid">
-                  <SummaryItem label="Email" value={watch('email')} col="col-12" />
-                  <SummaryItem label="Father Name" value={watch('father_name')} />
-                  <SummaryItem label="Father Phone" value={watch('father_phone')} />
-                  <SummaryItem label="Mother Name" value={watch('mother_name')} />
-                  <SummaryItem label="Mother Phone" value={watch('mother_phone')} />
-                  <SummaryItem label="City" value={watch('city')} />
-                  <SummaryItem label="Pincode" value={watch('pincode')} />
-                </div>
-              </div>
-
-              <div className="admissions-card" style={{ animationDelay: '160ms' }}>
-                <div className="flex items-center justify-between mb-6">
-                  <div>
-                    <span className="card-label">Review Step 3</span>
-                    <h2 className="card-title font-serif">Academic History</h2>
-                  </div>
-                  <button type="button" onClick={() => setCurrentStep(3)} className="btn-ghost">Edit</button>
-                </div>
-                <div className="form-grid">
-                  <SummaryItem label="Prev School" value={watch('prev_school_name')} col="col-8" />
-                  <SummaryItem label="Last Class" value={watch('prev_class')} col="col-4" />
-                </div>
-              </div>
-
-              <div className="flex flex-col gap-4 mt-4" style={{ animation: 'cardEnter 0.4s ease-out both', animationDelay: '240ms' }}>
-                <label className={`flex items-start gap-3 p-4 rounded-xl border-1.5 transition-all cursor-pointer ${watch('terms_accepted') ? 'border-accent bg-accent-soft' : 'border-border bg-white'}`}>
-                  <input 
-                    type="checkbox" 
-                    {...register('terms_accepted')}
-                    className="mt-1 accent-accent"
-                  />
-                  <span className="text-sm text-text-secondary leading-relaxed">
-                    I confirm that all information provided is accurate and true to the best of my knowledge. I understand that any false declaration may lead to cancellation of the application. I agree to the school's admission terms and privacy policy.
-                  </span>
-                </label>
-                {errors.terms_accepted && <span className="error-message px-4"><AlertCircle size={12} /> {errors.terms_accepted.message}</span>}
-              </div>
-
-              {apiError && (
-                <div className="p-4 bg-red-50 border border-red-200 rounded-xl flex items-center gap-3 text-error text-sm mt-4">
-                  <AlertCircle size={18} />
-                  {apiError}
-                </div>
-              )}
-
-              <button 
-                type="submit" 
-                className="btn-continue btn-submit mt-6 flex items-center justify-center gap-2"
-                disabled={isSubmitting}
-              >
-                {isSubmitting ? (
-                  <>
-                    <div className="h-5 w-5 animate-spin rounded-full border-2 border-white border-t-transparent" />
-                    Processing Application...
-                  </>
-                ) : 'Submit Final Application'}
-              </button>
             </div>
           )}
-
-          <div className="admissions-footer">
-            <div className="step-info">
-              Step {currentStep} of 4 — {STEPS[currentStep - 1].title}
-            </div>
-            <div className="nav-buttons">
-              {currentStep > 1 && (
-                <button type="button" onClick={prevStep} className="btn-back flex items-center gap-2">
-                  <ChevronLeft size={18} /> Back
-                </button>
-              )}
-              {currentStep < 4 && (
-                <button type="button" onClick={nextStep} className="btn-continue flex items-center gap-2">
-                  Continue <ChevronRight size={18} />
-                </button>
-              )}
-            </div>
-          </div>
         </form>
       </main>
+
+      <footer className="admissions-footer">
+        {currentStep > 1 ? (
+          <button type="button" className="btn-secondary-clean flex items-center gap-2" onClick={() => setCurrentStep(s => s - 1)}>
+            <ChevronLeft size={18} /> BACK
+          </button>
+        ) : <div />}
+        
+        {currentStep < 4 ? (
+          <button type="button" className="btn-primary-clean" onClick={nextStep}>
+            CONTINUE <ChevronRight size={18} />
+          </button>
+        ) : (
+          <button type="button" className="btn-primary-clean flex items-center gap-2" disabled={isSubmitting} onClick={handleSubmit(onSubmit)}>
+            {isSubmitting ? <><Loader2 size={18} className="animate-spin" /> PROCESSING...</> : <><ShieldCheck size={18} /> SUBMIT APPLICATION</>}
+          </button>
+        )}
+      </footer>
     </div>
   )
 }
 
-const SummaryItem = ({ label, value, col = 'col-6' }) => (
-  <div className={`flex flex-col gap-1 ${col}`}>
-    <span className="text-xs font-semibold text-text-muted uppercase tracking-wider">{label}</span>
-    <span className="text-sm font-medium text-text-primary">{value || '--'}</span>
+const FileField = ({ label, name, files, onChange }) => (
+  <div className="file-input-wrapper">
+    <label className="text-xs font-bold text-slate-500 mb-1 block uppercase">{label}</label>
+    <div className={`file-drop-zone ${files[name] ? 'has-file' : ''}`}>
+      <input type="file" name={name} onChange={onChange} accept="image/*,application/pdf" id={`file-${name}`} className="hidden" />
+      <label htmlFor={`file-${name}`} className="cursor-pointer flex items-center justify-between w-full p-2 text-sm border-2 border-dashed border-slate-200 rounded-lg hover:border-blue-400 transition-colors">
+        <span className="truncate flex-1 pr-2">{files[name]?.name || 'Select file'}</span>
+        {files[name] ? <Check size={14} className="text-green-500 shrink-0" /> : <Upload size={14} className="text-slate-400 shrink-0" />}
+      </label>
+    </div>
+  </div>
+)
+
+const SummaryRow = ({ label, value }) => (
+  <div className="summary-row py-2 border-b border-slate-50 flex justify-between">
+    <span className="summary-label text-slate-400 text-sm">{label}</span>
+    <span className="summary-value text-slate-700 font-semibold text-sm truncate ml-4">{value || '--'}</span>
   </div>
 )
 

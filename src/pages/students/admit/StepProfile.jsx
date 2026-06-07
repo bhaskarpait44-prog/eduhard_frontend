@@ -2,6 +2,7 @@
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
+import { useEffect } from 'react'
 import Input    from '@/components/ui/Input'
 import Select   from '@/components/ui/Select'
 import Textarea from '@/components/ui/Textarea'
@@ -21,11 +22,29 @@ const StepProfile = ({ defaultValues, onNext, onBack }) => {
   const {
     register,
     handleSubmit,
+    watch,
+    setValue,
     formState: { errors },
   } = useForm({
     defaultValues,
     resolver: zodResolver(schema),
   })
+
+  const isPermanentSame = watch('is_permanent_same')
+  const currentAddress = watch(['address', 'village', 'police_station', 'post_office', 'district', 'city', 'state', 'pincode'])
+
+  // Sync permanent address if toggle is active
+  useEffect(() => {
+    if (isPermanentSame) {
+      setValue('perm_address', currentAddress[0])
+      setValue('perm_village', currentAddress[1])
+      setValue('perm_police_station', currentAddress[2])
+      setValue('perm_post_office', currentAddress[3])
+      setValue('perm_district', currentAddress[4])
+      setValue('perm_state', currentAddress[6])
+      setValue('perm_pincode', currentAddress[7])
+    }
+  }, [isPermanentSame, ...currentAddress, setValue])
 
   return (
     <form onSubmit={handleSubmit(onNext)}>
@@ -33,16 +52,83 @@ const StepProfile = ({ defaultValues, onNext, onBack }) => {
         className="rounded-2xl p-6 space-y-5"
         style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)' }}
       >
-        {/* Address */}
-        <SectionHeading title="Address" subtitle="Student's current residential address" />
-        <Textarea label="Address" placeholder="House/Flat No, Street, Locality" rows={2} {...register('address')} />
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          <Input label="City"    placeholder="Guwahati" containerClassName="col-span-2" {...register('city')} />
-          <Input label="State"   placeholder="Assam"                                    {...register('state')} />
+        {/* Identity Expansion */}
+        <SectionHeading title="Identity Details" subtitle="Additional personal information" />
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <Input label="Nationality" placeholder="Indian" {...register('nationality')} />
+          <Select
+            label="Religion"
+            options={[
+              { value: 'Hindu', label: 'Hindu' },
+              { value: 'Muslim', label: 'Muslim' },
+              { value: 'Christian', label: 'Christian' },
+              { value: 'Sikh', label: 'Sikh' },
+              { value: 'Buddhist', label: 'Buddhist' },
+              { value: 'Jain', label: 'Jain' },
+              { value: 'Others', label: 'Others' },
+            ]}
+            {...register('religion')}
+          />
+          <Select
+            label="Caste"
+            options={[
+              { value: 'Gen', label: 'General' },
+              { value: 'OBC', label: 'OBC' },
+              { value: 'ST', label: 'ST' },
+              { value: 'SC', label: 'SC' },
+            ]}
+            {...register('caste')}
+          />
+          <Input label="Mother Tongue" placeholder="e.g. Assamese, Bodo, etc." {...register('mother_tongue')} />
+          <Input label="PEN No." placeholder="Permanent Education Number" {...register('pen_no')} />
+          <Input label="APAAR ID" placeholder="Automated Permanent Academic Account Registry" {...register('apaar_id')} />
+          <Input label="Identification Marks" placeholder="e.g. Mole on left cheek" containerClassName="col-span-2" {...register('identification_marks')} />
+        </div>
+
+        {/* Current Address */}
+        <SectionHeading title="Current Address" subtitle="Student's current residential address" />
+        <Textarea label="Village/Town/Street" placeholder="House/Flat No, Street, Locality" rows={2} {...register('address')} />
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+          <Input label="Police Station (P.S.)" placeholder="P.S." {...register('police_station')} />
+          <Input label="Post Office (P.O.)" placeholder="P.O." {...register('post_office')} />
+          <Input label="District" placeholder="District" {...register('district')} />
+          <Input label="City"    placeholder="City/Town" {...register('city')} />
+          <Input label="State"   placeholder="State"                                    {...register('state')} />
           <Input label="Pincode" placeholder="781001" type="number" error={errors.pincode?.message} {...register('pincode')} />
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+
+        {/* Permanent Address */}
+        <div className="pt-2">
+          <SectionHeading title="Permanent Address" subtitle="Legal permanent residence" />
+          <div className="flex items-center gap-2 mb-4 bg-surface-raised p-3 rounded-xl border border-border">
+            <input 
+              type="checkbox" 
+              id="is_permanent_same" 
+              className="h-4 w-4 rounded border-border text-brand focus:ring-brand"
+              {...register('is_permanent_same')} 
+            />
+            <label htmlFor="is_permanent_same" className="text-sm font-semibold text-text-primary cursor-pointer">
+              Same as Current Address
+            </label>
+          </div>
+
+          {!isPermanentSame && (
+            <div className="space-y-5 animate-in fade-in slide-in-from-top-2 duration-300">
+              <Textarea label="Village/Town/Street" placeholder="House/Flat No, Street, Locality" rows={2} {...register('perm_address')} />
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                <Input label="Police Station (P.S.)" placeholder="P.S." {...register('perm_police_station')} />
+                <Input label="Post Office (P.O.)" placeholder="P.O." {...register('perm_post_office')} />
+                <Input label="District" placeholder="District" {...register('perm_district')} />
+                <Input label="State"   placeholder="State"      {...register('perm_state')} />
+                <Input label="Pincode" placeholder="781001" type="number" error={errors.perm_pincode?.message} {...register('perm_pincode')} />
+              </div>
+            </div>
+          )}
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <Input label="Phone"  type="tel" placeholder="+91-9876543210" error={errors.phone?.message} {...register('phone')} />
+          <Input label="WhatsApp No." type="tel" placeholder="+91-9876543210" error={errors.whatsapp_no?.message} {...register('whatsapp_no')} />
           <Input
             label="Student Email"
             type="email"
@@ -54,28 +140,34 @@ const StepProfile = ({ defaultValues, onNext, onBack }) => {
         </div>
 
         {/* Parents */}
-        <SectionHeading title="Parents / Guardians" subtitle="One email is required for parent portal login" />
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <Input label="Father's Name"  placeholder="Rajesh Sharma" {...register('father_name')} />
-          <Input 
-            label="Father's Email (Login)" 
-            type="email" 
-            placeholder="father@email.com" 
-            error={errors.father_email?.message}
-            {...register('father_email')} 
-          />
-          <Input label="Father's Phone" type="tel" placeholder="+91-9876543211" error={errors.father_phone?.message} {...register('father_phone')} />
-          <div className="hidden sm:block" />
-
+        <SectionHeading title="Parents Profile" subtitle="Detailed information of Mother and Father" />
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           <Input label="Mother's Name"  placeholder="Sunita Sharma" {...register('mother_name')} />
-          <Input 
-            label="Mother's Email" 
-            type="email" 
-            placeholder="mother@email.com" 
-            error={errors.mother_email?.message}
-            {...register('mother_email')} 
-          />
+          <Input label="Mother's Qualification" placeholder="e.g. B.A., M.Sc." {...register('mother_qualification')} />
           <Input label="Mother's Phone" type="tel" placeholder="+91-9876543212" error={errors.mother_phone?.message} {...register('mother_phone')} />
+          <Input label="Mother's Email" type="email" placeholder="mother@email.com" error={errors.mother_email?.message} {...register('mother_email')} />
+          <Input label="Mother's Aadhar" placeholder="12-digit number" {...register('mother_aadhar')} />
+          <Input label="Mother's Annual Income" placeholder="e.g. 5,00,000" {...register('mother_annual_income')} />
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-6">
+          <Input label="Father's Name"  placeholder="Rajesh Sharma" {...register('father_name')} />
+          <Input label="Father's Qualification" placeholder="e.g. B.Tech, M.A." {...register('father_qualification')} />
+          <Input label="Father's Phone" type="tel" placeholder="+91-9876543211" error={errors.father_phone?.message} {...register('father_phone')} />
+          <Input label="Father's Email (Login)" type="email" placeholder="father@email.com" error={errors.father_email?.message} {...register('father_email')} />
+          <Input label="Father's Aadhar" placeholder="12-digit number" {...register('father_aadhar')} />
+          <Input label="Father's Annual Income" placeholder="e.g. 8,00,000" {...register('father_annual_income')} />
+        </div>
+
+        {/* Guardian Expansion */}
+        <SectionHeading title="Guardian Details" subtitle="If applicable, or secondary contact" />
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          <Input label="Guardian's Name" placeholder="Guardian Name" {...register('guardian_name')} />
+          <Input label="Relation" placeholder="Relation to student" {...register('guardian_relation')} />
+          <Input label="Guardian's Phone" type="tel" placeholder="+91-9876543213" {...register('guardian_phone')} />
+          <Input label="Qualification" placeholder="Qualification" {...register('guardian_qualification')} />
+          <Input label="Occupation" placeholder="Occupation" {...register('guardian_occupation')} />
+          <Input label="Guardian's Aadhar" placeholder="12-digit number" {...register('guardian_aadhar')} />
         </div>
 
         {/* Medical */}

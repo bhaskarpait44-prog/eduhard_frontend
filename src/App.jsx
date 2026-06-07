@@ -4,6 +4,7 @@ import { RouterProvider } from 'react-router-dom'
 import router from '@/router'
 import useUiStore from '@/store/uiStore'
 import ToastContainer from '@/components/ui/ToastContainer'
+import LightningLoader from '@/components/ui/LightningLoader'
 
 const App = () => {
   const initTheme = useUiStore((state) => state.initTheme)
@@ -17,6 +18,7 @@ const App = () => {
 
   return (
     <>
+      <LightningLoader />
       <RouterProvider router={router} />
       <ToastContainer />
     </>

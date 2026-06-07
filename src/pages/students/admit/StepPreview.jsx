@@ -5,8 +5,8 @@ import { SectionHeading } from './StepIdentity'
 const PreviewGroup = ({ icon: Icon, title, children }) => (
   <div className="space-y-3">
     <div className="flex items-center gap-2 pb-1 border-b border-dashed border-gray-200 dark:border-gray-700">
-      <Icon size={16} className="text-indigo-500" />
-      <h4 className="text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">
+      <Icon size={16} className="text-brand" />
+      <h4 className="text-sm font-extrabold uppercase tracking-tight text-text-primary">
         {title}
       </h4>
     </div>
@@ -43,25 +43,52 @@ const StepPreview = ({ formData, onBack, onSubmit, isSaving }) => {
           <PreviewField label="Admission No" value={formData.admission_no} />
           <PreviewField label="Date of Birth" value={formData.date_of_birth} />
           <PreviewField label="Gender" value={formData.gender?.toUpperCase()} />
+          <PreviewField label="Aadhar No" value={formData.aadhar_no} />
+          <PreviewField label="Nationality" value={formData.nationality} />
+          <PreviewField label="Religion" value={formData.religion} />
+          <PreviewField label="Caste" value={formData.caste} />
         </PreviewGroup>
 
         {/* Enrollment */}
-        <PreviewGroup icon={GraduationCap} title="Enrollment Details">
+        <PreviewGroup icon={GraduationCap} title="Enrollment & Logistics">
           <PreviewField label="Joining Type" value={formData.joining_type?.replace('_', ' ').toUpperCase()} />
           <PreviewField label="Joining Date" value={formData.joined_date} />
           <PreviewField label="Roll Number" value={formData.roll_number || 'Auto-assign'} />
-          <PreviewField label="Subjects Selected" value={`${formData.subject_ids?.length || 0} subjects`} />
+          <PreviewField label="Medium" value={formData.medium} />
+          <PreviewField label="Hostel" value={formData.is_hostel ? 'Yes' : 'No'} />
+          <PreviewField label="Distance" value={formData.distance_km ? `${formData.distance_km} km` : null} />
+          <PreviewField label="Subjects" value={`${formData.subject_ids?.length || 0} selected`} />
         </PreviewGroup>
 
         {/* Profile & Contact */}
-        <PreviewGroup icon={MapPin} title="Contact & Profile">
-          <PreviewField label="Student Email" value={formData.email} />
-          <PreviewField label="Student Phone" value={formData.phone} />
-          <PreviewField label="Father's Name" value={formData.father_name} />
-          <PreviewField label="Father's Email (Login)" value={formData.father_email} />
-          <PreviewField label="Mother's Name" value={formData.mother_name} />
-          <PreviewField label="Mother's Email" value={formData.mother_email} />
+        <PreviewGroup icon={MapPin} title="Contact & Address">
+          <PreviewField label="Email" value={formData.email} />
+          <PreviewField label="Phone" value={formData.phone} />
+          <PreviewField label="Village/Street" value={formData.address} colSpan="col-span-2" />
+          <PreviewField label="District" value={formData.district} />
+          <PreviewField label="PIN" value={formData.pincode} />
         </PreviewGroup>
+
+        {/* Documents */}
+        <div className="space-y-3">
+          <div className="flex items-center gap-2 pb-1 border-b border-dashed border-gray-200 dark:border-gray-700">
+            <CheckCircle2 size={16} className="text-brand" />
+            <h4 className="text-sm font-extrabold uppercase tracking-tight text-text-primary">
+              Uploaded Documents
+            </h4>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {formData.files && Object.keys(formData.files).length > 0 ? (
+              Object.keys(formData.files).map(key => (
+                <div key={key} className="px-3 py-1.5 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-xs font-medium text-gray-600 dark:text-gray-300">
+                  {key.replace(/_/g, ' ').toUpperCase()}
+                </div>
+              ))
+            ) : (
+              <p className="text-sm text-gray-400 italic">No documents uploaded</p>
+            )}
+          </div>
+        </div>
 
         <div
           className="rounded-xl p-4 flex gap-3"

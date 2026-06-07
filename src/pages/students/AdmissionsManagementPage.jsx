@@ -300,8 +300,19 @@ const AdmissionsManagementPage = () => {
               <Section title="Student Identity" icon={User}>
                 <InfoRow label="Gender" value={selectedApp.student_data.gender} />
                 <InfoRow label="Date of Birth" value={selectedApp.student_data.date_of_birth} />
+                <InfoRow label="Aadhar No" value={selectedApp.student_data.aadhar_no} />
+                <InfoRow label="Nationality" value={selectedApp.student_data.nationality} />
+                <InfoRow label="Religion" value={selectedApp.student_data.religion} />
+                <InfoRow label="Caste" value={selectedApp.student_data.caste} />
+                <InfoRow label="Mother Tongue" value={selectedApp.student_data.mother_tongue} />
                 <InfoRow label="Blood Group" value={selectedApp.student_data.blood_group} />
                 <InfoRow label="Stream" value={selectedApp.student_data.stream} />
+                <InfoRow label="Medium" value={selectedApp.student_data.medium} />
+                <InfoRow label="Hostel" value={selectedApp.student_data.is_hostel} />
+                <InfoRow label="Distance" value={`${selectedApp.student_data.distance_km} km`} />
+                <InfoRow label="PEN No" value={selectedApp.student_data.pen_no} />
+                <InfoRow label="APAAR ID" value={selectedApp.student_data.apaar_id} />
+                <InfoRow label="ID Marks" value={selectedApp.student_data.identification_marks} colSpan="col-span-2" />
               </Section>
 
               <Section title="Applying For" icon={GraduationCap}>
@@ -310,23 +321,37 @@ const AdmissionsManagementPage = () => {
                 <InfoRow label="Type" value={selectedApp.student_data.joining_type} />
               </Section>
 
-              <Section title="Contact Details" icon={Info}>
+              <Section title="Contact & Address" icon={Info}>
                 <InfoRow label="Email" value={selectedApp.student_data.email} colSpan="col-span-2" />
                 <InfoRow label="Phone" value={selectedApp.student_data.phone} />
-                <InfoRow label="City" value={selectedApp.student_data.city} />
-                <InfoRow label="Address" value={selectedApp.student_data.address} colSpan="col-span-2" />
+                <InfoRow label="WhatsApp" value={selectedApp.student_data.whatsapp_no} />
+                <InfoRow label="Village" value={selectedApp.student_data.address} colSpan="col-span-2" />
+                <InfoRow label="P.S." value={selectedApp.student_data.police_station} />
+                <InfoRow label="P.O." value={selectedApp.student_data.post_office} />
+                <InfoRow label="District" value={selectedApp.student_data.district} />
+                <InfoRow label="State" value={selectedApp.student_data.state} />
+                <InfoRow label="PIN" value={selectedApp.student_data.pincode} />
               </Section>
 
               <Section title="Family Details" icon={Users}>
-                <InfoRow label="Father" value={selectedApp.student_data.father_name} />
                 <InfoRow label="Mother" value={selectedApp.student_data.mother_name} />
-                <InfoRow label="F-Phone" value={selectedApp.student_data.father_phone} />
+                <InfoRow label="M-Qual" value={selectedApp.student_data.mother_qualification} />
                 <InfoRow label="M-Phone" value={selectedApp.student_data.mother_phone} />
+                <InfoRow label="M-Aadhar" value={selectedApp.student_data.mother_aadhar} />
+                <InfoRow label="Father" value={selectedApp.student_data.father_name} />
+                <InfoRow label="F-Qual" value={selectedApp.student_data.father_qualification} />
+                <InfoRow label="F-Phone" value={selectedApp.student_data.father_phone} />
+                <InfoRow label="F-Aadhar" value={selectedApp.student_data.father_aadhar} />
+                <InfoRow label="Guardian" value={selectedApp.student_data.guardian_name} />
+                <InfoRow label="G-Rel" value={selectedApp.student_data.guardian_relation} />
+                <InfoRow label="G-Phone" value={selectedApp.student_data.guardian_phone} />
+                <InfoRow label="Annual Income" value={selectedApp.student_data.father_annual_income} />
               </Section>
 
               <Section title="Previous Education" icon={BookOpen}>
                 <InfoRow label="School" value={selectedApp.student_data.prev_school_name} colSpan="col-span-2" />
                 <InfoRow label="Last Class" value={selectedApp.student_data.prev_class} />
+                <InfoRow label="Prev Attendance" value={selectedApp.student_data.prev_attendance_days} />
               </Section>
 
               {selectedApp.student_data.documents && (

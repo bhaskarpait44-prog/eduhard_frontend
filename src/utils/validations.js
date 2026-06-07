@@ -28,6 +28,7 @@ export const studentAdmitSchema = z.object({
   date_of_birth: z.string().min(1, 'Date of birth is required'),
   gender       : z.enum(['male', 'female', 'other'], { required_error: 'Gender is required' }),
   admission_no : z.string().min(1, 'Admission number is required'),
+  aadhar_no    : z.string().optional(),
 })
 
 export const studentProfileSchema = z.object({
@@ -37,12 +38,57 @@ export const studentProfileSchema = z.object({
   pincode: pincodeSchema,
   phone: phoneSchema,
   email: z.string().email('A valid student email is required'),
+
+  // SVA Expansion
+  village: z.string().optional(),
+  police_station: z.string().optional(),
+  post_office: z.string().optional(),
+  district: z.string().optional(),
+  whatsapp_no: phoneSchema,
+  nationality: z.string().optional().default('Indian'),
+  religion: z.string().optional(),
+  caste: z.enum(['OBC', 'ST', 'SC', 'Gen']).optional(),
+  mother_tongue: z.string().optional(),
+  identification_marks: z.string().optional(),
+  is_hostel: z.boolean().optional(),
+  medium: z.enum(['English', 'Assamese']).optional(),
+  pen_no: z.string().optional(),
+  apaar_id: z.string().optional(),
+  prev_attendance_days: z.preprocess((val) => (val === '' || val === null ? undefined : Number(val)), z.number().int().nonnegative().optional()),
+  distance_km: z.preprocess((val) => (val === '' || val === null ? undefined : Number(val)), z.number().nonnegative().optional()),
+
+  // Permanent Address
+  is_permanent_same: z.boolean().optional().default(false),
+  perm_address: z.string().optional(),
+  perm_village: z.string().optional(),
+  perm_police_station: z.string().optional(),
+  perm_post_office: z.string().optional(),
+  perm_district: z.string().optional(),
+  perm_state: z.string().optional(),
+  perm_pincode: pincodeSchema,
+
   father_name: z.string().optional(),
   father_phone: phoneSchema,
   father_email: z.string().email('A valid parent email is required for login access').optional().or(z.literal('')),
+  father_qualification: z.string().optional(),
+  father_aadhar: z.string().optional(),
+  father_annual_income: z.string().optional(),
+
   mother_name: z.string().optional(),
   mother_phone: phoneSchema,
   mother_email: z.string().email('A valid parent email is required').optional().or(z.literal('')),
+  mother_qualification: z.string().optional(),
+  mother_aadhar: z.string().optional(),
+  mother_annual_income: z.string().optional(),
+
+  guardian_name: z.string().optional(),
+  guardian_relation: z.string().optional(),
+  guardian_phone: phoneSchema,
+  guardian_occupation: z.string().optional(),
+  guardian_qualification: z.string().optional(),
+  guardian_aadhar: z.string().optional(),
+  guardian_annual_income: z.string().optional(),
+
   emergency_contact: phoneSchema,
   blood_group: z.string().optional(),
   medical_notes: z.string().optional(),

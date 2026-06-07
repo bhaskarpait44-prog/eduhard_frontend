@@ -122,11 +122,13 @@ const useAdminStudentStore = create((set, get) => ({
       const res = await studentsApi.updateProfile(id, data)
       set(s => ({
         isSaving       : false,
-        selectedStudent: s.selectedStudent
-          ? { ...s.selectedStudent, ...res.data.new_version }
+        selectedStudent: s.selectedStudent?.id === Number(id)
+          ? { ...s.selectedStudent, ...res.data }
           : s.selectedStudent,
+        // Also update in the list if present
+        students: s.students.map(std => std.id === Number(id) ? { ...std, ...res.data } : std)
       }))
-      return { success: true }
+      return { success: true, data: res.data }
     } catch (err) {
       set({ isSaving: false })
       return { success: false, message: err.message }

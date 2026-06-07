@@ -3,7 +3,7 @@ import { useState, useRef, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
   Menu, Sun, Moon, Bell, LogOut,
-  ChevronDown, User, Settings, X,
+  ChevronDown, User, Settings, X, RefreshCcw
 } from 'lucide-react'
 import useUiStore from '@/store/uiStore'
 import useAuthStore from '@/store/authStore'
@@ -536,6 +536,18 @@ const Header = ({ onMenuClick }) => {
                     icon={Settings}
                     label={secondaryLabel}
                     onClick={() => { navigate(secondaryRoute); setUserMenuOpen(false) }}
+                  />
+                  <DropdownItem
+                    icon={RefreshCcw}
+                    label="Hard Refresh"
+                    onClick={() => { 
+                      if (window.triggerLightning) {
+                        window.triggerLightning()
+                      } else {
+                        window.location.reload()
+                      }
+                      setUserMenuOpen(false) 
+                    }}
                   />
                 </div>
 
