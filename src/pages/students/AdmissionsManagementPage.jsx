@@ -337,7 +337,6 @@ const AdmissionsManagementPage = () => {
                 <InfoRow label="Mother" value={selectedApp.student_data.mother_name} />
                 <InfoRow label="M-Qual" value={selectedApp.student_data.mother_qualification} />
                 <InfoRow label="M-Phone" value={selectedApp.student_data.mother_phone} />
-                <InfoRow label="M-Aadhar" value={selectedApp.student_data.mother_aadhar} />
                 <InfoRow label="Father" value={selectedApp.student_data.father_name} />
                 <InfoRow label="F-Qual" value={selectedApp.student_data.father_qualification} />
                 <InfoRow label="F-Phone" value={selectedApp.student_data.father_phone} />

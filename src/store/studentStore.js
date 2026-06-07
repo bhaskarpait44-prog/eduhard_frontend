@@ -17,17 +17,33 @@ const useAdminStudentStore = create((set, get) => ({
     set({ isLoading: true, error: null })
     try {
       const res = await studentsApi.getStudents(params)
-      // Support both paginated and plain array responses
-      const data     = res.data
-      const students = Array.isArray(data) ? data : (data.students || data.data || [])
-      const meta     = data.meta || data.pagination || {}
+      const data = res.data
+
+      // Explicitly extract students and metadata
+      // Backend returns { students: [...], meta: {...} }
+      let students = []
+      let meta = {}
+
+      if (Array.isArray(data)) {
+        students = data
+      } else if (data && typeof data === 'object') {
+        students = data.students || data.data || []
+        meta = data.meta || data.pagination || {}
+      }
+
+      // Defensive check: if we expected data but got nothing, it might be a silent backend error
+      if (!Array.isArray(students)) {
+        console.error('[StudentStore] Unexpected response shape:', data)
+        throw new Error('Received invalid data format from server.')
+      }
+
       set({
         students,
         pagination: {
-          page      : meta.page       || params.page || 1,
-          perPage   : meta.perPage    || params.perPage || 20,
-          total     : meta.total      || students.length,
-          totalPages: meta.totalPages || 1,
+          page      : Number(meta.page || params.page || 1),
+          perPage   : Number(meta.perPage || params.perPage || 20),
+          total     : Number(meta.total || students.length),
+          totalPages: Number(meta.totalPages || 1),
         },
         isLoading: false,
       })

@@ -85,10 +85,7 @@ const AdmitStudentPage = () => {
       
       mother_name: allData.mother_name,
       mother_phone: allData.mother_phone,
-      mother_email: allData.mother_email,
       mother_qualification: allData.mother_qualification,
-      mother_aadhar: allData.mother_aadhar,
-      mother_annual_income: allData.mother_annual_income,
 
       guardian_name: allData.guardian_name,
       guardian_relation: allData.guardian_relation,

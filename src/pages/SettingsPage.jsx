@@ -417,14 +417,14 @@ const SettingsPage = () => {
             <div className="space-y-4">
               <ToggleRow
                 title="Online Admission Portal"
-                description="When enabled, anyone can visit /apply and submit an admission application. When disabled, the page will show a 'Closed' message."
+                description="When enabled, anyone can visit /admission and submit an admission application. When disabled, the page will show a 'Closed' message."
                 checked={settings.online_admission_open}
                 onToggle={() => handleChange('online_admission_open', !settings.online_admission_open)}
               />
               <div className="flex items-center gap-3 p-4 rounded-2xl bg-brand/5 border border-brand/10">
                 <AlertCircle size={20} className="text-brand shrink-0" />
                 <p className="text-xs leading-relaxed" style={{ color: 'var(--color-text-secondary)' }}>
-                  Current Public URL: <span className="font-mono text-brand font-bold">{window.location.origin}/apply</span>
+                  Current Public URL: <span className="font-mono text-brand font-bold">{window.location.origin}/admission</span>
                 </p>
               </div>
             </div>

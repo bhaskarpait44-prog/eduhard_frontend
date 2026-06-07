@@ -13,6 +13,8 @@ import Badge from '@/components/ui/Badge'
 import { formatDate } from '@/utils/helpers'
 import { ROUTES } from '@/constants/app'
 import { SectionHeading } from './admit/StepIdentity'
+import * as studentApi from '@/api/studentsApi'
+import { downloadBlob } from '@/utils/downloadBlob'
 
 const DataField = ({ label, value, highlight, uppercase, capitalize, colSpan = '' }) => (
   <div className={colSpan}>
@@ -26,9 +28,10 @@ const DataField = ({ label, value, highlight, uppercase, capitalize, colSpan = '
 const StudentFullDetailsPage = () => {
   const { id } = useParams()
   const navigate = useNavigate()
-  const { toastError } = useToast()
+  const { toastError, toastSuccess } = useToast()
   const { selectedStudent: student, fetchStudent } = useAdminStudentStore()
   const [loading, setLoading] = useState(true)
+  const [isDownloading, setIsDownloading] = useState(false)
 
   usePageTitle(student ? `${student.first_name} ${student.last_name} - Full Details` : 'Student Full Details')
 
@@ -41,6 +44,20 @@ const StudentFullDetailsPage = () => {
       })
       .finally(() => setLoading(false))
   }, [id, fetchStudent, navigate, toastError])
+
+  const handlePrint = async () => {
+    setIsDownloading(true)
+    try {
+      const blob = await studentApi.downloadAdmissionForm(id)
+      // The axios interceptor returns response.data directly
+      downloadBlob(blob, `AdmissionForm_${student.admission_no}.pdf`)
+      toastSuccess('Admission form downloaded')
+    } catch (err) {
+      toastError(err.message || 'Failed to download admission form')
+    } finally {
+      setIsDownloading(false)
+    }
+  }
 
   if (loading || !student) return <div className="max-w-5xl mx-auto p-6 animate-pulse"><div className="h-8 w-48 bg-gray-200 rounded mb-6" /><div className="space-y-6"><div className="h-64 bg-gray-100 rounded-2xl" /><div className="h-64 bg-gray-100 rounded-2xl" /></div></div>
 
@@ -63,7 +80,14 @@ const StudentFullDetailsPage = () => {
             <p className="text-sm text-text-muted">Comprehensive record for {fullName}</p>
           </div>
         </div>
-        <Button variant="secondary" icon={Printer} onClick={() => window.print()}>Print Profile</Button>
+        <Button 
+          variant="secondary" 
+          icon={Printer} 
+          onClick={handlePrint}
+          loading={isDownloading}
+        >
+          Print Profile
+        </Button>
       </div>
 
       <div className="grid grid-cols-1 gap-8">
@@ -163,13 +187,10 @@ const StudentFullDetailsPage = () => {
             {/* Mother */}
             <div className="space-y-4">
               <div className="inline-flex items-center gap-2 px-3 py-1 bg-indigo-50 rounded-lg text-indigo-700 font-bold text-[10px] uppercase tracking-wider">Mother's Particulars</div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
                 <DataField label="Name" value={student.mother_name} />
                 <DataField label="Phone" value={student.mother_phone} />
-                <DataField label="Email" value={student.mother_email} />
                 <DataField label="Qualification" value={student.mother_qualification} />
-                <DataField label="Aadhar No" value={student.mother_aadhar} />
-                <DataField label="Annual Income" value={student.mother_annual_income} />
               </div>
             </div>
 

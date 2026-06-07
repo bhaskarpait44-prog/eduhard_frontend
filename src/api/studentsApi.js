@@ -15,6 +15,7 @@ export const getAuditLog    = (table, id)  => api.get(`/audit/${table}/${id}`)
 export const getIDCardData  = (id)         => api.get(`/students/${id}/id-card/data`)
 export const getTCData      = (id)         => api.get(`/students/${id}/tc/data`)
 export const getClassIDCardsData = (params) => api.get('/students/bulk/id-cards/data', { params })
+export const downloadAdmissionForm = (id) => api.get(`/students/${id}/admission-form`, { responseType: 'blob' })
 
 // ── Bulk Import ──────────────────────────────────────────────────────────
 export const getAdmissionTemplate = ()      => api.get('/students/import/template')

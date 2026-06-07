@@ -13,11 +13,6 @@ import { studentProfileSchema } from '@/utils/validations'
 const BLOOD_GROUPS = ['A+','A-','B+','B-','AB+','AB-','O+','O-','unknown']
   .map(v => ({ value: v, label: v }))
 
-const schema = studentProfileSchema.refine(data => data.father_email || data.mother_email, {
-  message: "At least one parent email is required for portal access",
-  path: ["father_email"]
-})
-
 const StepProfile = ({ defaultValues, onNext, onBack }) => {
   const {
     register,
@@ -27,7 +22,7 @@ const StepProfile = ({ defaultValues, onNext, onBack }) => {
     formState: { errors },
   } = useForm({
     defaultValues,
-    resolver: zodResolver(schema),
+    resolver: zodResolver(studentProfileSchema),
   })
 
   const isPermanentSame = watch('is_permanent_same')
@@ -55,9 +50,11 @@ const StepProfile = ({ defaultValues, onNext, onBack }) => {
         {/* Identity Expansion */}
         <SectionHeading title="Identity Details" subtitle="Additional personal information" />
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <Input label="Nationality" placeholder="Indian" {...register('nationality')} />
+          <Input label="Nationality" required placeholder="Indian" error={errors.nationality?.message} {...register('nationality')} />
           <Select
             label="Religion"
+            required
+            error={errors.religion?.message}
             options={[
               { value: 'Hindu', label: 'Hindu' },
               { value: 'Muslim', label: 'Muslim' },
@@ -71,6 +68,8 @@ const StepProfile = ({ defaultValues, onNext, onBack }) => {
           />
           <Select
             label="Caste"
+            required
+            error={errors.caste?.message}
             options={[
               { value: 'Gen', label: 'General' },
               { value: 'OBC', label: 'OBC' },
@@ -79,7 +78,7 @@ const StepProfile = ({ defaultValues, onNext, onBack }) => {
             ]}
             {...register('caste')}
           />
-          <Input label="Mother Tongue" placeholder="e.g. Assamese, Bodo, etc." {...register('mother_tongue')} />
+          <Input label="Mother Tongue" required placeholder="e.g. Assamese, Bodo, etc." error={errors.mother_tongue?.message} {...register('mother_tongue')} />
           <Input label="PEN No." placeholder="Permanent Education Number" {...register('pen_no')} />
           <Input label="APAAR ID" placeholder="Automated Permanent Academic Account Registry" {...register('apaar_id')} />
           <Input label="Identification Marks" placeholder="e.g. Mole on left cheek" containerClassName="col-span-2" {...register('identification_marks')} />
@@ -87,14 +86,14 @@ const StepProfile = ({ defaultValues, onNext, onBack }) => {
 
         {/* Current Address */}
         <SectionHeading title="Current Address" subtitle="Student's current residential address" />
-        <Textarea label="Village/Town/Street" placeholder="House/Flat No, Street, Locality" rows={2} {...register('address')} />
+        <Textarea label="Village/Town/Street" required placeholder="House/Flat No, Street, Locality" rows={2} error={errors.address?.message} {...register('address')} />
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-          <Input label="Police Station (P.S.)" placeholder="P.S." {...register('police_station')} />
-          <Input label="Post Office (P.O.)" placeholder="P.O." {...register('post_office')} />
-          <Input label="District" placeholder="District" {...register('district')} />
-          <Input label="City"    placeholder="City/Town" {...register('city')} />
-          <Input label="State"   placeholder="State"                                    {...register('state')} />
-          <Input label="Pincode" placeholder="781001" type="number" error={errors.pincode?.message} {...register('pincode')} />
+          <Input label="Police Station (P.S.)" required placeholder="P.S." error={errors.police_station?.message} {...register('police_station')} />
+          <Input label="Post Office (P.O.)" required placeholder="P.O." error={errors.post_office?.message} {...register('post_office')} />
+          <Input label="District" required placeholder="District" error={errors.district?.message} {...register('district')} />
+          <Input label="City" required placeholder="City/Town" error={errors.city?.message} {...register('city')} />
+          <Input label="State" required placeholder="State" error={errors.state?.message} {...register('state')} />
+          <Input label="Pincode" required placeholder="781001" type="number" error={errors.pincode?.message} {...register('pincode')} />
         </div>
 
         {/* Permanent Address */}
@@ -114,13 +113,13 @@ const StepProfile = ({ defaultValues, onNext, onBack }) => {
 
           {!isPermanentSame && (
             <div className="space-y-5 animate-in fade-in slide-in-from-top-2 duration-300">
-              <Textarea label="Village/Town/Street" placeholder="House/Flat No, Street, Locality" rows={2} {...register('perm_address')} />
+              <Textarea label="Village/Town/Street" required placeholder="House/Flat No, Street, Locality" rows={2} error={errors.perm_address?.message} {...register('perm_address')} />
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                <Input label="Police Station (P.S.)" placeholder="P.S." {...register('perm_police_station')} />
-                <Input label="Post Office (P.O.)" placeholder="P.O." {...register('perm_post_office')} />
-                <Input label="District" placeholder="District" {...register('perm_district')} />
-                <Input label="State"   placeholder="State"      {...register('perm_state')} />
-                <Input label="Pincode" placeholder="781001" type="number" error={errors.perm_pincode?.message} {...register('perm_pincode')} />
+                <Input label="Police Station (P.S.)" required placeholder="P.S." error={errors.perm_police_station?.message} {...register('perm_police_station')} />
+                <Input label="Post Office (P.O.)" required placeholder="P.O." error={errors.perm_post_office?.message} {...register('perm_post_office')} />
+                <Input label="District" required placeholder="District" error={errors.perm_district?.message} {...register('perm_district')} />
+                <Input label="State" required  placeholder="State" error={errors.perm_state?.message} {...register('perm_state')} />
+                <Input label="Pincode" required placeholder="781001" type="number" error={errors.perm_pincode?.message} {...register('perm_pincode')} />
               </div>
             </div>
           )}
@@ -133,7 +132,6 @@ const StepProfile = ({ defaultValues, onNext, onBack }) => {
             label="Student Email"
             type="email"
             placeholder="student@email.com"
-            required
             error={errors.email?.message}
             {...register('email')}
           />
@@ -142,19 +140,16 @@ const StepProfile = ({ defaultValues, onNext, onBack }) => {
         {/* Parents */}
         <SectionHeading title="Parents Profile" subtitle="Detailed information of Mother and Father" />
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          <Input label="Mother's Name"  placeholder="Sunita Sharma" {...register('mother_name')} />
+          <Input label="Mother's Name" required placeholder="Sunita Sharma" error={errors.mother_name?.message} {...register('mother_name')} />
           <Input label="Mother's Qualification" placeholder="e.g. B.A., M.Sc." {...register('mother_qualification')} />
           <Input label="Mother's Phone" type="tel" placeholder="+91-9876543212" error={errors.mother_phone?.message} {...register('mother_phone')} />
-          <Input label="Mother's Email" type="email" placeholder="mother@email.com" error={errors.mother_email?.message} {...register('mother_email')} />
-          <Input label="Mother's Aadhar" placeholder="12-digit number" {...register('mother_aadhar')} />
-          <Input label="Mother's Annual Income" placeholder="e.g. 5,00,000" {...register('mother_annual_income')} />
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-6">
-          <Input label="Father's Name"  placeholder="Rajesh Sharma" {...register('father_name')} />
+          <Input label="Father's Name" required placeholder="Rajesh Sharma" error={errors.father_name?.message} {...register('father_name')} />
           <Input label="Father's Qualification" placeholder="e.g. B.Tech, M.A." {...register('father_qualification')} />
-          <Input label="Father's Phone" type="tel" placeholder="+91-9876543211" error={errors.father_phone?.message} {...register('father_phone')} />
-          <Input label="Father's Email (Login)" type="email" placeholder="father@email.com" error={errors.father_email?.message} {...register('father_email')} />
+          <Input label="Father's Phone" required type="tel" placeholder="+91-9876543211" error={errors.father_phone?.message} {...register('father_phone')} />
+          <Input label="Father's Email (Login)" required type="email" placeholder="father@email.com" error={errors.father_email?.message} {...register('father_email')} />
           <Input label="Father's Aadhar" placeholder="12-digit number" {...register('father_aadhar')} />
           <Input label="Father's Annual Income" placeholder="e.g. 8,00,000" {...register('father_annual_income')} />
         </div>
@@ -173,8 +168,8 @@ const StepProfile = ({ defaultValues, onNext, onBack }) => {
         {/* Medical */}
         <SectionHeading title="Medical Information" />
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <Input label="Emergency Contact" type="tel" placeholder="+91-9876543213" error={errors.emergency_contact?.message} {...register('emergency_contact')} />
-          <Select label="Blood Group" options={BLOOD_GROUPS} placeholder="Select…" {...register('blood_group')} />
+          <Input label="Emergency Contact" required type="tel" placeholder="+91-9876543213" error={errors.emergency_contact?.message} {...register('emergency_contact')} />
+          <Select label="Blood Group" required options={BLOOD_GROUPS} placeholder="Select…" error={errors.blood_group?.message} {...register('blood_group')} />
         </div>
         <Textarea
           label="Medical Notes"

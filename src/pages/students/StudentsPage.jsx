@@ -5,7 +5,7 @@ import {
   Plus, Search, Users, ChevronRight,
   ChevronLeft, X, LayoutGrid, LayoutList,
   MoreVertical, Eye, Pencil, Trash2,
-  ExternalLink, Filter, Upload, Download
+  ExternalLink, Filter, Upload, Download, FileDown, IdCard
 } from 'lucide-react'
 import useAdminStudentStore from '@/store/studentStore'
 import useSessionStore from '@/store/sessionStore'
@@ -24,6 +24,7 @@ import { ROUTES } from '@/constants/app'
 import { downloadSimpleClassStudentsPdf } from '@/api/classApi'
 import { downloadBlob } from '@/utils/downloadBlob'
 import useAuth from '@/hooks/useAuth'
+import * as studentApi from '@/api/studentsApi'
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 const GENDER_BADGE = {
@@ -65,9 +66,11 @@ const StatusToggle = ({ isActive, onToggle, isLoading }) => {
 }
 
 // ─── Three-dot dropdown menu ──────────────────────────────────────────────────
-const CardMenu = ({ onView, onEdit, onDelete, onToggleStatus, isActive }) => {
+const CardMenu = ({ student, onView, onEdit, onDelete }) => {
   const [open, setOpen] = useState(false)
   const ref = useRef(null)
+  const { toastError, toastSuccess } = useToast()
+  const [isDownloading, setIsDownloading] = useState(false)
 
   useEffect(() => {
     const handler = (e) => {
@@ -77,9 +80,23 @@ const CardMenu = ({ onView, onEdit, onDelete, onToggleStatus, isActive }) => {
     return () => document.removeEventListener('mousedown', handler)
   }, [])
 
+  const handleDownloadForm = async () => {
+    setIsDownloading(true)
+    try {
+      const blob = await studentApi.downloadAdmissionForm(student.id)
+      downloadBlob(blob, `AdmissionForm_${student.admission_no}.pdf`)
+      toastSuccess('Admission form ready')
+    } catch (err) {
+      toastError(err.message || 'Download failed')
+    } finally {
+      setIsDownloading(false)
+    }
+  }
+
   const items = [
     { icon: ExternalLink, label: 'Full Profile', action: onView },
     { icon: Pencil, label: 'Edit Profile',  action: onEdit },
+    { icon: FileDown, label: 'Admission Form', action: handleDownloadForm, loading: isDownloading },
     { icon: Trash2, label: 'Delete Student', action: onDelete, danger: true },
   ]
 
@@ -94,13 +111,18 @@ const CardMenu = ({ onView, onEdit, onDelete, onToggleStatus, isActive }) => {
 
       {open && (
         <div className="absolute top-10 right-0 z-50 min-w-[180px] bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl shadow-xl p-1 animate-in fade-in slide-in-from-top-2">
-          {items.map(({ icon: Icon, label, action, danger }) => (
+          {items.map(({ icon: Icon, label, action, danger, loading }) => (
             <button
               key={label}
-              onClick={(e) => { e.stopPropagation(); setOpen(false); action?.() }}
-              className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-left transition-colors ${danger ? 'text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800'}`}
+              disabled={loading}
+              onClick={(e) => { e.stopPropagation(); if(!loading) { setOpen(false); action?.() } }}
+              className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-left transition-colors ${danger ? 'text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800'} ${loading ? 'opacity-50 cursor-not-allowed' : ''}`}
             >
-              <Icon size={14} className={danger ? 'text-red-500' : 'text-gray-400'} />
+              {loading ? (
+                <div className="w-3.5 h-3.5 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin" />
+              ) : (
+                <Icon size={14} className={danger ? 'text-red-500' : 'text-gray-400'} />
+              )}
               {label}
             </button>
           ))}
@@ -130,7 +152,7 @@ const StudentGridCard = ({ student, onView, onEdit, onDelete }) => {
         >
           {student.admission_no}
         </span>
-        <CardMenu onView={onView} onEdit={onEdit} onDelete={onDelete} />
+        <CardMenu student={student} onView={onView} onEdit={onEdit} onDelete={onDelete} />
       </div>
 
       {/* Profile Info */}
@@ -191,7 +213,7 @@ const StudentGridCard = ({ student, onView, onEdit, onDelete }) => {
 }
 
 // ─── Table Row ────────────────────────────────────────────────────────────────
-const StudentTableRow = ({ student, onView, onToggleStatus, isSaving }) => {
+const StudentTableRow = ({ student, onView, onEdit, onDelete, onToggleStatus, isSaving }) => {
   const fullName = `${student.first_name} ${student.last_name}`
   const enrollment = student.current_enrollment
   const gCfg = GENDER_BADGE[student.gender] || { label: student.gender, variant: 'grey' }
@@ -250,13 +272,8 @@ const StudentTableRow = ({ student, onView, onToggleStatus, isSaving }) => {
         </div>
       </td>
       <td className="px-6 py-4 text-right">
-        <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-          <button 
-            onClick={onView}
-            className="p-1.5 text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg"
-          >
-            <ChevronRight size={16} />
-          </button>
+        <div className="flex justify-end gap-2">
+          <CardMenu student={student} onView={onView} onEdit={onEdit} onDelete={onDelete} />
         </div>
       </td>
     </tr>
@@ -285,6 +302,8 @@ const StudentsPage = () => {
   const [bulkIDData, setBulkIDData] = useState(null)
   const [fetchingBulk, setFetchingBulk] = useState(false)
   const [downloadModal, setDownloadModal] = useState(false)
+  const [idCardModal, setIdCardModal] = useState(false)
+  const [idCardFilters, setIdCardFilters] = useState({ class_id: '', section_id: '' })
   const [downloadFilters, setDownloadFilters] = useState({ class_id: '', section_id: '' })
   const [downloadingPdf, setDownloadingPdf] = useState(false)
   const [isInitialLoading, setIsInitialLoading] = useState(true)
@@ -378,6 +397,30 @@ const StudentsPage = () => {
     }
   }
 
+  const handleFetchBulkIDData = async () => {
+    if (!idCardFilters.class_id) {
+      toastError('Please select a class.')
+      return
+    }
+    setFetchingBulk(true)
+    try {
+      const data = await fetchClassIDCardsData({ 
+        class_id: idCardFilters.class_id, 
+        section_id: idCardFilters.section_id,
+        session_id: currentSession?.id 
+      })
+      if (data && data.length > 0) {
+        setBulkIDData(data)
+      } else {
+        toastError('No students found in this class/section.')
+      }
+    } catch (err) {
+      toastError('Failed to fetch ID card data.')
+    } finally {
+      setFetchingBulk(false)
+    }
+  }
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -417,36 +460,21 @@ const StudentsPage = () => {
             <div className="flex items-center gap-2">
               <Button 
                 variant="secondary" 
+                icon={IdCard} 
+                onClick={() => {
+                  setBulkIDData(null)
+                  setIdCardModal(true)
+                }}
+              >
+                ID Cards
+              </Button>
+              <Button 
+                variant="secondary" 
                 icon={Download} 
                 onClick={() => setDownloadModal(true)}
               >
                 Download List
               </Button>
-              {filters.class_id && (
-                <>
-                  {bulkIDData ? (
-                    <BulkIDCardsDownload data={bulkIDData} fileName={`IDCards_Class_${filters.class_id}.pdf`} />
-                  ) : (
-                    <Button 
-                      variant="secondary" 
-                      onClick={async () => {
-                        setFetchingBulk(true)
-                        try {
-                          const data = await fetchClassIDCardsData({ 
-                            class_id: filters.class_id, 
-                            session_id: currentSession?.id 
-                          })
-                          setBulkIDData(data)
-                        } catch {} finally { setFetchingBulk(false) }
-                      }}
-                      loading={fetchingBulk}
-                      className="text-xs"
-                    >
-                      ID Cards
-                    </Button>
-                  )}
-                </>
-              )}
               <Button 
                 variant="secondary" 
                 icon={Upload} 
@@ -588,6 +616,8 @@ const StudentsPage = () => {
                       key={student.id}
                       student={student}
                       onView={() => goToDetail(student.id)}
+                      onEdit={() => goToEdit(student.id)}
+                      onDelete={() => setConfirmDelete(student)}
                       onToggleStatus={() => handleToggleStatus(student)}
                       isSaving={isSaving}
                     />
@@ -609,6 +639,64 @@ const StudentsPage = () => {
         confirmLabel="Delete"
         loading={isSaving}
       />
+
+      {/* ID Cards Modal */}
+      <Modal 
+        open={idCardModal} 
+        onClose={() => setIdCardModal(false)} 
+        title="Download Bulk ID Cards"
+      >
+        <div className="space-y-4">
+          <div className="p-3 bg-indigo-50 dark:bg-indigo-950/30 rounded-xl text-xs text-indigo-700 dark:text-indigo-300 leading-relaxed font-medium">
+            Generate printable ID cards for all students in a class.
+          </div>
+
+          <Select
+            label="Class"
+            value={idCardFilters.class_id}
+            onChange={e => {
+              setIdCardFilters(prev => ({ ...prev, class_id: e.target.value, section_id: '' }))
+              if (e.target.value) fetchSections(e.target.value).catch(() => {})
+            }}
+            options={classes.map(cls => ({
+              value: cls.id,
+              label: `${cls.name}${cls.stream && cls.stream !== 'regular' ? ` (${cls.stream.charAt(0).toUpperCase() + cls.stream.slice(1)})` : ''}`
+            }))}
+            placeholder="Select Class"
+            required
+          />
+
+          <Select
+            label="Section"
+            value={idCardFilters.section_id}
+            onChange={e => setIdCardFilters(prev => ({ ...prev, section_id: e.target.value }))}
+            disabled={!idCardFilters.class_id}
+            options={sections.map(sec => ({
+              value: sec.id,
+              label: `Section ${sec.name}`
+            }))}
+            placeholder={idCardFilters.class_id ? "All Sections" : "Select Class First"}
+          />
+
+          <div className="flex justify-end gap-3 pt-4">
+            <Button variant="secondary" onClick={() => setIdCardModal(false)} disabled={fetchingBulk}>
+              Cancel
+            </Button>
+            {bulkIDData ? (
+              <BulkIDCardsDownload data={bulkIDData} fileName={`IDCards_Class_${idCardFilters.class_id}.pdf`} />
+            ) : (
+              <Button 
+                icon={IdCard} 
+                onClick={handleFetchBulkIDData} 
+                loading={fetchingBulk}
+                disabled={!idCardFilters.class_id}
+              >
+                Generate ID Cards
+              </Button>
+            )}
+          </div>
+        </div>
+      </Modal>
 
       <Modal 
         open={downloadModal} 

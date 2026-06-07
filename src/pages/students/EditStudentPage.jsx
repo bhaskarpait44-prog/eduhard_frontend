@@ -99,8 +99,6 @@ const EditStudentPage = () => {
       mother_name: student.mother_name || '',
       mother_phone: student.mother_phone || '',
       mother_qualification: student.mother_qualification || '',
-      mother_aadhar: student.mother_aadhar || '',
-      mother_annual_income: student.mother_annual_income || '',
 
       guardian_name: student.guardian_name || '',
       guardian_relation: student.guardian_relation || '',
@@ -229,12 +227,12 @@ const EditStudentPage = () => {
                <p className="text-[10px] font-black uppercase text-indigo-400 mb-1">Student Portal ID</p>
                <p className="text-sm font-bold text-indigo-900">{student?.admission_no || '--'}</p>
             </div>
-            <Input label="Student Login Email" type="email" required error={errors.email?.message} {...register('email')} />
-            <Input label="Parent Login Email" type="email" error={errors.parent_email?.message} {...register('parent_email')} />
+            <Input label="Student Login Email (Optional)" type="email" error={errors.email?.message} {...register('email')} />
+            <Input label="Parent Login Email" type="email" required error={errors.parent_email?.message} {...register('parent_email')} />
           </div>
           <div className="flex items-center gap-2 p-3 bg-white/50 rounded-xl text-[11px] text-indigo-700 font-medium">
              <KeyRound size={14} />
-             <span>Passwords can be reset from the student profile page. Admission number acts as the secondary login ID.</span>
+             <span>Passwords can be reset from the student profile page. Admission number acts as the primary login ID for students.</span>
           </div>
         </div>
 
@@ -256,9 +254,11 @@ const EditStudentPage = () => {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <Input label="Nationality" {...register('nationality')} />
+            <Input label="Nationality" required error={errors.nationality?.message} {...register('nationality')} />
             <Select
               label="Religion"
+              required
+              error={errors.religion?.message}
               options={[
                 { value: 'Hindu', label: 'Hindu' },
                 { value: 'Muslim', label: 'Muslim' },
@@ -272,6 +272,8 @@ const EditStudentPage = () => {
             />
             <Select
               label="Caste"
+              required
+              error={errors.caste?.message}
               options={[
                 { value: 'Gen', label: 'General' },
                 { value: 'OBC', label: 'OBC' },
@@ -280,7 +282,7 @@ const EditStudentPage = () => {
               ]}
               {...register('caste')}
             />
-            <Input label="Mother Tongue" {...register('mother_tongue')} />
+            <Input label="Mother Tongue" required error={errors.mother_tongue?.message} {...register('mother_tongue')} />
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -294,10 +296,10 @@ const EditStudentPage = () => {
         <div className="bg-surface rounded-2xl border border-border p-6 space-y-6 shadow-sm">
           <SectionHeading title="Contact Information" subtitle="Student and emergency contact data" />
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <Input label="Phone Number" required error={errors.phone?.message} {...register('phone')} />
+            <Input label="Phone Number" error={errors.phone?.message} {...register('phone')} />
             <Input label="WhatsApp Number" error={errors.whatsapp_no?.message} {...register('whatsapp_no')} />
             <Input label="Emergency Contact" required error={errors.emergency_contact?.message} {...register('emergency_contact')} />
-            <Select label="Blood Group" options={BLOOD_GROUPS} {...register('blood_group')} />
+            <Select label="Blood Group" required error={errors.blood_group?.message} options={BLOOD_GROUPS} {...register('blood_group')} />
             <div className="md:col-span-2">
                <Input label="Medical Notes" placeholder="Allergies, chronic conditions, etc." {...register('medical_notes')} />
             </div>
@@ -309,14 +311,14 @@ const EditStudentPage = () => {
           {/* Current Address */}
           <div className="bg-surface rounded-2xl border border-border p-6 space-y-5 shadow-sm">
             <SectionHeading title="Current Address" subtitle="Where the student currently resides" />
-            <Textarea label="Village/Town/Street" rows={2} {...register('address')} />
+            <Textarea label="Village/Town/Street" required error={errors.address?.message} rows={2} {...register('address')} />
             <div className="grid grid-cols-2 gap-4">
-              <Input label="Police Station" {...register('police_station')} />
-              <Input label="Post Office" {...register('post_office')} />
-              <Input label="District" {...register('district')} />
-              <Input label="City" {...register('city')} />
-              <Input label="State" {...register('state')} />
-              <Input label="PIN Code" error={errors.pincode?.message} {...register('pincode')} />
+              <Input label="Police Station" required error={errors.police_station?.message} {...register('police_station')} />
+              <Input label="Post Office" required error={errors.post_office?.message} {...register('post_office')} />
+              <Input label="District" required error={errors.district?.message} {...register('district')} />
+              <Input label="City" required error={errors.city?.message} {...register('city')} />
+              <Input label="State" required error={errors.state?.message} {...register('state')} />
+              <Input label="PIN Code" required error={errors.pincode?.message} {...register('pincode')} />
             </div>
           </div>
 
@@ -338,13 +340,13 @@ const EditStudentPage = () => {
 
             {!isPermanentSame && (
               <div className="space-y-5 animate-in fade-in slide-in-from-top-2 duration-300">
-                <Textarea label="Village/Town/Street" rows={2} {...register('perm_address')} />
+                <Textarea label="Village/Town/Street" required error={errors.perm_address?.message} rows={2} {...register('perm_address')} />
                 <div className="grid grid-cols-2 gap-4">
-                  <Input label="Police Station" {...register('perm_police_station')} />
-                  <Input label="Post Office" {...register('perm_post_office')} />
-                  <Input label="District" {...register('perm_district')} />
-                  <Input label="State" {...register('perm_state')} />
-                  <Input label="PIN Code" error={errors.perm_pincode?.message} {...register('perm_pincode')} />
+                  <Input label="Police Station" required error={errors.perm_police_station?.message} {...register('perm_police_station')} />
+                  <Input label="Post Office" required error={errors.perm_post_office?.message} {...register('perm_post_office')} />
+                  <Input label="District" required error={errors.perm_district?.message} {...register('perm_district')} />
+                  <Input label="State" required error={errors.perm_state?.message} {...register('perm_state')} />
+                  <Input label="PIN Code" required error={errors.perm_pincode?.message} {...register('perm_pincode')} />
                 </div>
               </div>
             )}
@@ -366,12 +368,10 @@ const EditStudentPage = () => {
               <div className="flex items-center gap-2 border-b border-border pb-2">
                 <Badge variant="blue">Mother's Particulars</Badge>
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
-                <Input label="Name" {...register('mother_name')} />
+              <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-3 gap-4">
+                <Input label="Name" required error={errors.mother_name?.message} {...register('mother_name')} />
                 <Input label="Phone" error={errors.mother_phone?.message} {...register('mother_phone')} />
                 <Input label="Qualification" {...register('mother_qualification')} />
-                <Input label="Aadhar No" {...register('mother_aadhar')} />
-                <Input label="Annual Income" {...register('mother_annual_income')} />
               </div>
             </div>
 
@@ -381,8 +381,8 @@ const EditStudentPage = () => {
                 <Badge variant="indigo">Father's Particulars</Badge>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
-                <Input label="Name" {...register('father_name')} />
-                <Input label="Phone" error={errors.father_phone?.message} {...register('father_phone')} />
+                <Input label="Name" required error={errors.father_name?.message} {...register('father_name')} />
+                <Input label="Phone" required error={errors.father_phone?.message} {...register('father_phone')} />
                 <Input label="Qualification" {...register('father_qualification')} />
                 <Input label="Aadhar No" {...register('father_aadhar')} />
                 <Input label="Annual Income" {...register('father_annual_income')} />

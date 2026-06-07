@@ -5,7 +5,7 @@ import {
   AlertCircle, ChevronLeft, GraduationCap, Loader2, ArrowRight,
   ShieldCheck, Info, User, Mail, Calendar, ExternalLink
 } from 'lucide-react'
-import { APP_NAME } from '@/constants/app'
+import { APP_NAME, ROUTES } from '@/constants/app'
 import { formatDate } from '@/utils/helpers'
 import './AdmissionsPortal.css'
 
@@ -63,7 +63,7 @@ const AdmissionStatus = () => {
           <h1 className="school-name font-serif">{APP_NAME}</h1>
           <span className="badge">Status</span>
         </div>
-        <a href="/apply" className="track-link">
+        <a href={ROUTES.ADMISSIONS} className="track-link">
           <ChevronLeft size={16} /> <span className="text-brand">Back to Portal</span>
         </a>
       </header>

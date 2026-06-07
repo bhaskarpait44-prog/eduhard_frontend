@@ -32,23 +32,23 @@ export const studentAdmitSchema = z.object({
 })
 
 export const studentProfileSchema = z.object({
-  address: z.string().optional(),
-  city: z.string().optional(),
-  state: z.string().optional(),
-  pincode: pincodeSchema,
+  address: z.string().min(1, 'Address is required'),
+  city: z.string().min(1, 'City is required'),
+  state: z.string().min(1, 'State is required'),
+  pincode: z.string().regex(/^\d{6}$/, 'Enter a valid 6-digit pincode'),
   phone: phoneSchema,
-  email: z.string().email('A valid student email is required'),
+  email: z.string().email('A valid student email is required').optional().or(z.literal('')),
 
   // SVA Expansion
-  village: z.string().optional(),
-  police_station: z.string().optional(),
-  post_office: z.string().optional(),
-  district: z.string().optional(),
+  village: z.string().min(1, 'Village is required'),
+  police_station: z.string().min(1, 'Police station is required'),
+  post_office: z.string().min(1, 'Post office is required'),
+  district: z.string().min(1, 'District is required'),
   whatsapp_no: phoneSchema,
-  nationality: z.string().optional().default('Indian'),
-  religion: z.string().optional(),
-  caste: z.enum(['OBC', 'ST', 'SC', 'Gen']).optional(),
-  mother_tongue: z.string().optional(),
+  nationality: z.string().min(1, 'Nationality is required'),
+  religion: z.string().min(1, 'Religion is required'),
+  caste: z.enum(['OBC', 'ST', 'SC', 'Gen'], { required_error: 'Caste is required' }),
+  mother_tongue: z.string().min(1, 'Mother tongue is required'),
   identification_marks: z.string().optional(),
   is_hostel: z.boolean().optional(),
   medium: z.enum(['English', 'Assamese']).optional(),
@@ -67,19 +67,16 @@ export const studentProfileSchema = z.object({
   perm_state: z.string().optional(),
   perm_pincode: pincodeSchema,
 
-  father_name: z.string().optional(),
-  father_phone: phoneSchema,
-  father_email: z.string().email('A valid parent email is required for login access').optional().or(z.literal('')),
+  father_name: z.string().min(1, "Father's name is required"),
+  father_phone: z.string().regex(/^[6-9]\d{9}$/, 'Enter a valid 10-digit mobile number'),
+  father_email: z.string().email('A valid parent email is required'),
   father_qualification: z.string().optional(),
   father_aadhar: z.string().optional(),
   father_annual_income: z.string().optional(),
 
-  mother_name: z.string().optional(),
+  mother_name: z.string().min(1, "Mother's name is required"),
   mother_phone: phoneSchema,
-  mother_email: z.string().email('A valid parent email is required').optional().or(z.literal('')),
   mother_qualification: z.string().optional(),
-  mother_aadhar: z.string().optional(),
-  mother_annual_income: z.string().optional(),
 
   guardian_name: z.string().optional(),
   guardian_relation: z.string().optional(),
@@ -89,9 +86,19 @@ export const studentProfileSchema = z.object({
   guardian_aadhar: z.string().optional(),
   guardian_annual_income: z.string().optional(),
 
-  emergency_contact: phoneSchema,
-  blood_group: z.string().optional(),
+  emergency_contact: z.string().regex(/^[6-9]\d{9}$/, 'Enter a valid 10-digit mobile number'),
+  blood_group: z.string().min(1, 'Blood group is required'),
   medical_notes: z.string().optional(),
+}).superRefine((data, ctx) => {
+  if (!data.is_permanent_same) {
+    if (!data.perm_address) ctx.addIssue({ code: 'custom', message: 'Permanent address is required', path: ['perm_address'] });
+    if (!data.perm_village) ctx.addIssue({ code: 'custom', message: 'Permanent village is required', path: ['perm_village'] });
+    if (!data.perm_police_station) ctx.addIssue({ code: 'custom', message: 'Permanent police station is required', path: ['perm_police_station'] });
+    if (!data.perm_post_office) ctx.addIssue({ code: 'custom', message: 'Permanent post office is required', path: ['perm_post_office'] });
+    if (!data.perm_district) ctx.addIssue({ code: 'custom', message: 'Permanent district is required', path: ['perm_district'] });
+    if (!data.perm_state) ctx.addIssue({ code: 'custom', message: 'Permanent state is required', path: ['perm_state'] });
+    if (!data.perm_pincode || !/^\d{6}$/.test(data.perm_pincode)) ctx.addIssue({ code: 'custom', message: 'Valid permanent pincode is required', path: ['perm_pincode'] });
+  }
 })
 
 // ── Student Profile Updates (TabProfile) ──────────────────────────────────

@@ -207,7 +207,7 @@ export const ROUTES = {
 
   // Settings
   SETTINGS: '/settings',
-  ADMISSIONS: '/apply',
+  ADMISSIONS: '/admission',
   ADMISSION_STATUS: '/status',
 }
 

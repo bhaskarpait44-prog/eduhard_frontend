@@ -90,6 +90,8 @@ const StudentDetailPage = () => {
   const [parentResetResult, setParentResetResult] = useState(null)
   const [isResettingPass, setIsResettingPass] = useState(false)
   const [isResettingParentPass, setIsResettingParentPass] = useState(false)
+  const [manualPassword, setManualPassword] = useState('')
+  const [manualParentPassword, setManualParentPassword] = useState('')
 
   const [fetchingDocs, setFetchingDocs] = useState({ id: false, tc: false })
   const [docs, setDocs] = useState({ id: null, tc: null })
@@ -128,8 +130,9 @@ const StudentDetailPage = () => {
   const handleResetPassword = async () => {
     setIsResettingPass(true)
     try {
-      const res = await studentApi.resetPassword(id)
+      const res = await studentApi.resetPassword(id, manualPassword ? { new_password: manualPassword } : {})
       setResetResult(res.data)
+      setManualPassword('')
       toastSuccess('Student password reset')
     } catch (err) { toastError(err.message || 'Failed') }
     finally { setIsResettingPass(false) }
@@ -138,8 +141,9 @@ const StudentDetailPage = () => {
   const handleResetParentPassword = async () => {
     setIsResettingParentPass(true)
     try {
-      const res = await studentApi.resetParentPassword(id)
+      const res = await studentApi.resetParentPassword(id, manualParentPassword ? { new_password: manualParentPassword } : {})
       setParentResetResult(res.data)
+      setManualParentPassword('')
       toastSuccess('Parent password reset')
     } catch (err) { toastError(err.message || 'Failed') }
     finally { setIsResettingParentPass(false) }
@@ -160,15 +164,24 @@ const StudentDetailPage = () => {
     <div className="max-w-[1400px] mx-auto p-4 sm:p-6 space-y-6">
       {/* ── Header ── */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Student Details</h1>
-          <nav className="flex items-center gap-2 text-xs font-medium text-gray-400 mt-1">
-            <span className="hover:text-gray-600 cursor-pointer" onClick={() => navigate('/')}>Dashboard</span>
-            <ChevronRIcon size={10} />
-            <span className="hover:text-gray-600 cursor-pointer" onClick={() => navigate(ROUTES.STUDENTS)}>Student</span>
-            <ChevronRIcon size={10} />
-            <span className="text-indigo-600">Student Details</span>
-          </nav>
+        <div className="flex items-center gap-4">
+          <button 
+            onClick={() => navigate(ROUTES.STUDENTS)}
+            className="p-2 rounded-xl border border-gray-200 bg-white hover:bg-gray-50 text-gray-600 transition-colors shadow-sm"
+            title="Back to Students"
+          >
+            <ArrowLeft size={20} />
+          </button>
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">Student Details</h1>
+            <nav className="flex items-center gap-2 text-xs font-medium text-gray-400 mt-1">
+              <span className="hover:text-gray-600 cursor-pointer" onClick={() => navigate('/')}>Dashboard</span>
+              <ChevronRIcon size={10} />
+              <span className="hover:text-gray-600 cursor-pointer" onClick={() => navigate(ROUTES.STUDENTS)}>Student</span>
+              <ChevronRIcon size={10} />
+              <span className="text-indigo-600">Student Details</span>
+            </nav>
+          </div>
         </div>
         <div className="flex items-center gap-2">
           {student.status === 'active' && (
@@ -287,15 +300,6 @@ const StudentDetailPage = () => {
                 {student.is_active ? 'Suspend Account' : 'Activate Account'}
               </Button>
               <Button variant="secondary" size="sm" icon={History} className="w-full justify-start" onClick={() => setHistoryOpen(true)}>Enrollment History</Button>
-              <Button 
-                variant="secondary" 
-                size="sm" 
-                icon={FileDown} 
-                className="w-full justify-start" 
-                onClick={() => window.open(`/api/students/${student.id}/admission-form`, '_blank')}
-              >
-                Download Admission Form
-              </Button>
               <Button variant="danger" size="sm" icon={Trash2} className="w-full justify-start" onClick={() => navigate(`${ROUTES.STUDENTS}/${student.id}/delete`)}>Delete Student</Button>
             </div>
           </div>
@@ -347,13 +351,30 @@ const StudentDetailPage = () => {
             <div className="space-y-4">
               <h4 className="text-xs font-black uppercase tracking-widest text-indigo-600">Student Access</h4>
               <CredentialRow icon={Mail} label="Login Email" value={student.email} onCopy={handleCopy} />
-              <Button icon={KeyRound} className="w-full" onClick={handleResetPassword} loading={isResettingPass}>Reset Password</Button>
+              
+              <div className="space-y-2">
+                <Input 
+                  label="New Manual Password (Optional)" 
+                  type="password" 
+                  placeholder="Min 8 characters"
+                  value={manualPassword}
+                  onChange={e => setManualPassword(e.target.value)}
+                />
+                <Button icon={KeyRound} className="w-full" onClick={handleResetPassword} loading={isResettingPass}>
+                  {manualPassword ? 'Set Manual Password' : 'Reset Random Password'}
+                </Button>
+              </div>
+
               {resetResult && (
                 <div className="mt-2 p-3 bg-green-50 rounded-lg border border-green-100">
-                  <p className="text-[10px] font-bold text-green-800 mb-1">New Temp Password:</p>
+                  <p className="text-[10px] font-bold text-green-800 mb-1">Status:</p>
                   <div className="flex items-center justify-between">
-                    <code className="text-sm font-bold text-green-900">{resetResult.generated_password}</code>
-                    <button onClick={() => handleCopy(resetResult.generated_password)} className="text-green-600"><Copy size={14}/></button>
+                    <code className="text-sm font-bold text-green-900">
+                      {resetResult.generated_password ? `New Temp: ${resetResult.generated_password}` : 'Password Updated'}
+                    </code>
+                    {resetResult.generated_password && (
+                      <button onClick={() => handleCopy(resetResult.generated_password)} className="text-green-600"><Copy size={14}/></button>
+                    )}
                   </div>
                 </div>
               )}
@@ -361,13 +382,30 @@ const StudentDetailPage = () => {
             <div className="space-y-4">
               <h4 className="text-xs font-black uppercase tracking-widest text-amber-600">Parent Access</h4>
               <CredentialRow icon={Mail} label="Login Email" value={student.parent_email} onCopy={handleCopy} />
-              <Button variant="secondary" icon={KeyRound} className="w-full" onClick={handleResetParentPassword} loading={isResettingParentPass}>Reset Password</Button>
+              
+              <div className="space-y-2">
+                <Input 
+                  label="New Manual Password (Optional)" 
+                  type="password" 
+                  placeholder="Min 8 characters"
+                  value={manualParentPassword}
+                  onChange={e => setManualParentPassword(e.target.value)}
+                />
+                <Button variant="secondary" icon={KeyRound} className="w-full" onClick={handleResetParentPassword} loading={isResettingParentPass}>
+                  {manualParentPassword ? 'Set Manual Password' : 'Reset Random Password'}
+                </Button>
+              </div>
+
               {parentResetResult && (
                 <div className="mt-2 p-3 bg-amber-50 rounded-lg border border-amber-100">
-                  <p className="text-[10px] font-bold text-amber-800 mb-1">New Temp Password:</p>
+                  <p className="text-[10px] font-bold text-amber-800 mb-1">Status:</p>
                   <div className="flex items-center justify-between">
-                    <code className="text-sm font-bold text-amber-900">{parentResetResult.generated_password}</code>
-                    <button onClick={() => handleCopy(parentResetResult.generated_password)} className="text-amber-600"><Copy size={14}/></button>
+                    <code className="text-sm font-bold text-amber-900">
+                      {parentResetResult.generated_password ? `New Temp: ${parentResetResult.generated_password}` : 'Password Updated'}
+                    </code>
+                    {parentResetResult.generated_password && (
+                      <button onClick={() => handleCopy(parentResetResult.generated_password)} className="text-amber-600"><Copy size={14}/></button>
+                    )}
                   </div>
                 </div>
               )}
@@ -401,7 +439,6 @@ const TabDetails = ({ student }) => {
             name={student.mother_name} 
             role="Mother" 
             phone={student.mother_phone} 
-            email={student.mother_email} 
           />
           <ParentCard 
             name={student.guardian_name || student.father_name} 
