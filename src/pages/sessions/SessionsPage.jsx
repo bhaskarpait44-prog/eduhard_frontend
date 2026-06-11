@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
   Plus, Search, CalendarDays, Eye, Zap,
-  ChevronRight, ChevronLeft, Filter, Trash2, Lock
+  ChevronRight, ChevronLeft, Filter, Trash2, Lock, Unlock
 } from 'lucide-react'
 import useSessionStore from '@/store/sessionStore'
 import useToast from '@/hooks/useToast'
@@ -33,13 +33,14 @@ const SessionsPage = () => {
   usePageTitle('Academic Sessions')
   const navigate = useNavigate()
   const { toastSuccess, toastError } = useToast()
-  const { sessions, pagination, isLoading, isSaving, fetchSessions, activateSession, lockSession, deleteSession } = useSessionStore()
+  const { sessions, pagination, isLoading, isSaving, fetchSessions, activateSession, lockSession, unlockSession, deleteSession } = useSessionStore()
 
   const [search,       setSearch]       = useState('')
   const [statusFilter, setStatusFilter] = useState('all')
   const [deleteTarget, setDeleteTarget] = useState(null)
   const [activateTarget, setActivateTarget] = useState(null)
   const [lockTarget,     setLockTarget]     = useState(null)
+  const [unlockTarget,   setUnlockTarget]   = useState(null)
   const [page,         setPage]         = useState(1)
 
   // Fetch with server-side filters
@@ -80,6 +81,18 @@ const SessionsPage = () => {
       fetchSessions({ page, search, status: statusFilter, limit: 20 })
     } else {
       toastError(result.message || 'Failed to lock session')
+    }
+  }
+
+  const handleUnlock = async () => {
+    if (!unlockTarget) return
+    const result = await unlockSession(unlockTarget.id)
+    if (result.success) {
+      toastSuccess(`Session "${unlockTarget.name}" unlocked successfully`)
+      setUnlockTarget(null)
+      fetchSessions({ page, search, status: statusFilter, limit: 20 })
+    } else {
+      toastError(result.message || 'Failed to unlock session')
     }
   }
 
@@ -277,6 +290,17 @@ const SessionsPage = () => {
                               Lock
                             </Button>
                           )}
+                          {session.status === 'locked' && (
+                            <Button
+                              variant="outline"
+                              size="xs"
+                              icon={Unlock}
+                              className="text-blue-600 border-blue-200 hover:bg-blue-50"
+                              onClick={() => setUnlockTarget(session)}
+                            >
+                              Unlock
+                            </Button>
+                          )}
                           {!session.is_current && (
                             <Button
                               variant="ghost"
@@ -420,6 +444,18 @@ const SessionsPage = () => {
         title="Lock Session?"
         description={`This will lock "${lockTarget?.name}". Once locked, attendance, fees, and results for this session cannot be modified. This action cannot be undone.`}
         confirmLabel="Yes, Lock Session"
+        variant="warning"
+        loading={isSaving}
+      />
+
+      {/* ── Confirm unlock dialog ───────────────────────────────────────── */}
+      <ConfirmDialog
+        open={!!unlockTarget}
+        onClose={() => setUnlockTarget(null)}
+        onConfirm={handleUnlock}
+        title="Unlock Session?"
+        description={`This will unlock "${unlockTarget?.name}" and set it back to 'Upcoming' status.`}
+        confirmLabel="Yes, Unlock"
         variant="warning"
         loading={isSaving}
       />

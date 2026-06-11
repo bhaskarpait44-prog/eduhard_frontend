@@ -127,11 +127,13 @@ const useSessionStore = create((set, get) => ({
       set(s => ({
         isSaving       : false,
         currentSession : activated,
-        sessions       : s.sessions.map(sess =>
-          sess.id === Number(id)
-            ? activated
-            : { ...sess, is_current: false, is_locked: false, status: sess.status === 'active' ? 'closed' : sess.status }
-        ),
+        sessions       : s.sessions.map(sess => {
+          if (sess.id === Number(id)) return activated
+          if (sess.is_current && sess.status === 'active') {
+            return { ...sess, is_current: false, status: 'closed' }
+          }
+          return sess
+        }),
         selectedSession: s.selectedSession?.id === Number(id)
           ? activated
           : s.selectedSession,
@@ -153,8 +155,27 @@ const useSessionStore = create((set, get) => ({
         isSaving       : false,
         sessions       : s.sessions.map(sess => (sess.id === Number(id) ? locked : sess)),
         selectedSession: s.selectedSession?.id === Number(id) ? locked : s.selectedSession,
+        currentSession : s.currentSession?.id === Number(id) ? null : s.currentSession,
       }))
       return { success: true }
+    } catch (err) {
+      set({ isSaving: false })
+      return { success: false, message: err.message }
+    }
+  },
+
+  // ── Unlock session ───────────────────────────────────────────────────
+  unlockSession: async (id) => {
+    set({ isSaving: true })
+    try {
+      const res = await api.unlockSession(id)
+      const unlocked = res.data
+      set(s => ({
+        isSaving       : false,
+        sessions       : s.sessions.map(sess => (sess.id === Number(id) ? unlocked : sess)),
+        selectedSession: s.selectedSession?.id === Number(id) ? unlocked : s.selectedSession,
+      }))
+      return { success: true, data: unlocked }
     } catch (err) {
       set({ isSaving: false })
       return { success: false, message: err.message }

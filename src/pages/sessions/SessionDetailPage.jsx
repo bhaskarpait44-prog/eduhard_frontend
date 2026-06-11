@@ -2,7 +2,7 @@
 import { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import {
-  ArrowLeft, Zap, Lock, CalendarCheck,
+  ArrowLeft, Zap, Lock, Unlock, CalendarCheck,
   UmbrellaOff, Plus, Trash2, Calendar, Archive
 } from 'lucide-react'
 import useSessionStore from '@/store/sessionStore'
@@ -41,7 +41,7 @@ const SessionDetailPage = () => {
     selectedSession : session,
     sessionStats,
     isLoading, isSaving,
-    fetchSession, fetchSessionStats, activateSession, lockSession, archiveSession,
+    fetchSession, fetchSessionStats, activateSession, lockSession, unlockSession, archiveSession,
     removeHoliday, updateWorkingDays, deleteSession,
   } = useSessionStore()
 
@@ -50,6 +50,7 @@ const SessionDetailPage = () => {
   const [activeTab,   setActiveTab]   = useState('working_days')
   const [confirmOpen, setConfirmOpen] = useState(false)
   const [lockOpen,    setLockOpen]    = useState(false)
+  const [unlockOpen,  setUnlockOpen]  = useState(false)
   const [archiveOpen, setArchiveOpen] = useState(false)
   const [deleteOpen,  setDeleteOpen]  = useState(false)
   const [editOpen,    setEditOpen]    = useState(false)
@@ -100,6 +101,17 @@ const SessionDetailPage = () => {
       fetchSession(id)
     } else {
       toastError(result.message || 'Failed to lock session')
+    }
+  }
+
+  const handleUnlock = async () => {
+    setUnlockOpen(false)
+    const result = await unlockSession(id)
+    if (result.success) {
+      toastSuccess(`Session unlocked. It is now back in 'Upcoming' status.`)
+      fetchSession(id)
+    } else {
+      toastError(result.message || 'Failed to unlock session')
     }
   }
 
@@ -219,6 +231,16 @@ const SessionDetailPage = () => {
               loading={isSaving}
             >
               Lock Session
+            </Button>
+          )}
+          {session.status === 'locked' && (
+            <Button
+              variant="outline"
+              icon={Unlock}
+              onClick={() => setUnlockOpen(true)}
+              loading={isSaving}
+            >
+              Unlock Session
             </Button>
           )}
           {session.status === 'closed' && (
@@ -502,6 +524,18 @@ const SessionDetailPage = () => {
         description={`This will lock "${session.name}" and make it read-only. No further changes to attendance, results, or fees will be permitted. This action is permanent.`}
         confirmLabel="Yes, Lock Session"
         variant="danger"
+        loading={isSaving}
+      />
+
+      {/* ── Confirm unlock dialog ───────────────────────────────────────── */}
+      <ConfirmDialog
+        open={unlockOpen}
+        onClose={() => setUnlockOpen(false)}
+        onConfirm={handleUnlock}
+        title="Unlock Session?"
+        description={`This will unlock "${session.name}" and set it back to 'Upcoming' status. You can re-edit it or activate it again afterward.`}
+        confirmLabel="Yes, Unlock"
+        variant="warning"
         loading={isSaving}
       />
 
