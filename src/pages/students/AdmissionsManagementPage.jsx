@@ -25,6 +25,8 @@ const AdmissionsManagementPage = () => {
   const [classes, setClasses] = useState([])
   const [sections, setSections] = useState([])
   const [loadingSections, setLoadingSections] = useState(false)
+  const [admissionOpen, setAdmissionOpen] = useState(false)
+  const [toggling, setToggling] = useState(false)
   
   const [filters, setFilters] = useState({
     status: 'pending',
@@ -34,20 +36,26 @@ const AdmissionsManagementPage = () => {
     perPage: 10
   })
 
-  // Approval State
-  const [selectedApp, setSelectedApp] = useState(null)
+  // Modal Visibility States
+  const [detailModal, setDetailModal] = useState(false)
   const [approvalModal, setApprovalModal] = useState(false)
+  const [admitModal, setAdmitModal] = useState(false)
+  const [emailModal, setEmailModal] = useState(false)
+  const [rejectModal, setRejectModal] = useState(false)
+
+  // Data States
+  const [selectedApp, setSelectedApp] = useState(null)
   const [approving, setApproving] = useState(false)
-  const [approvalData, setApprovalData] = useState({
+  const [admitting, setAdmitting] = useState(false)
+  const [admissionData, setAdmissionData] = useState({
     admission_no: '',
     section_id: '',
     roll_number: ''
   })
-
-  // Email State
-  const [emailModal, setEmailModal] = useState(false)
-  const [sendingEmail, setSendingEmail] = useState(false)
   const [emailData, setEmailData] = useState({ subject: '', message: '' })
+  const [sendingEmail, setSendingEmail] = useState(false)
+  const [rejecting, setRejecting] = useState(false)
+  const [rejectionReason, setRejectionReason] = useState('')
 
   const fetchApplications = useCallback(async () => {
     setLoading(true)
@@ -60,7 +68,7 @@ const AdmissionsManagementPage = () => {
     } finally {
       setLoading(false)
     }
-  }, [filters])
+  }, [filters, toastError])
 
   const fetchSections = async (classId) => {
     if (!classId) return
@@ -75,36 +83,95 @@ const AdmissionsManagementPage = () => {
     }
   }
 
+  const fetchAdmissionStatus = async () => {
+    try {
+      const res = await api.get('/settings')
+      setAdmissionOpen(!!res.data.data.online_admission_open)
+    } catch (e) { /* ignore */ }
+  }
+
+  const handleToggleAdmission = async () => {
+    setToggling(true)
+    try {
+      const next = !admissionOpen
+      await api.put('/settings', { online_admission_open: next })
+      setAdmissionOpen(next)
+      toastSuccess(`Online admission portal ${next ? 'OPENED' : 'CLOSED'}`)
+    } catch (err) {
+      toastError('Failed to update admission status')
+    } finally {
+      setToggling(false)
+    }
+  }
+
   useEffect(() => {
     fetchApplications()
   }, [fetchApplications])
 
   useEffect(() => {
     getClasses().then(res => setClasses(res.data.classes))
+    fetchAdmissionStatus()
   }, [])
 
-  const handleStatusUpdate = async (id, status) => {
-    if (status === 'approved') {
-      const app = applications.find(a => a.id === id)
-      setSelectedApp(app)
-      setApprovalData({
-        admission_no: `ADM-${new Date().getFullYear()}-${String(Math.floor(1000 + Math.random() * 9000))}`,
-        section_id: '',
-        roll_number: ''
+  const handleShowDetails = (app) => {
+    setSelectedApp(app)
+    setDetailModal(true)
+  }
+
+  const handleStartEmail = (app) => {
+    setSelectedApp(app)
+    setDetailModal(false)
+    setEmailModal(true)
+  }
+
+  const handleApproveOnly = (app) => {
+    setSelectedApp(app)
+    setDetailModal(false)
+    setApprovalModal(true)
+  }
+
+  const handleStartAdmission = (app) => {
+    setSelectedApp(app)
+    setDetailModal(false)
+    
+    // Fetch next sequential admission number from server
+    setAdmissionData({ admission_no: 'Loading...', section_id: '', roll_number: '' })
+    api.get('/applications/next-admission-no')
+      .then(res => setAdmissionData(prev => ({ ...prev, admission_no: res.data.next_admission_no })))
+      .catch(() => {
+        setAdmissionData(prev => ({ ...prev, admission_no: `ADM-${new Date().getFullYear()}-XXXX` }))
+        toastError('Failed to fetch next admission number')
       })
-      fetchSections(app.class_id)
-      setApprovalModal(true)
-      return
-    }
 
-    if (!confirm('Are you sure you want to REJECT this application?')) return
+    fetchSections(app.class_id)
+    setAdmitModal(true)
+  }
 
+  const handleStartRejection = (app) => {
+    setSelectedApp(app)
+    setDetailModal(false)
+    setRejectionReason('')
+    setRejectModal(true)
+  }
+
+  const onRejectSubmit = async (e) => {
+    e.preventDefault()
+    if (!rejectionReason.trim()) return toastError('Please provide a reason')
+    
+    setRejecting(true)
     try {
-      await updateApplicationStatus(id, { status: 'rejected' })
-      toastSuccess('Application rejected')
+      await updateApplicationStatus(selectedApp.id, { 
+        status: 'rejected',
+        remarks: rejectionReason 
+      })
+      toastSuccess('Application rejected and notification sent.')
+      setRejectModal(false)
+      setSelectedApp(null)
       fetchApplications()
     } catch (err) {
-      toastError(err.response?.data?.message || 'Action failed')
+      toastError(err.response?.data?.message || 'Rejection failed')
+    } finally {
+      setRejecting(false)
     }
   }
 
@@ -114,10 +181,11 @@ const AdmissionsManagementPage = () => {
     try {
       await updateApplicationStatus(selectedApp.id, {
         status: 'approved',
-        ...approvalData
+        remarks: 'Application Approved'
       })
-      toastSuccess('Application approved! Student admitted successfully.')
+      toastSuccess('Application approved! Applicant has been notified to visit the school.')
       setApprovalModal(false)
+      setSelectedApp(null)
       fetchApplications()
     } catch (err) {
       toastError(err.response?.data?.message || 'Approval failed')
@@ -126,13 +194,30 @@ const AdmissionsManagementPage = () => {
     }
   }
 
+  const onAdmitSubmit = async (e) => {
+    e.preventDefault()
+    setAdmitting(true)
+    try {
+      await api.post(`/applications/${selectedApp.id}/admit`, admissionData)
+      toastSuccess('Student admitted successfully!')
+      setAdmitModal(false)
+      setSelectedApp(null)
+      fetchApplications()
+    } catch (err) {
+      toastError(err.response?.data?.message || 'Admission failed')
+    } finally {
+      setAdmitting(false)
+    }
+  }
+
   const handleSendEmail = async (e) => {
     e.preventDefault()
     setSendingEmail(true)
     try {
-      await api.post(`/api/applications/${selectedApp.id}/email`, emailData)
+      await api.post(`/applications/${selectedApp.id}/email`, emailData)
       toastSuccess('Email sent to applicant!')
       setEmailModal(false)
+      setSelectedApp(null)
       setEmailData({ subject: '', message: '' })
     } catch (err) {
       toastError(err.response?.data?.message || 'Failed to send email')
@@ -175,7 +260,11 @@ const AdmissionsManagementPage = () => {
       header: 'Status',
       accessor: 'status',
       render: (val) => (
-        <Badge variant={val === 'pending' ? 'warning' : val === 'approved' ? 'success' : 'danger'}>
+        <Badge variant={
+          val === 'pending' ? 'warning' : 
+          val === 'approved' ? 'primary' : 
+          val === 'admitted' ? 'success' : 'danger'
+        }>
           {val.toUpperCase()}
         </Badge>
       )
@@ -189,16 +278,16 @@ const AdmissionsManagementPage = () => {
             variant="ghost" 
             size="xs" 
             icon={Mail} 
-            onClick={() => { setSelectedApp(row); setEmailModal(true); }}
+            onClick={() => handleStartEmail(row)}
             title="Send Email"
           />
           {row.status === 'pending' && (
             <>
               <Button 
-                variant="success" 
+                variant="primary" 
                 size="xs" 
                 icon={CheckCircle}
-                onClick={() => handleStatusUpdate(row.id, 'approved')}
+                onClick={() => handleApproveOnly(row)}
               >
                 Approve
               </Button>
@@ -206,13 +295,23 @@ const AdmissionsManagementPage = () => {
                 variant="danger" 
                 size="xs" 
                 icon={XCircle}
-                onClick={() => handleStatusUpdate(row.id, 'rejected')}
+                onClick={() => handleStartRejection(row)}
               >
                 Reject
               </Button>
             </>
           )}
-          <Button variant="ghost" size="xs" icon={Eye} onClick={() => setSelectedApp(row)}>
+          {row.status === 'approved' && (
+            <Button 
+              variant="success" 
+              size="xs" 
+              icon={GraduationCap}
+              onClick={() => handleStartAdmission(row)}
+            >
+              Admit
+            </Button>
+          )}
+          <Button variant="ghost" size="xs" icon={Eye} onClick={() => handleShowDetails(row)}>
             Details
           </Button>
         </div>
@@ -222,26 +321,47 @@ const AdmissionsManagementPage = () => {
 
   return (
     <div className="flex flex-col gap-6">
-      <PageHeader 
-        title="Admission Applications" 
-        subtitle="Manage public online applications"
-        icon={ClipboardList}
-      />
-      
-      {/* ... filters ... */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 bg-surface p-4 rounded-xl border border-border">
-        <Input 
-          placeholder="Search ref, name, email..." 
-          icon={Search}
-          value={filters.search}
-          onChange={(e) => setFilters(f => ({ ...f, search: e.target.value, page: 1 }))}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <PageHeader 
+          title="Admission Applications" 
+          subtitle="Manage public online applications"
+          icon={ClipboardList}
+          className="flex-1"
         />
+        
+        <div className="flex items-center gap-4 bg-surface p-3 rounded-2xl border border-border shadow-sm">
+          <div className="flex flex-col">
+            <span className="text-[10px] font-black uppercase text-text-muted tracking-widest">Portal Status</span>
+            <span className={`text-xs font-bold ${admissionOpen ? 'text-success' : 'text-danger'}`}>
+              {admissionOpen ? 'OPEN FOR PUBLIC' : 'CLOSED TO PUBLIC'}
+            </span>
+          </div>
+          <button
+            onClick={handleToggleAdmission}
+            disabled={toggling}
+            className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none disabled:opacity-50 ${admissionOpen ? 'bg-success' : 'bg-slate-200'}`}
+          >
+            <span className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${admissionOpen ? 'translate-x-5' : 'translate-x-0'}`} />
+          </button>
+        </div>
+      </div>
+      
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 bg-surface p-4 rounded-xl border border-border">
+        <div className="relative col-span-1">
+          <Input 
+            placeholder="Search ref, name, email..." 
+            icon={Search}
+            value={filters.search}
+            onChange={(e) => setFilters(f => ({ ...f, search: e.target.value, page: 1 }))}
+          />
+        </div>
         <Select 
           value={filters.status}
           onChange={(e) => setFilters(f => ({ ...f, status: e.target.value, page: 1 }))}
           options={[
             { label: 'Pending', value: 'pending' },
             { label: 'Approved', value: 'approved' },
+            { label: 'Admitted', value: 'admitted' },
             { label: 'Rejected', value: 'rejected' },
           ]}
         />
@@ -251,10 +371,15 @@ const AdmissionsManagementPage = () => {
           onChange={(e) => setFilters(f => ({ ...f, class_id: e.target.value, page: 1 }))}
           options={classes.map(c => ({ label: c.name, value: c.id }))}
         />
-        <div className="flex items-center gap-2">
+        <div className="flex items-center justify-between gap-2">
           <Button variant="ghost" onClick={() => setFilters({ status: 'pending', search: '', class_id: '', page: 1, perPage: 10 })}>
             Reset
           </Button>
+          {meta.total > 0 && (
+            <div className="text-[10px] font-black uppercase text-text-muted bg-surface-raised px-2 py-1 rounded-lg border border-border">
+              {meta.total} Records
+            </div>
+          )}
         </div>
       </div>
 
@@ -265,6 +390,7 @@ const AdmissionsManagementPage = () => {
         pagination={{
           currentPage: meta.page,
           totalPages: meta.totalPages,
+          total: meta.total, // Added total
           onPageChange: (p) => setFilters(f => ({ ...f, page: p }))
         }}
         emptyMessage="No applications found matching your filters."
@@ -272,8 +398,8 @@ const AdmissionsManagementPage = () => {
 
       {/* Detail Modal */}
       <Modal 
-        open={!!selectedApp && !approvalModal && !emailModal} 
-        onClose={() => setSelectedApp(null)}
+        open={detailModal} 
+        onClose={() => { setDetailModal(false); setSelectedApp(null); }}
         title="Application Details"
         size="lg"
       >
@@ -291,7 +417,11 @@ const AdmissionsManagementPage = () => {
                   <span className="text-sm text-text-muted">Ref: {selectedApp.reference_no}</span>
                 </div>
               </div>
-              <Badge variant={selectedApp.status === 'pending' ? 'warning' : selectedApp.status === 'approved' ? 'success' : 'danger'}>
+              <Badge variant={
+                selectedApp.status === 'pending' ? 'warning' : 
+                selectedApp.status === 'approved' ? 'primary' : 
+                selectedApp.status === 'admitted' ? 'success' : 'danger'
+              }>
                 {selectedApp.status.toUpperCase()}
               </Badge>
             </div>
@@ -333,7 +463,7 @@ const AdmissionsManagementPage = () => {
                 <InfoRow label="PIN" value={selectedApp.student_data.pincode} />
               </Section>
 
-              <Section title="Family Details" icon={Users}>
+              <Section title="Family Details" icon={UsersIcon}>
                 <InfoRow label="Mother" value={selectedApp.student_data.mother_name} />
                 <InfoRow label="M-Qual" value={selectedApp.student_data.mother_qualification} />
                 <InfoRow label="M-Phone" value={selectedApp.student_data.mother_phone} />
@@ -358,7 +488,12 @@ const AdmissionsManagementPage = () => {
                   {Object.entries(selectedApp.student_data.documents).map(([key, path]) => (
                     <div key={key} className="col-span-2 flex items-center justify-between p-2 bg-surface rounded-lg border border-border">
                       <span className="text-xs font-bold text-text-muted capitalize">{key.replace(/_/g, ' ')}</span>
-                      <a href={`/${path}`} target="_blank" rel="noreferrer" className="text-xs text-primary font-bold hover:underline flex items-center gap-1">
+                      <a 
+                        href={`/api/applications/${selectedApp.id}/documents/${key}`} 
+                        target="_blank" 
+                        rel="noreferrer" 
+                        className="text-xs text-primary font-bold hover:underline flex items-center gap-1"
+                      >
                         View <ArrowRight size={12} />
                       </a>
                     </div>
@@ -368,12 +503,15 @@ const AdmissionsManagementPage = () => {
             </div>
 
             <div className="flex justify-end gap-3 pt-4 border-t border-border">
-              <Button variant="ghost" icon={Mail} onClick={() => setEmailModal(true)}>Message</Button>
+              <Button variant="ghost" icon={Mail} onClick={() => handleStartEmail(selectedApp)}>Message</Button>
               {selectedApp.status === 'pending' && (
                 <>
-                  <Button variant="danger" onClick={() => handleStatusUpdate(selectedApp.id, 'rejected')}>Reject</Button>
-                  <Button variant="success" onClick={() => handleStatusUpdate(selectedApp.id, 'approved')}>Approve & Admit</Button>
+                  <Button variant="danger" onClick={() => handleStartRejection(selectedApp)}>Reject</Button>
+                  <Button variant="primary" onClick={() => handleApproveOnly(selectedApp)}>Approve Application</Button>
                 </>
+              )}
+              {selectedApp.status === 'approved' && (
+                <Button variant="success" onClick={() => handleStartAdmission(selectedApp)}>Finalize Admission</Button>
               )}
             </div>
           </div>
@@ -383,7 +521,7 @@ const AdmissionsManagementPage = () => {
       {/* Email Modal */}
       <Modal
         open={emailModal}
-        onClose={() => setEmailModal(false)}
+        onClose={() => { setEmailModal(false); setSelectedApp(null); }}
         title="Send Email to Applicant"
         size="md"
       >
@@ -411,7 +549,7 @@ const AdmissionsManagementPage = () => {
             </div>
           </div>
           <div className="flex justify-end gap-3 pt-4 border-t border-border">
-            <Button variant="ghost" onClick={() => setEmailModal(false)}>Cancel</Button>
+            <Button variant="ghost" onClick={() => { setEmailModal(false); setSelectedApp(null); }}>Cancel</Button>
             <Button type="submit" variant="primary" loading={sendingEmail} icon={Mail}>
               Send Email
             </Button>
@@ -419,18 +557,42 @@ const AdmissionsManagementPage = () => {
         </form>
       </Modal>
 
-      {/* Approval & Admission Modal */}
+      {/* Approval Modal */}
       <Modal
         open={approvalModal}
-        onClose={() => setApprovalModal(false)}
-        title="Approve & Finalize Admission"
+        onClose={() => { setApprovalModal(false); setSelectedApp(null); }}
+        title="Approve Application"
         size="md"
       >
         <form onSubmit={onApproveSubmit} className="flex flex-col gap-6">
-          <div className="p-4 bg-amber-50 border border-amber-200 rounded-xl flex items-start gap-3">
-            <AlertTriangle className="text-amber-500 mt-0.5" size={20} />
-            <p className="text-sm text-amber-800 leading-relaxed">
-              Approving this application will automatically create a <strong>Student</strong> record and an <strong>Enrollment</strong> for the current session. Please assign an admission number and section.
+          <div className="p-4 bg-blue-50 border border-blue-200 rounded-xl flex items-start gap-3">
+            <Info className="text-blue-500 mt-0.5" size={20} />
+            <p className="text-sm text-blue-800 leading-relaxed">
+              Are you sure you want to approve this application? The applicant will be notified via email to visit the school for document verification and final admission.
+            </p>
+          </div>
+
+          <div className="flex justify-end gap-3 pt-4 border-t border-border">
+            <Button variant="ghost" onClick={() => { setApprovalModal(false); setSelectedApp(null); }} disabled={approving}>Cancel</Button>
+            <Button type="submit" variant="primary" loading={approving} icon={CheckCircle}>
+              Confirm Approval
+            </Button>
+          </div>
+        </form>
+      </Modal>
+
+      {/* Admission Modal */}
+      <Modal
+        open={admitModal}
+        onClose={() => { setAdmitModal(false); setSelectedApp(null); }}
+        title="Finalize Admission"
+        size="md"
+      >
+        <form onSubmit={onAdmitSubmit} className="flex flex-col gap-6">
+          <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-xl flex items-start gap-3">
+            <GraduationCap className="text-emerald-500 mt-0.5" size={20} />
+            <p className="text-sm text-emerald-800 leading-relaxed">
+              Student has arrived at the school. Proceed to create the official student record and enrollment.
             </p>
           </div>
 
@@ -438,16 +600,16 @@ const AdmissionsManagementPage = () => {
             <Input 
               label="Admission Number"
               required
-              value={approvalData.admission_no}
-              onChange={(e) => setApprovalData(d => ({ ...d, admission_no: e.target.value }))}
+              value={admissionData.admission_no}
+              onChange={(e) => setAdmissionData(d => ({ ...d, admission_no: e.target.value }))}
               placeholder="e.g. ADM-2024-0001"
             />
 
             <Select 
               label="Assign Section"
               required
-              value={approvalData.section_id}
-              onChange={(e) => setApprovalData(d => ({ ...d, section_id: e.target.value }))}
+              value={admissionData.section_id}
+              onChange={(e) => setAdmissionData(d => ({ ...d, section_id: e.target.value }))}
               options={sections.map(s => ({
                 label: `${s.name} (${s.enrolled_count}/${s.capacity})`,
                 value: s.id
@@ -458,16 +620,51 @@ const AdmissionsManagementPage = () => {
 
             <Input 
               label="Roll Number (Optional)"
-              value={approvalData.roll_number}
-              onChange={(e) => setApprovalData(d => ({ ...d, roll_number: e.target.value }))}
+              value={admissionData.roll_number}
+              onChange={(e) => setAdmissionData(d => ({ ...d, roll_number: e.target.value }))}
               placeholder="Leave blank for auto-assign"
             />
           </div>
 
           <div className="flex justify-end gap-3 pt-4 border-t border-border">
-            <Button variant="ghost" onClick={() => setApprovalModal(false)} disabled={approving}>Cancel</Button>
-            <Button type="submit" variant="success" loading={approving} icon={CheckCircle}>
-              Finalize Admission
+            <Button variant="ghost" onClick={() => { setAdmitModal(false); setSelectedApp(null); }} disabled={admitting}>Cancel</Button>
+            <Button type="submit" variant="success" loading={admitting} icon={CheckCircle}>
+              Admit Student
+            </Button>
+          </div>
+        </form>
+      </Modal>
+
+      {/* Rejection Modal */}
+      <Modal
+        open={rejectModal}
+        onClose={() => { setRejectModal(false); setSelectedApp(null); }}
+        title="Reject Application"
+        size="md"
+      >
+        <form onSubmit={onRejectSubmit} className="flex flex-col gap-6">
+          <div className="p-4 bg-red-50 border border-red-200 rounded-xl flex items-start gap-3">
+            <XCircle className="text-red-500 mt-0.5" size={20} />
+            <p className="text-sm text-red-800 leading-relaxed">
+              Are you sure you want to reject this application? This will notify the applicant and they will no longer be able to track it as pending.
+            </p>
+          </div>
+
+          <div className="flex flex-col gap-1.5">
+            <label className="text-xs font-bold text-text-muted uppercase tracking-wider">Reason for Rejection <span className="text-red-500">*</span></label>
+            <textarea 
+              className="w-full p-4 bg-surface border border-border rounded-xl focus:ring-2 focus:ring-red-500 outline-none min-h-[120px] text-sm"
+              required
+              value={rejectionReason}
+              onChange={(e) => setRejectionReason(e.target.value)}
+              placeholder="e.g. Incomplete documentation, Seat unavailable, etc."
+            />
+          </div>
+
+          <div className="flex justify-end gap-3 pt-4 border-t border-border">
+            <Button variant="ghost" onClick={() => { setRejectModal(false); setSelectedApp(null); }} disabled={rejecting}>Cancel</Button>
+            <Button type="submit" variant="danger" loading={rejecting} icon={XCircle}>
+              Confirm Rejection
             </Button>
           </div>
         </form>
@@ -495,7 +692,7 @@ const InfoRow = ({ label, value, colSpan = 'col-span-1' }) => (
   </div>
 )
 
-const Users = ({ size, className }) => (
+const UsersIcon = ({ size, className }) => (
   <svg 
     xmlns="http://www.w3.org/2000/svg" 
     width={size} 

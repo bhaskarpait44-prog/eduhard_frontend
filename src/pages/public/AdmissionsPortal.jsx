@@ -129,6 +129,9 @@ const AdmissionsPortal = () => {
   const [zoom, setZoom] = useState(1)
   const [croppedAreaPixels, setCroppedAreaPixels] = useState(null)
 
+  // Honeypot
+  const [hpValue, setHpValue] = useState('')
+
   const [files, setFiles] = useState({
     photo: null, birth_certificate: null, marksheet: null, transfer_certificate: null,
     admit_card: null, pass_certificate: null, registration_certificate: null,
@@ -265,11 +268,30 @@ const AdmissionsPortal = () => {
   }
 
   const onSubmit = async (data) => {
+    // Honeypot Check
+    if (hpValue) {
+      console.warn('Bot detected via honeypot');
+      return;
+    }
+
     setIsSubmitting(true)
     setApiError(null)
     try {
+      // Structure academic records for backend approval flow
+      const studentData = {
+        ...data,
+        previous_academic_records: data.prev_school_name ? [
+          {
+            school_name: data.prev_school_name,
+            class_name: data.prev_class,
+            year_of_study: data.prev_year,
+            percentage_grade: data.prev_percentage
+          }
+        ] : []
+      }
+
       const payload = new FormData()
-      payload.append('student_data', JSON.stringify(data))
+      payload.append('student_data', JSON.stringify(studentData))
       
       // Auto-Rename and Append Files
       Object.keys(files).forEach(key => { 
@@ -338,6 +360,16 @@ const AdmissionsPortal = () => {
 
   return (
     <div className="admissions-portal">
+      {/* Honeypot field - Hidden from users */}
+      <input 
+        type="text" 
+        style={{ display: 'none' }} 
+        tabIndex="-1" 
+        autoComplete="off"
+        value={hpValue}
+        onChange={e => setHpValue(e.target.value)}
+      />
+
       <header className="admissions-header">
         <div className="logo-group">
           <div className="w-10 h-10 bg-blue-50 rounded-xl flex items-center justify-center">
@@ -345,7 +377,7 @@ const AdmissionsPortal = () => {
           </div>
           <h1 className="school-name font-serif text-xl">{APP_NAME} <span className="text-xs font-sans text-slate-400 font-bold ml-2">Admissions {sessions[0]?.name}</span></h1>
         </div>
-        <a href="/status" className="track-link flex items-center gap-2 font-bold text-xs tracking-widest uppercase py-2 px-4 bg-slate-50 rounded-full border border-slate-100 hover:bg-white hover:border-blue-200 hover:text-blue-600 transition-all shadow-sm">
+        <a href="/admissions/status" className="track-link flex items-center gap-2 font-bold text-xs tracking-widest uppercase py-2 px-4 bg-slate-50 rounded-full border border-slate-100 hover:bg-white hover:border-blue-200 hover:text-blue-600 transition-all shadow-sm">
           <Search size={14} /> Track Status
         </a>
       </header>
@@ -661,11 +693,24 @@ const AdmissionsPortal = () => {
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
                     <div className={`form-field ${errors.phone ? 'error' : ''}`}>
                       <label>Student Phone <span className="text-red-500">*</span></label>
                       <input {...register('phone')} maxLength={10} placeholder="Mobile number" />
                       {errors.phone && <span className="error-message">{errors.phone.message}</span>}
+                    </div>
+                    <div className={`form-field ${errors.email ? 'error' : ''}`}>
+                      <label>Student Email</label>
+                      <input type="email" {...register('email')} placeholder="Student email address (optional)" />
+                      {errors.email && <span className="error-message">{errors.email.message}</span>}
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div className={`form-field ${errors.whatsapp_no ? 'error' : ''}`}>
+                      <label>WhatsApp Number</label>
+                      <input {...register('whatsapp_no')} maxLength={10} placeholder="WhatsApp number" />
+                      {errors.whatsapp_no && <span className="error-message">{errors.whatsapp_no.message}</span>}
                     </div>
                     <div className={`form-field ${errors.blood_group ? 'error' : ''}`}>
                       <label>Blood Group <span className="text-red-500">*</span></label>
@@ -720,7 +765,7 @@ const AdmissionsPortal = () => {
               <div className="admissions-card">
                 <div className="card-header-simple">
                   <h2 className="card-title-simple font-serif">Supporting Documents</h2>
-                  <p className="card-subtitle-simple">Upload digital copies for faster processing. Max 2MB per file.</p>
+                  <p className="card-subtitle-simple">Upload digital copies for faster processing. Max 3MB per file.</p>
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mt-8">
                   <FileField label="Latest Passport Photo" name="photo" files={files} onChange={handleFileChange} required />
@@ -869,7 +914,7 @@ const AdmissionsPortal = () => {
                   max={3}
                   step={0.1}
                   aria-labelledby="Zoom"
-                  onChange={(e) => setZoom(e.target.value)}
+                  onChange={(e) => setZoom(Number(e.target.value))}
                   className="w-full h-1.5 bg-slate-100 rounded-lg appearance-none cursor-pointer accent-blue-600"
                 />
               </div>
@@ -905,14 +950,14 @@ const FileField = ({ label, name, files, onChange, required }) => (
     </label>
     <div className={`file-drop-zone ${files[name] ? 'has-file' : ''}`}>
       <input type="file" name={name} onChange={onChange} accept="image/*,application/pdf" id={`file-${name}`} className="hidden" />
-      <label htmlFor={`file-${name}`} className="cursor-pointer flex items-center justify-between w-full h-14 px-4 border-2 border-dashed border-slate-200 rounded-2xl hover:border-blue-400 hover:bg-blue-50/30 transition-all group">
+      <label htmlFor={`file-${name}`} className={`cursor-pointer flex items-center justify-between w-full h-14 px-4 border-2 border-dashed rounded-2xl transition-all group ${files[name] ? 'border-emerald-200 bg-emerald-50/30' : 'border-slate-200 hover:border-blue-400 hover:bg-blue-50/30'}`}>
         <div className="flex items-center gap-3 min-w-0">
-          <div className="w-8 h-8 rounded-lg bg-slate-50 flex items-center justify-center group-hover:bg-blue-100/50 transition-colors">
-            {files[name] ? <FileText size={16} className="text-emerald-500" /> : <Upload size={16} className="text-slate-400" />}
+          <div className="w-8 h-8 rounded-lg bg-white shadow-sm flex items-center justify-center group-hover:shadow transition-all">
+            {files[name] ? <FileText size={16} className="text-emerald-500" /> : <Upload size={16} className="text-slate-400 group-hover:text-blue-500" />}
           </div>
-          <span className="truncate text-xs font-bold text-slate-600 group-hover:text-blue-600">{files[name]?.name || 'Choose file…'}</span>
+          <span className={`truncate text-xs font-bold ${files[name] ? 'text-emerald-700' : 'text-slate-600 group-hover:text-blue-600'}`}>{files[name]?.name || 'Choose file…'}</span>
         </div>
-        {files[name] && <CheckCircle2 size={16} className="text-emerald-500 shrink-0" />}
+        {files[name] && <CheckCircle2 size={16} className="text-emerald-500 shrink-0 animate-in zoom-in duration-300" />}
       </label>
     </div>
   </div>
