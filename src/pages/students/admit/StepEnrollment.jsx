@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
+import { AlertCircle } from 'lucide-react'
 import { getClasses, getClassOptions, getSections, getSubjects } from '@/api/classApi'
 import Input from '@/components/ui/Input'
 import Select from '@/components/ui/Select'
@@ -14,7 +15,15 @@ const schema = z.object({
   section_id: z.string().min(1, 'Section is required'),
   stream: z.enum(['regular', 'arts', 'commerce', 'science']).optional().or(z.literal('')),
   joining_type: z.enum(['fresh', 'promoted', 'transfer_in', 'rejoined'], { required_error: 'Joining type required' }),
-  joined_date: z.string().min(1, 'Joining date is required'),
+  joined_date: z
+    .string()
+    .min(1, 'Joining date is required')
+    .refine(val => {
+      const date = new Date(val)
+      const maxDate = new Date()
+      maxDate.setFullYear(maxDate.getFullYear() + 1) // allow up to 1 year in future
+      return date <= maxDate
+    }, 'Joining date cannot be more than 1 year in the future'),
   roll_number: z.string().optional(),
   subject_ids: z.array(z.string()).optional(),
   medium: z.enum(['English', 'Assamese']).optional(),
@@ -119,6 +128,15 @@ const StepEnrollment = ({ defaultValues, currentSession, onSubmit, onBack }) => 
       >
         <SectionHeading title="Enrollment" subtitle="Assign class, section and subjects" />
 
+        {/* Hidden field for session_id validation */}
+        <input type="hidden" {...register('session_id')} />
+
+        {!currentSession && (
+          <div className="p-3 rounded-xl bg-amber-50 border border-amber-200 text-sm text-amber-700 font-medium">
+            ⚠️ No active session found. Please set up a current session before admitting students.
+          </div>
+        )}
+
         {currentSession && (
           <div
             className="flex items-center gap-3 p-3 rounded-xl"
@@ -131,14 +149,14 @@ const StepEnrollment = ({ defaultValues, currentSession, onSubmit, onBack }) => 
           </div>
         )}
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div className={`grid grid-cols-1 sm:grid-cols-2 gap-4 ${!currentSession ? 'opacity-50 pointer-events-none' : ''}`}>
           <Select
             label="Class"
             required
             error={errors.class_id?.message}
             options={classes}
             placeholder={loadingC ? 'Loading…' : 'Select class'}
-            disabled={loadingC}
+            disabled={loadingC || !currentSession}
             {...register('class_id')}
           />
           <Select
@@ -147,7 +165,7 @@ const StepEnrollment = ({ defaultValues, currentSession, onSubmit, onBack }) => 
             error={errors.section_id?.message}
             options={sections}
             placeholder={!classId ? 'Select class first' : loadingS ? 'Loading…' : 'Select section'}
-            disabled={!classId || loadingS}
+            disabled={!classId || loadingS || !currentSession}
             {...register('section_id')}
           />
           <Select
@@ -155,7 +173,7 @@ const StepEnrollment = ({ defaultValues, currentSession, onSubmit, onBack }) => 
             error={errors.stream?.message}
             options={STREAM_OPTIONS}
             placeholder={selectedClass?.stream ? 'Stream from selected class' : 'Select stream'}
-            disabled={Boolean(selectedClass?.stream)}
+            disabled={Boolean(selectedClass?.stream) || !currentSession}
             {...register('stream')}
           />
           <Select
@@ -164,6 +182,7 @@ const StepEnrollment = ({ defaultValues, currentSession, onSubmit, onBack }) => 
               { value: 'English', label: 'English' },
               { value: 'Assamese', label: 'Assamese' },
             ]}
+            disabled={!currentSession}
             {...register('medium')}
           />
           <Select
@@ -171,6 +190,7 @@ const StepEnrollment = ({ defaultValues, currentSession, onSubmit, onBack }) => 
             required
             error={errors.joining_type?.message}
             options={JOINING_TYPES}
+            disabled={!currentSession}
             {...register('joining_type')}
           />
           <Input
@@ -178,6 +198,7 @@ const StepEnrollment = ({ defaultValues, currentSession, onSubmit, onBack }) => 
             type="date"
             required
             error={errors.joined_date?.message}
+            disabled={!currentSession}
             {...register('joined_date')}
           />
           <Select
@@ -186,6 +207,7 @@ const StepEnrollment = ({ defaultValues, currentSession, onSubmit, onBack }) => 
               { value: 'false', label: 'No' },
               { value: 'true', label: 'Yes' },
             ]}
+            disabled={!currentSession}
             {...register('is_hostel', { setValueAs: v => v === 'true' })}
           />
           <Input
@@ -193,18 +215,21 @@ const StepEnrollment = ({ defaultValues, currentSession, onSubmit, onBack }) => 
             type="number"
             step="0.1"
             placeholder="0.0"
+            disabled={!currentSession}
             {...register('distance_km')}
           />
           <Input
             label="Prev. Year Attendance (Days)"
             type="number"
             placeholder="0"
+            disabled={!currentSession}
             {...register('prev_attendance_days')}
           />
           <Input
             label="Roll Number"
             placeholder="Leave blank for auto-assign"
             hint="Auto-assigned sequentially if left blank"
+            disabled={!currentSession}
             {...register('roll_number')}
           />
         </div>
@@ -227,7 +252,7 @@ const StepEnrollment = ({ defaultValues, currentSession, onSubmit, onBack }) => 
           ) : subjects.length === 0 ? (
             <p className="text-sm text-amber-600">No subjects configured for this class yet.</p>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className={`grid grid-cols-1 sm:grid-cols-2 gap-3 ${!currentSession ? 'opacity-50 pointer-events-none' : ''}`}>
               {subjects.map((subject) => {
                 const isSelected = subjectIds?.includes(String(subject.id))
                 return (
@@ -243,6 +268,7 @@ const StepEnrollment = ({ defaultValues, currentSession, onSubmit, onBack }) => 
                       type="checkbox"
                       className="w-4 h-4 rounded text-indigo-600 focus:ring-indigo-500"
                       checked={isSelected}
+                      disabled={!currentSession}
                       onChange={() => toggleSubject(String(subject.id))}
                     />
                     <div className="flex-1 min-w-0">
@@ -268,7 +294,9 @@ const StepEnrollment = ({ defaultValues, currentSession, onSubmit, onBack }) => 
 
       <div className="flex justify-between mt-4">
         <Button variant="secondary" type="button" onClick={onBack}>← Back</Button>
-        <Button type="submit">Continue to Access</Button>
+        <Button type="submit" disabled={!currentSession}>
+          Continue to Documents →
+        </Button>
       </div>
     </form>
   )

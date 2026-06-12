@@ -53,7 +53,7 @@ const StepIdentity = ({ defaultValues, onNext }) => {
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <Input label="Aadhar No." placeholder="12-digit number" maxLength={12} error={errors.aadhar_no?.message} {...register('aadhar_no')} />
+          <Input label="Aadhar No." placeholder="12-digit number" type="text" error={errors.aadhar_no?.message} {...register('aadhar_no')} />
           <div className="hidden sm:block" />
         </div>
 
@@ -66,6 +66,7 @@ const StepIdentity = ({ defaultValues, onNext }) => {
               placeholder="ADM-2024-0001"
               error={errors.admission_no?.message}
               containerClassName="flex-1"
+              autoComplete="off"
               {...register('admission_no')}
             />
             <button

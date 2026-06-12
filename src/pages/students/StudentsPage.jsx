@@ -25,6 +25,7 @@ import { downloadSimpleClassStudentsPdf } from '@/api/classApi'
 import { downloadBlob } from '@/utils/downloadBlob'
 import useAuth from '@/hooks/useAuth'
 import * as studentApi from '@/api/studentsApi'
+import { getSections } from '@/api/classApi'
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 const GENDER_BADGE = {
@@ -305,6 +306,8 @@ const StudentsPage = () => {
   const [idCardModal, setIdCardModal] = useState(false)
   const [idCardFilters, setIdCardFilters] = useState({ class_id: '', section_id: '' })
   const [downloadFilters, setDownloadFilters] = useState({ class_id: '', section_id: '' })
+  const [idCardSections, setIdCardSections] = useState([])
+  const [downloadSections, setDownloadSections] = useState([])
   const [downloadingPdf, setDownloadingPdf] = useState(false)
   const [isInitialLoading, setIsInitialLoading] = useState(true)
 
@@ -314,7 +317,7 @@ const StudentsPage = () => {
         .catch(() => toastError('Failed to load students'))
         .finally(() => setIsInitialLoading(false))
     }, 350),
-    []
+    [fetchStudents, toastError]
   )
 
   useEffect(() => {
@@ -654,9 +657,19 @@ const StudentsPage = () => {
           <Select
             label="Class"
             value={idCardFilters.class_id}
-            onChange={e => {
-              setIdCardFilters(prev => ({ ...prev, class_id: e.target.value, section_id: '' }))
-              if (e.target.value) fetchSections(e.target.value).catch(() => {})
+            onChange={async (e) => {
+              const classId = e.target.value
+              setIdCardFilters(prev => ({ ...prev, class_id: classId, section_id: '' }))
+              if (classId) {
+                try {
+                  const res = await getSections(classId)
+                  setIdCardSections(res.data || [])
+                } catch (err) {
+                  toastError('Failed to load sections')
+                }
+              } else {
+                setIdCardSections([])
+              }
             }}
             options={classes.map(cls => ({
               value: cls.id,
@@ -671,7 +684,7 @@ const StudentsPage = () => {
             value={idCardFilters.section_id}
             onChange={e => setIdCardFilters(prev => ({ ...prev, section_id: e.target.value }))}
             disabled={!idCardFilters.class_id}
-            options={sections.map(sec => ({
+            options={idCardSections.map(sec => ({
               value: sec.id,
               label: `Section ${sec.name}`
             }))}
@@ -712,9 +725,19 @@ const StudentsPage = () => {
           <Select
             label="Class"
             value={downloadFilters.class_id}
-            onChange={e => {
-              setDownloadFilters(prev => ({ ...prev, class_id: e.target.value, section_id: '' }))
-              if (e.target.value) fetchSections(e.target.value).catch(() => {})
+            onChange={async (e) => {
+              const classId = e.target.value
+              setDownloadFilters(prev => ({ ...prev, class_id: classId, section_id: '' }))
+              if (classId) {
+                try {
+                  const res = await getSections(classId)
+                  setDownloadSections(res.data || [])
+                } catch (err) {
+                  toastError('Failed to load sections')
+                }
+              } else {
+                setDownloadSections([])
+              }
             }}
             options={classes.map(cls => ({
               value: cls.id,
@@ -729,7 +752,7 @@ const StudentsPage = () => {
             value={downloadFilters.section_id}
             onChange={e => setDownloadFilters(prev => ({ ...prev, section_id: e.target.value }))}
             disabled={!downloadFilters.class_id}
-            options={sections.map(sec => ({
+            options={downloadSections.map(sec => ({
               value: sec.id,
               label: `Section ${sec.name}`
             }))}
@@ -768,8 +791,8 @@ const StudentsPage = () => {
             </button>
             <div className="flex items-center gap-1">
               {Array.from({ length: Math.min(5, pagination.totalPages) }, (_, i) => {
-                const p = pagination.page <= 3 ? i + 1 : pagination.page + i - 2
-                if (p < 1 || p > pagination.totalPages) return null
+                const startPage = Math.max(1, Math.min(pagination.page - 2, pagination.totalPages - 4))
+                const p = startPage + i
                 const active = p === pagination.page
                 return (
                   <button

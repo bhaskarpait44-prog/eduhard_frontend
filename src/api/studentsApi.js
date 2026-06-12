@@ -3,6 +3,7 @@ import api from './axios'
 
 export const getStudents    = (params)     => api.get('/students', { params })
 export const getStudent     = (id)         => api.get(`/students/${id}`)
+export const getSummary     = (id)         => api.get(`/students/${id}/summary`)
 export const createStudent  = (data)       => api.post('/students', data)
 export const deleteStudent  = (id, data)   => api.delete(`/students/${id}`, { data })
 export const updateIdentity = (id, data)   => api.patch(`/students/${id}/identity`, data)

@@ -19,6 +19,13 @@ const DOCUMENT_TYPES = [
   { id: 'aadhar_father', label: 'Father Aadhar Card', required: false },
 ]
 
+const ALLOWED_MIME_TYPES = [
+  'image/jpeg',
+  'image/png',
+  'image/webp',
+  'application/pdf',
+]
+
 const StepDocuments = ({ defaultValues, onNext, onBack }) => {
   const [files, setFiles] = useState(defaultValues.files || {})
   const [errors, setErrors] = useState({})
@@ -27,8 +34,15 @@ const StepDocuments = ({ defaultValues, onNext, onBack }) => {
     const file = e.target.files[0]
     if (!file) return
 
+    if (!ALLOWED_MIME_TYPES.includes(file.type)) {
+      setErrors(prev => ({ ...prev, [id]: 'Only JPG, PNG, WEBP or PDF files are allowed' }))
+      e.target.value = ''
+      return
+    }
+
     if (file.size > 5 * 1024 * 1024) {
       setErrors(prev => ({ ...prev, [id]: 'File size exceeds 5MB' }))
+      e.target.value = ''
       return
     }
 
@@ -44,21 +58,28 @@ const StepDocuments = ({ defaultValues, onNext, onBack }) => {
     })
   }
 
-  const handleNext = () => {
-    const newErrors = {}
-    DOCUMENT_TYPES.forEach(doc => {
-      if (doc.required && !files[doc.id]) {
-        newErrors[doc.id] = 'This document is required'
-      }
-    })
+  const handleNext = (isSkipping = false) => {
+    const missingRequired = DOCUMENT_TYPES.filter(doc => doc.required && !files[doc.id])
 
-    if (Object.keys(newErrors).length > 0) {
+    if (!isSkipping && missingRequired.length > 0) {
+      const newErrors = {}
+      missingRequired.forEach(doc => {
+        newErrors[doc.id] = 'This document is required'
+      })
       setErrors(newErrors)
       return
     }
 
+    if (isSkipping && missingRequired.length > 0) {
+      if (!window.confirm(`You haven't uploaded ${missingRequired.length} required documents. Are you sure you want to skip this step? You can upload them later from the student profile.`)) {
+        return
+      }
+    }
+
     onNext({ files })
   }
+
+  const missingAnyRequired = DOCUMENT_TYPES.some(doc => doc.required && !files[doc.id])
 
   return (
     <div className="space-y-6">
@@ -66,10 +87,18 @@ const StepDocuments = ({ defaultValues, onNext, onBack }) => {
         className="rounded-2xl p-6 space-y-5"
         style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)' }}
       >
-        <SectionHeading 
-          title="Digital Documents" 
-          subtitle="Upload clear scans in JPG, PNG or PDF (Max 5MB each)" 
-        />
+        <div className="flex items-center justify-between gap-4">
+          <SectionHeading 
+            title="Digital Documents" 
+            subtitle="Upload clear scans in JPG, PNG or PDF (Max 5MB each)" 
+          />
+          {missingAnyRequired && (
+             <div className="bg-amber-50 text-amber-700 px-3 py-1.5 rounded-lg border border-amber-100 flex items-center gap-2">
+                <AlertCircle size={14} />
+                <span className="text-[10px] font-bold uppercase tracking-tight">Optional to skip</span>
+             </div>
+          )}
+        </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {DOCUMENT_TYPES.map((doc) => (
@@ -130,7 +159,14 @@ const StepDocuments = ({ defaultValues, onNext, onBack }) => {
 
       <div className="flex justify-between mt-4">
         <Button variant="secondary" type="button" onClick={onBack}>← Back</Button>
-        <Button onClick={handleNext}>Continue to Access →</Button>
+        <div className="flex gap-3">
+           {missingAnyRequired && (
+             <Button variant="ghost" onClick={() => handleNext(true)}>Skip for now</Button>
+           )}
+           <Button onClick={() => handleNext(false)}>
+             {missingAnyRequired ? 'Upload & Continue →' : 'Continue to Access →'}
+           </Button>
+        </div>
       </div>
     </div>
   )

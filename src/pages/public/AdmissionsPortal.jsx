@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import * as z from 'zod'
-import axios from 'axios'
+import api from '@/api/axios'
 import { 
   User, Users, BookOpen, CheckCircle2, ChevronRight, 
   ChevronLeft, AlertCircle, GraduationCap, Loader2,
@@ -173,17 +173,17 @@ const AdmissionsPortal = () => {
       setLoading(true)
       try {
         const [sessionRes, classesRes] = await Promise.all([
-          axios.get('/api/public/sessions/current'),
-          axios.get('/api/public/classes')
+          api.get('/api/public/sessions/current'),
+          api.get('/api/public/classes')
         ])
-        const sessionData = sessionRes.data?.data
+        const sessionData = sessionRes.data
         if (sessionData) {
           setSessions([sessionData])
           if (!sessionData.online_admission_open) setIsClosed(true)
         } else {
           setIsClosed(true)
         }
-        setClasses(classesRes.data?.data || [])
+        setClasses(classesRes.data || [])
       } catch (err) {
         if (import.meta.env.MODE === 'development') {
           setSessions([{ id: 1, name: '2025–26', online_admission_open: true }])
@@ -302,10 +302,10 @@ const AdmissionsPortal = () => {
         } 
       })
 
-      const res = await axios.post('/api/applications', payload, {
+      const res = await api.post('/api/applications', payload, {
         headers: { 'Content-Type': 'multipart/form-data' }
       })
-      setSubmittedData({ ...data, reference: res.data?.data?.reference_no })
+      setSubmittedData({ ...data, reference: res.data?.reference_no })
       window.scrollTo({ top: 0, behavior: 'smooth' })
     } catch (err) {
       setApiError(err.response?.data?.message || 'Submission failed. Please check all fields.')

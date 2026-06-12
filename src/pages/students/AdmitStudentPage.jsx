@@ -1,6 +1,6 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { ArrowLeft, Check } from 'lucide-react'
+import { ArrowLeft, Check, Loader2, AlertCircle } from 'lucide-react'
 import useAdminStudentStore from '@/store/studentStore'
 import useSessionStore from '@/store/sessionStore'
 import useToast from '@/hooks/useToast'
@@ -8,6 +8,7 @@ import usePageTitle from '@/hooks/usePageTitle'
 import { createEnrollment } from '@/api/enrollmentsApi'
 import { assignSubjects } from '@/api/studentSubjectsApi'
 import { ROUTES } from '@/constants/app'
+import Button from '@/components/ui/Button'
 import StepIdentity from './admit/StepIdentity'
 import StepProfile from './admit/StepProfile'
 import StepEnrollment from './admit/StepEnrollment'
@@ -30,12 +31,19 @@ const AdmitStudentPage = () => {
   usePageTitle('Admit New Student')
   const navigate = useNavigate()
   const { toastError } = useToast()
-  const { createStudent, isSaving } = useAdminStudentStore()
-  const { currentSession } = useSessionStore()
+  const { createStudent } = useAdminStudentStore()
+  const { currentSession, fetchCurrentSession, isLoading } = useSessionStore()
 
   const [step, setStep] = useState(1)
   const [formData, setFormData] = useState({})
   const [admittedStudent, setAdmitted] = useState(null)
+  const [isSubmitting, setIsSubmitting] = useState(false)
+
+  useEffect(() => {
+    if (!currentSession && !isLoading) {
+      fetchCurrentSession()
+    }
+  }, [currentSession, isLoading, fetchCurrentSession])
 
   const goNext = (stepData) => {
     setFormData(prev => ({ ...prev, ...stepData }))
@@ -47,119 +55,150 @@ const AdmitStudentPage = () => {
   const handleSubmit = async (reviewData) => {
     const allData = { ...formData, ...reviewData }
 
-    // Prepare FormData for file uploads
-    const payload = new FormData()
-    payload.append('admission_no', allData.admission_no)
-    payload.append('first_name', allData.first_name)
-    payload.append('last_name', allData.last_name)
-    payload.append('date_of_birth', allData.date_of_birth)
-    payload.append('gender', allData.gender)
-    payload.append('aadhar_no', allData.aadhar_no || '')
-    
-    const profileData = {
-      address: allData.address,
-      city: allData.city,
-      state: allData.state,
-      pincode: allData.pincode,
-      phone: allData.phone,
-      email: allData.email,
-      whatsapp_no: allData.whatsapp_no,
-      village: allData.village,
-      police_station: allData.police_station,
-      post_office: allData.post_office,
-      district: allData.district,
-      nationality: allData.nationality,
-      religion: allData.religion,
-      caste: allData.caste,
-      mother_tongue: allData.mother_tongue,
-      identification_marks: allData.identification_marks,
-      pen_no: allData.pen_no,
-      apaar_id: allData.apaar_id,
-      
-      father_name: allData.father_name,
-      father_phone: allData.father_phone,
-      father_email: allData.father_email,
-      father_qualification: allData.father_qualification,
-      father_aadhar: allData.father_aadhar,
-      father_annual_income: allData.father_annual_income,
-      
-      mother_name: allData.mother_name,
-      mother_phone: allData.mother_phone,
-      mother_qualification: allData.mother_qualification,
-
-      guardian_name: allData.guardian_name,
-      guardian_relation: allData.guardian_relation,
-      guardian_phone: allData.guardian_phone,
-      guardian_qualification: allData.guardian_qualification,
-      guardian_occupation: allData.guardian_occupation,
-      guardian_aadhar: allData.guardian_aadhar,
-      guardian_annual_income: allData.guardian_annual_income,
-
-      is_permanent_same: allData.is_permanent_same,
-      perm_address: allData.perm_address,
-      perm_village: allData.perm_village,
-      perm_police_station: allData.perm_police_station,
-      perm_post_office: allData.perm_post_office,
-      perm_district: allData.perm_district,
-      perm_state: allData.perm_state,
-      perm_pincode: allData.perm_pincode,
-
-      emergency_contact: allData.emergency_contact,
-      blood_group: allData.blood_group,
-      medical_notes: allData.medical_notes,
-    }
-    payload.append('profile', JSON.stringify(profileData))
-
-    // Append files
-    if (allData.files) {
-      Object.entries(allData.files).forEach(([key, file]) => {
-        if (file) payload.append(key, file)
-      })
-    }
-
-    const studentResult = await createStudent(payload)
-
-    if (!studentResult.success) {
-      toastError(studentResult.message || 'Failed to admit student')
+    // ── Final guard ────────────────────────────────────────────────────
+    if (!allData.admission_no?.trim() || !allData.first_name?.trim()) {
+      toastError('Critical student data is missing. Please go back and review.')
       return
     }
-
-    const enrollmentResult = await createEnrollment({
-      student_id: studentResult.data.id,
-      session_id: parseInt(allData.session_id, 10),
-      class_id: parseInt(allData.class_id, 10),
-      section_id: parseInt(allData.section_id, 10),
-      stream: allData.stream || null,
-      medium: allData.medium,
-      is_hostel: allData.is_hostel,
-      distance_km: allData.distance_km,
-      prev_attendance_days: allData.prev_attendance_days,
-      joining_type: allData.joining_type,
-      joined_date: allData.joined_date,
-      roll_number: allData.roll_number?.trim() || '',
-    }).catch(err => ({ error: err }))
-
-    if (enrollmentResult?.error) {
-      toastError(enrollmentResult.error.message || 'Student created, but enrollment failed')
+    if (!allData.class_id || !allData.section_id || !allData.session_id) {
+      toastError('Enrollment details are incomplete. Please go back to Step 3.')
       return
     }
+    // ── End guard ──────────────────────────────────────────────────────
 
-    // Assign subjects if selected
-    const subjectIds = allData.subject_ids || []
-    if (subjectIds.length > 0) {
-      const subjectResult = await assignSubjects({
-        student_id: studentResult.data.id,
+    setIsSubmitting(true)
+
+    try {
+      // Prepare FormData for file uploads
+      const payload = new FormData()
+      payload.append('admission_no', allData.admission_no)
+      payload.append('first_name', allData.first_name)
+      payload.append('last_name', allData.last_name)
+      payload.append('date_of_birth', allData.date_of_birth)
+      payload.append('gender', allData.gender)
+      payload.append('aadhar_no', allData.aadhar_no || '')
+      
+      const profileData = {
+        address: allData.address,
+        city: allData.city,
+        state: allData.state,
+        pincode: allData.pincode,
+        phone: allData.phone,
+        email: allData.email,
+        whatsapp_no: allData.whatsapp_no,
+        village: allData.village,
+        police_station: allData.police_station,
+        post_office: allData.post_office,
+        district: allData.district,
+        nationality: allData.nationality,
+        religion: allData.religion,
+        caste: allData.caste,
+        mother_tongue: allData.mother_tongue,
+        identification_marks: allData.identification_marks,
+        pen_no: allData.pen_no,
+        apaar_id: allData.apaar_id,
+        
+        father_name: allData.father_name,
+        father_phone: allData.father_phone,
+        father_email: allData.father_email,
+        father_qualification: allData.father_qualification,
+        father_aadhar: allData.father_aadhar,
+        father_annual_income: allData.father_annual_income,
+        
+        mother_name: allData.mother_name,
+        mother_phone: allData.mother_phone,
+        mother_qualification: allData.mother_qualification,
+
+        guardian_name: allData.guardian_name,
+        guardian_relation: allData.guardian_relation,
+        guardian_phone: allData.guardian_phone,
+        guardian_qualification: allData.guardian_qualification,
+        guardian_occupation: allData.guardian_occupation,
+        guardian_aadhar: allData.guardian_aadhar,
+        guardian_annual_income: allData.guardian_annual_income,
+
+        is_permanent_same: allData.is_permanent_same,
+        perm_address: allData.perm_address,
+        perm_village: allData.perm_village,
+        perm_police_station: allData.perm_police_station,
+        perm_post_office: allData.perm_post_office,
+        perm_district: allData.perm_district,
+        perm_state: allData.perm_state,
+        perm_pincode: allData.perm_pincode,
+
+        emergency_contact: allData.emergency_contact,
+        blood_group: allData.blood_group,
+        medical_notes: allData.medical_notes,
+      }
+      payload.append('profile', JSON.stringify(profileData))
+
+      // Append files
+      if (allData.files) {
+        Object.entries(allData.files).forEach(([key, file]) => {
+          if (file) payload.append(key, file)
+        })
+      }
+
+      let currentStudent = admittedStudent
+
+      if (!currentStudent) {
+        const studentResult = await createStudent(payload)
+
+        if (!studentResult.success) {
+          toastError(studentResult.message || 'Failed to admit student')
+          return
+        }
+        currentStudent = studentResult.data
+        setAdmitted(currentStudent)
+      }
+
+      const enrollmentResult = await createEnrollment({
+        student_id: currentStudent.id,
         session_id: parseInt(allData.session_id, 10),
-        subject_ids: subjectIds,
+        class_id: parseInt(allData.class_id, 10),
+        section_id: parseInt(allData.section_id, 10),
+        stream: allData.stream || null,
+        medium: allData.medium,
+        is_hostel: allData.is_hostel,
+        distance_km: allData.distance_km,
+        prev_attendance_days: allData.prev_attendance_days,
+        joining_type: allData.joining_type,
+        joined_date: allData.joined_date,
+        roll_number: allData.roll_number?.trim() || '',
       }).catch(err => ({ error: err }))
 
-      if (subjectResult?.error) {
-        toastError(subjectResult.error.message || 'Student admitted, but subject assignment failed. You can add subjects later.')
+      if (enrollmentResult?.error) {
+        toastError(enrollmentResult.error.message || 'Student created, but enrollment failed. Please try again.')
+        return
       }
-    }
 
-    setAdmitted(studentResult.data)
-    setStep(7)
+      // Assign subjects if selected
+      const subjectIds = allData.subject_ids || []
+      if (subjectIds.length > 0) {
+        const subjectResult = await assignSubjects({
+          student_id: currentStudent.id,
+          session_id: parseInt(allData.session_id, 10),
+          subject_ids: subjectIds,
+        }).catch(err => ({ error: err }))
+
+        if (subjectResult?.error) {
+          toastError(subjectResult.error.message || 'Student admitted, but subject assignment failed. You can add subjects later.')
+        }
+      }
+
+      setStep(7)
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
+  if (isLoading && !currentSession && step === 1) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[400px] gap-4">
+        <Loader2 className="w-8 h-8 text-indigo-600 animate-spin" />
+        <p className="text-sm font-medium text-gray-500">Initializing admission portal...</p>
+      </div>
+    )
   }
 
   return (
@@ -180,7 +219,7 @@ const AdmitStudentPage = () => {
               Admit New Student
             </h1>
             <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>
-              Step {step} of 6 - {STEPS[step - 1]?.desc}
+              Step {step} of 6 - {STEPS[Math.min(step - 1, 5)]?.desc}
             </p>
           </div>
         </div>
@@ -258,7 +297,7 @@ const AdmitStudentPage = () => {
           formData={formData}
           onBack={goBack}
           onSubmit={handleSubmit}
-          isSaving={isSaving}
+          isSaving={isSubmitting}
         />
       )}
       {step === 7 && (

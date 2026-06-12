@@ -31,13 +31,14 @@ const StepProfile = ({ defaultValues, onNext, onBack }) => {
   // Sync permanent address if toggle is active
   useEffect(() => {
     if (isPermanentSame) {
-      setValue('perm_address', currentAddress[0])
-      setValue('perm_village', currentAddress[1])
+      setValue('perm_address',        currentAddress[0])
+      setValue('perm_village',        currentAddress[1])
       setValue('perm_police_station', currentAddress[2])
-      setValue('perm_post_office', currentAddress[3])
-      setValue('perm_district', currentAddress[4])
-      setValue('perm_state', currentAddress[6])
-      setValue('perm_pincode', currentAddress[7])
+      setValue('perm_post_office',    currentAddress[3])
+      setValue('perm_district',       currentAddress[4])
+      setValue('perm_city',           currentAddress[5])
+      setValue('perm_state',          currentAddress[6])
+      setValue('perm_pincode',        currentAddress[7])
     }
   }, [isPermanentSame, ...currentAddress, setValue])
 
@@ -86,14 +87,15 @@ const StepProfile = ({ defaultValues, onNext, onBack }) => {
 
         {/* Current Address */}
         <SectionHeading title="Current Address" subtitle="Student's current residential address" />
-        <Textarea label="Village/Town/Street" required placeholder="House/Flat No, Street, Locality" rows={2} error={errors.address?.message} {...register('address')} />
+        <Textarea label="House No. / Street / Locality" required placeholder="House/Flat No, Street, Locality" rows={2} error={errors.address?.message} {...register('address')} />
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+          <Input label="Village / Town" required placeholder="Village or Town name" error={errors.village?.message} {...register('village')} />
           <Input label="Police Station (P.S.)" required placeholder="P.S." error={errors.police_station?.message} {...register('police_station')} />
           <Input label="Post Office (P.O.)" required placeholder="P.O." error={errors.post_office?.message} {...register('post_office')} />
           <Input label="District" required placeholder="District" error={errors.district?.message} {...register('district')} />
           <Input label="City" required placeholder="City/Town" error={errors.city?.message} {...register('city')} />
           <Input label="State" required placeholder="State" error={errors.state?.message} {...register('state')} />
-          <Input label="Pincode" required placeholder="781001" type="number" error={errors.pincode?.message} {...register('pincode')} />
+          <Input label="Pincode" required placeholder="781001" type="text" error={errors.pincode?.message} {...register('pincode')} />
         </div>
 
         {/* Permanent Address */}
@@ -113,21 +115,23 @@ const StepProfile = ({ defaultValues, onNext, onBack }) => {
 
           {!isPermanentSame && (
             <div className="space-y-5 animate-in fade-in slide-in-from-top-2 duration-300">
-              <Textarea label="Village/Town/Street" required placeholder="House/Flat No, Street, Locality" rows={2} error={errors.perm_address?.message} {...register('perm_address')} />
+              <Textarea label="House No. / Street / Locality" required placeholder="House/Flat No, Street, Locality" rows={2} error={errors.perm_address?.message} {...register('perm_address')} />
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                <Input label="Village / Town" required placeholder="Village or Town name" error={errors.perm_village?.message} {...register('perm_village')} />
                 <Input label="Police Station (P.S.)" required placeholder="P.S." error={errors.perm_police_station?.message} {...register('perm_police_station')} />
                 <Input label="Post Office (P.O.)" required placeholder="P.O." error={errors.perm_post_office?.message} {...register('perm_post_office')} />
                 <Input label="District" required placeholder="District" error={errors.perm_district?.message} {...register('perm_district')} />
+                <Input label="City" placeholder="City/Town" error={errors.perm_city?.message} {...register('perm_city')} />
                 <Input label="State" required  placeholder="State" error={errors.perm_state?.message} {...register('perm_state')} />
-                <Input label="Pincode" required placeholder="781001" type="number" error={errors.perm_pincode?.message} {...register('perm_pincode')} />
+                <Input label="Pincode" required placeholder="781001" type="text" error={errors.perm_pincode?.message} {...register('perm_pincode')} />
               </div>
             </div>
           )}
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <Input label="Phone"  type="tel" placeholder="+91-9876543210" error={errors.phone?.message} {...register('phone')} />
-          <Input label="WhatsApp No." type="tel" placeholder="+91-9876543210" error={errors.whatsapp_no?.message} {...register('whatsapp_no')} />
+          <Input label="Phone"  type="text" placeholder="9876543210" error={errors.phone?.message} {...register('phone')} />
+          <Input label="WhatsApp No." type="text" placeholder="9876543210" error={errors.whatsapp_no?.message} {...register('whatsapp_no')} />
           <Input
             label="Student Email"
             type="email"
@@ -142,15 +146,15 @@ const StepProfile = ({ defaultValues, onNext, onBack }) => {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           <Input label="Mother's Name" required placeholder="Sunita Sharma" error={errors.mother_name?.message} {...register('mother_name')} />
           <Input label="Mother's Qualification" placeholder="e.g. B.A., M.Sc." {...register('mother_qualification')} />
-          <Input label="Mother's Phone" type="tel" placeholder="+91-9876543212" error={errors.mother_phone?.message} {...register('mother_phone')} />
+          <Input label="Mother's Phone" type="text" placeholder="9876543212" error={errors.mother_phone?.message} {...register('mother_phone')} />
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-6">
           <Input label="Father's Name" required placeholder="Rajesh Sharma" error={errors.father_name?.message} {...register('father_name')} />
           <Input label="Father's Qualification" placeholder="e.g. B.Tech, M.A." {...register('father_qualification')} />
-          <Input label="Father's Phone" required type="tel" placeholder="+91-9876543211" error={errors.father_phone?.message} {...register('father_phone')} />
+          <Input label="Father's Phone" type="text" placeholder="9876543211" error={errors.father_phone?.message} {...register('father_phone')} />
           <Input label="Father's Email (Login)" required type="email" placeholder="father@email.com" error={errors.father_email?.message} {...register('father_email')} />
-          <Input label="Father's Aadhar" placeholder="12-digit number" {...register('father_aadhar')} />
+          <Input label="Father's Aadhar" placeholder="12-digit number" type="text" maxLength={12} {...register('father_aadhar')} />
           <Input label="Father's Annual Income" placeholder="e.g. 8,00,000" {...register('father_annual_income')} />
         </div>
 
@@ -159,16 +163,16 @@ const StepProfile = ({ defaultValues, onNext, onBack }) => {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           <Input label="Guardian's Name" placeholder="Guardian Name" {...register('guardian_name')} />
           <Input label="Relation" placeholder="Relation to student" {...register('guardian_relation')} />
-          <Input label="Guardian's Phone" type="tel" placeholder="+91-9876543213" {...register('guardian_phone')} />
+          <Input label="Guardian's Phone" type="text" placeholder="9876543213" {...register('guardian_phone')} />
           <Input label="Qualification" placeholder="Qualification" {...register('guardian_qualification')} />
           <Input label="Occupation" placeholder="Occupation" {...register('guardian_occupation')} />
-          <Input label="Guardian's Aadhar" placeholder="12-digit number" {...register('guardian_aadhar')} />
+          <Input label="Guardian's Aadhar" placeholder="12-digit number" type="text" maxLength={12} {...register('guardian_aadhar')} />
         </div>
 
         {/* Medical */}
         <SectionHeading title="Medical Information" />
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <Input label="Emergency Contact" required type="tel" placeholder="+91-9876543213" error={errors.emergency_contact?.message} {...register('emergency_contact')} />
+          <Input label="Emergency Contact" required type="text" placeholder="9876543213" error={errors.emergency_contact?.message} {...register('emergency_contact')} />
           <Select label="Blood Group" required options={BLOOD_GROUPS} placeholder="Select…" error={errors.blood_group?.message} {...register('blood_group')} />
         </div>
         <Textarea

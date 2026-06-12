@@ -23,19 +23,51 @@ export const pincodeSchema = z.string()
 
 // ── Student Admission ─────────────────────────────────────────────────────
 export const studentAdmitSchema = z.object({
-  first_name   : z.string().min(1, 'First name is required'),
-  last_name    : z.string().min(1, 'Last name is required'),
-  date_of_birth: z.string().min(1, 'Date of birth is required'),
-  gender       : z.enum(['male', 'female', 'other'], { required_error: 'Gender is required' }),
-  admission_no : z.string().min(1, 'Admission number is required'),
-  aadhar_no    : z.string().optional(),
+  first_name: z
+    .string()
+    .trim()
+    .min(2, 'First name must be at least 2 characters')
+    .regex(/^[a-zA-Z\s''-]+$/, 'First name can only contain letters, spaces, hyphens and apostrophes'),
+
+  last_name: z
+    .string()
+    .trim()
+    .min(1, 'Last name is required')
+    .regex(/^[a-zA-Z\s''-]+$/, 'Last name can only contain letters, spaces, hyphens and apostrophes'),
+
+  date_of_birth: z
+    .string()
+    .min(1, 'Date of birth is required')
+    .refine(val => new Date(val) <= new Date(), 'Date of birth cannot be in the future')
+    .refine(val => {
+      const age = (new Date() - new Date(val)) / (1000 * 60 * 60 * 24 * 365.25)
+      return age >= 3
+    }, 'Student must be at least 3 years old'),
+
+  gender: z.enum(['male', 'female', 'other'], { required_error: 'Gender is required' }),
+
+  admission_no: z
+    .string()
+    .trim()
+    .min(1, 'Admission number is required')
+    .max(30, 'Admission number is too long')
+    .regex(/^[a-zA-Z0-9\-_/]+$/, 'Admission number can only contain letters, numbers, hyphens, underscores and slashes'),
+
+  aadhar_no: z
+    .string()
+    .regex(/^\d{12}$/, 'Aadhar must be exactly 12 digits')
+    .optional()
+    .or(z.literal('')),
 })
 
 export const studentProfileSchema = z.object({
   address: z.string().min(1, 'Address is required'),
   city: z.string().min(1, 'City is required'),
   state: z.string().min(1, 'State is required'),
-  pincode: z.string().regex(/^\d{6}$/, 'Enter a valid 6-digit pincode'),
+  pincode: z
+    .string()
+    .min(1, 'Pincode is required')
+    .regex(/^\d{6}$/, 'Enter a valid 6-digit pincode'),
   phone: phoneSchema,
   email: z.string().email('A valid student email is required').optional().or(z.literal('')),
 
@@ -64,14 +96,19 @@ export const studentProfileSchema = z.object({
   perm_police_station: z.string().optional(),
   perm_post_office: z.string().optional(),
   perm_district: z.string().optional(),
+  perm_city: z.string().optional(),
   perm_state: z.string().optional(),
   perm_pincode: pincodeSchema,
 
   father_name: z.string().min(1, "Father's name is required"),
-  father_phone: z.string().regex(/^[6-9]\d{9}$/, 'Enter a valid 10-digit mobile number'),
+  father_phone: phoneSchema,
   father_email: z.string().email('A valid parent email is required'),
   father_qualification: z.string().optional(),
-  father_aadhar: z.string().optional(),
+  father_aadhar: z
+    .string()
+    .regex(/^\d{12}$/, "Father's Aadhar must be exactly 12 digits")
+    .optional()
+    .or(z.literal('')),
   father_annual_income: z.string().optional(),
 
   mother_name: z.string().min(1, "Mother's name is required"),
@@ -83,11 +120,21 @@ export const studentProfileSchema = z.object({
   guardian_phone: phoneSchema,
   guardian_occupation: z.string().optional(),
   guardian_qualification: z.string().optional(),
-  guardian_aadhar: z.string().optional(),
+  guardian_aadhar: z
+    .string()
+    .regex(/^\d{12}$/, "Guardian's Aadhar must be exactly 12 digits")
+    .optional()
+    .or(z.literal('')),
   guardian_annual_income: z.string().optional(),
 
-  emergency_contact: z.string().regex(/^[6-9]\d{9}$/, 'Enter a valid 10-digit mobile number'),
-  blood_group: z.string().min(1, 'Blood group is required'),
+  emergency_contact: z
+    .string()
+    .min(1, 'Emergency contact is required')
+    .regex(/^[6-9]\d{9}$/, 'Enter a valid 10-digit mobile number'),
+  blood_group: z.enum(
+    ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-', 'unknown'],
+    { required_error: 'Blood group is required' }
+  ),
   medical_notes: z.string().optional(),
 }).superRefine((data, ctx) => {
   if (!data.is_permanent_same) {
@@ -98,6 +145,20 @@ export const studentProfileSchema = z.object({
     if (!data.perm_district) ctx.addIssue({ code: 'custom', message: 'Permanent district is required', path: ['perm_district'] });
     if (!data.perm_state) ctx.addIssue({ code: 'custom', message: 'Permanent state is required', path: ['perm_state'] });
     if (!data.perm_pincode || !/^\d{6}$/.test(data.perm_pincode)) ctx.addIssue({ code: 'custom', message: 'Valid permanent pincode is required', path: ['perm_pincode'] });
+  }
+
+  // At least one parent phone must be provided
+  if (!data.father_phone && !data.mother_phone) {
+    ctx.addIssue({
+      code: 'custom',
+      message: "At least one parent's phone number is required",
+      path: ['father_phone'],
+    })
+    ctx.addIssue({
+      code: 'custom',
+      message: "At least one parent's phone number is required",
+      path: ['mother_phone'],
+    })
   }
 })
 

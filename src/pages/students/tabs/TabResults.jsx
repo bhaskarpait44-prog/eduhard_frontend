@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { GraduationCap, ChevronDown, ChevronUp, CheckCircle2, AlertCircle } from 'lucide-react'
-import axios from 'axios'
+import api from '@/api/axios'
 import Badge from '@/components/ui/Badge'
 import EmptyState from '@/components/ui/EmptyState'
 import { formatPercent } from '@/utils/helpers'
@@ -14,10 +14,9 @@ const TabResults = ({ studentId }) => {
   useEffect(() => {
     const fetchExams = async () => {
       try {
-        // We use the public/portal API to get student-specific exam list
-        // Note: Admin might need a specific endpoint, but usually we can reuse the portal logic
-        const res = await axios.get(`/api/student-portal/results`, { params: { studentId } })
-        setExams(res.data?.data?.exams || [])
+        // Use admin-facing endpoint instead of student portal
+        const res = await api.get(`/api/students/${studentId}/results`)
+        setExams(res.data?.exams || [])
       } catch (err) {
         console.error('Failed to fetch exams', err)
       } finally {
@@ -35,8 +34,8 @@ const TabResults = ({ studentId }) => {
 
     if (!examDetails[examId]) {
       try {
-        const res = await axios.get(`/api/student-portal/results/${examId}`, { params: { studentId } })
-        setExamDetails(prev => ({ ...prev, [examId]: res.data?.data }))
+        const res = await api.get(`/api/students/${studentId}/results/${examId}`)
+        setExamDetails(prev => ({ ...prev, [examId]: res.data }))
       } catch (err) {
         console.error('Failed to fetch exam details', err)
       }

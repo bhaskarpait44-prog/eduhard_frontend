@@ -185,14 +185,36 @@ const StudentDetailPage = () => {
         </div>
         <div className="flex items-center gap-2">
           {student.status === 'active' && (
+            <>
+              <Button 
+                variant="secondary" 
+                icon={LogOut} 
+                size="sm" 
+                className="text-red-600 border-red-100 hover:bg-red-50" 
+                onClick={() => setLeftOpen(true)}
+              >
+                Mark as Left
+              </Button>
+              <Button 
+                variant="secondary" 
+                icon={GraduationCap} 
+                size="sm" 
+                className="text-blue-600 border-blue-100 hover:bg-blue-50" 
+                onClick={() => setGraduatedOpen(true)}
+              >
+                Mark as Graduated
+              </Button>
+            </>
+          )}
+          {(student.status === 'left' || student.status === 'graduated') && (
             <Button 
               variant="secondary" 
-              icon={LogOut} 
+              icon={ArrowRightLeft} 
               size="sm" 
-              className="text-red-600 border-red-100 hover:bg-red-50" 
-              onClick={() => setLeftOpen(true)}
+              className="text-emerald-600 border-emerald-100 hover:bg-emerald-50" 
+              onClick={() => setReadmitOpen(true)}
             >
-              Mark as Left
+              Re-admit Student
             </Button>
           )}
           {docs.id ? (
@@ -295,7 +317,14 @@ const StudentDetailPage = () => {
                 size="sm" 
                 icon={student.is_active ? ShieldCheck : CheckCircle2} 
                 className={`w-full justify-start ${student.is_active ? 'text-amber-600' : 'text-emerald-600'}`}
-                onClick={() => toggleStatus(student.id)}
+                onClick={async () => {
+                  const res = await toggleStatus(student.id)
+                  if (res.success) {
+                    toastSuccess(`Student ${res.is_active ? 'activated' : 'deactivated'}`)
+                  } else {
+                    toastError(res.message || 'Failed to toggle status')
+                  }
+                }}
               >
                 {student.is_active ? 'Suspend Account' : 'Activate Account'}
               </Button>
@@ -328,7 +357,7 @@ const StudentDetailPage = () => {
           {/* Tab Content */}
           <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
             {activeTab === 'details' && <TabDetails student={student} />}
-            {activeTab === 'timetable' && <TabTimeTable />}
+            {activeTab === 'timetable' && <TabTimeTable studentId={student.id} />}
             {activeTab === 'attendance' && <TabAttendance enrollmentId={enrollment?.id} />}
             {activeTab === 'fees' && <TabFees enrollmentId={enrollment?.id} />}
             {activeTab === 'results' && <TabResults studentId={student.id} />}
@@ -415,6 +444,8 @@ const StudentDetailPage = () => {
       </Modal>
 
       <MarkAsLeftModal open={leftOpen} student={student} onClose={() => setLeftOpen(false)} onSuccess={() => { setLeftOpen(false); fetchStudent(id) }} />
+      <MarkAsGraduatedModal open={graduatedOpen} student={student} onClose={() => setGraduatedOpen(false)} onSuccess={() => { setGraduatedOpen(false); fetchStudent(id) }} />
+      <ReadmitModal open={readmitOpen} student={student} onClose={() => setReadmitOpen(false)} onSuccess={() => { setReadmitOpen(false); fetchStudent(id) }} />
       <EnrollmentHistoryModal open={historyOpen} student={student} onClose={() => setHistoryOpen(false)} />
     </div>
   )

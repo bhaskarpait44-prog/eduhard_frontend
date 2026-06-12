@@ -7,7 +7,7 @@ import {
 } from 'lucide-react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import axios from 'axios'
+import api from '@/api/axios'
 import useAdminStudentStore from '@/store/studentStore'
 import usePageTitle from '@/hooks/usePageTitle'
 import useToast from '@/hooks/useToast'
@@ -131,7 +131,7 @@ const EditStudentPage = () => {
   }, [student, defaultValues, reset])
 
   const isPermanentSame = watch('is_permanent_same')
-  const currentAddr = watch(['address', 'village', 'police_station', 'post_office', 'district', 'state', 'pincode'])
+  const currentAddr = watch(['address', 'village', 'police_station', 'post_office', 'district', 'city', 'state', 'pincode'])
 
   useEffect(() => {
     if (isPermanentSame) {
@@ -140,8 +140,9 @@ const EditStudentPage = () => {
       setValue('perm_police_station', currentAddr[2])
       setValue('perm_post_office', currentAddr[3])
       setValue('perm_district', currentAddr[4])
-      setValue('perm_state', currentAddr[5])
-      setValue('perm_pincode', currentAddr[6])
+      setValue('perm_city', currentAddr[5])
+      setValue('perm_state', currentAddr[6])
+      setValue('perm_pincode', currentAddr[7])
     }
   }, [isPermanentSame, ...currentAddr, setValue])
 
@@ -166,8 +167,8 @@ const EditStudentPage = () => {
     formData.append('document_type', 'manual_edit')
 
     try {
-      const res = await axios.post(`/api/students/${id}/documents`, formData)
-      setDocuments(prev => [res.data.data, ...prev])
+      const res = await api.post(`/api/students/${id}/documents`, formData)
+      setDocuments(prev => [res.data, ...prev])
       toastSuccess('Document uploaded')
     } catch (err) {
       toastError(err.message || 'Upload failed')
@@ -179,7 +180,7 @@ const EditStudentPage = () => {
   const handleDeleteDoc = async (docId) => {
     if (!window.confirm('Delete this document?')) return
     try {
-      await axios.delete(`/api/students/${id}/documents/${docId}`)
+      await api.delete(`/api/students/${id}/documents/${docId}`)
       setDocuments(prev => prev.filter(d => d.id !== docId))
       toastSuccess('Document removed')
     } catch (err) {
@@ -345,6 +346,7 @@ const EditStudentPage = () => {
                   <Input label="Police Station" required error={errors.perm_police_station?.message} {...register('perm_police_station')} />
                   <Input label="Post Office" required error={errors.perm_post_office?.message} {...register('perm_post_office')} />
                   <Input label="District" required error={errors.perm_district?.message} {...register('perm_district')} />
+                  <Input label="City" required error={errors.perm_city?.message} {...register('perm_city')} />
                   <Input label="State" required error={errors.perm_state?.message} {...register('perm_state')} />
                   <Input label="PIN Code" required error={errors.perm_pincode?.message} {...register('perm_pincode')} />
                 </div>

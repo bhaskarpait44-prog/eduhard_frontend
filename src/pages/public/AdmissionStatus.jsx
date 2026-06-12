@@ -1,7 +1,7 @@
 import { useState } from 'react'
-import axios from 'axios'
-import { 
-  Search, ClipboardList, CheckCircle2, Clock, XCircle, 
+import api from '@/api/axios'
+import {
+  Search, ClipboardList, CheckCircle2, Clock, XCircle,
   AlertCircle, ChevronLeft, GraduationCap, Loader2, ArrowRight,
   ShieldCheck, Info, User, Mail, Calendar, ExternalLink,
   MapPin, Phone, FileText, Printer, Download
@@ -26,10 +26,10 @@ const AdmissionStatus = () => {
     setApplication(null)
 
     try {
-      const res = await axios.get('/api/public/applications/status', {
+      const res = await api.get('/api/public/applications/status', {
         params: { reference_no: referenceNo, email: email }
       })
-      setApplication(res.data.data)
+      setApplication(res.data)
     } catch (err) {
       setError(err.response?.data?.message || 'Unable to find application. Please check your details.')
     } finally {

@@ -2,7 +2,7 @@
 import { CheckCircle2, Copy, Eye, Plus, FileDown } from 'lucide-react'
 import { useState } from 'react'
 import Button from '@/components/ui/Button'
-import axios from 'axios'
+import * as studentApi from '@/api/studentsApi'
 
 const CredentialRow = ({ label, value, onCopy }) => (
   <div
@@ -46,10 +46,8 @@ const StepSuccess = ({ student, onViewStudent, onAdmitAnother }) => {
     if (!student?.id) return
     setIsDownloading(true)
     try {
-      const response = await axios.get(`/api/students/${student.id}/admission-form`, {
-        responseType: 'blob'
-      })
-      const url = window.URL.createObjectURL(new Blob([response.data]))
+      const blob = await studentApi.downloadAdmissionForm(student.id)
+      const url = window.URL.createObjectURL(new Blob([blob]))
       const link = document.createElement('a')
       link.href = url
       link.setAttribute('download', `AdmissionForm_${student.admission_no || 'Student'}.pdf`)

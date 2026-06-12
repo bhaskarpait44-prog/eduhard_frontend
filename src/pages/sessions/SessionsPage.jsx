@@ -476,3 +476,19 @@ const SessionsPage = () => {
 }
 export default SessionsPage
 
+// ── Loading skeleton ──────────────────────────────────────────────────────
+const TableSkeleton = () => (
+  <div className="divide-y animate-pulse" style={{ borderColor: 'var(--color-border)' }}>
+    {[...Array(5)].map((_, i) => (
+      <div key={i} className="px-5 py-5 flex items-center justify-between gap-4">
+        <div className="flex-1 space-y-2">
+          <div className="h-4 w-1/3 rounded bg-[var(--color-surface-raised)]" />
+          <div className="h-3 w-1/4 rounded bg-[var(--color-surface-raised)]" />
+        </div>
+        <div className="h-6 w-20 rounded bg-[var(--color-surface-raised)]" />
+        <div className="h-8 w-24 rounded bg-[var(--color-surface-raised)]" />
+      </div>
+    ))}
+  </div>
+)
+
