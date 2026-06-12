@@ -108,7 +108,7 @@ const SessionDetailPage = () => {
     setUnlockOpen(false)
     const result = await unlockSession(id)
     if (result.success) {
-      toastSuccess(`Session unlocked. It is now back in 'Upcoming' status.`)
+      toastSuccess(`Session unlocked and restored to 'Active' status.`)
       fetchSession(id)
     } else {
       toastError(result.message || 'Failed to unlock session')
@@ -521,9 +521,9 @@ const SessionDetailPage = () => {
         onClose={() => setLockOpen(false)}
         onConfirm={handleLock}
         title="Lock Session?"
-        description={`This will lock "${session.name}" and make it read-only. No further changes to attendance, results, or fees will be permitted. This action is permanent.`}
+        description={`This will lock "${session.name}" and make it read-only. No further changes to attendance, results, or fees will be permitted. You can unlock it later if you need to resume editing.`}
         confirmLabel="Yes, Lock Session"
-        variant="danger"
+        variant="warning"
         loading={isSaving}
       />
 
@@ -533,7 +533,7 @@ const SessionDetailPage = () => {
         onClose={() => setUnlockOpen(false)}
         onConfirm={handleUnlock}
         title="Unlock Session?"
-        description={`This will unlock "${session.name}" and set it back to 'Upcoming' status. You can re-edit it or activate it again afterward.`}
+        description={`This will unlock "${session.name}" and restore it to 'Active' status. You can then resume editing or marking attendance.`}
         confirmLabel="Yes, Unlock"
         variant="warning"
         loading={isSaving}

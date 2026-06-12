@@ -442,7 +442,7 @@ const SessionsPage = () => {
         onClose={() => setLockTarget(null)}
         onConfirm={handleLock}
         title="Lock Session?"
-        description={`This will lock "${lockTarget?.name}". Once locked, attendance, fees, and results for this session cannot be modified. This action cannot be undone.`}
+        description={`This will lock "${lockTarget?.name}". Once locked, attendance, fees, and results for this session will be read-only. You can unlock it later if you need to resume editing.`}
         confirmLabel="Yes, Lock Session"
         variant="warning"
         loading={isSaving}
@@ -454,7 +454,7 @@ const SessionsPage = () => {
         onClose={() => setUnlockTarget(null)}
         onConfirm={handleUnlock}
         title="Unlock Session?"
-        description={`This will unlock "${unlockTarget?.name}" and set it back to 'Upcoming' status.`}
+        description={`This will unlock "${unlockTarget?.name}" and restore it to 'Active' status.`}
         confirmLabel="Yes, Unlock"
         variant="warning"
         loading={isSaving}
@@ -474,22 +474,5 @@ const SessionsPage = () => {
     </div>
   )
 }
-
-// ── Table skeleton ────────────────────────────────────────────────────────
-const TableSkeleton = () => (
-  <div className="p-5 space-y-3">
-    {[...Array(4)].map((_, i) => (
-      <div key={i} className="flex gap-4 items-center">
-        {[140, 100, 100, 80, 60, 80].map((w, j) => (
-          <div
-            key={j}
-            className="h-4 rounded animate-pulse"
-            style={{ width: w, backgroundColor: 'var(--color-surface-raised)' }}
-          />
-        ))}
-      </div>
-    ))}
-  </div>
-)
-
 export default SessionsPage
+
