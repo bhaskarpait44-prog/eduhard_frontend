@@ -6,7 +6,7 @@ import Modal from '@/components/ui/Modal'
 import usePageTitle from '@/hooks/usePageTitle'
 import useToast from '@/hooks/useToast'
 import * as studentApi from '@/api/studentApi'
-import { formatDate } from '@/utils/helpers'
+import { formatDate, getFileUrl } from '@/utils/helpers'
 import { isStudentPortalSetupError } from '@/utils/studentPortal'
 
 const StudyMaterials = () => {
@@ -188,7 +188,7 @@ const StudyMaterials = () => {
                   Open Detail
                 </Button>
                 {item.file_path ? (
-                  <Button size="sm" variant="secondary" onClick={() => window.open(item.file_path, '_blank', 'noopener,noreferrer')} icon={Download}>
+                  <Button size="sm" variant="secondary" onClick={() => window.open(getFileUrl(item.file_path), '_blank', 'noopener,noreferrer')} icon={Download}>
                     Open File
                   </Button>
                 ) : null}
@@ -227,7 +227,7 @@ const StudyMaterials = () => {
 
             {selectedMaterial.file_path ? (
               <div className="flex justify-end">
-                <Button onClick={() => window.open(selectedMaterial.file_path, '_blank', 'noopener,noreferrer')} icon={Download}>
+                <Button onClick={() => window.open(getFileUrl(selectedMaterial.file_path), '_blank', 'noopener,noreferrer')} icon={Download}>
                   Open Material File
                 </Button>
               </div>

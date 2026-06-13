@@ -14,7 +14,7 @@ import Badge from '@/components/ui/Badge'
 import EmptyState from '@/components/ui/EmptyState'
 import Modal from '@/components/ui/Modal'
 import TransferCertificateDownload from '@/components/pdf/TransferCertificateDownload'
-import { formatDate, labelFromKey } from '@/utils/helpers'
+import { formatDate, labelFromKey, getFileUrl } from '@/utils/helpers'
 import { ROUTES } from '@/constants/app'
 import ReadmitModal from '@/components/students/ReadmitModal'
 import { downloadBlob } from '@/utils/downloadBlob'
@@ -254,7 +254,7 @@ export default function LeftStudentsPage() {
                     <div className="flex items-center gap-3">
                       <div className="w-9 h-9 rounded-full bg-slate-100 flex items-center justify-center overflow-hidden border border-slate-200">
                         {student.photo_url ? (
-                          <img src={student.photo_url} alt="" className="w-full h-full object-cover" />
+                          <img src={getFileUrl(student.photo_url)} alt="" className="w-full h-full object-cover" />
                         ) : (
                           <Users size={16} className="text-slate-400" />
                         )}

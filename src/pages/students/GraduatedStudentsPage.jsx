@@ -11,7 +11,7 @@ import Button from '@/components/ui/Button'
 import Select from '@/components/ui/Select'
 import Badge from '@/components/ui/Badge'
 import EmptyState from '@/components/ui/EmptyState'
-import { formatPercent } from '@/utils/helpers'
+import { formatPercent, getFileUrl } from '@/utils/helpers'
 import { ROUTES } from '@/constants/app'
 import ReadmitModal from '@/components/students/ReadmitModal'
 import { downloadBlob } from '@/utils/downloadBlob'
@@ -167,7 +167,7 @@ export default function GraduatedStudentsPage() {
                     <div className="flex items-center gap-3">
                       <div className="w-9 h-9 rounded-full bg-indigo-50 flex items-center justify-center overflow-hidden border border-indigo-100">
                         {student.photo_url ? (
-                          <img src={student.photo_url} alt="" className="w-full h-full object-cover" />
+                          <img src={getFileUrl(student.photo_url)} alt="" className="w-full h-full object-cover" />
                         ) : (
                           <Users size={16} className="text-indigo-400" />
                         )}

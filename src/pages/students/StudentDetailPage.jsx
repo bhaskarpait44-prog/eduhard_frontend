@@ -16,7 +16,7 @@ import Input from '@/components/ui/Input'
 import Modal from '@/components/ui/Modal'
 import Badge from '@/components/ui/Badge'
 import Select from '@/components/ui/Select'
-import { getInitials, formatDate } from '@/utils/helpers'
+import { getInitials, formatDate, getFileUrl } from '@/utils/helpers'
 import { ROUTES } from '@/constants/app'
 import * as studentApi from '@/api/studentsApi'
 import useAuth from '@/hooks/useAuth'
@@ -246,7 +246,7 @@ const StudentDetailPage = () => {
                 <div className="w-24 h-24 rounded-2xl overflow-hidden shadow-md border-4 border-white flex items-center justify-center bg-indigo-600">
                   {student.photo_path ? (
                     <img 
-                      src={student.photo_path.startsWith('/') ? student.photo_path : `/${student.photo_path}`} 
+                      src={getFileUrl(student.photo_path)} 
                       alt={fullName} 
                       className="w-full h-full object-cover" 
                       onError={(e) => {
@@ -471,7 +471,7 @@ const StudentDetailPage = () => {
       <Modal open={previewOpen} onClose={() => setPreviewOpen(false)} title="Profile Photo" size="md">
         <div className="flex justify-center p-2">
           <img 
-            src={student.photo_path?.startsWith('/') ? student.photo_path : `/${student.photo_path}`} 
+            src={getFileUrl(student.photo_path)} 
             alt={fullName} 
             className="max-w-full max-h-[70vh] rounded-xl shadow-lg object-contain"
           />
@@ -595,7 +595,7 @@ const DocumentRow = ({ name, path }) => (
       </div>
       <span className="text-xs font-bold text-gray-700 truncate max-w-[150px]">{name}</span>
     </div>
-    <a href={`/${path}`} target="_blank" rel="noreferrer" className="p-2 rounded bg-indigo-900 text-white hover:bg-indigo-800 shadow-sm transition-colors">
+    <a href={getFileUrl(path)} target="_blank" rel="noreferrer" className="p-2 rounded bg-indigo-900 text-white hover:bg-indigo-800 shadow-sm transition-colors">
       <FileDown size={14} />
     </a>
   </div>

@@ -18,6 +18,7 @@ import EmptyState from '@/components/ui/EmptyState'
 import ConfirmDialog from '@/components/ui/ConfirmDialog'
 import Modal from '@/components/ui/Modal'
 import Select from '@/components/ui/Select'
+import { getFileUrl } from '@/utils/helpers'
 import BulkIDCardsDownload from '@/components/pdf/BulkIDCardsDownload'
 import { formatDate, getInitials, debounce } from '@/utils/helpers'
 import { ROUTES } from '@/constants/app'
@@ -50,7 +51,7 @@ const AvatarCircle = ({ name, photo_path, size = "h-9 w-9", fontSize = "text-xs"
     >
       {photo_path ? (
         <img 
-          src={photo_path.startsWith('/') ? photo_path : `/${photo_path}`} 
+          src={getFileUrl(photo_path)} 
           alt={name} 
           className="w-full h-full object-cover"
           onError={(e) => {
@@ -823,7 +824,7 @@ const StudentsPage = () => {
         <div className="flex justify-center p-2">
           {previewImage && (
             <img 
-              src={previewImage.url.startsWith('/') ? previewImage.url : `/${previewImage.url}`} 
+              src={getFileUrl(previewImage.url)} 
               alt={previewImage.title} 
               className="max-w-full max-h-[70vh] rounded-xl shadow-lg object-contain"
             />

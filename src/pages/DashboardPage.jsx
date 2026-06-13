@@ -13,7 +13,7 @@ import useAuthStore      from '@/store/authStore'
 import usePageTitle      from '@/hooks/usePageTitle'
 import useToast          from '@/hooks/useToast'
 import { ROUTES }        from '@/constants/app'
-import { formatCurrency, formatPercent, getInitials, cn } from '@/utils/helpers'
+import { formatCurrency, formatPercent, getInitials, getFileUrl, cn } from '@/utils/helpers'
 import StatCard from '@/components/ui/StatCard'
 import Button from '@/components/ui/Button'
 import Badge from '@/components/ui/Badge'
@@ -302,7 +302,7 @@ const DashboardPage = () => {
                         <div className="flex items-center gap-3">
                           <div className="h-8 w-8 rounded-lg bg-surface-raised flex items-center justify-center text-text-muted font-bold text-[9px] overflow-hidden">
                              {student.photo_path ? (
-                               <img src={student.photo_path} alt="" className="h-full w-full object-cover" />
+                               <img src={getFileUrl(student.photo_path)} alt="" className="h-full w-full object-cover" />
                              ) : getInitials(`${student.first_name} ${student.last_name}`)}
                           </div>
                           <div className="font-medium text-text-primary truncate max-w-[120px]">{student.first_name} {student.last_name}</div>

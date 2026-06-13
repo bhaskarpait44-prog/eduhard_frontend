@@ -19,6 +19,7 @@ import Badge from '@/components/ui/Badge'
 import { ROUTES } from '@/constants/app'
 import { studentUpdateSchema } from '@/utils/validations'
 import { SectionHeading } from './admit/StepIdentity'
+import { getFileUrl } from '@/utils/helpers'
 
 const BLOOD_GROUPS = ['A+','A-','B+','B-','AB+','AB-','O+','O-','unknown']
   .map(v => ({ value: v, label: v }))
@@ -438,7 +439,7 @@ const EditStudentPage = () => {
                   </div>
                 </div>
                 <div className="flex items-center gap-1">
-                   <a href={`/${doc.file_path}`} target="_blank" rel="noreferrer" className="p-2 text-text-muted hover:text-brand transition-colors">
+                   <a href={getFileUrl(doc.file_path)} target="_blank" rel="noreferrer" className="p-2 text-text-muted hover:text-brand transition-colors">
                       <FileText size={14} />
                    </a>
                    <button 

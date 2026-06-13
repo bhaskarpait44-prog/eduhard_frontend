@@ -10,7 +10,7 @@ import usePageTitle from '@/hooks/usePageTitle'
 import useToast from '@/hooks/useToast'
 import Button from '@/components/ui/Button'
 import Badge from '@/components/ui/Badge'
-import { formatDate } from '@/utils/helpers'
+import { formatDate, getFileUrl, getInitials } from '@/utils/helpers'
 import { ROUTES } from '@/constants/app'
 import { SectionHeading } from './admit/StepIdentity'
 import * as studentApi from '@/api/studentsApi'
@@ -267,7 +267,7 @@ const StudentFullDetailsPage = () => {
                         <p className="text-[9px] font-bold text-text-muted uppercase">{doc.document_type?.replace(/_/g, ' ')}</p>
                       </div>
                     </div>
-                    <a href={`/${doc.file_path}`} target="_blank" rel="noreferrer" className="p-2 text-text-muted hover:text-brand transition-colors">
+                    <a href={getFileUrl(doc.file_path)} target="_blank" rel="noreferrer" className="p-2 text-text-muted hover:text-brand transition-colors">
                       <Printer size={14} />
                     </a>
                   </div>
