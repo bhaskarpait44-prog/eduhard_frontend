@@ -1,4 +1,5 @@
 import { Page, Text, View, Document, StyleSheet, Image } from '@react-pdf/renderer';
+import { getFileUrl } from '@/utils/helpers';
 
 const accentColor = '#0f766e';
 
@@ -126,7 +127,7 @@ const StudentIDCardPDF = ({ data }) => {
         <View style={styles.card}>
           {/* Header */}
           <View style={styles.header}>
-            {logo_url && <Image src={logo_url} style={styles.logo} />}
+            {logo_url && <Image src={getFileUrl(logo_url)} style={styles.logo} />}
             <Text style={styles.schoolName}>{school_name}</Text>
           </View>
 
@@ -136,7 +137,7 @@ const StudentIDCardPDF = ({ data }) => {
           <View style={styles.body}>
             <View style={styles.photoContainer}>
               {photo_url ? (
-                <Image src={photo_url} style={styles.photo} />
+                <Image src={getFileUrl(photo_url)} style={styles.photo} />
               ) : (
                 <Text style={{ fontSize: 6, color: '#94a3b8', textAlign: 'center' }}>No Photo</Text>
               )}

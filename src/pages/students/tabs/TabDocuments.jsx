@@ -8,6 +8,7 @@ import {
 import useToast from '@/hooks/useToast'
 import Button from '@/components/ui/Button'
 import * as studentApi from '@/api/studentsApi'
+import { getFileUrl } from '@/utils/helpers'
 
 const TabDocuments = ({ studentId }) => {
   const [documents, setDocuments] = useState([])
@@ -60,13 +61,6 @@ const TabDocuments = ({ studentId }) => {
     } catch (err) {
       toastError('Delete failed')
     }
-  }
-
-  const getFileUrl = (path) => {
-    const baseUrl = import.meta.env.VITE_API_BASE_URL || (import.meta.env.DEV ? 'http://localhost:5000' : window.location.origin)
-    // Remove /api from end of base URL if present
-    const rootUrl = baseUrl.replace(/\/api$/, '')
-    return `${rootUrl}/${path}`
   }
 
   if (loading) return <div className="py-12 animate-pulse space-y-4">

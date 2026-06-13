@@ -1,4 +1,5 @@
 import { Page, Text, View, Document, StyleSheet, Image } from '@react-pdf/renderer';
+import { getFileUrl } from '@/utils/helpers';
 
 const accentColor = '#0f766e';
 
@@ -129,7 +130,7 @@ const BulkStudentIDCardsPDF = ({ students = [] }) => {
             <View key={student.id || index} style={styles.card}>
               {/* Header */}
               <View style={styles.header}>
-                {student.logo_url && <Image src={student.logo_url} style={styles.logo} />}
+                {student.logo_url && <Image src={getFileUrl(student.logo_url)} style={styles.logo} />}
                 <Text style={styles.schoolName}>{student.school_name}</Text>
               </View>
 
@@ -139,7 +140,7 @@ const BulkStudentIDCardsPDF = ({ students = [] }) => {
               <View style={styles.body}>
                 <View style={styles.photoContainer}>
                   {student.photo_url ? (
-                    <Image src={student.photo_url} style={styles.photo} />
+                    <Image src={getFileUrl(student.photo_url)} style={styles.photo} />
                   ) : (
                     <Text style={{ fontSize: 6, color: '#94a3b8', textAlign: 'center' }}>No Photo</Text>
                   )}

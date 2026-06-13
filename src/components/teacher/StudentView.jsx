@@ -3,7 +3,7 @@ import { Phone, UserRound, GraduationCap, CalendarCheck, ClipboardList, Info, Ex
 import { Link } from 'react-router-dom'
 import Badge from '@/components/ui/Badge'
 import { ROUTES } from '@/constants/app'
-import { formatDate, formatPercent, getInitials, cn } from '@/utils/helpers'
+import { formatDate, formatPercent, getInitials, getFileUrl, cn } from '@/utils/helpers'
 
 const TABS = [
   { id: 'overview',   label: 'Overview',   icon: Info },
@@ -330,7 +330,7 @@ const ParentTab = ({ detail }) => (
 
 const Avatar = ({ name, photo, size = "h-14 w-14" }) => (
   photo ? (
-    <img src={photo} alt={name} className={cn(size, "rounded-2xl object-cover ring-2 ring-gray-100 dark:ring-gray-800")} />
+    <img src={getFileUrl(photo)} alt={name} className={cn(size, "rounded-2xl object-cover ring-2 ring-gray-100 dark:ring-gray-800")} />
   ) : (
     <div className={cn(size, "flex items-center justify-center rounded-2xl text-lg font-bold shadow-inner")} style={{ backgroundColor: '#0f766e', color: '#fff' }}>
       {getInitials(name)}
