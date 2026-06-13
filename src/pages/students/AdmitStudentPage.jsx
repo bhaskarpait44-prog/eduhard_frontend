@@ -123,6 +123,7 @@ const AdmitStudentPage = () => {
         perm_police_station: allData.perm_police_station,
         perm_post_office: allData.perm_post_office,
         perm_district: allData.perm_district,
+        perm_city: allData.perm_city,
         perm_state: allData.perm_state,
         perm_pincode: allData.perm_pincode,
 

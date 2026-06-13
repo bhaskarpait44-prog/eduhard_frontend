@@ -173,8 +173,8 @@ const AdmissionsPortal = () => {
       setLoading(true)
       try {
         const [sessionRes, classesRes] = await Promise.all([
-          api.get('/api/public/sessions/current'),
-          api.get('/api/public/classes')
+          api.get('/public/sessions/current'),
+          api.get('/public/classes')
         ])
         const sessionData = sessionRes.data
         if (sessionData) {
@@ -302,7 +302,7 @@ const AdmissionsPortal = () => {
         } 
       })
 
-      const res = await api.post('/api/applications', payload, {
+      const res = await api.post('/applications', payload, {
         headers: { 'Content-Type': 'multipart/form-data' }
       })
       setSubmittedData({ ...data, reference: res.data?.reference_no })

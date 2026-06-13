@@ -41,11 +41,26 @@ const formatStream = (stream) => {
 }
 
 // ─── Avatar Component ─────────────────────────────────────────────────────────
-const AvatarCircle = ({ name, size = "h-9 w-9", fontSize = "text-xs" }) => {
+const AvatarCircle = ({ name, photo_path, size = "h-9 w-9", fontSize = "text-xs", onClick }) => {
   const initials = getInitials(name)
   return (
-    <div className={`${size} rounded-full bg-indigo-50 dark:bg-indigo-950/40 border border-indigo-100 dark:border-indigo-900/50 flex items-center justify-center ${fontSize} font-bold text-indigo-600 dark:text-indigo-400 shrink-0`}>
-      {initials}
+    <div 
+      className={`${size} rounded-full overflow-hidden bg-indigo-50 dark:bg-indigo-950/40 border border-indigo-100 dark:border-indigo-900/50 flex items-center justify-center font-bold text-indigo-600 dark:text-indigo-400 shrink-0 ${photo_path ? 'cursor-pointer hover:ring-2 hover:ring-indigo-500 transition-all' : ''}`}
+      onClick={onClick}
+    >
+      {photo_path ? (
+        <img 
+          src={photo_path.startsWith('/') ? photo_path : `/${photo_path}`} 
+          alt={name} 
+          className="w-full h-full object-cover"
+          onError={(e) => {
+            e.target.style.display = 'none';
+            e.target.parentElement.innerHTML = `<span class="${fontSize}">${initials}</span>`;
+          }}
+        />
+      ) : (
+        <span className={fontSize}>{initials}</span>
+      )}
     </div>
   )
 }
@@ -134,7 +149,7 @@ const CardMenu = ({ student, onView, onEdit, onDelete }) => {
 }
 
 // ─── Grid Card ────────────────────────────────────────────────────────────────
-const StudentGridCard = ({ student, onView, onEdit, onDelete }) => {
+const StudentGridCard = ({ student, onView, onEdit, onDelete, onPreview }) => {
   const fullName = `${student.first_name} ${student.last_name}`
   const enrollment = student.current_enrollment
   const gCfg = GENDER_BADGE[student.gender] || { label: student.gender, variant: 'grey' }
@@ -149,7 +164,7 @@ const StudentGridCard = ({ student, onView, onEdit, onDelete }) => {
       <div className="flex items-center justify-between p-4 border-b border-gray-50 dark:border-gray-700/50">
         <span 
           onClick={onView}
-          className="text-xs font-mono font-bold text-indigo-600 dark:text-indigo-400 cursor-pointer hover:underline bg-indigo-50 dark:bg-indigo-900/20 px-2 py-1 rounded"
+          className="text-xs font-mono font-bold text-indigo-600 dark:text-indigo-400 cursor-pointer hover:underline bg-indigo-50 dark:bg-indigo-950/30 px-2 py-1 rounded"
         >
           {student.admission_no}
         </span>
@@ -159,7 +174,18 @@ const StudentGridCard = ({ student, onView, onEdit, onDelete }) => {
       {/* Profile Info */}
       <div className="p-5 flex flex-col items-center text-center flex-1" onClick={onView} style={{ cursor: 'pointer' }}>
         <div className="mb-4 relative">
-          <AvatarCircle name={fullName} size="h-16 w-16" fontSize="text-lg" />
+          <AvatarCircle 
+            name={fullName} 
+            photo_path={student.photo_path} 
+            size="h-16 w-16" 
+            fontSize="text-lg" 
+            onClick={(e) => {
+              if (student.photo_path) {
+                e.stopPropagation();
+                onPreview?.(student.photo_path, fullName);
+              }
+            }}
+          />
           {student.is_active && (
             <div className={`absolute bottom-0 right-0 w-4 h-4 border-2 border-white dark:border-gray-800 rounded-full ${student.is_online ? 'bg-indigo-500 animate-pulse' : 'bg-green-500'}`} />
           )}
@@ -214,7 +240,7 @@ const StudentGridCard = ({ student, onView, onEdit, onDelete }) => {
 }
 
 // ─── Table Row ────────────────────────────────────────────────────────────────
-const StudentTableRow = ({ student, onView, onEdit, onDelete, onToggleStatus, isSaving }) => {
+const StudentTableRow = ({ student, onView, onEdit, onDelete, onToggleStatus, onPreview, isSaving }) => {
   const fullName = `${student.first_name} ${student.last_name}`
   const enrollment = student.current_enrollment
   const gCfg = GENDER_BADGE[student.gender] || { label: student.gender, variant: 'grey' }
@@ -224,7 +250,16 @@ const StudentTableRow = ({ student, onView, onEdit, onDelete, onToggleStatus, is
       <td className="px-6 py-4">
         <div className="flex items-center gap-3">
           <div className="relative">
-            <AvatarCircle name={fullName} />
+            <AvatarCircle 
+              name={fullName} 
+              photo_path={student.photo_path} 
+              onClick={(e) => {
+                if (student.photo_path) {
+                  e.stopPropagation();
+                  onPreview?.(student.photo_path, fullName);
+                }
+              }}
+            />
             {student.is_online && (
               <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-indigo-500 border-2 border-white dark:border-gray-800 rounded-full animate-pulse" />
             )}
@@ -310,6 +345,7 @@ const StudentsPage = () => {
   const [downloadSections, setDownloadSections] = useState([])
   const [downloadingPdf, setDownloadingPdf] = useState(false)
   const [isInitialLoading, setIsInitialLoading] = useState(true)
+  const [previewImage, setPreviewImage] = useState(null)
 
   const doFetch = useCallback(
     debounce((q, f, p) => {
@@ -599,6 +635,7 @@ const StudentsPage = () => {
                 onView={() => goToDetail(student.id)}
                 onEdit={() => goToEdit(student.id)}
                 onDelete={() => setConfirmDelete(student)}
+                onPreview={(url, title) => setPreviewImage({ url, title })}
               />
             ))}
           </div>
@@ -622,6 +659,7 @@ const StudentsPage = () => {
                       onEdit={() => goToEdit(student.id)}
                       onDelete={() => setConfirmDelete(student)}
                       onToggleStatus={() => handleToggleStatus(student)}
+                      onPreview={(url, title) => setPreviewImage({ url, title })}
                       isSaving={isSaving}
                     />
                   ))}
@@ -772,6 +810,24 @@ const StudentsPage = () => {
               Download PDF
             </Button>
           </div>
+        </div>
+      </Modal>
+
+      {/* Photo Preview Modal */}
+      <Modal 
+        open={!!previewImage} 
+        onClose={() => setPreviewImage(null)} 
+        title={previewImage?.title || "Profile Photo"}
+        size="md"
+      >
+        <div className="flex justify-center p-2">
+          {previewImage && (
+            <img 
+              src={previewImage.url.startsWith('/') ? previewImage.url : `/${previewImage.url}`} 
+              alt={previewImage.title} 
+              className="max-w-full max-h-[70vh] rounded-xl shadow-lg object-contain"
+            />
+          )}
         </div>
       </Modal>
 

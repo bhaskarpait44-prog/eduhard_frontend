@@ -92,6 +92,7 @@ const StudentDetailPage = () => {
   const [isResettingParentPass, setIsResettingParentPass] = useState(false)
   const [manualPassword, setManualPassword] = useState('')
   const [manualParentPassword, setManualParentPassword] = useState('')
+  const [previewOpen, setPreviewOpen] = useState(false)
 
   const [fetchingDocs, setFetchingDocs] = useState({ id: false, tc: false })
   const [docs, setDocs] = useState({ id: null, tc: null })
@@ -241,23 +242,41 @@ const StudentDetailPage = () => {
         <div className="space-y-6">
           <div className="p-6 rounded-xl border border-gray-100 bg-white shadow-sm space-y-6">
             <div className="flex flex-col items-center text-center">
-              <div className="relative group">
-                <div className="w-24 h-24 rounded-2xl overflow-hidden shadow-md border-4 border-white">
+              <div className="relative group cursor-pointer" onClick={() => student.photo_path && setPreviewOpen(true)}>
+                <div className="w-24 h-24 rounded-2xl overflow-hidden shadow-md border-4 border-white flex items-center justify-center bg-indigo-600">
                   {student.photo_path ? (
-                    <img src={`/${student.photo_path}`} alt={fullName} className="w-full h-full object-cover" />
+                    <img 
+                      src={student.photo_path.startsWith('/') ? student.photo_path : `/${student.photo_path}`} 
+                      alt={fullName} 
+                      className="w-full h-full object-cover" 
+                      onError={(e) => {
+                        e.target.style.display = 'none';
+                        e.target.parentElement.innerHTML = `<div class="w-full h-full flex items-center justify-center bg-indigo-600 text-white text-3xl font-bold">${getInitials(fullName)}</div>`;
+                      }}
+                    />
                   ) : (
-                    <div className="w-full h-full flex items-center justify-center bg-indigo-600 text-white text-3xl font-bold">
+                    <div className="w-full h-full flex items-center justify-center text-white text-3xl font-bold">
                       {getInitials(fullName)}
                     </div>
                   )}
                 </div>
                 <div className="mt-4">
-                  <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-green-50 text-[10px] font-bold text-green-600 uppercase mb-1">
-                    <span className="w-1.5 h-1.5 rounded-full bg-green-500" />
+                  <div 
+                    className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold uppercase mb-1 shadow-sm border ${
+                      student.status === 'active' 
+                        ? 'bg-green-50 text-green-600 border-green-100' 
+                        : student.status === 'left' 
+                        ? 'bg-red-50 text-red-600 border-red-100'
+                        : 'bg-blue-50 text-blue-600 border-blue-100'
+                    }`}
+                  >
+                    <span className={`w-1.5 h-1.5 rounded-full ${
+                      student.status === 'active' ? 'bg-green-500' : student.status === 'left' ? 'bg-red-500' : 'bg-blue-500'
+                    }`} />
                     {student.status || 'Active'}
                   </div>
-                  <h2 className="text-lg font-bold text-gray-900">{fullName}</h2>
-                  <p className="text-sm font-bold text-indigo-600">{student.admission_no}</p>
+                  <h2 className="text-lg font-bold text-gray-900 leading-tight">{fullName}</h2>
+                  <p className="text-sm font-bold text-indigo-600 tracking-tight">{student.admission_no}</p>
                 </div>
               </div>
             </div>
@@ -447,6 +466,17 @@ const StudentDetailPage = () => {
       <MarkAsGraduatedModal open={graduatedOpen} student={student} onClose={() => setGraduatedOpen(false)} onSuccess={() => { setGraduatedOpen(false); fetchStudent(id) }} />
       <ReadmitModal open={readmitOpen} student={student} onClose={() => setReadmitOpen(false)} onSuccess={() => { setReadmitOpen(false); fetchStudent(id) }} />
       <EnrollmentHistoryModal open={historyOpen} student={student} onClose={() => setHistoryOpen(false)} />
+
+      {/* Image Preview Modal */}
+      <Modal open={previewOpen} onClose={() => setPreviewOpen(false)} title="Profile Photo" size="md">
+        <div className="flex justify-center p-2">
+          <img 
+            src={student.photo_path?.startsWith('/') ? student.photo_path : `/${student.photo_path}`} 
+            alt={fullName} 
+            className="max-w-full max-h-[70vh] rounded-xl shadow-lg object-contain"
+          />
+        </div>
+      </Modal>
     </div>
   )
 }

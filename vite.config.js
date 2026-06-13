@@ -27,6 +27,11 @@ export default defineConfig({
         changeOrigin: true,
         secure: false,
       },
+      '/uploads': {
+        target: 'http://10.126.46.32:5000',
+        changeOrigin: true,
+        secure: false,
+      },
     },
   },
 })

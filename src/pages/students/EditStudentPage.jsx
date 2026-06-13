@@ -167,7 +167,7 @@ const EditStudentPage = () => {
     formData.append('document_type', 'manual_edit')
 
     try {
-      const res = await api.post(`/api/students/${id}/documents`, formData)
+      const res = await api.post(`/students/${id}/documents`, formData)
       setDocuments(prev => [res.data, ...prev])
       toastSuccess('Document uploaded')
     } catch (err) {
@@ -180,7 +180,7 @@ const EditStudentPage = () => {
   const handleDeleteDoc = async (docId) => {
     if (!window.confirm('Delete this document?')) return
     try {
-      await api.delete(`/api/students/${id}/documents/${docId}`)
+      await api.delete(`/students/${id}/documents/${docId}`)
       setDocuments(prev => prev.filter(d => d.id !== docId))
       toastSuccess('Document removed')
     } catch (err) {

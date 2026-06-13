@@ -26,7 +26,7 @@ const AdmissionStatus = () => {
     setApplication(null)
 
     try {
-      const res = await api.get('/api/public/applications/status', {
+      const res = await api.get('/public/applications/status', {
         params: { reference_no: referenceNo, email: email }
       })
       setApplication(res.data)
