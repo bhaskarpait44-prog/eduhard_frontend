@@ -54,9 +54,10 @@ const AttendanceGrid = ({
         `${student.first_name} ${student.last_name}`,
         ...days.map((day) => {
           if (day.isFuture) return ''
-          if (day.weekend) return '-'
           const record = recordMap.get(day.date)
-          return STATUS_STYLE[record?.status || 'holiday']?.label || ''
+          if (record) return STATUS_STYLE[record.status]?.label || ''
+          if (day.weekend) return '-'
+          return STATUS_STYLE['holiday']?.label || ''
         }),
         stats.present,
         stats.absent,
@@ -378,11 +379,12 @@ const SummaryCard = ({ icon: Icon, title, subtitle, items, tone }) => {
 }
 
 const computeStudentStats = (records = []) => {
-  const present = records.filter((item) => item.status === 'present').length
-  const absent = records.filter((item) => item.status === 'absent').length
-  const late = records.filter((item) => item.status === 'late').length
-  const halfDay = records.filter((item) => item.status === 'half_day').length
-  const total = records.length
+  const filteredRecords = records.filter((item) => item.status !== 'holiday')
+  const present = filteredRecords.filter((item) => item.status === 'present').length
+  const absent = filteredRecords.filter((item) => item.status === 'absent').length
+  const late = filteredRecords.filter((item) => item.status === 'late').length
+  const halfDay = filteredRecords.filter((item) => item.status === 'half_day').length
+  const total = filteredRecords.length
   const effectivePresent = present + late + halfDay * 0.5
   const percentage = total ? (effectivePresent / total) * 100 : 0
   return { present, absent, late, halfDay, total, percentage }

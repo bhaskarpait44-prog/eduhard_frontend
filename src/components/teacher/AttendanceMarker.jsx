@@ -129,6 +129,19 @@ const AttendanceMarker = ({
     })
   }
 
+  const resetToDefaults = () => {
+    const next = {}
+    ;(payload?.students || []).forEach((student) => {
+      next[student.enrollment_id] = {
+        status: student.status || 'present',
+        note: '',
+        name: `${student.first_name} ${student.last_name}`,
+        roll_number: student.roll_number,
+      }
+    })
+    setRecords(next)
+  }
+
   const submitPayload = () => ({
     class_id: Number(context.class_id),
     section_id: Number(context.section_id),
@@ -288,7 +301,7 @@ const AttendanceMarker = ({
                   <AlertTriangle size={16} /> Mark All Absent
                 </button>
                 <button 
-                  onClick={() => bulkSet('present')}
+                  onClick={resetToDefaults}
                   className="h-10 px-5 rounded-2xl text-[11px] font-bold uppercase tracking-wider text-text-muted hover:bg-surface-raised transition-all border border-transparent hover:border-border active:scale-95"
                 >
                   Reset Defaults
