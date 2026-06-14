@@ -46,7 +46,7 @@ const STREAM_OPTIONS = [
   { value: 'science', label: 'Science' },
 ]
 
-const StepEnrollment = ({ defaultValues, currentSession, onSubmit, onBack }) => {
+const StepEnrollment = ({ defaultValues, currentSession, onSubmit, onBack, isPartialSuccess }) => {
   const [classes, setClasses] = useState([])
   const [sections, setSections] = useState([])
   const [subjects, setSubjects] = useState([])
@@ -130,6 +130,16 @@ const StepEnrollment = ({ defaultValues, currentSession, onSubmit, onBack }) => 
 
         {/* Hidden field for session_id validation */}
         <input type="hidden" {...register('session_id')} />
+
+        {isPartialSuccess && (
+          <div className="p-3 rounded-xl bg-indigo-50 border border-indigo-200 text-sm text-indigo-700 flex gap-2 items-start">
+            <AlertCircle className="w-4 h-4 mt-0.5 shrink-0" />
+            <p>
+              <strong>Student record is already saved.</strong> You can now adjust enrollment details to fix the previous failure. 
+              Navigation back to Identity or Profile is disabled.
+            </p>
+          </div>
+        )}
 
         {!currentSession && (
           <div className="p-3 rounded-xl bg-amber-50 border border-amber-200 text-sm text-amber-700 font-medium">
@@ -293,7 +303,15 @@ const StepEnrollment = ({ defaultValues, currentSession, onSubmit, onBack }) => 
       </div>
 
       <div className="flex justify-between mt-4">
-        <Button variant="secondary" type="button" onClick={onBack}>← Back</Button>
+        <Button 
+          variant="secondary" 
+          type="button" 
+          onClick={onBack}
+          disabled={isPartialSuccess}
+          className={isPartialSuccess ? 'opacity-30 cursor-not-allowed' : ''}
+        >
+          ← Back
+        </Button>
         <Button type="submit" disabled={!currentSession}>
           Continue to Documents →
         </Button>

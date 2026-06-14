@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Pencil, Clock, KeyRound, ShieldCheck } from 'lucide-react'
+import { Pencil, Clock, KeyRound, ShieldCheck, MapPin } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { formatDate } from '@/utils/helpers'
 import Button from '@/components/ui/Button'
@@ -28,8 +28,14 @@ const TabProfile = ({ student, studentId }) => {
   const [historyOpen,  setHistoryOpen]  = useState(false)
   const [resetModal,   setResetModal]   = useState(null) // 'student' or 'parent'
   const [newPass,      setNewPass]      = useState('')
-  const { resetPassword, resetParentPassword, isSaving } = useAdminStudentStore()
+  const { resetPassword, resetParentPassword, isSaving, history, fetchHistory } = useAdminStudentStore()
   const { toastSuccess, toastError, toastWarning } = useToast()
+
+  useEffect(() => {
+    if (historyOpen && !history) {
+      fetchHistory(studentId).catch(() => toastError('Failed to load history'))
+    }
+  }, [historyOpen, history, studentId, fetchHistory, toastError])
 
   const handleResetPassword = async () => {
     const data = newPass ? { new_password: newPass } : {}
@@ -165,19 +171,64 @@ const TabProfile = ({ student, studentId }) => {
         </div>
       </Modal>
 
-      {/* Version history modal — simplified */}
+      {/* Version history modal */}
       <Modal
         open={historyOpen}
         onClose={() => setHistoryOpen(false)}
         title="Profile Version History"
-        size="md"
+        size="lg"
       >
-        <div
-          className="flex flex-col items-center py-8 text-center"
-          style={{ color: 'var(--color-text-muted)' }}
-        >
-          <Clock size={28} className="mb-3 opacity-30" />
-          <p className="text-sm">Version history loads from the enrollment history tab.</p>
+        <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-2">
+          {!history?.profile_history?.length ? (
+            <div className="flex flex-col items-center py-12 text-center text-gray-400">
+              <Clock size={32} className="mb-2 opacity-20" />
+              <p className="text-sm italic">No version history found for this profile.</p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {history.profile_history.map((version, i) => (
+                <div 
+                  key={version.id} 
+                  className="p-4 rounded-2xl border transition-all hover:border-indigo-200"
+                  style={{ 
+                    backgroundColor: version.is_current ? 'var(--color-surface-raised)' : 'var(--color-surface)',
+                    borderColor: version.is_current ? 'var(--color-brand)' : 'var(--color-border)'
+                  }}
+                >
+                  <div className="flex justify-between items-start mb-2">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-gray-100 text-gray-600">
+                        V{history.profile_history.length - i}
+                      </span>
+                      {version.is_current && (
+                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-green-100 text-green-600 uppercase tracking-wider">
+                          Current
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-[11px] font-medium text-gray-400">
+                      Effective: {formatDate(version.valid_from)} {version.valid_to ? `to ${formatDate(version.valid_to)}` : '— Present'}
+                    </p>
+                  </div>
+                  
+                  <p className="text-sm font-semibold text-gray-800 mb-1">
+                    {version.change_reason || 'Initial profile created'}
+                  </p>
+                  
+                  <div className="flex items-center gap-4 mt-3 pt-3 border-t border-dashed border-gray-100">
+                    <div className="flex items-center gap-1.5 text-[11px] text-gray-500">
+                      <ShieldCheck size={12} className="text-gray-400" />
+                      <span>{version.changed_by_name || 'System / Admission'}</span>
+                    </div>
+                    <div className="flex items-center gap-1.5 text-[11px] text-gray-500">
+                      <MapPin size={12} className="text-gray-400" />
+                      <span>{version.city}, {version.state}</span>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </Modal>
     </div>

@@ -75,7 +75,13 @@ const MyProfile = () => {
               <div className="mt-3 flex flex-wrap gap-2">
                 <Badge variant="blue">{profile.session_name}</Badge>
                 {profile.blood_group && <Badge variant="red">{profile.blood_group}</Badge>}
-                <Badge variant="green">Active</Badge>
+                {profile.is_active === false ? (
+                  <Badge variant="red">Suspended</Badge>
+                ) : (
+                  <Badge variant={profile.status === 'active' ? 'green' : 'amber'}>
+                    {String(profile.status || 'Active').charAt(0).toUpperCase() + String(profile.status || 'Active').slice(1)}
+                  </Badge>
+                )}
               </div>
             </div>
           </div>

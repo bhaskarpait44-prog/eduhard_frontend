@@ -50,7 +50,10 @@ const AdmitStudentPage = () => {
     setStep(s => s + 1)
   }
 
-  const goBack = () => setStep(s => s - 1)
+  const goBack = () => {
+    if (admittedStudent && step === 3) return
+    setStep(s => s - 1)
+  }
 
   const handleSubmit = async (reviewData) => {
     const allData = { ...formData, ...reviewData }
@@ -101,12 +104,14 @@ const AdmitStudentPage = () => {
         father_name: allData.father_name,
         father_phone: allData.father_phone,
         father_email: allData.father_email,
+        father_occupation: allData.father_occupation,
         father_qualification: allData.father_qualification,
         father_aadhar: allData.father_aadhar,
         father_annual_income: allData.father_annual_income,
         
         mother_name: allData.mother_name,
         mother_phone: allData.mother_phone,
+        mother_email: allData.mother_email,
         mother_qualification: allData.mother_qualification,
 
         guardian_name: allData.guardian_name,
@@ -207,10 +212,14 @@ const AdmitStudentPage = () => {
       {step < 7 && (
         <div className="flex items-center gap-4">
           <button
-            onClick={() => step > 1 ? goBack() : navigate(ROUTES.STUDENTS)}
-            className="p-2 rounded-xl transition-colors"
+            onClick={() => {
+              if (admittedStudent && step === 3) return
+              step > 1 ? goBack() : navigate(ROUTES.STUDENTS)
+            }}
+            disabled={admittedStudent && step === 3}
+            className={`p-2 rounded-xl transition-colors ${admittedStudent && step === 3 ? 'opacity-30 cursor-not-allowed' : ''}`}
             style={{ color: 'var(--color-text-secondary)' }}
-            onMouseEnter={e => { e.currentTarget.style.backgroundColor = 'var(--color-surface-raised)' }}
+            onMouseEnter={e => { if (!(admittedStudent && step === 3)) e.currentTarget.style.backgroundColor = 'var(--color-surface-raised)' }}
             onMouseLeave={e => { e.currentTarget.style.backgroundColor = 'transparent' }}
           >
             <ArrowLeft size={20} />
@@ -221,6 +230,26 @@ const AdmitStudentPage = () => {
             </h1>
             <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>
               Step {step} of 6 - {STEPS[Math.min(step - 1, 5)]?.desc}
+            </p>
+          </div>
+        </div>
+      )}
+
+      {step === 6 && admittedStudent && (
+        <div 
+          className="p-4 rounded-2xl border flex gap-3 animate-in fade-in slide-in-from-top-2 duration-300"
+          style={{ 
+            backgroundColor: 'var(--color-surface-raised)', 
+            borderColor: 'var(--color-brand)',
+            color: 'var(--color-text-primary)'
+          }}
+        >
+          <AlertCircle className="w-5 h-5 shrink-0 text-amber-500" />
+          <div className="text-sm">
+            <p className="font-bold">Student record created</p>
+            <p className="text-xs opacity-80">
+              The student record was successfully saved, but enrollment failed. You are now re-submitting only the enrollment and subject details.
+              Back-navigation past Step 3 is disabled as student data is already committed.
             </p>
           </div>
         </div>
@@ -277,6 +306,7 @@ const AdmitStudentPage = () => {
           currentSession={currentSession}
           onSubmit={goNext}
           onBack={goBack}
+          isPartialSuccess={!!admittedStudent}
         />
       )}
       {step === 4 && (

@@ -147,10 +147,12 @@ const StepProfile = ({ defaultValues, onNext, onBack }) => {
           <Input label="Mother's Name" required placeholder="Sunita Sharma" error={errors.mother_name?.message} {...register('mother_name')} />
           <Input label="Mother's Qualification" placeholder="e.g. B.A., M.Sc." {...register('mother_qualification')} />
           <Input label="Mother's Phone" type="text" placeholder="9876543212" error={errors.mother_phone?.message} {...register('mother_phone')} />
+          <Input label="Mother's Email" type="email" placeholder="mother@email.com" error={errors.mother_email?.message} {...register('mother_email')} />
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-6">
           <Input label="Father's Name" required placeholder="Rajesh Sharma" error={errors.father_name?.message} {...register('father_name')} />
+          <Input label="Father's Occupation" placeholder="e.g. Engineer, Farmer" {...register('father_occupation')} />
           <Input label="Father's Qualification" placeholder="e.g. B.Tech, M.A." {...register('father_qualification')} />
           <Input label="Father's Phone" type="text" placeholder="9876543211" error={errors.father_phone?.message} {...register('father_phone')} />
           <Input label="Father's Email (Login)" required type="email" placeholder="father@email.com" error={errors.father_email?.message} {...register('father_email')} />

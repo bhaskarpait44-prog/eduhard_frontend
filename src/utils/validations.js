@@ -103,6 +103,7 @@ export const studentProfileSchema = z.object({
   father_name: z.string().min(1, "Father's name is required"),
   father_phone: phoneSchema,
   father_email: z.string().email('A valid parent email is required'),
+  father_occupation: z.string().optional(),
   father_qualification: z.string().optional(),
   father_aadhar: z
     .string()
@@ -114,6 +115,7 @@ export const studentProfileSchema = z.object({
   mother_name: z.string().min(1, "Mother's name is required"),
   mother_phone: phoneSchema,
   mother_qualification: z.string().optional(),
+  mother_email: z.string().email('Valid email required').optional().or(z.literal('')),
 
   guardian_name: z.string().optional(),
   guardian_relation: z.string().optional(),

@@ -64,9 +64,21 @@ const StepPreview = ({ formData, onBack, onSubmit, isSaving }) => {
         <PreviewGroup icon={MapPin} title="Contact & Address">
           <PreviewField label="Email" value={formData.email} />
           <PreviewField label="Phone" value={formData.phone} />
-          <PreviewField label="Village/Street" value={formData.address} colSpan="col-span-2" />
+          <PreviewField label="Address" value={formData.address} />
           <PreviewField label="District" value={formData.district} />
           <PreviewField label="PIN" value={formData.pincode} />
+        </PreviewGroup>
+
+        {/* Family */}
+        <PreviewGroup icon={User} title="Family Details">
+          <PreviewField label="Father's Name" value={formData.father_name} />
+          <PreviewField label="Father's Occupation" value={formData.father_occupation} />
+          <PreviewField label="Father's Phone" value={formData.father_phone} />
+          <PreviewField label="Father's Email" value={formData.father_email} />
+          <PreviewField label="Mother's Name" value={formData.mother_name} />
+          <PreviewField label="Mother's Email" value={formData.mother_email} />
+          <PreviewField label="Mother's Phone" value={formData.mother_phone} />
+          <PreviewField label="Guardian Name" value={formData.guardian_name} />
         </PreviewGroup>
 
         {/* Documents */}
