@@ -181,11 +181,19 @@ const getNavGroups = (user) => {
         { label: 'Students',      icon: 'Users',          path: ROUTES.STUDENTS,     roles: [ROLES.ADMIN, ROLES.TEACHER] },
         { label: 'Academic Calendar', icon: 'Calendar',   path: ROUTES.ACADEMIC_CALENDAR, roles: [ROLES.ADMIN, ROLES.TEACHER, ROLES.ACCOUNTANT, ROLES.RECEPTIONIST] },
         { label: 'Enrollment',    icon: 'BookOpenCheck',  path: ROUTES.ENROLLMENTS,  roles: [ROLES.ADMIN, ROLES.TEACHER] },
-        { label: 'Alumni & Leavers', icon: 'LogOut',        path: ROUTES.STUDENTS_LEFT, roles: [ROLES.ADMIN, ROLES.TEACHER] },
-        { label: 'Graduated',     icon: 'GraduationCap', path: ROUTES.STUDENTS_GRADUATED, roles: [ROLES.ADMIN, ROLES.TEACHER] },
         { label: 'Attendance',    icon: 'CalendarCheck',  path: ROUTES.ATTENDANCE,   roles: [ROLES.ADMIN, ROLES.TEACHER] },
         { label: 'Subjects',      icon: 'BookOpen',       path: ROUTES.SUBJECTS,     roles: [ROLES.ADMIN, ROLES.TEACHER] },
         { label: 'Exams & Results', icon: 'ClipboardList', path: ROUTES.EXAMS,       roles: [ROLES.ADMIN, ROLES.TEACHER] },
+      ],
+    },
+    {
+      label: 'Alumni',
+      items: [
+        { label: 'Alumni Dashboard', icon: 'GraduationCap', path: ROUTES.ALUMNI,           roles: [ROLES.ADMIN, ROLES.TEACHER] },
+        { label: 'Directory',        icon: 'Users',          path: ROUTES.ALUMNI_DIRECTORY,  roles: [ROLES.ADMIN, ROLES.TEACHER] },
+        { label: 'Events',           icon: 'CalendarHeart',  path: ROUTES.ALUMNI_EVENTS,     roles: [ROLES.ADMIN] },
+        { label: 'Left Students',    icon: 'LogOut',         path: ROUTES.STUDENTS_LEFT,     roles: [ROLES.ADMIN, ROLES.TEACHER] },
+        { label: 'Graduated',        icon: 'Award',          path: ROUTES.STUDENTS_GRADUATED,roles: [ROLES.ADMIN, ROLES.TEACHER] },
       ],
     },
     {

@@ -149,6 +149,11 @@ const AcademicCalendarPage = lazy(() => import('@/pages/academicCalendar/Academi
 const ComplianceReportPage = lazy(() => import('@/pages/compliance/ComplianceReportPage'))
 const StudentCalendarPage = lazy(() => import('@/pages/student/StudentCalendarPage'))
 
+const AlumniDashboard = lazy(() => import('@/pages/alumni/AlumniDashboard'))
+const AlumniDirectoryPage = lazy(() => import('@/pages/alumni/AlumniDirectoryPage'))
+const AlumniProfilePage = lazy(() => import('@/pages/alumni/AlumniProfilePage'))
+const AlumniEventsPage = lazy(() => import('@/pages/alumni/AlumniEventsPage'))
+
 const PageLoader = () => (
   <div className="flex min-h-[50vh] items-center justify-center">
     <div
@@ -502,6 +507,38 @@ const router = createBrowserRouter([
         element: (
           <ProtectedRoute roles={[ROLES.ADMIN, ROLES.TEACHER]}>
             <Lazy component={GraduatedStudentsPage} />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: ROUTES.ALUMNI,
+        element: (
+          <ProtectedRoute roles={[ROLES.ADMIN, ROLES.TEACHER]}>
+            <Lazy component={AlumniDashboard} />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: ROUTES.ALUMNI_DIRECTORY,
+        element: (
+          <ProtectedRoute roles={[ROLES.ADMIN, ROLES.TEACHER]}>
+            <Lazy component={AlumniDirectoryPage} />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: ROUTES.ALUMNI_PROFILE,
+        element: (
+          <ProtectedRoute roles={[ROLES.ADMIN, ROLES.TEACHER]}>
+            <Lazy component={AlumniProfilePage} />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: ROUTES.ALUMNI_EVENTS,
+        element: (
+          <ProtectedRoute roles={[ROLES.ADMIN, ROLES.TEACHER]}>
+            <Lazy component={AlumniEventsPage} />
           </ProtectedRoute>
         ),
       },

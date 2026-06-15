@@ -66,6 +66,12 @@ export const ROUTES = {
   STUDENTS_LEFT: '/students/left',
   STUDENTS_GRADUATED: '/students/graduated',
 
+  // Alumni
+  ALUMNI:                  '/alumni',
+  ALUMNI_DIRECTORY:        '/alumni/directory',
+  ALUMNI_PROFILE:          '/alumni/:id',
+  ALUMNI_EVENTS:           '/alumni/events',
+
   // Classes
   CLASSES: '/classes',
   CLASS_DETAIL: '/classes/:id',
