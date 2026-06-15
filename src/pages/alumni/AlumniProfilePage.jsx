@@ -109,7 +109,10 @@ const AlumniProfilePage = () => {
                   {student.status}
                 </Badge>
                 {profile?.is_mentor_volunteer && (
-                  <Badge variant="blue" icon={Heart}>Mentor Volunteer</Badge>
+                  <Badge variant="blue">
+                    <Heart size={12} className="mr-1.5" />
+                    Mentor Volunteer
+                  </Badge>
                 )}
               </div>
             </div>
@@ -157,7 +160,7 @@ const AlumniProfilePage = () => {
             {profile?.current_occupation ? (
               <div className="space-y-4">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <DetailItem label="Current Status" value={profile.current_occupation.replace('_', ' ')} capitalize />
+                  <DetailItem label="Current Status" value={profile.current_occupation.replace(/_/g, ' ')} capitalize />
                   <DetailItem label="Industry" value={profile.industry} />
                   <DetailItem label="Job Title" value={profile.job_title} />
                   <DetailItem label="Company / Institution" value={profile.company_or_institution} />

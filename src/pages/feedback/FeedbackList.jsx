@@ -19,12 +19,13 @@ import Badge from '@/components/ui/Badge'
 import EmptyState from '@/components/ui/EmptyState'
 import Modal from '@/components/ui/Modal'
 import Input from '@/components/ui/Input'
+import Textarea from '@/components/ui/Textarea'
 import Select from '@/components/ui/Select'
 import { formatDate } from '@/utils/helpers'
 
 const STATUS_BADGE = {
   'open': 'blue',
-  'in-progress': 'amber',
+  'in-progress': 'yellow',
   'resolved': 'green'
 }
 
@@ -161,7 +162,7 @@ export default function FeedbackList() {
                 {isAdmin && r.status !== 'resolved' && (
                   <Button size="sm" variant="secondary" onClick={() => { setSelectedRecord(r); setReplyForm({admin_reply: r.admin_reply||'', status: 'resolved'}); setReplyModalOpen(true) }}>Reply</Button>
                 )}
-                {(!isAdmin || r.status === 'resolved') && (
+                {((isAdmin && r.status === 'resolved') || (!isAdmin && r.status === 'open')) && (
                   <button onClick={() => handleDelete(r.id)} className="p-2 text-gray-400 hover:text-red-600 transition-colors"><Trash2 size={18}/></button>
                 )}
               </div>
@@ -195,7 +196,7 @@ export default function FeedbackList() {
             <Select label="Type" value={submitForm.type} onChange={e => setSubmitForm({...submitForm, type: e.target.value})} options={[{value:'feedback',label:'Feedback'},{value:'complaint',label:'Complaint'}]} required />
             <Input label="Subject" value={submitForm.subject} onChange={e => setSubmitForm({...submitForm, subject: e.target.value})} required placeholder="Short summary..." />
           </div>
-          <Input label="Your Message" textarea rows={4} value={submitForm.message} onChange={e => setSubmitForm({...submitForm, message: e.target.value})} required placeholder="Provide details here..." />
+          <Textarea label="Your Message" rows={4} value={submitForm.message} onChange={e => setSubmitForm({...submitForm, message: e.target.value})} required placeholder="Provide details here..." />
           <div className="flex justify-end pt-2"><Button type="submit" loading={isLoading} icon={Send}>Submit</Button></div>
         </form>
       </Modal>
@@ -209,7 +210,7 @@ export default function FeedbackList() {
               <p className="text-sm font-bold">{selectedRecord.subject}</p>
               <p className="text-xs text-gray-600 dark:text-gray-400 mt-2">{selectedRecord.message}</p>
             </div>
-            <Input label="Response / Reply" textarea rows={4} value={replyForm.admin_reply} onChange={e => setReplyForm({...replyForm, admin_reply: e.target.value})} required placeholder="Type your response..." />
+            <Textarea label="Response / Reply" rows={4} value={replyForm.admin_reply} onChange={e => setReplyForm({...replyForm, admin_reply: e.target.value})} required placeholder="Type your response..." />
             <Select label="Update Status" value={replyForm.status} onChange={e => setReplyForm({...replyForm, status: e.target.value})} options={[{value:'open',label:'Keep Open'},{value:'in-progress',label:'Mark In Progress'},{value:'resolved',label:'Mark Resolved'}]} />
             <div className="flex justify-end pt-2"><Button type="submit" loading={isLoading} icon={Send}>Send Response</Button></div>
           </form>

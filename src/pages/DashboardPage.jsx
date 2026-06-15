@@ -17,6 +17,8 @@ import { formatCurrency, formatPercent, getInitials, getFileUrl, cn } from '@/ut
 import StatCard from '@/components/ui/StatCard'
 import Button from '@/components/ui/Button'
 import Badge from '@/components/ui/Badge'
+import AIInsightsCard from '@/components/dashboard/AIInsightsCard'
+import RiskScoreWidget from '@/components/dashboard/RiskScoreWidget'
 
 const AUTO_REFRESH_MS = 10 * 60 * 1000 // 10 minutes
 
@@ -202,6 +204,8 @@ const DashboardPage = () => {
         />
       </div>
 
+      <AIInsightsCard />
+
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Class Attendance Summary */}
         <div className="lg:col-span-2 bg-surface border border-border-base rounded-2xl p-5">
@@ -252,6 +256,7 @@ const DashboardPage = () => {
 
         {/* Sidebar Content */}
         <div className="space-y-4">
+          <RiskScoreWidget />
           {/* Leaving Trends */}
           <div className="bg-surface border border-border-base rounded-2xl p-5">
             <h3 className="font-bold text-text-primary mb-4">Leaving Trends</h3>

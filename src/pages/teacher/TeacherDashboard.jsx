@@ -366,6 +366,8 @@ const TeacherDashboard = () => {
             <PendingTasksList tasks={pendingTasks} loading={loading && !pendingTasks.length} />
           </SectionShell>
 
+          <RiskScoreWidget />
+
           <SectionShell
             title="Quick Actions"
             caption="Shortcuts for the actions teachers repeat most during the day."

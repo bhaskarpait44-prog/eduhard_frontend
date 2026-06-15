@@ -66,10 +66,12 @@ export default function LeftStudentsPage() {
     try {
       const [clsRes, sessRes] = await Promise.all([getClasses(), getSessions()])
       fetchCurrentSession().catch(() => {})
-      // clsRes.data is { classes: [...], stats: {...} }
-      // sessRes.data is [...]
-      setClasses((clsRes.data?.classes || []).map(c => ({ value: String(c.id), label: c.name })))
-      setSessions((sessRes.data || []).map(s => ({ value: String(s.id), label: s.name })))
+      
+      const classes = clsRes.data?.classes || clsRes.data || []
+      const sessions = sessRes.data?.sessions || sessRes.data || []
+      
+      setClasses(classes.map(c => ({ value: String(c.id), label: c.name })))
+      setSessions(sessions.map(s => ({ value: String(s.id), label: s.name })))
     } catch (err) { toastError('Failed to load filter metadata.') }
   }
 

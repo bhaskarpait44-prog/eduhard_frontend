@@ -88,7 +88,7 @@ const AlumniDirectoryPage = () => {
     const newParams = new URLSearchParams(searchParams)
     if (value) newParams.set(name, value)
     else newParams.delete(name)
-    newParams.set('page', '1')
+    if (name !== 'page') newParams.set('page', '1')
     setSearchParams(newParams)
   }
 
@@ -324,7 +324,7 @@ const AlumniCard = ({ person, onClick, onEdit, isAdmin }) => {
                 <Briefcase size={12} className="mt-1 text-text-muted shrink-0" />
                 <div className="min-w-0">
                   <p className="text-xs font-bold text-text-primary truncate">
-                    {profile.job_title || profile.current_occupation.replace('_', ' ')}
+                    {profile.job_title || profile.current_occupation.replace(/_/g, ' ')}
                   </p>
                   <p className="text-[10px] text-text-secondary truncate">
                     {profile.company_or_institution || '--'}

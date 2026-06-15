@@ -69,7 +69,7 @@ const AlumniDashboard = () => {
   }
 
   const occupationData = stats?.byOccupation ? Object.entries(stats.byOccupation).map(([key, value]) => ({
-    name: key.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase()),
+    name: key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
     value
   })) : []
 

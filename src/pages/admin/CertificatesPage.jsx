@@ -166,7 +166,7 @@ const SAMPLE_DATA = {
     exam_name: 'Annual Examination 2026', session: '2025-2026',
     achievement: 'Gold Medal', event_name: 'District Sports Meet', event_date: '2026-03-15', position: '1st',
     scheme_name: 'Post Matric Scholarship', class: 'XI', year: '2026',
-    designation: 'PGT Physics', join_date: '2020-06-01', leaving_date: '2026-05-23',
+    designation: 'PGT Physics', join_date: '2020-06-01',
   }
 }
 
@@ -267,6 +267,32 @@ const CertificatesPage = () => {
   const [sections, setSections] = useState([])
   const [modalFilters, setModalFilters] = useState({ class_id: '', section_id: '' })
 
+  useEffect(() => {
+    certificateApi.getSettings().then(res => {
+      if (res.data) {
+        setCertSettings({
+          school_name: res.data.name || SAMPLE_DATA.school.name,
+          principal_name: res.data.principal_name || SAMPLE_DATA.school.principal_name,
+          address: res.data.address || SAMPLE_DATA.school.address,
+          phone: res.data.phone || SAMPLE_DATA.school.phone,
+          email: res.data.email || SAMPLE_DATA.school.email,
+        })
+      }
+    }).catch(console.error)
+  }, [])
+
+  const handleSaveSettings = async () => {
+    setSubmitting(true)
+    try {
+      await certificateApi.updateSettings(certSettings)
+      toastSuccess('Branding settings updated.')
+    } catch (err) {
+      toastErrorRef.current('Failed to update branding settings.')
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
   const loadCertificates = useCallback(async () => {
     setLoading(true)
     try {
@@ -355,7 +381,11 @@ const CertificatesPage = () => {
 
   const handleOpenIssueModal = (certType) => {
     setModalFilters({ class_id: '', section_id: '' })
-    setFormData({ recipient_id: '', extra_data: {} })
+    const defaultExtraData = {}
+    certType.fields?.forEach(field => {
+      if (field.defaultValue) defaultExtraData[field.name] = field.defaultValue
+    })
+    setFormData({ recipient_id: '', extra_data: defaultExtraData })
     setIssueModal({ open: true, type: certType })
   }
 
@@ -497,7 +527,7 @@ const CertificatesPage = () => {
       {/* Tab Content */}
       {activeTab === 'issue' && (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          {CERTIFICATE_TYPES.map((type) => {
+          {templates.map((type) => {
             const Icon = type.icon
             return (
               <div 
@@ -546,16 +576,15 @@ const CertificatesPage = () => {
             <div className="w-48">
               <Select 
                 placeholder="All Types"
-                options={[{ label: 'All Types', value: '' }, ...CERTIFICATE_TYPES.map(t => ({ label: t.label, value: t.value }))]}
+                options={templates.map(t => ({ label: t.label, value: t.value }))}
                 value={filters.type}
                 onChange={(e) => setFilters(p => ({ ...p, type: e.target.value, page: 1 }))}
               />
             </div>
             <div className="w-40">
               <Select 
-                placeholder="Status"
+                placeholder="All Status"
                 options={[
-                  { label: 'All Status', value: '' },
                   { label: 'Active', value: 'active' },
                   { label: 'Revoked', value: 'revoked' },
                 ]}
@@ -695,14 +724,20 @@ const CertificatesPage = () => {
         <div className="space-y-8">
           {/* Global Branding Settings */}
           <div className="p-6 rounded-3xl border bg-gradient-to-br from-brand/5 to-transparent shadow-sm" style={{ borderColor: 'var(--color-border-subtle)' }}>
-            <div className="flex items-center gap-3 mb-6">
-              <div className="w-10 h-10 rounded-xl bg-brand/10 text-brand flex items-center justify-center">
-                <Shield size={20} />
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-brand/10 text-brand flex items-center justify-center">
+                  <Shield size={20} />
+                </div>
+                <div>
+                  <h3 className="font-bold text-lg">Branding & School Info</h3>
+                  <p className="text-xs text-muted">These details appear on every generated certificate.</p>
+                </div>
               </div>
-              <div>
-                <h3 className="font-bold text-lg">Branding & School Info</h3>
-                <p className="text-xs text-muted">These details appear on every generated certificate.</p>
-              </div>
+              <Button onClick={handleSaveSettings} disabled={submitting} className="gap-2">
+                {submitting ? <RefreshCw size={16} className="animate-spin" /> : <Shield size={16} />}
+                Save Branding
+              </Button>
             </div>
             
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
