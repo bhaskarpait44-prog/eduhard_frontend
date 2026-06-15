@@ -179,7 +179,7 @@ const StepEnrollment = ({ defaultValues, currentSession, onSubmit, onBack, isPar
             {...register('section_id')}
           />
           <Select
-            label="Stream"
+            label="Stream (Optional)"
             error={errors.stream?.message}
             options={STREAM_OPTIONS}
             placeholder={selectedClass?.stream ? 'Stream from selected class' : 'Select stream'}
@@ -187,7 +187,7 @@ const StepEnrollment = ({ defaultValues, currentSession, onSubmit, onBack, isPar
             {...register('stream')}
           />
           <Select
-            label="Medium"
+            label="Medium (Optional)"
             options={[
               { value: 'English', label: 'English' },
               { value: 'Assamese', label: 'Assamese' },
@@ -212,7 +212,7 @@ const StepEnrollment = ({ defaultValues, currentSession, onSubmit, onBack, isPar
             {...register('joined_date')}
           />
           <Select
-            label="Hostel Required"
+            label="Hostel Required (Optional)"
             options={[
               { value: 'false', label: 'No' },
               { value: 'true', label: 'Yes' },
@@ -221,7 +221,7 @@ const StepEnrollment = ({ defaultValues, currentSession, onSubmit, onBack, isPar
             {...register('is_hostel', { setValueAs: v => v === 'true' })}
           />
           <Input
-            label="Distance from School (km)"
+            label="Distance from School (km) (Optional)"
             type="number"
             step="0.1"
             placeholder="0.0"
@@ -229,14 +229,14 @@ const StepEnrollment = ({ defaultValues, currentSession, onSubmit, onBack, isPar
             {...register('distance_km')}
           />
           <Input
-            label="Prev. Year Attendance (Days)"
+            label="Prev. Year Attendance (Days) (Optional)"
             type="number"
             placeholder="0"
             disabled={!currentSession}
             {...register('prev_attendance_days')}
           />
           <Input
-            label="Roll Number"
+            label="Roll Number (Optional)"
             placeholder="Leave blank for auto-assign"
             hint="Auto-assigned sequentially if left blank"
             disabled={!currentSession}

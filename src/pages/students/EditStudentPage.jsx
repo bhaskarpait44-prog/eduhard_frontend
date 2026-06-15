@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo } from 'react'
+import { useEffect, useState, useMemo, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { 
   User, MapPin, Phone, Mail, Heart, IdCard, GraduationCap, 
@@ -33,6 +33,7 @@ const EditStudentPage = () => {
   const [loading, setLoading] = useState(true)
   const [uploading, setUploading] = useState(false)
   const [documents, setDocuments] = useState([])
+  const isSubmittingRef = useRef(false)
 
   usePageTitle(student ? `Edit: ${student.first_name} ${student.last_name}` : 'Edit Student')
 
@@ -74,6 +75,7 @@ const EditStudentPage = () => {
       perm_police_station: student.perm_police_station || '',
       perm_post_office: student.perm_post_office || '',
       perm_district: student.perm_district || '',
+      perm_city: student.perm_city || '',
       perm_state: student.perm_state || '',
       perm_pincode: student.perm_pincode || '',
 
@@ -93,12 +95,15 @@ const EditStudentPage = () => {
       
       father_name: student.father_name || '',
       father_phone: student.father_phone || '',
+      father_email: student.father_email || '',
+      father_occupation: student.father_occupation || '',
       father_qualification: student.father_qualification || '',
       father_aadhar: student.father_aadhar || '',
       father_annual_income: student.father_annual_income || '',
       
       mother_name: student.mother_name || '',
       mother_phone: student.mother_phone || '',
+      mother_email: student.mother_email || '',
       mother_qualification: student.mother_qualification || '',
 
       guardian_name: student.guardian_name || '',
@@ -121,10 +126,11 @@ const EditStudentPage = () => {
     watch,
     setValue,
     reset,
-    formState: { errors, isDirty }
+    formState: { errors, isDirty, isSubmitting }
   } = useForm({
     defaultValues,
-    resolver: zodResolver(studentUpdateSchema)
+    resolver: zodResolver(studentUpdateSchema),
+    mode: 'onBlur',
   })
 
   useEffect(() => {
@@ -148,12 +154,18 @@ const EditStudentPage = () => {
   }, [isPermanentSame, ...currentAddr, setValue])
 
   const onSave = async (data) => {
-    const res = await updateProfile(id, data)
-    if (res.success) {
-      toastSuccess('Student profile updated successfully')
-      navigate(`${ROUTES.STUDENTS}/${id}`)
-    } else {
-      toastError(res.message || 'Failed to update student')
+    if (isSubmittingRef.current) return
+    isSubmittingRef.current = true
+    try {
+      const res = await updateProfile(id, data)
+      if (res.success) {
+        toastSuccess('Student profile updated successfully')
+        navigate(`${ROUTES.STUDENTS}/${id}`)
+      } else {
+        toastError(res.message || 'Failed to update student')
+      }
+    } finally {
+      isSubmittingRef.current = false
     }
   }
 
@@ -211,8 +223,8 @@ const EditStudentPage = () => {
           <Button 
             icon={Save} 
             onClick={handleSubmit(onSave)} 
-            loading={isSaving}
-            disabled={!isDirty}
+            loading={isSaving || isSubmitting}
+            disabled={!isDirty || isSubmitting}
           >
             Save Changes
           </Button>
@@ -229,8 +241,20 @@ const EditStudentPage = () => {
                <p className="text-[10px] font-black uppercase text-indigo-400 mb-1">Student Portal ID</p>
                <p className="text-sm font-bold text-indigo-900">{student?.admission_no || '--'}</p>
             </div>
-            <Input label="Student Login Email (Optional)" type="email" error={errors.email?.message} {...register('email')} />
-            <Input label="Parent Login Email" type="email" required error={errors.parent_email?.message} {...register('parent_email')} />
+            <Input 
+              label="Student Login Email (Optional)" 
+              type="email" 
+              error={errors.email?.message} 
+              {...register('email')} 
+            />
+            <Input 
+              label="Parent Login Email" 
+              type="email" 
+              required 
+              hint="The email the parent uses to log in to the portal"
+              error={errors.parent_email?.message} 
+              {...register('parent_email')} 
+            />
           </div>
           <div className="flex items-center gap-2 p-3 bg-white/50 rounded-xl text-[11px] text-indigo-700 font-medium">
              <KeyRound size={14} />
@@ -244,15 +268,34 @@ const EditStudentPage = () => {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <Input label="First Name" required error={errors.first_name?.message} {...register('first_name')} />
             <Input label="Last Name" required error={errors.last_name?.message} {...register('last_name')} />
-            <Input label="Admission Number" required error={errors.admission_no?.message} {...register('admission_no')} />
-            <Input label="Date of Birth" type="date" required error={errors.date_of_birth?.message} {...register('date_of_birth')} />
+            <Input 
+              label="Admission Number" 
+              required 
+              hint="Auto-generated or enter manually. Format: ADM-2024-0001"
+              error={errors.admission_no?.message} 
+              {...register('admission_no')} 
+            />
+            <Input 
+              label="Date of Birth" 
+              type="date" 
+              required 
+              max={new Date().toISOString().split('T')[0]} 
+              error={errors.date_of_birth?.message} 
+              {...register('date_of_birth')} 
+            />
             <Select 
               label="Gender" required 
               error={errors.gender?.message}
               options={[{value:'male', label:'Male'}, {value:'female', label:'Female'}, {value:'other', label:'Other'}]}
               {...register('gender')}
             />
-            <Input label="Aadhar Number" maxLength={12} error={errors.aadhar_no?.message} {...register('aadhar_no')} />
+            <Input 
+              label="Aadhar Number (Optional)" 
+              maxLength={12} 
+              hint="12-digit Aadhaar number printed on the card (optional)"
+              error={errors.aadhar_no?.message} 
+              {...register('aadhar_no')} 
+            />
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -288,9 +331,21 @@ const EditStudentPage = () => {
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <Input label="PEN Number" {...register('pen_no')} />
-            <Input label="APAAR ID" {...register('apaar_id')} />
-            <Input label="Identification Marks" containerClassName="md:col-span-2" {...register('identification_marks')} />
+            <Input 
+              label="PEN Number (Optional)" 
+              hint="Permanent Education Number assigned by the government (optional)"
+              {...register('pen_no')} 
+            />
+            <Input 
+              label="APAAR ID (Optional)" 
+              hint="Automated Permanent Academic Account Registry ID (optional)"
+              {...register('apaar_id')} 
+            />
+            <Input 
+              label="Identification Marks (Optional)" 
+              containerClassName="md:col-span-2" 
+              {...register('identification_marks')} 
+            />
           </div>
         </div>
 
@@ -299,11 +354,17 @@ const EditStudentPage = () => {
           <SectionHeading title="Contact Information" subtitle="Student and emergency contact data" />
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <Input label="Phone Number" error={errors.phone?.message} {...register('phone')} />
-            <Input label="WhatsApp Number" error={errors.whatsapp_no?.message} {...register('whatsapp_no')} />
-            <Input label="Emergency Contact" required error={errors.emergency_contact?.message} {...register('emergency_contact')} />
+            <Input label="WhatsApp Number (Optional)" error={errors.whatsapp_no?.message} {...register('whatsapp_no')} />
+            <Input 
+              label="Emergency Contact" 
+              required 
+              hint="Someone we can call immediately if there's an emergency"
+              error={errors.emergency_contact?.message} 
+              {...register('emergency_contact')} 
+            />
             <Select label="Blood Group" required error={errors.blood_group?.message} options={BLOOD_GROUPS} {...register('blood_group')} />
             <div className="md:col-span-2">
-               <Input label="Medical Notes" placeholder="Allergies, chronic conditions, etc." {...register('medical_notes')} />
+               <Input label="Medical Notes (Optional)" placeholder="Allergies, chronic conditions, etc." {...register('medical_notes')} />
             </div>
           </div>
         </div>
@@ -313,7 +374,14 @@ const EditStudentPage = () => {
           {/* Current Address */}
           <div className="bg-surface rounded-2xl border border-border p-6 space-y-5 shadow-sm">
             <SectionHeading title="Current Address" subtitle="Where the student currently resides" />
-            <Textarea label="Village/Town/Street" required error={errors.address?.message} rows={2} {...register('address')} />
+            <Textarea label="House No. / Street / Locality" required error={errors.address?.message} rows={2} {...register('address')} />
+            <Input
+              label="Village / Town"
+              required
+              placeholder="Village or town name"
+              error={errors.village?.message}
+              {...register('village')}
+            />
             <div className="grid grid-cols-2 gap-4">
               <Input label="Police Station" required error={errors.police_station?.message} {...register('police_station')} />
               <Input label="Post Office" required error={errors.post_office?.message} {...register('post_office')} />
@@ -342,7 +410,14 @@ const EditStudentPage = () => {
 
             {!isPermanentSame && (
               <div className="space-y-5 animate-in fade-in slide-in-from-top-2 duration-300">
-                <Textarea label="Village/Town/Street" required error={errors.perm_address?.message} rows={2} {...register('perm_address')} />
+                <Textarea label="House No. / Street / Locality" required error={errors.perm_address?.message} rows={2} {...register('perm_address')} />
+                <Input
+                  label="Village / Town"
+                  required
+                  placeholder="Village or town name"
+                  error={errors.perm_village?.message}
+                  {...register('perm_village')}
+                />
                 <div className="grid grid-cols-2 gap-4">
                   <Input label="Police Station" required error={errors.perm_police_station?.message} {...register('perm_police_station')} />
                   <Input label="Post Office" required error={errors.perm_post_office?.message} {...register('perm_post_office')} />
@@ -371,10 +446,20 @@ const EditStudentPage = () => {
               <div className="flex items-center gap-2 border-b border-border pb-2">
                 <Badge variant="blue">Mother's Particulars</Badge>
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
                 <Input label="Name" required error={errors.mother_name?.message} {...register('mother_name')} />
                 <Input label="Phone" error={errors.mother_phone?.message} {...register('mother_phone')} />
-                <Input label="Qualification" {...register('mother_qualification')} />
+                <p className="text-xs text-text-muted mt-1 md:col-span-3">
+                  At least one parent phone number is required
+                </p>
+                <Input label="Qualification (Optional)" {...register('mother_qualification')} />
+                <Input
+                  label="Mother's Email (Optional)"
+                  type="email"
+                  placeholder="mother@email.com"
+                  error={errors.mother_email?.message}
+                  {...register('mother_email')}
+                />
               </div>
             </div>
 
@@ -383,13 +468,37 @@ const EditStudentPage = () => {
               <div className="flex items-center gap-2 border-b border-border pb-2">
                 <Badge variant="indigo">Father's Particulars</Badge>
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-3 gap-4">
                 <Input label="Name" required error={errors.father_name?.message} {...register('father_name')} />
-                <Input label="Phone" required error={errors.father_phone?.message} {...register('father_phone')} />
-                <Input label="Qualification" {...register('father_qualification')} />
-                <Input label="Aadhar No" {...register('father_aadhar')} />
-                <Input label="Annual Income" {...register('father_annual_income')} />
+                <Input 
+                  label="Phone" 
+                  error={errors.father_phone?.message} 
+                  {...register('father_phone')} 
+                />
+                <Input
+                  label="Father's Email"
+                  type="email"
+                  placeholder="father@email.com"
+                  hint="This email will be the parent's login ID for the portal"
+                  error={errors.father_email?.message}
+                  {...register('father_email')}
+                />
+                <Input
+                  label="Father's Occupation (Optional)"
+                  placeholder="e.g. Farmer, Engineer"
+                  {...register('father_occupation')}
+                />
+                <Input label="Qualification (Optional)" {...register('father_qualification')} />
+                <Input 
+                  label="Aadhar No (Optional)" 
+                  hint="12-digit Aadhaar number printed on the card (optional)"
+                  {...register('father_aadhar')} 
+                />
+                <Input label="Annual Income (Optional)" {...register('father_annual_income')} />
               </div>
+              <p className="text-xs text-text-muted mt-1">
+                At least one parent phone number is required
+              </p>
             </div>
 
             {/* Guardian */}
@@ -398,13 +507,17 @@ const EditStudentPage = () => {
                 <Badge variant="grey">Guardian Details</Badge>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                <Input label="Guardian Name" {...register('guardian_name')} />
-                <Input label="Relation" {...register('guardian_relation')} />
-                <Input label="Phone" {...register('guardian_phone')} />
-                <Input label="Qualification" {...register('guardian_qualification')} />
-                <Input label="Occupation" {...register('guardian_occupation')} />
-                <Input label="Aadhar No" {...register('guardian_aadhar')} />
-                <Input label="Annual Income" {...register('guardian_annual_income')} />
+                <Input label="Guardian Name (Optional)" {...register('guardian_name')} />
+                <Input label="Relation (Optional)" {...register('guardian_relation')} />
+                <Input label="Phone (Optional)" {...register('guardian_phone')} />
+                <Input label="Qualification (Optional)" {...register('guardian_qualification')} />
+                <Input label="Occupation (Optional)" {...register('guardian_occupation')} />
+                <Input 
+                  label="Aadhar No (Optional)" 
+                  hint="12-digit Aadhaar number printed on the card (optional)"
+                  {...register('guardian_aadhar')} 
+                />
+                <Input label="Annual Income (Optional)" {...register('guardian_annual_income')} />
               </div>
             </div>
           </div>
@@ -468,6 +581,7 @@ const EditStudentPage = () => {
             label="Reason for update" 
             required 
             placeholder="Please provide a brief reason for these changes (e.g., 'Corrected spelling of father's name', 'Permanent address updated')"
+            hint="Explain what you are changing and why — saved for audit"
             error={errors.change_reason?.message}
             {...register('change_reason')}
           />
@@ -476,8 +590,8 @@ const EditStudentPage = () => {
              <Button 
                type="submit" 
                icon={Save} 
-               loading={isSaving}
-               disabled={!isDirty}
+               loading={isSaving || isSubmitting}
+               disabled={!isDirty || isSubmitting}
                className="shadow-lg shadow-indigo-200"
              >
                Save All Profile Updates

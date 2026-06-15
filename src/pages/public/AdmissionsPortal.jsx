@@ -100,6 +100,7 @@ const applicationSchema = z.object({
     if (!data.perm_police_station) ctx.addIssue({ code: 'custom', message: 'Required', path: ['perm_police_station'] });
     if (!data.perm_post_office) ctx.addIssue({ code: 'custom', message: 'Required', path: ['perm_post_office'] });
     if (!data.perm_district) ctx.addIssue({ code: 'custom', message: 'Required', path: ['perm_district'] });
+    if (!data.perm_city) ctx.addIssue({ code: 'custom', message: 'Required', path: ['perm_city'] });
     if (!data.perm_state) ctx.addIssue({ code: 'custom', message: 'Required', path: ['perm_state'] });
     if (!data.perm_pincode || !pincodeRegex.test(data.perm_pincode)) ctx.addIssue({ code: 'custom', message: 'Invalid', path: ['perm_pincode'] });
   }

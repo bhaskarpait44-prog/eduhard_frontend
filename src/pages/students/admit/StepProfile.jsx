@@ -23,6 +23,7 @@ const StepProfile = ({ defaultValues, onNext, onBack }) => {
   } = useForm({
     defaultValues,
     resolver: zodResolver(studentProfileSchema),
+    mode: 'onBlur',
   })
 
   const isPermanentSame = watch('is_permanent_same')
@@ -80,9 +81,24 @@ const StepProfile = ({ defaultValues, onNext, onBack }) => {
             {...register('caste')}
           />
           <Input label="Mother Tongue" required placeholder="e.g. Assamese, Bodo, etc." error={errors.mother_tongue?.message} {...register('mother_tongue')} />
-          <Input label="PEN No." placeholder="Permanent Education Number" {...register('pen_no')} />
-          <Input label="APAAR ID" placeholder="Automated Permanent Academic Account Registry" {...register('apaar_id')} />
-          <Input label="Identification Marks" placeholder="e.g. Mole on left cheek" containerClassName="col-span-2" {...register('identification_marks')} />
+          <Input 
+            label="PEN No. (Optional)" 
+            placeholder="Permanent Education Number" 
+            hint="Permanent Education Number assigned by the government (optional)"
+            {...register('pen_no')} 
+          />
+          <Input 
+            label="APAAR ID (Optional)" 
+            placeholder="Automated Permanent Academic Account Registry" 
+            hint="Automated Permanent Academic Account Registry ID (optional)"
+            {...register('apaar_id')} 
+          />
+          <Input 
+            label="Identification Marks (Optional)" 
+            placeholder="e.g. Mole on left cheek" 
+            containerClassName="col-span-2" 
+            {...register('identification_marks')} 
+          />
         </div>
 
         {/* Current Address */}
@@ -131,9 +147,9 @@ const StepProfile = ({ defaultValues, onNext, onBack }) => {
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <Input label="Phone"  type="text" placeholder="9876543210" error={errors.phone?.message} {...register('phone')} />
-          <Input label="WhatsApp No." type="text" placeholder="9876543210" error={errors.whatsapp_no?.message} {...register('whatsapp_no')} />
+          <Input label="WhatsApp No. (Optional)" type="text" placeholder="9876543210" error={errors.whatsapp_no?.message} {...register('whatsapp_no')} />
           <Input
-            label="Student Email"
+            label="Student Email (Optional)"
             type="email"
             placeholder="student@email.com"
             error={errors.email?.message}
@@ -145,40 +161,85 @@ const StepProfile = ({ defaultValues, onNext, onBack }) => {
         <SectionHeading title="Parents Profile" subtitle="Detailed information of Mother and Father" />
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           <Input label="Mother's Name" required placeholder="Sunita Sharma" error={errors.mother_name?.message} {...register('mother_name')} />
-          <Input label="Mother's Qualification" placeholder="e.g. B.A., M.Sc." {...register('mother_qualification')} />
-          <Input label="Mother's Phone" type="text" placeholder="9876543212" error={errors.mother_phone?.message} {...register('mother_phone')} />
-          <Input label="Mother's Email" type="email" placeholder="mother@email.com" error={errors.mother_email?.message} {...register('mother_email')} />
+          <Input label="Mother's Qualification (Optional)" placeholder="e.g. B.A., M.Sc." {...register('mother_qualification')} />
+          <Input 
+            label="Mother's Phone" 
+            type="text" 
+            placeholder="9876543212" 
+            hint="At least one parent phone number is required"
+            error={errors.mother_phone?.message} 
+            {...register('mother_phone')} 
+          />
+          <Input label="Mother's Email (Optional)" type="email" placeholder="mother@email.com" error={errors.mother_email?.message} {...register('mother_email')} />
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-6">
           <Input label="Father's Name" required placeholder="Rajesh Sharma" error={errors.father_name?.message} {...register('father_name')} />
-          <Input label="Father's Occupation" placeholder="e.g. Engineer, Farmer" {...register('father_occupation')} />
-          <Input label="Father's Qualification" placeholder="e.g. B.Tech, M.A." {...register('father_qualification')} />
-          <Input label="Father's Phone" type="text" placeholder="9876543211" error={errors.father_phone?.message} {...register('father_phone')} />
-          <Input label="Father's Email (Login)" required type="email" placeholder="father@email.com" error={errors.father_email?.message} {...register('father_email')} />
-          <Input label="Father's Aadhar" placeholder="12-digit number" type="text" maxLength={12} {...register('father_aadhar')} />
-          <Input label="Father's Annual Income" placeholder="e.g. 8,00,000" {...register('father_annual_income')} />
+          <Input label="Father's Occupation (Optional)" placeholder="e.g. Engineer, Farmer" {...register('father_occupation')} />
+          <Input label="Father's Qualification (Optional)" placeholder="e.g. B.Tech, M.A." {...register('father_qualification')} />
+          <Input 
+            label="Father's Phone" 
+            type="text" 
+            placeholder="9876543211" 
+            hint="At least one parent phone number is required"
+            error={errors.father_phone?.message} 
+            {...register('father_phone')} 
+          />
+          <Input 
+            label="Father's Email" 
+            hint="This email becomes the parent's login ID for the portal"
+            required 
+            type="email" 
+            placeholder="father@email.com" 
+            error={errors.father_email?.message} 
+            {...register('father_email')} 
+          />
+          <Input 
+            label="Father's Aadhar (Optional)" 
+            placeholder="12-digit number" 
+            type="text" 
+            maxLength={12} 
+            hint="12-digit Aadhaar number printed on the card (optional)"
+            {...register('father_aadhar')} 
+          />
+          <Input label="Father's Annual Income (Optional)" placeholder="e.g. 8,00,000" {...register('father_annual_income')} />
         </div>
 
         {/* Guardian Expansion */}
         <SectionHeading title="Guardian Details" subtitle="If applicable, or secondary contact" />
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          <Input label="Guardian's Name" placeholder="Guardian Name" {...register('guardian_name')} />
-          <Input label="Relation" placeholder="Relation to student" {...register('guardian_relation')} />
-          <Input label="Guardian's Phone" type="text" placeholder="9876543213" {...register('guardian_phone')} />
-          <Input label="Qualification" placeholder="Qualification" {...register('guardian_qualification')} />
-          <Input label="Occupation" placeholder="Occupation" {...register('guardian_occupation')} />
-          <Input label="Guardian's Aadhar" placeholder="12-digit number" type="text" maxLength={12} {...register('guardian_aadhar')} />
+          <Input label="Guardian's Name (Optional)" placeholder="Guardian Name" {...register('guardian_name')} />
+          <Input label="Relation (Optional)" placeholder="Relation to student" {...register('guardian_relation')} />
+          <Input label="Guardian's Phone (Optional)" type="text" placeholder="9876543213" {...register('guardian_phone')} />
+          <Input label="Qualification (Optional)" placeholder="Qualification" {...register('guardian_qualification')} />
+          <Input label="Occupation (Optional)" placeholder="Occupation" {...register('guardian_occupation')} />
+          <Input 
+            label="Guardian's Aadhar (Optional)" 
+            placeholder="12-digit number" 
+            type="text" 
+            maxLength={12} 
+            hint="12-digit Aadhaar number printed on the card (optional)"
+            {...register('guardian_aadhar')} 
+          />
+          <Input label="Guardian's Annual Income (Optional)" placeholder="e.g. 8,00,000" {...register('guardian_annual_income')} />
         </div>
 
         {/* Medical */}
         <SectionHeading title="Medical Information" />
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <Input label="Emergency Contact" required type="text" placeholder="9876543213" error={errors.emergency_contact?.message} {...register('emergency_contact')} />
+          <Input 
+            label="Emergency Contact" 
+            required 
+            type="text" 
+            placeholder="9876543213" 
+            hint="Someone we can call immediately if there's an emergency"
+            error={errors.emergency_contact?.message} 
+            {...register('emergency_contact')} 
+          />
           <Select label="Blood Group" required options={BLOOD_GROUPS} placeholder="Select…" error={errors.blood_group?.message} {...register('blood_group')} />
         </div>
         <Textarea
-          label="Medical Notes"
+          label="Medical Notes (Optional)"
           placeholder="Allergies, conditions, medications…"
           hint="Optional — visible to staff only"
           rows={2}

@@ -2,7 +2,7 @@ import { cn } from '@/utils/helpers'
 
 export const AttendanceHero = ({ badge, title, description, meta = [], actions, children }) => (
   <section
-    className="overflow-hidden rounded-3xl border"
+    className="rounded-3xl border"
     style={{
       background:
         'linear-gradient(135deg, color-mix(in srgb, var(--color-brand) 10%, var(--color-surface)) 0%, var(--color-surface) 52%, color-mix(in srgb, var(--color-surface-raised) 70%, white) 100%)',
@@ -63,7 +63,7 @@ export const AttendanceHero = ({ badge, title, description, meta = [], actions, 
 
     {children ? (
       <div
-        className="border-t px-6 py-4 lg:px-8"
+        className="rounded-b-3xl border-t px-6 py-4 lg:px-8"
         style={{
           borderColor: 'color-mix(in srgb, var(--color-brand) 10%, var(--color-border))',
           backgroundColor: 'color-mix(in srgb, var(--color-surface) 94%, white)',

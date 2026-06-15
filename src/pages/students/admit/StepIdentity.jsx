@@ -2,7 +2,9 @@
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { Shuffle } from 'lucide-react'
+import { Shuffle, Loader2 } from 'lucide-react'
+import { useState } from 'react'
+import api from '@/api/axios'
 import Input from '@/components/ui/Input'
 import Select from '@/components/ui/Select'
 import Button from '@/components/ui/Button'
@@ -15,13 +17,35 @@ const genAdmissionNo = () => {
 }
 
 const StepIdentity = ({ defaultValues, onNext }) => {
-  const { register, handleSubmit, setValue, watch, formState: { errors } } = useForm({
+  const [checking, setChecking] = useState(false)
+  const { register, handleSubmit, setValue, watch, setError, formState: { errors } } = useForm({
     resolver     : zodResolver(studentAdmitSchema),
     defaultValues: { ...defaultValues, admission_no: defaultValues.admission_no || genAdmissionNo() },
+    mode         : 'onBlur',
   })
 
+  const handleProceed = async (data) => {
+    setChecking(true)
+    try {
+      // M2: Pre-check against API to prevent collisions
+      const res = await api.get('/students', { params: { search: data.admission_no, perPage: 10 } })
+      const exists = res.data.students.some(s => s.admission_no === data.admission_no)
+      
+      if (exists) {
+        setError('admission_no', { message: 'This admission number is already taken — please generate a new one' })
+        return
+      }
+      onNext(data)
+    } catch (err) {
+      console.error('Uniqueness check failed', err)
+      onNext(data) // Fallback: allow proceed, backend will catch it anyway
+    } finally {
+      setChecking(false)
+    }
+  }
+
   return (
-    <form onSubmit={handleSubmit(onNext)}>
+    <form onSubmit={handleSubmit(handleProceed)}>
       <div
         className="rounded-2xl p-6 space-y-5"
         style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)' }}
@@ -53,7 +77,14 @@ const StepIdentity = ({ defaultValues, onNext }) => {
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <Input label="Aadhar No." placeholder="12-digit number" type="text" error={errors.aadhar_no?.message} {...register('aadhar_no')} />
+          <Input 
+            label="Aadhar No. (Optional)" 
+            placeholder="12-digit number" 
+            type="text" 
+            hint="12-digit Aadhaar number printed on the card (optional)"
+            error={errors.aadhar_no?.message} 
+            {...register('aadhar_no')} 
+          />
           <div className="hidden sm:block" />
         </div>
 
@@ -65,6 +96,7 @@ const StepIdentity = ({ defaultValues, onNext }) => {
             <Input
               placeholder="ADM-2024-0001"
               error={errors.admission_no?.message}
+              hint="Auto-generated or enter manually. Format: ADM-2024-0001"
               containerClassName="flex-1"
               autoComplete="off"
               {...register('admission_no')}
@@ -83,7 +115,9 @@ const StepIdentity = ({ defaultValues, onNext }) => {
       </div>
 
       <div className="flex justify-end mt-4">
-        <Button type="submit">Continue to Profile →</Button>
+        <Button type="submit" loading={checking}>
+          {checking ? 'Checking uniqueness...' : 'Continue to Profile →'}
+        </Button>
       </div>
     </form>
   )

@@ -398,7 +398,7 @@ const AttendanceReports = () => {
     <div className="space-y-6 pb-20 lg:pb-8">
       {/* ── Header ── */}
       <section 
-        className="rounded-[28px] border p-6 overflow-hidden" 
+        className="rounded-[28px] border p-6" 
         style={{ 
           borderColor: 'var(--color-border)',
           background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.12), rgba(139, 92, 246, 0.05) 55%, var(--color-surface) 100%)'

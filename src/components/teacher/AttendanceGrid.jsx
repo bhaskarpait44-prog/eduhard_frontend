@@ -35,7 +35,7 @@ const AttendanceGrid = ({
       const now = new Date()
       const dayDate = new Date(date)
       const isFuture = dayDate > new Date(now.getFullYear(), now.getMonth(), now.getDate())
-      const weekend = dayDate.getDay() === 0
+      const weekend = dayDate.getDay() === 0 || dayDate.getDay() === 6
       return { day, date, weekend, isFuture }
     })
   }, [month, year])
