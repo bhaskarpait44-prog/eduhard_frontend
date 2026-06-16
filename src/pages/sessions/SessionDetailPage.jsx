@@ -214,7 +214,7 @@ const SessionDetailPage = () => {
               Delete
             </Button>
           )}
-          {session.status === 'upcoming' && (
+          {(session.status === 'upcoming' || session.status === 'locked') && (
             <Button
               icon={Zap}
               onClick={() => setConfirmOpen(true)}

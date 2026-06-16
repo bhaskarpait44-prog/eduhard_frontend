@@ -7,6 +7,7 @@ const useSessionStore = create((set, get) => ({
   pagination     : { total: 0, page: 1, limit: 20, totalPages: 0 },
   currentSession : null,
   selectedSession: null,
+  sessionStats   : null,
   isLoading      : false,
   isSaving       : false,
   error          : null,
@@ -109,6 +110,7 @@ const useSessionStore = create((set, get) => ({
         isSaving: false,
         sessions: s.sessions.map(sess => sess.id === Number(id) ? updated : sess),
         selectedSession: s.selectedSession?.id === Number(id) ? updated : s.selectedSession,
+        currentSession : s.currentSession?.id === Number(id) ? updated : s.currentSession,
       }))
       return { success: true, data: updated }
     } catch (err) {
@@ -155,7 +157,7 @@ const useSessionStore = create((set, get) => ({
         isSaving       : false,
         sessions       : s.sessions.map(sess => (sess.id === Number(id) ? locked : sess)),
         selectedSession: s.selectedSession?.id === Number(id) ? locked : s.selectedSession,
-        currentSession : s.currentSession?.id === Number(id) ? null : s.currentSession,
+        currentSession : s.currentSession?.id === Number(id) ? locked : s.currentSession,
       }))
       return { success: true }
     } catch (err) {
@@ -174,6 +176,7 @@ const useSessionStore = create((set, get) => ({
         isSaving       : false,
         sessions       : s.sessions.map(sess => (sess.id === Number(id) ? unlocked : sess)),
         selectedSession: s.selectedSession?.id === Number(id) ? unlocked : s.selectedSession,
+        currentSession : s.currentSession?.id === Number(id) ? unlocked : s.currentSession,
       }))
       return { success: true, data: unlocked }
     } catch (err) {
@@ -192,6 +195,9 @@ const useSessionStore = create((set, get) => ({
         isSaving       : false,
         sessions       : s.sessions.map(sess => (sess.id === Number(id) ? updated : sess)),
         selectedSession: s.selectedSession?.id === Number(id) ? updated : s.selectedSession,
+        currentSession : s.currentSession?.id === Number(id) 
+          ? (updated.is_current ? updated : null) 
+          : s.currentSession,
       }))
       return { success: true, data: updated }
     } catch (err) {
@@ -261,6 +267,7 @@ const useSessionStore = create((set, get) => ({
         isSaving       : false,
         sessions       : s.sessions.map(sess => (sess.id === Number(sessionId) ? updated : sess)),
         selectedSession: s.selectedSession?.id === Number(sessionId) ? updated : s.selectedSession,
+        currentSession : s.currentSession?.id === Number(sessionId) ? updated : s.currentSession,
       }))
       return { success: true, data: updated }
     } catch (err) {
@@ -280,6 +287,7 @@ const useSessionStore = create((set, get) => ({
           isSaving: false,
           sessions: s.sessions.filter(sess => sess.id !== Number(id)),
           selectedSession: s.selectedSession?.id === Number(id) ? null : s.selectedSession,
+          currentSession : s.currentSession?.id === Number(id) ? null : s.currentSession,
           pagination: {
             ...s.pagination,
             total: newTotal,

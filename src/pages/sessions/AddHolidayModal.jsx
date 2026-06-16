@@ -34,7 +34,7 @@ const AddHolidayModal = ({ open, onClose, sessionId, existingHolidays = [] }) =>
 
   // Check for date conflict
   const isDateConflict = selectedDate && existingHolidays.some(
-    h => h && h.holiday_date === selectedDate
+    h => h && String(h.holiday_date).slice(0, 10) === selectedDate
   )
 
   // Reset form when modal opens

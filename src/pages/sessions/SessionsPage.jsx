@@ -269,7 +269,7 @@ const SessionsPage = () => {
                           >
                             View
                           </Button>
-                          {session.status === 'upcoming' && (
+                          {(session.status === 'upcoming' || session.status === 'locked') && (
                             <Button
                               variant="outline"
                               size="xs"
