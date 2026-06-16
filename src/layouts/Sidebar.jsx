@@ -1,7 +1,8 @@
 // src/components/layout/Sidebar.jsx
-import { useEffect, useMemo, useRef } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { NavLink, useLocation } from 'react-router-dom'
 import * as Icons from 'lucide-react'
+import { motion, AnimatePresence } from 'framer-motion'
 import useUiStore from '@/store/uiStore'
 import useAuth from '@/hooks/useAuth'
 import { APP_NAME, ROUTES, ROLES } from '@/constants/app'
@@ -187,22 +188,38 @@ const getNavGroups = (user) => {
       ],
     },
     {
-      label: 'Alumni',
+      label: 'Alumni Management',
       items: [
-        { label: 'Alumni Dashboard', icon: 'GraduationCap', path: ROUTES.ALUMNI,           roles: [ROLES.ADMIN, ROLES.TEACHER] },
-        { label: 'Directory',        icon: 'Users',          path: ROUTES.ALUMNI_DIRECTORY,  roles: [ROLES.ADMIN, ROLES.TEACHER] },
-        { label: 'Events',           icon: 'CalendarHeart',  path: ROUTES.ALUMNI_EVENTS,     roles: [ROLES.ADMIN] },
-        { label: 'Left Students',    icon: 'LogOut',         path: ROUTES.STUDENTS_LEFT,     roles: [ROLES.ADMIN, ROLES.TEACHER] },
-        { label: 'Graduated',        icon: 'Award',          path: ROUTES.STUDENTS_GRADUATED,roles: [ROLES.ADMIN, ROLES.TEACHER] },
+        { 
+          label: 'Alumni Management', 
+          icon: 'GraduationCap', 
+          path: '#',           
+          roles: [ROLES.ADMIN, ROLES.TEACHER],
+          children: [
+            { label: 'Dashboard',        icon: 'LayoutDashboard',path: ROUTES.ALUMNI,            roles: [ROLES.ADMIN, ROLES.TEACHER] },
+            { label: 'Directory',        icon: 'Users',          path: ROUTES.ALUMNI_DIRECTORY,  roles: [ROLES.ADMIN, ROLES.TEACHER] },
+            { label: 'Events',           icon: 'CalendarHeart',  path: ROUTES.ALUMNI_EVENTS,     roles: [ROLES.ADMIN] },
+            { label: 'Left Students',    icon: 'LogOut',         path: ROUTES.STUDENTS_LEFT,     roles: [ROLES.ADMIN, ROLES.TEACHER] },
+            { label: 'Graduated',        icon: 'Award',          path: ROUTES.STUDENTS_GRADUATED,roles: [ROLES.ADMIN, ROLES.TEACHER] },
+          ]
+        },
       ],
     },
     {
       label: 'Finance',
       items: [
-        { label: 'Fees',          icon: 'Wallet',         path: ROUTES.FEES,           roles: [ROLES.ADMIN] },
-        { label: 'Fee Structure', icon: 'NotebookTabs',   path: ROUTES.FEE_STRUCTURES, roles: [ROLES.ADMIN] },
-        { label: 'Fee Report',    icon: 'BarChart3',      path: ROUTES.FEE_REPORT,     roles: [ROLES.ADMIN] },
-        { label: 'UPI Confirmations', icon: 'QrCode',     path: ROUTES.FEE_UPI_CONFIRMATIONS, roles: [ROLES.ADMIN] },
+        { 
+          label: 'Fee Management', 
+          icon: 'Wallet', 
+          path: '#',           
+          roles: [ROLES.ADMIN],
+          children: [
+            { label: 'Fee Collection',   icon: 'IndianRupee',    path: ROUTES.FEES,                  roles: [ROLES.ADMIN] },
+            { label: 'Fee Structure',    icon: 'NotebookTabs',   path: ROUTES.FEE_STRUCTURES,        roles: [ROLES.ADMIN] },
+            { label: 'Fee Report',       icon: 'BarChart3',      path: ROUTES.FEE_REPORT,            roles: [ROLES.ADMIN] },
+            { label: 'UPI Confirmations', icon: 'QrCode',        path: ROUTES.FEE_UPI_CONFIRMATIONS, roles: [ROLES.ADMIN] },
+          ]
+        },
       ],
     },
     {
@@ -214,8 +231,17 @@ const getNavGroups = (user) => {
     {
       label: 'Teachers',
       items: [
-        { label: 'Teachers',        icon: 'UsersRound',     path: ROUTES.TEACHERS,              roles: [ROLES.ADMIN] },
-        { label: 'Teacher Control', icon: 'ShieldEllipsis', path: ROUTES.ADMIN_TEACHER_CONTROL, roles: [ROLES.ADMIN] },
+        { 
+          label: 'Teachers', 
+          icon: 'UsersRound', 
+          path: '#',           
+          roles: [ROLES.ADMIN],
+          children: [
+            { label: 'Admit Teacher',   icon: 'UserPlus',       path: ROUTES.TEACHER_NEW,           roles: [ROLES.ADMIN] },
+            { label: 'Teacher List',    icon: 'List',           path: ROUTES.TEACHERS,              roles: [ROLES.ADMIN] },
+            { label: 'Teacher Control', icon: 'ShieldEllipsis', path: ROUTES.ADMIN_TEACHER_CONTROL, roles: [ROLES.ADMIN] },
+          ]
+        },
       ],
     },
     {
@@ -262,79 +288,193 @@ const NavIcon = ({ name, size = 17 }) => {
   return LucideIcon ? <LucideIcon size={size} /> : null
 }
 
-const NavItem = ({ item, collapsed }) => (
-  <NavLink
-    to={item.path}
-    title={collapsed ? item.label : undefined}
-    end={item.path === ROUTES.DASHBOARD}
-    className={() =>
-      cn(
-        'group relative flex items-center gap-3 rounded-xl px-3 py-2.5',
-        'text-sm font-medium select-none outline-none',
-        'transition-all duration-200 ease-out',
-        collapsed && 'justify-center px-0 mx-auto w-10 h-10 rounded-xl'
-      )
+const NavItem = ({ item, collapsed }) => {
+  const [isOpen, setIsOpen] = useState(false)
+  const [isClicked, setIsClicked] = useState(false)
+  const [coords, setCoords] = useState({ top: 0, left: 0, bottom: 'auto' })
+  const itemRef = useRef(null)
+  const hasChildren = item.children && item.children.length > 0
+  const location = useLocation()
+  
+  // Check if any child is active
+  const isChildActive = hasChildren && item.children.some(child => location.pathname === child.path)
+
+  const updateCoords = () => {
+    if (itemRef.current) {
+      const rect = itemRef.current.getBoundingClientRect()
+      const isBottomHalf = rect.top > window.innerHeight / 2
+      setCoords({
+        top: isBottomHalf ? 'auto' : rect.top,
+        bottom: isBottomHalf ? window.innerHeight - rect.bottom : 'auto',
+        left: rect.right
+      })
     }
-    style={({ isActive }) => ({
-      color           : isActive ? '#fff' : 'var(--color-sidebar-text)',
-      backgroundColor : isActive ? 'var(--color-sidebar-active)' : 'transparent',
-      boxShadow       : isActive ? '0 4px 14px rgba(16,185,129,0.25)' : 'none',
-    })}
-    onMouseEnter={e => {
-      if (e.currentTarget.getAttribute('aria-current') !== 'page') {
-        e.currentTarget.style.backgroundColor = 'var(--color-sidebar-hover)'
-        e.currentTarget.style.color           = 'var(--color-text-primary)'
-      }
-    }}
-    onMouseLeave={e => {
-      if (e.currentTarget.getAttribute('aria-current') !== 'page') {
-        e.currentTarget.style.backgroundColor = 'transparent'
-        e.currentTarget.style.color           = 'var(--color-sidebar-text)'
-      }
-    }}
-  >
-    {({ isActive }) => (
-      <>
-        <span
-          className="shrink-0 transition-transform duration-200"
-          style={{
-            opacity   : isActive ? 1 : 0.75,
-            transform : isActive ? 'scale(1.05)' : 'scale(1)',
-          }}
-        >
-          <NavIcon name={item.icon} size={17} />
-        </span>
+  }
 
-        {!collapsed && (
-          <span className="truncate leading-none tracking-[-0.01em]">
-            {item.label}
-          </span>
+  const handleMouseEnter = () => {
+    if (hasChildren) {
+      updateCoords()
+      setIsOpen(true)
+    }
+  }
+
+  const handleMouseLeave = () => {
+    if (hasChildren && !isClicked) {
+      setIsOpen(false)
+    }
+  }
+
+  const handleClick = (e) => {
+    if (hasChildren) {
+      e.preventDefault()
+      updateCoords()
+      setIsClicked(!isClicked)
+      setIsOpen(true)
+    }
+  }
+
+  // Close when clicking outside
+  useEffect(() => {
+    if (!isClicked) return
+    const handleOutsideClick = (e) => {
+      if (itemRef.current && !itemRef.current.contains(e.target)) {
+        setIsClicked(false)
+        setIsOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handleOutsideClick)
+    return () => document.removeEventListener('mousedown', handleOutsideClick)
+  }, [isClicked])
+
+  return (
+    <div 
+      ref={itemRef}
+      className="relative"
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
+    >
+      <NavLink
+        to={item.path}
+        title={collapsed && !hasChildren ? item.label : undefined}
+        onClick={handleClick}
+        className={({ isActive }) =>
+          cn(
+            'group relative flex items-center gap-3 rounded-xl px-3 py-2.5',
+            'text-sm font-medium select-none outline-none',
+            'transition-all duration-200 ease-out cursor-pointer',
+            collapsed && 'justify-center px-0 mx-auto w-10 h-10 rounded-xl',
+            // Highlight if active path OR a child is active OR flyout is clicked open
+            ((isActive && item.path !== '#') || isChildActive || isClicked) && 'bg-[var(--color-sidebar-active)] text-white shadow-[0_4px_14px_rgba(16,185,129,0.25)]'
+          )
+        }
+        style={({ isActive }) => ({
+          color: ((isActive && item.path !== '#') || isChildActive || isClicked) ? '#fff' : 'var(--color-sidebar-text)',
+          backgroundColor: ((isActive && item.path !== '#') || isChildActive || isClicked) ? 'var(--color-sidebar-active)' : 'transparent',
+        })}
+      >
+        {({ isActive }) => (
+          <>
+            <span
+              className="shrink-0 transition-transform duration-200"
+              style={{
+                opacity   : ((isActive && item.path !== '#') || isChildActive || isClicked) ? 1 : 0.75,
+                transform : ((isActive && item.path !== '#') || isChildActive || isClicked) ? 'scale(1.05)' : 'scale(1)',
+              }}
+            >
+              <NavIcon name={item.icon} size={17} />
+            </span>
+
+            {!collapsed && (
+              <span className="truncate leading-none tracking-[-0.01em]">
+                {item.label}
+              </span>
+            )}
+
+            {!collapsed && hasChildren && (
+              <Icons.ChevronRight 
+                size={14} 
+                className={cn('ml-auto transition-transform duration-200 opacity-50 group-hover:opacity-100', (isOpen || isClicked) && 'translate-x-1')} 
+              />
+            )}
+
+            {/* Collapsed Tooltip (for non-children items) */}
+            {collapsed && !hasChildren && (
+              <div
+                className={cn(
+                  'absolute left-full ml-3 px-2.5 py-1.5 rounded-lg text-xs font-medium',
+                  'whitespace-nowrap pointer-events-none z-50',
+                  'opacity-0 group-hover:opacity-100 translate-x-1 group-hover:translate-x-0',
+                  'transition-all duration-150 ease-out'
+                )}
+                style={{
+                  backgroundColor : 'var(--color-sidebar-card)',
+                  color           : 'var(--color-text-primary)',
+                  border          : '1px solid var(--color-sidebar-border)',
+                  boxShadow       : '0 8px 24px rgba(15,23,42,0.18)',
+                }}
+              >
+                {item.label}
+              </div>
+            )}
+          </>
         )}
+      </NavLink>
 
-        {/* Collapsed tooltip */}
-        {collapsed && (
-          <span
+      {/* Flyout Submenu - Now outside the NavLink */}
+      <AnimatePresence>
+        {hasChildren && (isOpen || isClicked) && (
+          <motion.div
+            initial={{ opacity: 0, x: 8 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: 8 }}
             className={cn(
-              'absolute left-full ml-3 px-2.5 py-1.5 rounded-lg text-xs font-medium',
-              'whitespace-nowrap pointer-events-none z-50',
-              'opacity-0 group-hover:opacity-100',
-              'translate-x-1 group-hover:translate-x-0',
-              'transition-all duration-150 ease-out'
+              'fixed z-[9999] rounded-2xl p-2',
+              'min-w-[240px] shadow-2xl',
+              'border border-[var(--color-sidebar-border)]'
             )}
             style={{
-              backgroundColor : 'var(--color-sidebar-card)',
-              color           : 'var(--color-text-primary)',
-              border          : '1px solid var(--color-sidebar-border)',
-              boxShadow       : '0 8px 24px rgba(15,23,42,0.18)',
+              top: coords.top,
+              bottom: coords.bottom,
+              left: coords.left + 8,
+              maxHeight: 'calc(100vh - 40px)',
+              overflowY: 'auto',
+              backgroundColor : 'var(--color-sidebar-bg)',
+              boxShadow: '0 15px 45px rgba(0,0,0,0.18)'
             }}
           >
-            {item.label}
-          </span>
+            {/* Invisible bridge */}
+            <div className="absolute top-0 -left-6 w-6 h-full" />
+            
+            <div className="space-y-1">
+              {item.children.map(child => (
+                <NavLink
+                  key={child.path}
+                  to={child.path}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setIsClicked(false);
+                    setIsOpen(false);
+                  }}
+                  className={({ isActive }) => cn(
+                    "flex items-center gap-4 px-4 py-3 rounded-xl text-[14px] font-semibold transition-all",
+                    isActive 
+                      ? "bg-[var(--color-sidebar-active)] text-white shadow-md" 
+                      : "text-[var(--color-sidebar-text)] hover:bg-[var(--color-sidebar-hover)] hover:text-[var(--color-text-primary)]"
+                  )}
+                >
+                  <span className="shrink-0 opacity-80">
+                    <NavIcon name={child.icon} size={16} />
+                  </span>
+                  <span className="whitespace-nowrap">{child.label}</span>
+                </NavLink>
+              ))}
+            </div>
+          </motion.div>
         )}
-      </>
-    )}
-  </NavLink>
-)
+      </AnimatePresence>
+    </div>
+  )
+}
 
 /* ─────────────────────────── Sidebar ────────────────────────────── */
 const Sidebar = ({ mobileOpen, onMobileClose }) => {

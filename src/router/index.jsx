@@ -786,7 +786,11 @@ const router = createBrowserRouter([
       },
       {
         path: ROUTES.TEACHER_NEW,
-        element: <Navigate to={ROUTES.TEACHERS} replace />,
+        element: (
+          <ProtectedRoute roles={[ROLES.ADMIN]}>
+            <Lazy component={CreateTeacherPage} />
+          </ProtectedRoute>
+        ),
       },
       {
         path: ROUTES.TEACHER_DETAIL,

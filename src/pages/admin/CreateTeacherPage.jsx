@@ -1,12 +1,12 @@
 import { useEffect, useMemo, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useLocation } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import {
   ArrowLeft, ArrowRight, BadgeCheck, BookOpen, Briefcase,
   Check, Copy, GraduationCap, KeyRound, Mail, Plus,
-  Search, ShieldCheck, UserRound, Users,
+  Search, ShieldCheck, UserRound, Users, List,
 } from 'lucide-react'
 import * as userApi from '@/api/userManagementApi'
 import { ROUTES } from '@/constants/app'
@@ -271,12 +271,18 @@ const StepSidebar = ({ current }) => (
 const CreateTeacherPage = () => {
   usePageTitle('Teacher')
   const navigate = useNavigate()
+  const location = useLocation()
   const { toastSuccess, toastError, toastInfo } = useToast()
 
   const [isSaving, setIsSaving]         = useState(false)
   const [createdTeacher, setCreated]    = useState(null)
-  const [showForm, setShowForm]         = useState(false)
+  const [showForm, setShowForm]         = useState(location.pathname.includes('/new'))
   const [step, setStep]                 = useState(1)
+
+  // Sync state with URL
+  useEffect(() => {
+    setShowForm(location.pathname.includes('/new'))
+  }, [location.pathname])
 
   const defaultPermissions = useMemo(() => getDefaultPermissionsForRole('teacher'), [])
 
@@ -294,8 +300,8 @@ const CreateTeacherPage = () => {
     catch  { toastError('Unable to copy') }
   }
 
-  const openForm = () => { reset(defaultValues); setStep(1); setShowForm(true) }
-  const closeForm = () => { setShowForm(false); setStep(1); reset(defaultValues) }
+  const openForm = () => { navigate(ROUTES.TEACHER_NEW) }
+  const closeForm = () => { navigate(ROUTES.TEACHERS) }
 
   const next = async () => {
     if (step === 1) { const ok = await trigger(['name','email']); if (!ok) return }
@@ -340,7 +346,7 @@ const CreateTeacherPage = () => {
             <h1 className="text-xl font-bold" style={{ color: 'var(--color-text-primary)' }}>Teachers</h1>
             <p className="mt-0.5 text-sm" style={{ color: 'var(--color-text-secondary)' }}>Manage teacher accounts and profiles</p>
           </div>
-          {!showForm && (
+          {!showForm ? (
             <button
               type="button"
               onClick={openForm}
@@ -350,6 +356,15 @@ const CreateTeacherPage = () => {
               onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = '#0369a1' }}
             >
               <Plus size={15} /> Admit Teacher
+            </button>
+          ) : (
+             <button
+              type="button"
+              onClick={closeForm}
+              className="inline-flex items-center gap-2 rounded-[18px] px-4 py-2.5 text-sm font-semibold transition-all"
+              style={{ backgroundColor: 'var(--color-surface)', color: 'var(--color-text-secondary)', border: '1px solid var(--color-border)' }}
+            >
+              <List size={15} /> View List
             </button>
           )}
         </div>
