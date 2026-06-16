@@ -2,6 +2,7 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, AlertCircle, User, ChevronRight, Filter, Download } from 'lucide-react';
 import { useStudentRisk } from '@/hooks/useStudentRisk';
+import useSessionStore from '@/store/sessionStore';
 import Card from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import Badge from '@/components/ui/Badge';
@@ -10,8 +11,9 @@ import { ROUTES } from '@/constants/app';
 
 const StudentRiskPage = () => {
   const navigate = useNavigate();
+  const { currentSession } = useSessionStore();
   const [page, setPage] = React.useState(1);
-  const { students, pagination, isLoading } = useStudentRisk(page, 20);
+  const { students, pagination, isLoading } = useStudentRisk(page, 20, currentSession?.id);
 
   if (isLoading) {
     return (
@@ -31,10 +33,6 @@ const StudentRiskPage = () => {
             <h1 className="text-2xl font-bold text-text-primary">Student Risk Analysis</h1>
             <p className="text-sm text-text-secondary mt-0.5">AI-driven identification of students requiring attention</p>
           </div>
-        </div>
-        <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" icon={Filter}>Filter</Button>
-          <Button variant="outline" size="sm" icon={Download}>Export</Button>
         </div>
       </div>
 

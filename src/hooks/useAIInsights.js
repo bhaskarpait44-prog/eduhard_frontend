@@ -2,7 +2,7 @@ import { useState, useCallback, useEffect } from 'react';
 import { aiInsightsApi } from '../api';
 import useToast from './useToast';
 
-export const useAIInsights = () => {
+export const useAIInsights = (sessionId) => {
   const [data, setData] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -12,7 +12,7 @@ export const useAIInsights = () => {
     setIsLoading(true);
     setError(null);
     try {
-      const res = await aiInsightsApi.getDashboardInsights();
+      const res = await aiInsightsApi.getDashboardInsights(sessionId);
       if (res.success) {
         setData(res.data);
       }
@@ -23,11 +23,11 @@ export const useAIInsights = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [toastError]);
+  }, [toastError, sessionId]);
 
   useEffect(() => {
-    fetchInsights();
-  }, [fetchInsights]);
+    if (sessionId) fetchInsights();
+  }, [fetchInsights, sessionId]);
 
   return { data, isLoading, error, refetch: fetchInsights };
 };

@@ -6,12 +6,12 @@ import Badge from '../ui/Badge';
 import Button from '../ui/Button';
 import { cn } from '@/utils/helpers';
 
-const AIBriefingPanel = () => {
-  const { summary, loading, error, fetchDashboardSummary } = useAiAnalysis();
+const AIBriefingPanel = ({ sessionId }) => {
+  const { summary, loading, error, fetchDashboardSummary } = useAiAnalysis(sessionId);
 
   useEffect(() => {
-    fetchDashboardSummary();
-  }, [fetchDashboardSummary]);
+    if (sessionId) fetchDashboardSummary();
+  }, [fetchDashboardSummary, sessionId]);
 
   if (loading && !summary) {
     return (

@@ -2,7 +2,7 @@ import { useState, useCallback, useEffect } from 'react';
 import { aiInsightsApi } from '../api';
 import useToast from './useToast';
 
-export const useStudentRisk = (page = 1, limit = 50) => {
+export const useStudentRisk = (page = 1, limit = 50, sessionId) => {
   const [students, setStudents] = useState([]);
   const [pagination, setPagination] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -11,7 +11,7 @@ export const useStudentRisk = (page = 1, limit = 50) => {
   const fetchRiskStudents = useCallback(async () => {
     setIsLoading(true);
     try {
-      const res = await aiInsightsApi.getRiskStudents(page, limit);
+      const res = await aiInsightsApi.getRiskStudents(page, limit, sessionId);
       if (res.success) {
         // Backend returns { students, pagination } after my update
         if (res.data.students) {
@@ -27,11 +27,11 @@ export const useStudentRisk = (page = 1, limit = 50) => {
     } finally {
       setIsLoading(false);
     }
-  }, [toastError, page, limit]);
+  }, [toastError, page, limit, sessionId]);
 
   useEffect(() => {
-    fetchRiskStudents();
-  }, [fetchRiskStudents]);
+    if (sessionId) fetchRiskStudents();
+  }, [fetchRiskStudents, sessionId]);
 
   return { students, pagination, isLoading, refetch: fetchRiskStudents };
 };

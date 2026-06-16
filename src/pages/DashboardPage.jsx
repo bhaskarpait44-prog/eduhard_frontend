@@ -175,7 +175,7 @@ const DashboardPage = () => {
         </div>
       </div>
 
-      <AIBriefingPanel />
+      <AIBriefingPanel sessionId={currentSession?.id} />
 
       {/* Stats Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -232,7 +232,7 @@ const DashboardPage = () => {
         </div>
       </div>
 
-      <AIInsightsCard />
+      <AIInsightsCard sessionId={currentSession?.id} />
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Class Attendance Summary */}
@@ -284,7 +284,7 @@ const DashboardPage = () => {
 
         {/* Sidebar Content */}
         <div className="space-y-4">
-          <RiskScoreWidget />
+          <RiskScoreWidget sessionId={currentSession?.id} />
           
           {/* Recent Audit Logs (Fixing Dead #4) */}
           <div className="bg-surface border border-border-base rounded-2xl p-5">

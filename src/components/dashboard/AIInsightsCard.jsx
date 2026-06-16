@@ -12,8 +12,8 @@ import Badge from '../ui/Badge';
 import Card from '../ui/Card';
 import { useAIInsights } from '@/hooks/useAIInsights';
 
-const AIInsightsCard = () => {
-  const { data, isLoading, error, refetch } = useAIInsights();
+const AIInsightsCard = ({ sessionId }) => {
+  const { data, isLoading, error, refetch } = useAIInsights(sessionId);
 
   if (isLoading) {
     return (

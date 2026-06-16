@@ -1,3 +1,4 @@
 import api from './axios';
 
-export const getDashboardSummary = () => api.get('/ai-analysis/dashboard-summary');
+export const getDashboardSummary = (sessionId) => 
+  api.get('/ai-analysis/dashboard-summary', { params: { session_id: sessionId } });

@@ -7,9 +7,9 @@ import Badge from '../ui/Badge';
 import { useStudentRisk } from '@/hooks/useStudentRisk';
 import { ROUTES } from '@/constants/app';
 
-const RiskScoreWidget = ({ limit = 5 }) => {
+const RiskScoreWidget = ({ limit = 5, sessionId }) => {
   const navigate = useNavigate();
-  const { students, isLoading } = useStudentRisk();
+  const { students, pagination, isLoading } = useStudentRisk(1, 50, sessionId);
 
   if (isLoading) {
     return (
@@ -38,7 +38,7 @@ const RiskScoreWidget = ({ limit = 5 }) => {
         <h3 className="text-lg font-bold text-text-primary flex items-center gap-2">
           <AlertCircle size={20} className="text-red-500" /> High-Risk Students
         </h3>
-        <Badge variant="red" size="sm">{students.length} Total</Badge>
+        <Badge variant="red" size="sm">{pagination?.total || students.length} Total</Badge>
       </div>
 
       <div className="space-y-4">
