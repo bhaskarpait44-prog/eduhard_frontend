@@ -67,6 +67,7 @@ const FeeStructurePage = lazy(() => import('@/pages/fees/FeeStructurePage'))
 const FeeReportPage = lazy(() => import('@/pages/fees/FeeReportPage'))
 const ExamsPage = lazy(() => import('@/pages/exams/ExamsPage'))
 const ExamAnalyticsPage = lazy(() => import('@/pages/exams/ExamAnalyticsPage'))
+const StudentRiskPage = lazy(() => import('@/pages/analytics/StudentRiskPage'))
 const AuditPage = lazy(() => import('@/pages/audit/AuditPage'))
 const StudentFeePage = lazy(() => import('@/pages/fees/StudentFeePage'))
 const UpiConfirmationsPage = lazy(() => import('@/pages/fees/UpiConfirmationsPage'))
@@ -671,6 +672,14 @@ const router = createBrowserRouter([
         ),
       },
       { path: ROUTES.RESULTS, element: <Navigate to={ROUTES.EXAMS} replace /> },
+      {
+        path: ROUTES.AI_RISK_ANALYSIS,
+        element: (
+          <ProtectedRoute roles={[ROLES.ADMIN, ROLES.TEACHER]}>
+            <Lazy component={StudentRiskPage} />
+          </ProtectedRoute>
+        ),
+      },
       {
         path: ROUTES.AUDIT,
         element: (

@@ -23,16 +23,18 @@ const useDashboardStore = create((set) => ({
     set({ isLoading: true, error: null })
 
     try {
-      const [statsRes, auditRes, leavingRes] = await Promise.allSettled([
+      const [statsRes, auditRes, leavingRes, trendRes] = await Promise.allSettled([
         api.get('/dashboard/admin/stats', { params: { session_id: cleanSessionId } }),
         getAuditLogs({ limit: 5, page: 1 }),
         studentLeavingApi.getLeavingSummary({ session_id: cleanSessionId }),
+        api.get('/dashboard/admin/attendance-trend', { params: { days: 7 } })
       ])
 
       // statsRes.value is the body { success, data, message }
       const statsBody = statsRes.status === 'fulfilled' ? statsRes.value : null
       const auditBody = auditRes.status === 'fulfilled' ? auditRes.value : null
       const leavingBody = leavingRes.status === 'fulfilled' ? leavingRes.value : null
+      const trendBody = trendRes.status === 'fulfilled' ? trendRes.value : null
 
       if (statsRes.status === 'rejected') {
         const reason = statsRes.reason?.message || statsRes.reason
@@ -54,7 +56,7 @@ const useDashboardStore = create((set) => ({
 
       set({
         stats           : statsBody?.data || null,
-        attendanceChart : [],
+        attendanceChart : trendBody?.data || [],
         recentAdmissions: recentStudents,
         feeDefaulters   : [],
         recentAudit     : auditBody?.logs || (Array.isArray(auditBody) ? auditBody : []),

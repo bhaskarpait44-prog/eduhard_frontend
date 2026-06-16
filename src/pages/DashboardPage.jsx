@@ -4,7 +4,7 @@ import {
   Users, CalendarCheck, IndianRupee, ClipboardList,
   Plus, RefreshCw, ClipboardCheck, RefreshCcw,
   UserPlus, Wallet, LogOut, GraduationCap,
-  ArrowRight, Search, Clock, ArrowRightLeft
+  ArrowRight, Search, Clock, ArrowRightLeft, TrendingUp
 } from 'lucide-react'
 
 import useDashboardStore from '@/store/dashboardStore'
@@ -18,7 +18,9 @@ import StatCard from '@/components/ui/StatCard'
 import Button from '@/components/ui/Button'
 import Badge from '@/components/ui/Badge'
 import AIInsightsCard from '@/components/dashboard/AIInsightsCard'
+import AIBriefingPanel from '@/components/dashboard/AIBriefingPanel'
 import RiskScoreWidget from '@/components/dashboard/RiskScoreWidget'
+import { AttendanceTrendChart, FeeStatusChart } from '@/components/admin/DashboardCharts'
 
 const AUTO_REFRESH_MS = 10 * 60 * 1000 // 10 minutes
 
@@ -30,7 +32,7 @@ const DashboardPage = () => {
   const { user } = useAuthStore()
   const { currentSession, sessions, fetchSessions, isLoading: sessionLoading } = useSessionStore()
   const {
-    stats, recentAdmissions, leavingStats,
+    stats, recentAdmissions, leavingStats, attendanceChart, recentAudit,
     isLoading, fetchAll, clearDashboard, error
   } = useDashboardStore()
 
@@ -106,7 +108,7 @@ const DashboardPage = () => {
   const showWarning = noStats || !currentSession
 
   return (
-    <div className="max-w-[1400px] mx-auto space-y-6">
+    <div className="max-w-[1400px] mx-auto space-y-6 pb-12">
       {showWarning && !isLoading && !sessionLoading && (
         <div className="bg-amber-50 border border-amber-200 text-amber-800 p-5 rounded-2xl text-sm font-medium flex items-center gap-4 shadow-sm">
           <div className="h-10 w-10 bg-amber-100 rounded-xl flex items-center justify-center text-amber-600 shrink-0">
@@ -173,6 +175,8 @@ const DashboardPage = () => {
         </div>
       </div>
 
+      <AIBriefingPanel />
+
       {/* Stats Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard
@@ -184,14 +188,14 @@ const DashboardPage = () => {
         <StatCard
           label="Today's Attendance"
           value={formatPercent(stats?.attendanceToday?.percentage || 0)}
-          sub={`${stats?.attendanceToday?.present || 0} students present`}
+          sub={stats?.attendanceToday?.forecast ? `AI Forecast: ${stats.attendanceToday.forecast}%` : `${stats?.attendanceToday?.present || 0} present`}
           icon={CalendarCheck}
           color="#10b981"
         />
         <StatCard
           label="Revenue (Month)"
           value={formatCurrency(stats?.feeCollection?.collected || 0)}
-          sub={`${formatPercent(stats?.feeCollection?.percentage || 0)} of session target`}
+          sub={`${formatPercent(stats?.feeCollection?.percentage || 0)} of target`}
           icon={IndianRupee}
           color="#f59e0b"
         />
@@ -202,6 +206,30 @@ const DashboardPage = () => {
           icon={ClipboardList}
           color="#8b5cf6"
         />
+      </div>
+
+      {/* Analytics Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-2 bg-surface border border-border-base rounded-2xl p-6">
+          <h3 className="font-bold text-text-primary mb-6 flex items-center gap-2">
+            <TrendingUp size={18} className="text-brand" /> Attendance Trends (Last 7 Days)
+          </h3>
+          <div className="h-[240px]">
+            <AttendanceTrendChart data={attendanceChart} />
+          </div>
+        </div>
+        <div className="bg-surface border border-border-base rounded-2xl p-6 text-center">
+          <h3 className="font-bold text-text-primary mb-6 flex items-center gap-2">
+            <IndianRupee size={18} className="text-amber-500" /> Fee Target Progress
+          </h3>
+          <div className="h-[200px]">
+            <FeeStatusChart 
+              collected={stats?.feeCollection?.collected || 0} 
+              pending={Math.max(0, (stats?.feeCollection?.total_expected || 0) - (stats?.feeCollection?.collected || 0))} 
+            />
+          </div>
+          <p className="text-[10px] text-text-muted mt-4">Based on current month's expected invoices</p>
+        </div>
       </div>
 
       <AIInsightsCard />
@@ -257,13 +285,29 @@ const DashboardPage = () => {
         {/* Sidebar Content */}
         <div className="space-y-4">
           <RiskScoreWidget />
-          {/* Leaving Trends */}
+          
+          {/* Recent Audit Logs (Fixing Dead #4) */}
           <div className="bg-surface border border-border-base rounded-2xl p-5">
-            <h3 className="font-bold text-text-primary mb-4">Leaving Trends</h3>
-            <div className="space-y-3">
-              <TrendItem icon={LogOut} label="Left this Session" value={leavingStats?.left_this_session || 0} color="red" />
-              <TrendItem icon={GraduationCap} label="Graduated" value={leavingStats?.graduated_this_session || 0} color="indigo" />
-              <TrendItem icon={ArrowRightLeft} label="Re-admissions" value={leavingStats?.readmissions_this_session || 0} color="emerald" />
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="font-bold text-text-primary">Recent Activity</h3>
+              <Link to={ROUTES.AUDIT} className="text-[10px] font-bold text-brand uppercase">Audit Trail</Link>
+            </div>
+            <div className="space-y-4">
+              {recentAudit && recentAudit.length > 0 ? (
+                recentAudit.map((log) => (
+                  <div key={log.id} className="flex gap-3">
+                    <div className="mt-1 h-1.5 w-1.5 rounded-full bg-brand shrink-0" />
+                    <div>
+                      <p className="text-xs text-text-primary leading-tight font-medium">{log.action_description}</p>
+                      <p className="text-[10px] text-text-muted mt-0.5">
+                        {new Date(log.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} • {log.performer_name}
+                      </p>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <p className="text-xs text-text-muted italic py-4 text-center">No recent activity.</p>
+              )}
             </div>
           </div>
 
@@ -339,15 +383,28 @@ const DashboardPage = () => {
           </div>
         </div>
 
-        {/* Daily Checklist */}
-        <div className="bg-surface border border-border-base rounded-2xl p-5">
-           <h3 className="font-bold text-text-primary mb-3">Daily Checklist</h3>
-           <ul className="text-xs space-y-3 text-text-secondary">
-             <CheckItem label="Verify today's student attendance" />
-             <CheckItem label="Review pending fee collections" />
-             <CheckItem label="Check system audit logs for updates" />
-             <CheckItem label="Verify and publish upcoming results" />
-           </ul>
+        {/* Sidebar Sidebar */}
+        <div className="space-y-4">
+          {/* Leaving Trends */}
+          <div className="bg-surface border border-border-base rounded-2xl p-5">
+            <h3 className="font-bold text-text-primary mb-4">Leaving Trends</h3>
+            <div className="space-y-3">
+              <TrendItem icon={LogOut} label="Left this Session" value={leavingStats?.left_this_session || 0} color="red" />
+              <TrendItem icon={GraduationCap} label="Graduated" value={leavingStats?.graduated_this_session || 0} color="indigo" />
+              <TrendItem icon={ArrowRightLeft} label="Re-admissions" value={leavingStats?.readmissions_this_session || 0} color="emerald" />
+            </div>
+          </div>
+
+          {/* Daily Checklist */}
+          <div className="bg-surface border border-border-base rounded-2xl p-5">
+             <h3 className="font-bold text-text-primary mb-3">Daily Checklist</h3>
+             <ul className="text-xs space-y-3 text-text-secondary">
+               <CheckItem label="Verify today's student attendance" />
+               <CheckItem label="Review pending fee collections" />
+               <CheckItem label="Check system audit logs for updates" />
+               <CheckItem label="Verify and publish upcoming results" />
+             </ul>
+          </div>
         </div>
       </div>
     </div>

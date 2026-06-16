@@ -1,11 +1,14 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { User, AlertCircle, ChevronRight } from 'lucide-react';
 import { cn } from '@/utils/helpers';
 import Card from '../ui/Card';
 import Badge from '../ui/Badge';
 import { useStudentRisk } from '@/hooks/useStudentRisk';
+import { ROUTES } from '@/constants/app';
 
 const RiskScoreWidget = ({ limit = 5 }) => {
+  const navigate = useNavigate();
   const { students, isLoading } = useStudentRisk();
 
   if (isLoading) {
@@ -40,7 +43,11 @@ const RiskScoreWidget = ({ limit = 5 }) => {
 
       <div className="space-y-4">
         {students.slice(0, limit).map((student) => (
-          <div key={student.id} className="group relative flex items-center gap-4 p-3 rounded-xl hover:bg-surface-raised transition-all border border-transparent hover:border-border-base">
+          <div 
+            key={student.id} 
+            className="group relative flex items-center gap-4 p-3 rounded-xl hover:bg-surface-raised transition-all border border-transparent hover:border-border-base cursor-pointer"
+            onClick={() => navigate(ROUTES.STUDENT_DETAIL.replace(':id', student.id))}
+          >
             <div className={cn(
               "w-12 h-12 rounded-full flex items-center justify-center font-bold text-white shrink-0",
               student.riskScore > 70 ? "bg-red-500 shadow-lg shadow-red-500/20" : 
@@ -72,7 +79,10 @@ const RiskScoreWidget = ({ limit = 5 }) => {
       </div>
 
       {students.length > limit && (
-        <button className="w-full mt-4 py-2 text-xs font-bold text-brand hover:bg-brand/5 rounded-lg transition-colors flex items-center justify-center gap-1">
+        <button 
+          className="w-full mt-4 py-2 text-xs font-bold text-brand hover:bg-brand/5 rounded-lg transition-colors flex items-center justify-center gap-1"
+          onClick={() => navigate(ROUTES.AI_RISK_ANALYSIS)}
+        >
           View All At-Risk Students <ChevronRight size={14} />
         </button>
       )}

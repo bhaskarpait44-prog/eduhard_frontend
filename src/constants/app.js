@@ -109,6 +109,7 @@ export const ROUTES = {
   // Exams
   EXAMS: '/exams',
   RESULTS: '/results',
+  AI_RISK_ANALYSIS: '/analytics/risk-analysis',
 
   // Audit
   AUDIT: '/audit',

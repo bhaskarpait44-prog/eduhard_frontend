@@ -47,7 +47,7 @@ export const AttendanceTrendChart = ({ data = [] }) => {
         </defs>
         <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--color-border)" />
         <XAxis 
-          dataKey="date" 
+          dataKey="label" 
           axisLine={false} 
           tickLine={false} 
           tick={{ fontSize: 10, fill: 'var(--color-text-muted)' }}
@@ -62,7 +62,7 @@ export const AttendanceTrendChart = ({ data = [] }) => {
         <Tooltip content={<CustomTooltip />} cursor={{ stroke: 'var(--color-border)', strokeWidth: 1 }} />
         <Area
           type="monotone"
-          dataKey="percentage"
+          dataKey="value"
           stroke="var(--color-brand)"
           strokeWidth={2}
           fillOpacity={1}

@@ -13,7 +13,7 @@ import Card from '../ui/Card';
 import { useAIInsights } from '@/hooks/useAIInsights';
 
 const AIInsightsCard = () => {
-  const { data, isLoading } = useAIInsights();
+  const { data, isLoading, error, refetch } = useAIInsights();
 
   if (isLoading) {
     return (
@@ -24,6 +24,24 @@ const AIInsightsCard = () => {
           <div className="h-4 w-full bg-surface-raised rounded" />
           <div className="h-4 w-2/3 bg-surface-raised rounded" />
         </div>
+      </Card>
+    );
+  }
+
+  if (error) {
+    return (
+      <Card className="bg-red-50 border-red-100 p-6 flex flex-col items-center justify-center text-center gap-3">
+        <AlertTriangle className="text-red-500" size={32} />
+        <div>
+          <h3 className="text-sm font-bold text-red-900">AI Insights Unavailable</h3>
+          <p className="text-xs text-red-700 mt-1">We encountered an error while analyzing your data.</p>
+        </div>
+        <button 
+          onClick={refetch}
+          className="text-xs font-bold text-red-600 hover:underline"
+        >
+          Try Again
+        </button>
       </Card>
     );
   }
@@ -72,19 +90,36 @@ const AIInsightsCard = () => {
                   {trends.attendance.trend >= 0 ? '+' : ''}{trends.attendance.trend.toFixed(1)}%
                 </span>
               </div>
+              {trends.attendance.forecast && (
+                <p className="text-[10px] text-text-muted mt-1">
+                  AI Forecast: <span className="font-bold text-brand">{trends.attendance.forecast}%</span> for next period
+                </p>
+              )}
             </div>
 
             <div className="bg-surface p-4 rounded-xl border border-border-base">
               <div className="flex items-center justify-between mb-2">
                 <span className="text-xs font-medium text-text-muted uppercase">Fee Collection</span>
-                <TrendingUp size={16} className="text-brand" />
+                {trends.fees.trend >= 0 ? (
+                  <TrendingUp size={16} className="text-green-500" />
+                ) : (
+                  <TrendingDown size={16} className="text-red-500" />
+                )}
               </div>
               <div className="flex items-baseline gap-2">
                 <span className="text-2xl font-bold text-text-primary">
-                  {trends.fees.value.toFixed(0)}%
+                  {trends.fees.value.toFixed(1)}%
                 </span>
-                <span className="text-xs text-text-muted">Target: 100%</span>
+                <span className={cn(
+                  "text-xs font-bold",
+                  trends.fees.trend >= 0 ? "text-green-500" : "text-red-500"
+                )}>
+                  {trends.fees.trend >= 0 ? '+' : ''}{trends.fees.trend.toFixed(1)}%
+                </span>
               </div>
+              <p className="text-[10px] text-text-muted mt-1">
+                Compared to last month's collection
+              </p>
             </div>
           </div>
 
