@@ -2,12 +2,12 @@ import api from './axios'
 
 export const getTeacherControlOverview = () => api.get('/admin/teacher-control/overview')
 export const getTeacherControlTeachers = () => api.get('/admin/teacher-control/teachers')
-export const getTeacherControlAssignments = () => api.get('/admin/teacher-control/assignments')
+export const getTeacherControlAssignments = (params) => api.get('/admin/teacher-control/assignments', { params })
 export const createTeacherControlAssignment = (data) => api.post('/admin/teacher-control/assignments', data)
 export const updateTeacherControlAssignment = (id, data) => api.patch(`/admin/teacher-control/assignments/${id}`, data)
 export const deleteTeacherControlAssignment = (id) => api.delete(`/admin/teacher-control/assignments/${id}`)
 
-export const getTeacherControlTimetable = () => api.get('/admin/teacher-control/timetable')
+export const getTeacherControlTimetable = (params) => api.get('/admin/teacher-control/timetable', { params })
 export const createTeacherControlTimetableSlot = (data) => api.post('/admin/teacher-control/timetable', data)
 export const updateTeacherControlTimetableSlot = (id, data) => api.patch(`/admin/teacher-control/timetable/${id}`, data)
 
@@ -35,3 +35,7 @@ export const reviewTeacherControlCorrection = (id, data) => api.patch(`/admin/te
 
 export const getStudentControlCorrections = () => api.get('/admin/teacher-control/student-correction-requests')
 export const reviewStudentControlCorrection = (id, data) => api.patch(`/admin/teacher-control/student-correction-requests/${id}/review`, data)
+
+export const revokeTeacherControlLeave = (id) => api.patch(`/admin/teacher-control/leave/${id}/revoke`)
+export const getTeacherControlLeaveBalances = () => api.get('/admin/teacher-control/leave/balances')
+export const updateTeacherControlLeaveBalance = (teacher_id, data) => api.patch(`/admin/teacher-control/leave/balances/${teacher_id}`, data)

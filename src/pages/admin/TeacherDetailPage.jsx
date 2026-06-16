@@ -189,7 +189,7 @@ const TeacherAssignmentsTab = ({ teacherId }) => {
   })
 
   const loadAssignments = async () => {
-    const res = await getTeacherControlAssignments()
+    const res = await getTeacherControlAssignments({ teacher_id: teacherRecordId })
     setAssignments(res?.data?.assignments || [])
   }
 
@@ -230,14 +230,13 @@ const TeacherAssignmentsTab = ({ teacherId }) => {
 
   const teacherAssignments = useMemo(() => (
     assignments
-      .filter(item => Number(item.teacher_id) === Number(teacherRecordId))
       .sort((a, b) =>
         (a.class_name || '').localeCompare(b.class_name || '') ||
         (a.section_name || '').localeCompare(b.section_name || '') ||
         Number(b.is_class_teacher) - Number(a.is_class_teacher) ||
         (a.subject_name || '').localeCompare(b.subject_name || '')
       )
-  ), [assignments, teacherRecordId])
+  ), [assignments])
 
   const classTeacherAssignments = teacherAssignments.filter(item => item.is_class_teacher)
   const subjectAssignments = teacherAssignments.filter(item => !item.is_class_teacher)
@@ -418,10 +417,10 @@ const TeacherTimetableTab = ({ teacherId }) => {
 
   useEffect(() => {
     setLoading(true)
-    getTeacherControlTimetable()
+    getTeacherControlTimetable({ teacher_id: teacherRecordId })
       .then(r => {
         const rows = r?.data?.timetable || []
-        setSlots(rows.filter(s => Number(s.teacher_id) === Number(teacherRecordId) && s.is_active !== false))
+        setSlots(rows.filter(s => s.is_active !== false))
       })
       .catch(e => { setSlots([]); toastError(e.message || 'Failed to load timetable') })
       .finally(() => setLoading(false))
