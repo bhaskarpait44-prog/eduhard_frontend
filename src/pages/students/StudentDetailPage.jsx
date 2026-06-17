@@ -50,6 +50,7 @@ const TABS = [
   { key: 'fees',       label: 'Fees',               icon: Wallet },
   { key: 'results',    label: 'Exam & Results',     icon: GraduationCap },
   { key: 'library',    label: 'Library',            icon: Library },
+  { key: 'family',     label: 'Family',             icon: Users },
   { key: 'audit',      label: 'Audit Log',          icon: ScrollText },
 ]
 
@@ -381,6 +382,7 @@ const StudentDetailPage = () => {
             {activeTab === 'fees' && <TabFees enrollmentId={enrollment?.id} />}
             {activeTab === 'results' && <TabResults studentId={student.id} />}
             {activeTab === 'library' && <TabLibrary student={student} />}
+            {activeTab === 'family' && <TabFamily student={student} />}
             {activeTab === 'audit' && <TabAuditLog studentId={student.id} />}
           </div>
         </div>

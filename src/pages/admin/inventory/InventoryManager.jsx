@@ -11,7 +11,7 @@ import {
 } from '@/utils/inventoryPdf'
 import {
   Package, Plus, Search, ArrowUpRight, ArrowDownRight,
-  AlertTriangle, Pencil, Trash2, History, FileDown,
+  AlertTriangle, Pencil, Trash2, FileDown,
   ChevronLeft, ChevronRight, Filter
 } from 'lucide-react'
 import Button from '@/components/ui/Button'
@@ -22,7 +22,6 @@ import Input from '@/components/ui/Input'
 import Select from '@/components/ui/Select'
 import { formatDate } from '@/utils/helpers'
 
-const TABS = ['catalog', 'transactions', 'low-stock']
 const TX_PAGE_SIZE = 50
 
 export default function InventoryManager() {
@@ -69,25 +68,35 @@ export default function InventoryManager() {
   // PDF loading states
   const [pdfLoading, setPdfLoading] = useState({ catalog: false, stockIn: false, stockOut: false, lowStock: false })
 
+  const [pendingTx, setPendingTx] = useState(null)
+
   // ── Data Loading ───────────────────────────────────────
 
   const loadTransactions = useCallback(async () => {
-    const params = { item_id: txItemId || undefined, type: txType || undefined,
-      date_from: txDateFrom || undefined, date_to: txDateTo || undefined,
-      page: txPage, limit: TX_PAGE_SIZE }
-    const res = await inventoryApi.getTransactions(params)
-    // Update store manually with paginated data
-    useInventoryStore.setState({
-      transactions: res.data?.transactions || res.data || [],
-      isLoading: false
-    })
-    setTxTotal(res.data?.total || 0)
-  }, [txItemId, txType, txDateFrom, txDateTo, txPage])
+    try {
+      const params = {
+        item_id: txItemId || undefined, type: txType || undefined,
+        date_from: txDateFrom || undefined, date_to: txDateTo || undefined,
+        page: txPage, limit: TX_PAGE_SIZE
+      }
+      const res = await fetchTransactions(params)
+      setTxTotal(res?.total || 0)
+    } catch (err) {
+      toastError('Failed to load transactions. Please try again.')
+    }
+  }, [txItemId, txType, txDateFrom, txDateTo, txPage, fetchTransactions, toastError])
 
   useEffect(() => {
     fetchItems()
     inventoryApi.getCategories().then(r => setCategories(r.data || []))
   }, [fetchItems])
+
+  useEffect(() => {
+    if (activeTab === 'transactions' && pendingTx) {
+      openTxModal(pendingTx.type, pendingTx.itemId)
+      setPendingTx(null)
+    }
+  }, [activeTab, pendingTx])
 
   useEffect(() => {
     if (activeTab === 'transactions') loadTransactions()
@@ -107,8 +116,8 @@ export default function InventoryManager() {
 
   const lowStockItems = useMemo(() =>
     items.filter(i =>
-      parseFloat(i.reorder_level) > 0 &&
-      parseFloat(i.quantity) <= parseFloat(i.reorder_level)
+      parseFloat(i.reorder_level || 0) > 0 &&
+      parseFloat(i.quantity || 0) <= parseFloat(i.reorder_level || 0)
     ), [items])
 
   // ── Item CRUD ──────────────────────────────────────────
@@ -288,8 +297,8 @@ export default function InventoryManager() {
       {activeTab === 'catalog' && (
         <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-5">
           {filteredItems.length > 0 ? filteredItems.map(item => {
-            const isLowStock = parseFloat(item.reorder_level) > 0 &&
-                               parseFloat(item.quantity) <= parseFloat(item.reorder_level)
+            const isLowStock = parseFloat(item.reorder_level || 0) > 0 &&
+                               parseFloat(item.quantity || 0) <= parseFloat(item.reorder_level || 0)
             return (
               <div key={item.id} className={`bg-white dark:bg-gray-900 rounded-3xl border shadow-sm p-5 flex flex-col transition-all ${
                 isLowStock ? 'border-red-200 dark:border-red-900/50' : 'border-gray-200 dark:border-gray-800 hover:border-indigo-200'
@@ -336,14 +345,14 @@ export default function InventoryManager() {
                     <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Current Stock</p>
                     <div className="flex items-baseline gap-1">
                       <span className={`text-xl font-black ${isLowStock ? 'text-red-600' : 'text-gray-900 dark:text-white'}`}>
-                        {parseFloat(item.quantity)}
+                        {parseFloat(item.quantity || 0)}
                       </span>
                       <span className="text-xs font-bold text-gray-400">{item.unit}</span>
                     </div>
                   </div>
                   {isLowStock && (
                     <div className="flex items-center gap-1 text-[9px] font-bold text-red-600 bg-red-50 dark:bg-red-500/10 px-2 py-1 rounded-md">
-                      <AlertTriangle size={10} /> LOW (Min {parseFloat(item.reorder_level)})
+                      <AlertTriangle size={10} /> LOW (Min {parseFloat(item.reorder_level || 0)})
                     </div>
                   )}
                 </div>
@@ -402,7 +411,16 @@ export default function InventoryManager() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-50 dark:divide-gray-800">
-                  {transactions.length > 0 ? transactions.map(t => (
+                  {isLoading ? (
+                    <tr>
+                      <td colSpan={7} className="py-16 text-center">
+                        <div className="flex flex-col items-center gap-3 text-gray-400">
+                          <div className="w-6 h-6 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin" />
+                          <p className="text-sm">Loading transactions...</p>
+                        </div>
+                      </td>
+                    </tr>
+                  ) : transactions.length > 0 ? transactions.map(t => (
                     <tr key={t.id} className="hover:bg-gray-50/50 dark:hover:bg-gray-800/30">
                       <td className="px-5 py-3 text-sm text-gray-700 dark:text-gray-300">{formatDate(t.date, 'short')}</td>
                       <td className="px-5 py-3 text-sm font-bold text-gray-900 dark:text-white">{t.item_name}</td>
@@ -413,7 +431,7 @@ export default function InventoryManager() {
                         </Badge>
                       </td>
                       <td className={`px-5 py-3 text-sm font-black text-right ${t.type === 'in' ? 'text-emerald-600' : 'text-red-600'}`}>
-                        {t.type === 'in' ? '+' : '-'}{parseFloat(t.quantity)} {t.unit}
+                        {t.type === 'in' ? '+' : '-'}{parseFloat(t.quantity || 0)} {t.unit}
                       </td>
                       <td className="px-5 py-3">
                         {t.vendor && <p className="text-xs font-semibold text-indigo-600">{t.vendor}</p>}
@@ -493,15 +511,15 @@ export default function InventoryManager() {
                         <td className="px-5 py-3 font-bold text-sm text-gray-900 dark:text-white">{item.name}</td>
                         <td className="px-5 py-3 text-xs text-gray-500 uppercase tracking-wide font-semibold">{item.category}</td>
                         <td className="px-5 py-3 text-sm text-gray-700">{item.unit}</td>
-                        <td className="px-5 py-3 text-sm font-black text-red-600">{parseFloat(item.quantity)}</td>
-                        <td className="px-5 py-3 text-sm text-gray-600">{parseFloat(item.reorder_level)}</td>
+                        <td className="px-5 py-3 text-sm font-black text-red-600">{parseFloat(item.quantity || 0)}</td>
+                        <td className="px-5 py-3 text-sm text-gray-600">{parseFloat(item.reorder_level || 0)}</td>
                         <td className="px-5 py-3 text-sm font-bold text-red-700">
-                          {(parseFloat(item.reorder_level) - parseFloat(item.quantity)).toFixed(2)}
+                          {Number((parseFloat(item.reorder_level || 0) - parseFloat(item.quantity || 0)).toFixed(2))}
                         </td>
                         <td className="px-5 py-3">
                           <Button size="xs" icon={ArrowDownRight} onClick={() => {
                             setActiveTab('transactions')
-                            setTimeout(() => openTxModal('in', String(item.id)), 100)
+                            setPendingTx({ type: 'in', itemId: String(item.id) })
                           }}>
                             Stock In
                           </Button>
@@ -521,13 +539,13 @@ export default function InventoryManager() {
         title={editingId ? 'Edit Item' : 'Add Item to Catalog'} size="md">
         <form onSubmit={handleItemSubmit} className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
-            <Input label="Item Name" required value={itemForm.name}
+            <Input label="Item Name" required value={itemForm.name} maxLength={150}
               onChange={e => setItemForm(f => ({...f, name: e.target.value}))}
               placeholder="e.g. A4 Paper Rim" className="col-span-2" />
-            <Input label="Category" required value={itemForm.category}
+            <Input label="Category" required value={itemForm.category} maxLength={100}
               onChange={e => setItemForm(f => ({...f, category: e.target.value}))}
               placeholder="e.g. Stationery, Lab, Sports" />
-            <Input label="Unit" required value={itemForm.unit}
+            <Input label="Unit" required value={itemForm.unit} maxLength={50}
               onChange={e => setItemForm(f => ({...f, unit: e.target.value}))}
               placeholder="e.g. Pcs, Box, Rim, Kg" />
             <Input label="Reorder Level (Min Stock)" type="number" step="0.01" min="0"
@@ -539,7 +557,7 @@ export default function InventoryManager() {
               onChange={e => setItemForm(f => ({...f, unit_price: e.target.value}))}
               placeholder="0.00" />
           </div>
-          <Input label="Storage Location (Optional)" value={itemForm.location}
+          <Input label="Storage Location (Optional)" value={itemForm.location} maxLength={150}
             onChange={e => setItemForm(f => ({...f, location: e.target.value}))}
             placeholder="e.g. Room 3 Shelf B, Science Lab Cabinet" />
           <Input label="Description (Optional)" value={itemForm.description}
@@ -596,11 +614,11 @@ export default function InventoryManager() {
           </div>
 
           <Select label="Item" required value={txForm.item_id}
-            onChange={e => setTxForm(f => ({...f, item_id: e.target.value}))}
             options={[{value:'',label:'Select an item...'}, ...items.map(i => ({
               value: String(i.id),
-              label: `${i.name} (${parseFloat(i.quantity)} ${i.unit} in stock)`
-            }))]} />
+              label: `${i.name} (${parseFloat(i.quantity || 0)} ${i.unit} in stock)`
+            }))]}
+            onChange={e => setTxForm(f => ({...f, item_id: e.target.value}))} />
 
           <div className="grid grid-cols-2 gap-4">
             <Input label="Quantity" required type="number" step="0.01" min="0.01"
@@ -612,7 +630,7 @@ export default function InventoryManager() {
           </div>
 
           {txForm.type === 'in' && (
-            <Input label="Vendor / Supplier (Optional)"
+            <Input label="Vendor / Supplier (Optional)" maxLength={200}
               placeholder="Where was this purchased from?"
               value={txForm.vendor}
               onChange={e => setTxForm(f => ({...f, vendor: e.target.value}))} />
@@ -620,7 +638,7 @@ export default function InventoryManager() {
 
           <Input label={txForm.type === 'out' ? 'Issued To / Remarks (Optional)' : 'Remarks / PO Number (Optional)'}
             placeholder={txForm.type === 'out' ? 'e.g. Class 10 Exams, Staff Room' : 'e.g. Monthly stock, PO#123'}
-            value={txForm.remarks}
+            value={txForm.remarks} maxLength={500}
             onChange={e => setTxForm(f => ({...f, remarks: e.target.value}))} />
 
           <div className="flex justify-end gap-3 pt-2">

@@ -116,13 +116,10 @@ export function generateItemCatalogPdf(data) {
     return acc
   }, {})
 
-  let firstGroup = true
+  let isFirstGroup = true
   Object.entries(grouped).forEach(([category, catItems]) => {
-    if (!firstGroup) { /* autoTable handles page breaks */ }
-    firstGroup = false
-
     autoTable(doc, {
-      startY: firstGroup ? y : undefined,
+      startY: isFirstGroup ? y : undefined,
       head: [[
         { content: `Category: ${category}`, colSpan: 7,
           styles: { fillColor: [237, 242, 255], textColor: [50, 80, 200], fontStyle: 'bold', fontSize: 8 }
@@ -138,11 +135,13 @@ export function generateItemCatalogPdf(data) {
       startY: doc.lastAutoTable.finalY,
       head: [['#', 'Item Name', 'Unit', 'Current Stock', 'Reorder Level', 'Location', 'Status']],
       body: catItems.map((item, idx) => {
-        const isLow = parseFloat(item.reorder_level) > 0 &&
-                      parseFloat(item.quantity) <= parseFloat(item.reorder_level)
+        const isLow = parseFloat(item.reorder_level || 0) > 0 &&
+                      parseFloat(item.quantity || 0) <= parseFloat(item.reorder_level || 0)
+        let desc = item.description || ''
+        if (desc.length > 80) desc = desc.substring(0, 77) + '...'
         return [
           idx + 1,
-          item.name + (item.description ? `\n${item.description}` : ''),
+          item.name + (desc ? `\n${desc}` : ''),
           item.unit,
           formatQty(item.quantity),
           formatQty(item.reorder_level) || '—',
@@ -173,6 +172,8 @@ export function generateItemCatalogPdf(data) {
       },
       alternateRowStyles: { fillColor: [250, 251, 255] },
     })
+
+    isFirstGroup = false
   })
 
   // Low stock alert section at end
@@ -282,7 +283,11 @@ export function generateStockInPdf(data) {
   })
 
   // Authorisation block
-  const authY = doc.lastAutoTable.finalY + 12
+  let authY = (doc.lastAutoTable?.finalY || 250) + 12
+  if (authY > 268) {
+    doc.addPage()
+    authY = 20
+  }
   doc.setFontSize(8)
   doc.setFont('helvetica', 'normal')
   doc.setTextColor(100, 100, 100)
@@ -393,7 +398,11 @@ export function generateStockOutPdf(data) {
   }
 
   // Auth block
-  const authY = (doc.lastAutoTable?.finalY || 250) + 12
+  let authY = (doc.lastAutoTable?.finalY || 250) + 12
+  if (authY > 268) {
+    doc.addPage()
+    authY = 20
+  }
   doc.setFontSize(8)
   doc.setFont('helvetica', 'normal')
   doc.setTextColor(100, 100, 100)
@@ -415,12 +424,12 @@ export function generateLowStockPdf(data) {
   const subtitle = `Generated: ${formatDate(generated_at)}  |  By: ${generated_by || 'Administrator'}`
   let y = drawHeader(doc, school, 'LOW STOCK ALERT REPORT', subtitle)
 
-  const totalShortfall = items.reduce((acc, i) => acc + (parseFloat(i.reorder_level) - parseFloat(i.quantity)), 0)
+  const categoriesCount = [...new Set(items.map(i => i.category))].length
 
   y = drawSummaryBox(doc, y, [
-    { label: 'Items Below Limit', value: items.length },
-    { label: 'Total Shortfall',   value: formatQty(totalShortfall) },
-    { label: 'Status',            value: 'ACTION REQ.' },
+    { label: 'Items Below Limit',    value: items.length },
+    { label: 'Categories Affected',  value: categoriesCount },
+    { label: 'Immediate Action Req', value: items.length > 0 ? 'YES' : 'NO' },
   ])
 
   autoTable(doc, {

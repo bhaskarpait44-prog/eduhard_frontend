@@ -69,8 +69,7 @@ const useInventoryStore = create((set, get) => ({
     try {
       await api.recordTransaction(data)
       await get().fetchItems()
-      // Refresh transactions filtered by the same item
-      await get().fetchTransactions({ item_id: data.item_id })
+      set({ isLoading: false })
     } catch (err) {
       set({ isLoading: false })
       throw err

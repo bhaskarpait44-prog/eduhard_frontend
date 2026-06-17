@@ -185,6 +185,7 @@ const getNavGroups = (user) => {
         { label: 'Attendance',    icon: 'CalendarCheck',  path: ROUTES.ATTENDANCE,   roles: [ROLES.ADMIN, ROLES.TEACHER] },
         { label: 'Subjects',      icon: 'BookOpen',       path: ROUTES.SUBJECTS,     roles: [ROLES.ADMIN, ROLES.TEACHER] },
         { label: 'Exams & Results', icon: 'ClipboardList', path: ROUTES.EXAMS,       roles: [ROLES.ADMIN, ROLES.TEACHER] },
+        { label: 'Certificates', icon: 'Award',            path: ROUTES.ADMIN_CERTIFICATES, roles: [ROLES.ADMIN] },
       ],
     },
     {
@@ -264,7 +265,6 @@ const getNavGroups = (user) => {
         { label: 'Families',   icon: 'Users',              path: ROUTES.ADMIN_FAMILIES,    roles: [ROLES.ADMIN, ROLES.ACCOUNTANT] },
         { label: 'Inventory',  icon: 'Package',            path: ROUTES.ADMIN_INVENTORY,   roles: [ROLES.ADMIN, ROLES.ACCOUNTANT] },
         { label: 'Transport',  icon: 'Bus',                path: ROUTES.ADMIN_TRANSPORT,   roles: [ROLES.ADMIN, ROLES.ACCOUNTANT] },
-        { label: 'Certificates', icon: 'Award',            path: ROUTES.ADMIN_CERTIFICATES, roles: [ROLES.ADMIN] },
         { label: 'Staff Attendance', icon: 'UserCheck',    path: ROUTES.STAFF_ATTENDANCE,  roles: [ROLES.ADMIN, ROLES.ACCOUNTANT] },
         { label: 'Notices',    icon: 'BellRing',           path: ROUTES.ADMIN_NOTICES,     roles: [ROLES.ADMIN] },
         { label: 'Compliance Report', icon: 'FileCheck', path: ROUTES.COMPLIANCE_REPORT, roles: [ROLES.ADMIN] },
