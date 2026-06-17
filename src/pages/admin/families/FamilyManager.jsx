@@ -11,7 +11,9 @@ import {
   Mail,
   Trash2,
   Pencil,
-  AlertCircle
+  AlertCircle,
+  ChevronLeft,
+  ChevronRight
 } from 'lucide-react'
 import Button from '@/components/ui/Button'
 import EmptyState from '@/components/ui/EmptyState'
@@ -22,7 +24,9 @@ export default function FamilyManager() {
   usePageTitle('Sibling Linking & Families')
   const { toastSuccess, toastError } = useToast()
   const { 
-    families, isLoading, fetchFamilies, createFamily, updateFamily, deleteFamily, clearError, error 
+    families, total, page, limit,
+    isLoading, fetchFamilies, createFamily, updateFamily, 
+    deleteFamily, clearError, error 
   } = useFamilyStore()
   const { students, fetchStudents } = useAdminStudentStore()
 
@@ -30,6 +34,7 @@ export default function FamilyManager() {
   const [modalOpen, setModalOpen] = useState(false)
   const [editingId, setEditingId] = useState(null)
   const [deleteTarget, setDeleteTarget] = useState(null)
+  const [currentPage, setCurrentPage] = useState(1)
   
   const [form, setForm] = useState({
     family_name: '',
@@ -43,9 +48,9 @@ export default function FamilyManager() {
   const [studentSearch, setStudentSearch] = useState('')
 
   useEffect(() => {
-    fetchFamilies()
+    fetchFamilies({ page: currentPage, limit: 50 })
     fetchStudents()
-  }, [fetchFamilies, fetchStudents])
+  }, [currentPage, fetchFamilies, fetchStudents])
 
   const filteredFamilies = useMemo(() => {
     if (!searchQuery) return families
@@ -57,6 +62,8 @@ export default function FamilyManager() {
       f.siblings?.some(s => s.first_name?.toLowerCase().includes(q) || s.last_name?.toLowerCase().includes(q))
     )
   }, [families, searchQuery])
+
+  const totalPages = Math.ceil(total / limit) || 1
 
   const filteredStudentsForSelect = useMemo(() => {
     if (!studentSearch) return students.slice(0, 10)
@@ -102,6 +109,11 @@ export default function FamilyManager() {
     setModalOpen(true)
   }
 
+  const handleSearchChange = (e) => {
+    setSearchQuery(e.target.value)
+    setCurrentPage(1)
+  }
+
   const handleSubmit = async (e) => {
     e.preventDefault()
     try {
@@ -111,6 +123,7 @@ export default function FamilyManager() {
       } else {
         await createFamily(form)
         toastSuccess('Family created')
+        setCurrentPage(1)
       }
       setModalOpen(false)
     } catch (err) {
@@ -124,6 +137,7 @@ export default function FamilyManager() {
       await deleteFamily(deleteTarget.id)
       toastSuccess('Family deleted')
       setDeleteTarget(null)
+      setCurrentPage(1)
     } catch (err) { 
       toastError('Deletion failed') 
     }
@@ -158,7 +172,7 @@ export default function FamilyManager() {
               type="text"
               placeholder="Search families..."
               value={searchQuery}
-              onChange={e => setSearchQuery(e.target.value)}
+              onChange={handleSearchChange}
               className="pl-10 pr-4 py-2 bg-gray-50 dark:bg-gray-800 border-none rounded-xl text-sm focus:ring-2 focus:ring-indigo-500/20 w-full sm:w-64"
             />
           </div>
@@ -179,44 +193,103 @@ export default function FamilyManager() {
           ))}
         </div>
       ) : filteredFamilies.length > 0 ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredFamilies.map(f => (
-            <div key={f.id} className="bg-white dark:bg-gray-900 rounded-3xl border border-gray-200 dark:border-gray-800 shadow-sm p-6 flex flex-col hover:border-indigo-300 dark:hover:border-indigo-500/50 transition-colors">
-              <div className="flex justify-between items-start mb-4">
-                <div>
-                  <h3 className="text-lg font-bold text-gray-900 dark:text-white">{f.family_name || 'Unnamed Family'}</h3>
-                  <p className="text-xs font-medium text-gray-500 uppercase tracking-widest mt-0.5">{f.primary_contact}</p>
-                  {f.parent_user_name && (
-                    <p className="text-[10px] font-bold text-indigo-500 mt-1 uppercase">Account: {f.parent_user_name}</p>
-                  )}
+        <div className="space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {filteredFamilies.map(f => (
+              <div key={f.id} className="bg-white dark:bg-gray-900 rounded-3xl border border-gray-200 dark:border-gray-800 shadow-sm p-6 flex flex-col hover:border-indigo-300 dark:hover:border-indigo-500/50 transition-colors">
+                <div className="flex justify-between items-start mb-4">
+                  <div>
+                    <h3 className="text-lg font-bold text-gray-900 dark:text-white">{f.family_name || 'Unnamed Family'}</h3>
+                    <p className="text-xs font-medium text-gray-500 uppercase tracking-widest mt-0.5">{f.primary_contact}</p>
+                    {f.parent_user_name && (
+                      <p className="text-[10px] font-bold text-indigo-500 mt-1 uppercase">Account: {f.parent_user_name}</p>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <button onClick={() => openModal(f)} className="p-1.5 text-gray-400 hover:text-indigo-600 transition-colors"><Pencil size={16}/></button>
+                    <button onClick={() => setDeleteTarget(f)} className="p-1.5 text-gray-400 hover:text-red-600 transition-colors"><Trash2 size={16}/></button>
+                  </div>
                 </div>
-                <div className="flex items-center gap-2">
-                  <button onClick={() => openModal(f)} className="p-1.5 text-gray-400 hover:text-indigo-600 transition-colors"><Pencil size={16}/></button>
-                  <button onClick={() => setDeleteTarget(f)} className="p-1.5 text-gray-400 hover:text-red-600 transition-colors"><Trash2 size={16}/></button>
+
+                <div className="space-y-2 mb-6">
+                  {f.phone && <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400"><Phone size={14} /> {f.phone}</div>}
+                  {f.email && <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400"><Mail size={14} /> {f.email}</div>}
+                </div>
+
+                <div className="mt-auto pt-4 border-t border-gray-100 dark:border-gray-800">
+                  <p className="text-xs font-bold uppercase tracking-widest text-gray-500 mb-3">Linked Siblings ({f.siblings?.length || 0})</p>
+                  <div className="space-y-2">
+                    {f.siblings?.map(s => (
+                      <div key={s.id} className="flex items-center justify-between p-2 rounded-xl bg-gray-50 dark:bg-gray-800/50 border border-gray-100 dark:border-gray-800">
+                        <span className="text-sm font-bold text-gray-900 dark:text-white">{s.first_name} {s.last_name}</span>
+                        <span className="text-[10px] font-mono font-bold text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-500/10 px-2 py-0.5 rounded-md">{s.admission_no}</span>
+                      </div>
+                    ))}
+                    {(!f.siblings || f.siblings.length === 0) && (
+                      <p className="text-xs text-gray-400 italic">No siblings linked.</p>
+                    )}
+                  </div>
                 </div>
               </div>
+            ))}
+          </div>
 
-              <div className="space-y-2 mb-6">
-                {f.phone && <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400"><Phone size={14} /> {f.phone}</div>}
-                {f.email && <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400"><Mail size={14} /> {f.email}</div>}
-              </div>
+          {totalPages > 1 && (
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-4 border-t border-gray-100 dark:border-gray-800">
+              <p className="text-xs font-medium text-gray-500">
+                Showing{' '}
+                <span className="text-gray-900 dark:text-gray-100">{families.length}</span>
+                {' '}of{' '}
+                <span className="text-gray-900 dark:text-gray-100">{total}</span>
+                {' '}families
+              </p>
 
-              <div className="mt-auto pt-4 border-t border-gray-100 dark:border-gray-800">
-                <p className="text-xs font-bold uppercase tracking-widest text-gray-500 mb-3">Linked Siblings ({f.siblings?.length || 0})</p>
-                <div className="space-y-2">
-                  {f.siblings?.map(s => (
-                    <div key={s.id} className="flex items-center justify-between p-2 rounded-xl bg-gray-50 dark:bg-gray-800/50 border border-gray-100 dark:border-gray-800">
-                      <span className="text-sm font-bold text-gray-900 dark:text-white">{s.first_name} {s.last_name}</span>
-                      <span className="text-[10px] font-mono font-bold text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-500/10 px-2 py-0.5 rounded-md">{s.admission_no}</span>
-                    </div>
-                  ))}
-                  {(!f.siblings || f.siblings.length === 0) && (
-                    <p className="text-xs text-gray-400 italic">No siblings linked.</p>
-                  )}
+              <div className="flex items-center gap-2">
+                <button
+                  disabled={currentPage <= 1 || isLoading}
+                  onClick={() => setCurrentPage(p => p - 1)}
+                  className="p-2 rounded-lg border border-gray-200 dark:border-gray-700
+                             disabled:opacity-50 hover:bg-gray-50 dark:hover:bg-gray-800
+                             transition-colors text-gray-600 dark:text-gray-400"
+                >
+                  <ChevronLeft size={16} />
+                </button>
+
+                <div className="flex items-center gap-1">
+                  {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                    const start = Math.max(1, Math.min(currentPage - 2, totalPages - 4))
+                    const p = start + i
+                    const active = p === currentPage
+                    if (p > totalPages) return null
+                    return (
+                      <button
+                        key={p}
+                        onClick={() => setCurrentPage(p)}
+                        disabled={isLoading}
+                        className={`w-9 h-9 rounded-lg text-xs font-bold transition-all disabled:opacity-50
+                          ${active
+                            ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/30'
+                            : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'
+                          }`}
+                      >
+                        {p}
+                      </button>
+                    )
+                  })}
                 </div>
+
+                <button
+                  disabled={currentPage >= totalPages || isLoading}
+                  onClick={() => setCurrentPage(p => p + 1)}
+                  className="p-2 rounded-lg border border-gray-200 dark:border-gray-700
+                             disabled:opacity-50 hover:bg-gray-50 dark:hover:bg-gray-800
+                             transition-colors text-gray-600 dark:text-gray-400"
+                >
+                  <ChevronRight size={16} />
+                </button>
               </div>
             </div>
-          ))}
+          )}
         </div>
       ) : (
         <div className="py-12">
