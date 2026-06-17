@@ -1,11 +1,27 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { User, AlertCircle, ChevronRight } from 'lucide-react';
+import { User, AlertCircle, ChevronRight, Activity, Calendar, Wallet, GraduationCap } from 'lucide-react';
+import { motion } from 'framer-motion';
 import { cn } from '@/utils/helpers';
 import Card from '../ui/Card';
 import Badge from '../ui/Badge';
 import { useStudentRisk } from '@/hooks/useStudentRisk';
 import { ROUTES } from '@/constants/app';
+
+const container = {
+  hidden: { opacity: 0 },
+  show: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.05
+    }
+  }
+};
+
+const item = {
+  hidden: { opacity: 0, x: -10 },
+  show: { opacity: 1, x: 0 }
+};
 
 const RiskScoreWidget = ({ limit = 5, sessionId }) => {
   const navigate = useNavigate();
@@ -13,15 +29,18 @@ const RiskScoreWidget = ({ limit = 5, sessionId }) => {
 
   if (isLoading) {
     return (
-      <Card className="animate-pulse bg-surface p-6">
-        <div className="h-6 w-32 bg-surface-raised rounded mb-6" />
+      <Card className="animate-pulse bg-white border-brand/10 p-6">
+        <div className="flex items-center justify-between mb-6">
+          <div className="h-5 w-32 bg-brand/5 rounded" />
+          <div className="h-5 w-16 bg-brand/5 rounded" />
+        </div>
         <div className="space-y-4">
           {[...Array(3)].map((_, i) => (
             <div key={i} className="flex gap-4">
-              <div className="w-10 h-10 rounded-full bg-surface-raised" />
+              <div className="w-12 h-12 rounded-2xl bg-brand/5" />
               <div className="flex-1 space-y-2">
-                <div className="h-4 w-1/3 bg-surface-raised rounded" />
-                <div className="h-3 w-1/4 bg-surface-raised rounded" />
+                <div className="h-4 w-1/2 bg-brand/5 rounded" />
+                <div className="h-3 w-1/3 bg-brand/5 rounded" />
               </div>
             </div>
           ))}
@@ -33,71 +52,120 @@ const RiskScoreWidget = ({ limit = 5, sessionId }) => {
   if (students.length === 0) return null;
 
   return (
-    <Card className="p-6">
-      <div className="flex items-center justify-between mb-6">
-        <h3 className="text-lg font-bold text-text-primary flex items-center gap-2">
-          <AlertCircle size={20} className="text-red-500" /> High-Risk Students
-        </h3>
-        <Badge variant="red" size="sm">{pagination?.total || students.length} Total</Badge>
+    <Card className="p-0 overflow-hidden border-brand/10 shadow-xl shadow-brand/5">
+      <div className="p-5 border-b border-border-base flex items-center justify-between bg-surface-raised/50">
+        <div className="flex items-center gap-2">
+          <div className="p-1.5 bg-red-50 text-red-500 rounded-lg">
+            <AlertCircle size={18} />
+          </div>
+          <h3 className="text-sm font-bold text-text-primary uppercase tracking-wider">
+            High-Risk Students
+          </h3>
+        </div>
+        <Badge variant="red" className="bg-red-500 text-white border-none font-bold px-2 py-0.5">
+          {pagination?.total || students.length}
+        </Badge>
       </div>
 
-      <div className="space-y-4">
+      <motion.div 
+        variants={container}
+        initial="hidden"
+        whileInView="show"
+        viewport={{ once: true }}
+        className="divide-y divide-border-base"
+      >
         {students.slice(0, limit).map((student) => (
-          <div 
+          <motion.div 
             key={student.id} 
-            className="group relative flex items-center gap-4 p-3 rounded-xl hover:bg-surface-raised transition-all border border-transparent hover:border-border-base cursor-pointer"
+            variants={item}
+            className="group relative flex items-center gap-4 p-4 hover:bg-brand/[0.02] transition-colors cursor-pointer"
             onClick={() => navigate(ROUTES.STUDENT_DETAIL.replace(':id', student.id))}
           >
-            <div className={cn(
-              "w-12 h-12 rounded-full flex items-center justify-center font-bold text-white shrink-0",
-              student.riskScore > 70 ? "bg-red-500 shadow-lg shadow-red-500/20" : 
-              student.riskScore > 40 ? "bg-amber-500 shadow-lg shadow-amber-500/20" : "bg-blue-500 shadow-lg shadow-blue-500/20"
-            )}>
-              {student.riskScore}
+            <div className="relative shrink-0">
+              <svg className="w-14 h-14 -rotate-90">
+                <circle
+                  cx="28"
+                  cy="28"
+                  r="24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="4"
+                  className="text-border-base"
+                />
+                <circle
+                  cx="28"
+                  cy="28"
+                  r="24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="4"
+                  strokeDasharray={150.7}
+                  strokeDashoffset={150.7 - (150.7 * student.riskScore) / 100}
+                  className={cn(
+                    "transition-all duration-1000",
+                    student.riskScore > 70 ? "text-red-500" : 
+                    student.riskScore > 40 ? "text-amber-500" : "text-brand"
+                  )}
+                  strokeLinecap="round"
+                />
+              </svg>
+              <div className="absolute inset-0 flex items-center justify-center">
+                <span className="text-xs font-bold text-text-primary">{student.riskScore}%</span>
+              </div>
             </div>
 
             <div className="flex-1 min-w-0">
-              <h4 className="font-bold text-text-primary truncate">{student.name}</h4>
-              <p className="text-[11px] text-text-secondary truncate">
-                {student.class_name} • Adm: {student.admission_no}
+              <h4 className="font-bold text-text-primary truncate text-sm">{student.name}</h4>
+              <p className="text-[11px] text-text-muted font-medium truncate mb-1">
+                {student.class_name} • #{student.admission_no}
               </p>
-              <p className="text-[10px] font-medium text-text-muted mt-1 italic truncate">
+              <div className="flex items-center gap-1.5 text-[10px] text-red-600/80 font-bold italic truncate">
+                <Activity size={10} />
                 {student.recommendation}
-              </p>
+              </div>
             </div>
 
-            <div className="flex flex-col items-end gap-1 shrink-0">
-              <div className="flex gap-1">
-                <RiskDot label="Att" score={student.breakdown.attendance} />
-                <RiskDot label="Fee" score={student.breakdown.fees} />
-                <RiskDot label="Acad" score={student.breakdown.academics} />
+            <div className="flex flex-col items-end gap-2 shrink-0">
+              <div className="flex gap-1.5">
+                <RiskIndicator icon={Calendar} score={student.breakdown.attendance} color="blue" />
+                <RiskIndicator icon={Wallet} score={student.breakdown.fees} color="amber" />
+                <RiskIndicator icon={GraduationCap} score={student.breakdown.academics} color="purple" />
               </div>
-              <ChevronRight size={14} className="text-text-muted opacity-0 group-hover:opacity-100 transition-opacity" />
+              <ChevronRight size={14} className="text-text-muted group-hover:translate-x-1 transition-all" />
             </div>
-          </div>
+          </motion.div>
         ))}
-      </div>
+      </motion.div>
 
       {students.length > limit && (
-        <button 
-          className="w-full mt-4 py-2 text-xs font-bold text-brand hover:bg-brand/5 rounded-lg transition-colors flex items-center justify-center gap-1"
-          onClick={() => navigate(ROUTES.AI_RISK_ANALYSIS)}
-        >
-          View All At-Risk Students <ChevronRight size={14} />
-        </button>
+        <div className="p-3 bg-surface-raised/30 border-t border-border-base">
+          <button 
+            className="w-full py-2 text-[10px] font-bold text-brand hover:bg-brand/5 rounded-lg transition-colors flex items-center justify-center gap-1 uppercase tracking-widest"
+            onClick={() => navigate(ROUTES.AI_RISK_ANALYSIS)}
+          >
+            Review All Analytics <ChevronRight size={14} />
+          </button>
+        </div>
       )}
     </Card>
   );
 };
 
-const RiskDot = ({ label, score }) => (
-  <div className="flex flex-col items-center">
+const RiskIndicator = ({ icon: Icon, score, color }) => {
+  const colorMap = {
+    blue: "text-blue-500 bg-blue-50",
+    amber: "text-amber-500 bg-amber-50",
+    purple: "text-purple-500 bg-purple-50",
+  };
+  
+  return (
     <div className={cn(
-      "w-2 h-2 rounded-full",
-      score > 70 ? "bg-red-500" : score > 40 ? "bg-amber-500" : score > 20 ? "bg-blue-500" : "bg-green-500"
-    )} title={`${label}: ${score}% risk`} />
-    <span className="text-[8px] text-text-muted mt-0.5">{label}</span>
-  </div>
-);
+      "p-1.5 rounded-lg border border-transparent transition-colors",
+      score > 60 ? "bg-red-50 text-red-500 border-red-100" : colorMap[color]
+    )} title={`Risk factor: ${score}%`}>
+      <Icon size={12} strokeWidth={2.5} />
+    </div>
+  );
+};
 
 export default RiskScoreWidget;

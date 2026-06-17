@@ -105,6 +105,8 @@ const EditStudentPage = () => {
       mother_phone: student.mother_phone || '',
       mother_email: student.mother_email || '',
       mother_qualification: student.mother_qualification || '',
+      mother_aadhar: student.mother_aadhar || '',
+      mother_annual_income: student.mother_annual_income || '',
 
       guardian_name: student.guardian_name || '',
       guardian_relation: student.guardian_relation || '',
@@ -460,6 +462,13 @@ const EditStudentPage = () => {
                   error={errors.mother_email?.message}
                   {...register('mother_email')}
                 />
+                <Input 
+                  label="Mother's Aadhar No (Optional)" 
+                  hint="12-digit Aadhaar number printed on the card (optional)"
+                  error={errors.mother_aadhar?.message}
+                  {...register('mother_aadhar')} 
+                />
+                <Input label="Mother's Annual Income (Optional)" error={errors.mother_annual_income?.message} {...register('mother_annual_income')} />
               </div>
             </div>
 

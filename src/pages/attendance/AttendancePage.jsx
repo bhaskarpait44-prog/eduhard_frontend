@@ -21,7 +21,7 @@ const AttendancePage = () => {
     ...(isAdmin ? [{ key: 'override', label: 'Override Attendance', icon: ShieldCheck }] : []),
     { key: 'report', label: 'Student Report', icon: TrendingUp },
   ]), [isAdmin])
-  const [tab, setTab] = useState(isAdmin ? 'override' : 'mark')
+  const [tab, setTab] = useState('mark')
 
   return (
     <div className="space-y-6">

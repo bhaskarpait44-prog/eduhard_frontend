@@ -37,6 +37,7 @@ const AdmitStudentPage = () => {
   const [step, setStep] = useState(1)
   const [formData, setFormData] = useState({})
   const [admittedStudent, setAdmitted] = useState(null)
+  const [admittedEnrollmentId, setAdmittedEnrollmentId] = useState(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
 
   useEffect(() => {
@@ -113,6 +114,8 @@ const AdmitStudentPage = () => {
         mother_phone: allData.mother_phone,
         mother_email: allData.mother_email,
         mother_qualification: allData.mother_qualification,
+        mother_aadhar: allData.mother_aadhar,
+        mother_annual_income: allData.mother_annual_income,
 
         guardian_name: allData.guardian_name,
         guardian_relation: allData.guardian_relation,
@@ -158,24 +161,30 @@ const AdmitStudentPage = () => {
         setAdmitted(currentStudent)
       }
 
-      const enrollmentResult = await createEnrollment({
-        student_id: currentStudent.id,
-        session_id: parseInt(allData.session_id, 10),
-        class_id: parseInt(allData.class_id, 10),
-        section_id: parseInt(allData.section_id, 10),
-        stream: allData.stream || null,
-        medium: allData.medium,
-        is_hostel: allData.is_hostel,
-        distance_km: allData.distance_km,
-        prev_attendance_days: allData.prev_attendance_days,
-        joining_type: allData.joining_type,
-        joined_date: allData.joined_date,
-        roll_number: allData.roll_number?.trim() || '',
-      }).catch(err => ({ error: err }))
+      if (!admittedEnrollmentId) {
+        const enrollmentResult = await createEnrollment({
+          student_id: currentStudent.id,
+          session_id: parseInt(allData.session_id, 10),
+          class_id: parseInt(allData.class_id, 10),
+          section_id: parseInt(allData.section_id, 10),
+          stream: allData.stream || null,
+          medium: allData.medium,
+          is_hostel: allData.is_hostel,
+          distance_km: allData.distance_km,
+          prev_attendance_days: allData.prev_attendance_days,
+          joining_type: allData.joining_type,
+          joined_date: allData.joined_date,
+          roll_number: allData.roll_number?.trim() || '',
+        }).catch(err => ({ error: err }))
 
-      if (enrollmentResult?.error) {
-        toastError(enrollmentResult.error.message || 'Student created, but enrollment failed. Please try again.')
-        return
+        if (enrollmentResult?.error) {
+          toastError(enrollmentResult.error.message || 'Student created, but enrollment failed. Please try again.')
+          return
+        }
+        
+        // Handle both direct result and result.data depending on API wrapper behavior
+        const enrollmentId = enrollmentResult?.id || enrollmentResult?.data?.id
+        if (enrollmentId) setAdmittedEnrollmentId(enrollmentId)
       }
 
       // Assign subjects if selected
@@ -188,7 +197,8 @@ const AdmitStudentPage = () => {
         }).catch(err => ({ error: err }))
 
         if (subjectResult?.error) {
-          toastError(subjectResult.error.message || 'Student admitted, but subject assignment failed. You can add subjects later.')
+          toastError(subjectResult.error.message || 'Subject assignment failed. Please retry or skip and add subjects later.')
+          return // STAY ON STEP 6 to allow retry
         }
       }
 
@@ -246,10 +256,12 @@ const AdmitStudentPage = () => {
         >
           <AlertCircle className="w-5 h-5 shrink-0 text-amber-500" />
           <div className="text-sm">
-            <p className="font-bold">Student record created</p>
+            <p className="font-bold">Partial Admission Saved</p>
             <p className="text-xs opacity-80">
-              The student record was successfully saved, but enrollment failed. You are now re-submitting only the enrollment and subject details.
-              Back-navigation past Step 3 is disabled as student data is already committed.
+              {admittedEnrollmentId 
+                ? "Student and enrollment records are saved. Only subject assignment is pending."
+                : "Student record is saved, but enrollment is pending."}
+              {" "}Back-navigation past Step 3 is disabled to maintain data integrity.
             </p>
           </div>
         </div>

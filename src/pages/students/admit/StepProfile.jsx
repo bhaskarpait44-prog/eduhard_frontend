@@ -171,6 +171,16 @@ const StepProfile = ({ defaultValues, onNext, onBack }) => {
             {...register('mother_phone')} 
           />
           <Input label="Mother's Email (Optional)" type="email" placeholder="mother@email.com" error={errors.mother_email?.message} {...register('mother_email')} />
+          <Input 
+            label="Mother's Aadhar (Optional)" 
+            placeholder="12-digit number" 
+            type="text" 
+            maxLength={12} 
+            hint="12-digit Aadhaar number printed on the card (optional)"
+            error={errors.mother_aadhar?.message}
+            {...register('mother_aadhar')} 
+          />
+          <Input label="Mother's Annual Income (Optional)" placeholder="e.g. 8,00,000" error={errors.mother_annual_income?.message} {...register('mother_annual_income')} />
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-6">

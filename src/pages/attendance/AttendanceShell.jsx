@@ -2,18 +2,18 @@ import { cn } from '@/utils/helpers'
 
 export const AttendanceHero = ({ badge, title, description, meta = [], actions, children }) => (
   <section
-    className="rounded-3xl border"
+    className="rounded-2xl border"
     style={{
       background:
         'linear-gradient(135deg, color-mix(in srgb, var(--color-brand) 10%, var(--color-surface)) 0%, var(--color-surface) 52%, color-mix(in srgb, var(--color-surface-raised) 70%, white) 100%)',
       borderColor: 'color-mix(in srgb, var(--color-brand) 16%, var(--color-border))',
     }}
   >
-    <div className="flex flex-col gap-6 p-6 lg:flex-row lg:items-start lg:justify-between lg:p-8">
-      <div className="space-y-4">
+    <div className="flex flex-col gap-4 p-4 lg:flex-row lg:items-start lg:justify-between lg:p-5">
+      <div className="space-y-3">
         {badge ? (
           <span
-            className="inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em]"
+            className="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.18em]"
             style={{
               backgroundColor: 'color-mix(in srgb, var(--color-brand) 10%, var(--color-surface))',
               color: 'var(--color-brand-dark)',
@@ -24,32 +24,32 @@ export const AttendanceHero = ({ badge, title, description, meta = [], actions, 
           </span>
         ) : null}
 
-        <div className="space-y-2">
-          <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl" style={{ color: 'var(--color-text-primary)' }}>
+        <div className="space-y-1">
+          <h1 className="text-lg font-semibold tracking-tight sm:text-xl" style={{ color: 'var(--color-text-primary)' }}>
             {title}
           </h1>
           {description ? (
-            <p className="max-w-3xl text-sm leading-6 sm:text-base" style={{ color: 'var(--color-text-secondary)' }}>
+            <p className="max-w-2xl text-xs leading-relaxed" style={{ color: 'var(--color-text-secondary)' }}>
               {description}
             </p>
           ) : null}
         </div>
 
         {meta.length > 0 ? (
-          <div className="flex flex-wrap gap-3">
+          <div className="flex flex-wrap gap-2">
             {meta.map((item) => (
               <div
                 key={item.label}
-                className="min-w-[140px] rounded-2xl border px-4 py-3"
+                className="min-w-[110px] rounded-xl border px-3 py-2"
                 style={{
                   backgroundColor: 'color-mix(in srgb, var(--color-surface) 84%, white)',
                   borderColor: 'var(--color-border)',
                 }}
               >
-                <p className="text-[11px] font-medium uppercase tracking-[0.16em]" style={{ color: 'var(--color-text-muted)' }}>
+                <p className="text-[9px] font-medium uppercase tracking-[0.16em]" style={{ color: 'var(--color-text-muted)' }}>
                   {item.label}
                 </p>
-                <p className="mt-1 text-sm font-semibold" style={{ color: 'var(--color-text-primary)' }}>
+                <p className="mt-0.5 text-xs font-semibold" style={{ color: 'var(--color-text-primary)' }}>
                   {item.value}
                 </p>
               </div>
@@ -58,12 +58,12 @@ export const AttendanceHero = ({ badge, title, description, meta = [], actions, 
         ) : null}
       </div>
 
-      {actions ? <div className="flex flex-wrap items-center gap-3">{actions}</div> : null}
+      {actions ? <div className="flex flex-wrap items-center gap-2">{actions}</div> : null}
     </div>
 
     {children ? (
       <div
-        className="rounded-b-3xl border-t px-6 py-4 lg:px-8"
+        className="rounded-b-2xl border-t px-4 py-3 lg:px-5"
         style={{
           borderColor: 'color-mix(in srgb, var(--color-brand) 10%, var(--color-border))',
           backgroundColor: 'color-mix(in srgb, var(--color-surface) 94%, white)',

@@ -78,6 +78,8 @@ const StepPreview = ({ formData, onBack, onSubmit, isSaving }) => {
           <PreviewField label="Mother's Name" value={formData.mother_name} />
           <PreviewField label="Mother's Email" value={formData.mother_email} />
           <PreviewField label="Mother's Phone" value={formData.mother_phone} />
+          <PreviewField label="Mother's Aadhaar" value={formData.mother_aadhar} />
+          <PreviewField label="Mother's Annual Income" value={formData.mother_annual_income} />
           <PreviewField label="Guardian Name" value={formData.guardian_name} />
         </PreviewGroup>
 

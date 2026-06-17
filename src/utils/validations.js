@@ -129,6 +129,15 @@ const baseStudentProfileSchema = z.object({
   mother_phone: phoneSchema,
   mother_qualification: z.string().optional(),
   mother_email: z.string().email('Mother\'s email is invalid — please enter a valid email address (Optional)').optional().or(z.literal('')),
+  mother_aadhar: z
+    .string()
+    .regex(/^\d{12}$/, 'Mother\'s Aadhaar number is invalid — enter exactly 12 digits (numbers only) (Optional)')
+    .optional()
+    .or(z.literal('')),
+  mother_annual_income: z.preprocess(
+    val => (val === '' || val === null || val === undefined ? undefined : String(val).replace(/,/g, '')),
+    z.string().regex(/^\d+$/, 'Annual income is invalid — enter numbers only without commas or symbols (Optional)').optional()
+  ),
 
   guardian_name: z.string().optional(),
   guardian_relation: z.string().optional(),
@@ -191,6 +200,12 @@ export const studentUpdateSchema = baseStudentProfileSchema.extend({
     .min(1, 'Last name is missing — please enter the student\'s last name')
     .max(50, 'Last name is too long — please limit to 50 characters')
     .regex(/^[a-zA-Z\s''-]+$/, 'Last name contains invalid characters — only letters are allowed'),
+
+  admission_no: z
+    .string().trim()
+    .min(1, 'Admission number is missing — please enter a unique admission number')
+    .max(30, 'Admission number is too long — please limit to 30 characters')
+    .regex(/^[a-zA-Z0-9\-_]+$/, 'Admission number contains invalid characters — only letters, numbers, hyphens, and underscores are allowed'),
 
   father_email: z.string().email('Email is invalid — please enter a valid email address for the father').optional().or(z.literal('')),
 

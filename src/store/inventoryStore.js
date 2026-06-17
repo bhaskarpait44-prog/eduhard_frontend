@@ -1,4 +1,3 @@
-// src/store/inventoryStore.js
 import { create } from 'zustand'
 import * as api from '@/api/inventoryApi'
 
@@ -24,7 +23,7 @@ const useInventoryStore = create((set, get) => ({
       await api.createItem(data)
       await get().fetchItems()
     } catch (err) {
-      set({ error: err.message, isLoading: false })
+      set({ isLoading: false })
       throw err
     }
   },
@@ -35,7 +34,7 @@ const useInventoryStore = create((set, get) => ({
       await api.updateItem(id, data)
       await get().fetchItems()
     } catch (err) {
-      set({ error: err.message, isLoading: false })
+      set({ isLoading: false })
       throw err
     }
   },
@@ -46,16 +45,20 @@ const useInventoryStore = create((set, get) => ({
       await api.deleteItem(id)
       await get().fetchItems()
     } catch (err) {
-      set({ error: err.message, isLoading: false })
+      set({ isLoading: false })
       throw err
     }
   },
 
-  fetchTransactions: async (itemId) => {
+  fetchTransactions: async (params) => {
     set({ isLoading: true, error: null })
     try {
-      const res = await api.getTransactions(itemId)
-      set({ transactions: res.data, isLoading: false })
+      const res = await api.getTransactions(params)
+      const data = res.data
+      // Handle both paginated { transactions, total } and flat array
+      const txList = Array.isArray(data) ? data : (data.transactions || [])
+      set({ transactions: txList, isLoading: false })
+      return data  // return for pagination info
     } catch (err) {
       set({ error: err.message, isLoading: false })
     }
@@ -66,12 +69,13 @@ const useInventoryStore = create((set, get) => ({
     try {
       await api.recordTransaction(data)
       await get().fetchItems()
-      await get().fetchTransactions()
+      // Refresh transactions filtered by the same item
+      await get().fetchTransactions({ item_id: data.item_id })
     } catch (err) {
-      set({ error: err.message, isLoading: false })
+      set({ isLoading: false })
       throw err
     }
-  }
+  },
 }))
 
 export default useInventoryStore
