@@ -21,8 +21,13 @@ import {
   CheckCircle2,
   Clock,
   BookOpen,
+  FileText,
 } from 'lucide-react'
+import { pdf } from '@react-pdf/renderer'
+import { TeacherDetailPDF } from '@/pdf/TeacherDetailPDF'
 import * as userApi from '@/api/userManagementApi'
+import api from '@/api/axios'
+import { getSettings } from '@/api/settingsApi'
 import {
   createTeacherControlAssignment,
   getTeacherControlAssignments,
@@ -523,6 +528,7 @@ const TeacherDetailPage = () => {
   const [isSavingEdit,       setSavingEdit]       = useState(false)
   const [isDeleting,         setDeleting]         = useState(false)
   const [isResettingPassword,setResettingPassword]= useState(false)
+  const [exportingPDF,       setExportingPDF]     = useState(false)
 
   /* form values */
   const [confirmName, setConfirmName] = useState('')
@@ -580,6 +586,48 @@ const TeacherDetailPage = () => {
   }
 
   /* ── actions ── */
+  const handleDownloadDetail = async () => {
+    setExportingPDF(true)
+    const teacherRecordId = String(id || '').replace(/^teacher-/, '')
+    try {
+      const [settingsRes, assignRes, timetableRes, leaveRes] = await Promise.all([
+        getSettings(),
+        getTeacherControlAssignments({ teacher_id: teacherRecordId }),
+        getTeacherControlTimetable({ teacher_id: teacherRecordId }),
+        api.get(`/admin/teacher-control/leave?teacher_id=${teacherRecordId}`),
+      ])
+
+      const schoolData = {
+        name: settingsRes.data?.school_name,
+        email: settingsRes.data?.school_email,
+        phone: settingsRes.data?.school_phone,
+        address: settingsRes.data?.school_address,
+        logo_url: settingsRes.data?.logo_url,
+      }
+
+      const blob = await pdf(
+        <TeacherDetailPDF
+          teacher={teacher}
+          school={schoolData}
+          assignments={assignRes?.data?.assignments || []}
+          timetable={timetableRes?.data?.timetable || []}
+          leaves={leaveRes?.data?.applications || []}
+          />
+      ).toBlob()
+
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `Teacher_${teacher.name.replace(/\s+/g, '_')}_Report.pdf`
+      a.click()
+      URL.revokeObjectURL(url)
+    } catch (err) {
+      toastError('Failed to download PDF.')
+    } finally {
+      setExportingPDF(false)
+    }
+  }
+
   const handleSaveEdit = async () => {
     const phoneRegex = /^[6-9]\d{9}$/
     if (editForm.phone && !phoneRegex.test(editForm.phone)) {
@@ -733,6 +781,13 @@ const TeacherDetailPage = () => {
 
         {/* action buttons */}
         <div className="flex flex-wrap gap-2 shrink-0">
+          <Button
+            variant="secondary" size="sm" icon={FileText}
+            onClick={handleDownloadDetail}
+            loading={exportingPDF}
+          >
+            Download PDF
+          </Button>
           <Button
             variant="secondary" size="sm" icon={Pencil}
             onClick={() => { syncEditForm(); setEditOpen(true) }}

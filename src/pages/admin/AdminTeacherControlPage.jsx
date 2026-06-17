@@ -2,9 +2,12 @@ import { useEffect, useMemo, useState } from 'react'
 import {
   BookOpenText, CalendarRange, ChevronDown, ChevronRight, Clock,
   Grid3x3, School2, ShieldCheck, UserRoundCheck, Zap,
-  Pencil, Trash2
+  Pencil, Trash2, FileDown
 } from 'lucide-react'
+import { pdf } from '@react-pdf/renderer'
+import { TeacherListPDF } from '@/pdf/TeacherListPDF'
 import * as teacherControlApi from '@/api/adminTeacherControlApi'
+import { getSettings } from '@/api/settingsApi'
 import { getClasses, getClassList, getSections, getSubjects } from '@/api/classApi'
 import usePageTitle from '@/hooks/usePageTitle'
 import useToast from '@/hooks/useToast'
@@ -255,6 +258,36 @@ const AdminTeacherControlPage = () => {
   }, [filteredSlots])
 
   /* ── actions ── */
+  const handleExportList = async () => {
+    try {
+      const settingsRes = await getSettings()
+      const schoolData = {
+        name: settingsRes.data?.school_name,
+        email: settingsRes.data?.school_email,
+        phone: settingsRes.data?.school_phone,
+        address: settingsRes.data?.school_address,
+        logo_url: settingsRes.data?.logo_url,
+      }
+
+      const blob = await pdf(
+        <TeacherListPDF
+          teachers={teachers}
+          school={schoolData}
+          session={session}
+        />
+      ).toBlob()
+
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `Teacher_Directory_${new Date().toISOString().slice(0, 10)}.pdf`
+      a.click()
+      URL.revokeObjectURL(url)
+    } catch (err) {
+      toastError('Failed to export PDF.')
+    }
+  }
+
   const handleAssignmentSave = async (e) => {
     e.preventDefault();
 
@@ -449,14 +482,24 @@ const AdminTeacherControlPage = () => {
                 />
               )}
             </div>
-            <button
-              type="button"
-              onClick={() => setShowAssignForm((p) => !p)}
-              className="inline-flex min-h-10 items-center gap-2 rounded-2xl px-4 text-sm font-semibold transition-all"
-              style={{ backgroundColor: '#0f766e', color: '#fff', border: 'none' }}
-            >
-              <Zap size={14} />{showAssignForm ? 'Cancel' : 'New Assignment'}
-            </button>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={handleExportList}
+                className="inline-flex min-h-10 items-center gap-2 rounded-2xl px-4 text-sm font-semibold transition-all"
+                style={{ backgroundColor: 'var(--color-surface)', color: 'var(--color-text-primary)', border: '1px solid var(--color-border)' }}
+              >
+                <FileDown size={14} />Export PDF
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowAssignForm((p) => !p)}
+                className="inline-flex min-h-10 items-center gap-2 rounded-2xl px-4 text-sm font-semibold transition-all"
+                style={{ backgroundColor: '#0f766e', color: '#fff', border: 'none' }}
+              >
+                <Zap size={14} />{showAssignForm ? 'Cancel' : 'New Assignment'}
+              </button>
+            </div>
           </div>
 
           {/* create form */}

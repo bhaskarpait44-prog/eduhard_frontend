@@ -27,6 +27,17 @@ const AIBriefingPanel = ({ sessionId }) => {
     return summary.split(/(?<=\.)\s+/).filter(s => s.trim().length > 0);
   }, [summary]);
 
+  const renderText = (text) => {
+    if (!text) return null;
+    const parts = text.split(/(\*\*.*?\*\*)/g);
+    return parts.map((part, i) => {
+      if (part.startsWith('**') && part.endsWith('**')) {
+        return <strong key={i} className="font-bold text-text-primary">{part.slice(2, -2)}</strong>;
+      }
+      return part;
+    });
+  };
+
   if (loading && !summary) {
     return (
       <Card className="p-0 overflow-hidden border-brand/20 bg-brand/5">
@@ -144,14 +155,14 @@ const AIBriefingPanel = ({ sessionId }) => {
                         <li key={idx} className="flex gap-3 text-text-primary leading-relaxed text-sm md:text-base">
                           <div className="mt-2 w-1.5 h-1.5 rounded-full bg-brand/30 shrink-0" />
                           <p className={cn(idx === 0 ? "font-semibold text-text-primary" : "text-text-secondary")}>
-                            {sentence}
+                            {renderText(sentence)}
                           </p>
                         </li>
                       ))}
                     </ul>
                   ) : (
                     <p className="text-sm md:text-base font-medium leading-relaxed text-text-primary">
-                      {summary}
+                      {renderText(summary)}
                     </p>
                   )}
                 </motion.div>

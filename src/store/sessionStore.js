@@ -22,8 +22,7 @@ const useSessionStore = create((set, get) => ({
       const sessions = res.data?.sessions || []
       const pagination = res.data?.pagination || { total: sessions.length, page: 1, limit: 20, totalPages: 1 }
       
-      const currentSession = sessions.find((session) => session.is_current === true) || null
-      set({ sessions, pagination, currentSession, isLoading: false })
+      set({ sessions, pagination, isLoading: false })
       return res.data
     } catch (err) {
       set({ error: err.message, isLoading: false })

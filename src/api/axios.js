@@ -1,6 +1,5 @@
 // src/api/axios.js
 import axios from 'axios'
-import { STORAGE_KEYS } from '@/constants/app'
 import useAuthStore from '@/store/authStore'
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api'

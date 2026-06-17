@@ -204,24 +204,30 @@ const AIInsightsCard = ({ sessionId }) => {
             </motion.div>
           )}
 
-          <motion.div variants={item}>
-            <h4 className="text-sm font-bold text-text-primary mb-4 flex items-center gap-2">
-              <ArrowRight size={18} className="text-brand" /> Strategic Recommendations
-            </h4>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              {recommendations.map((rec, idx) => (
-                <div key={idx} className="flex items-start gap-3 bg-surface p-4 rounded-xl border border-border-base hover:border-brand/20 transition-all hover:shadow-sm">
-                  <div className={cn(
-                    "mt-1.5 w-2 h-2 rounded-full shrink-0",
-                    rec.type === 'critical' ? "bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.5)]" : 
-                    rec.type === 'warning' ? "bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.5)]" : 
-                    "bg-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.5)]"
-                  )} />
-                  <p className="text-xs text-text-secondary leading-relaxed font-medium">{rec.message}</p>
-                </div>
-              ))}
-            </div>
-          </motion.div>
+          {recommendations.length > 0 ? (
+            <motion.div variants={item}>
+              <h4 className="text-sm font-bold text-text-primary mb-4 flex items-center gap-2">
+                <ArrowRight size={18} className="text-brand" /> Strategic Recommendations
+              </h4>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {recommendations.map((rec, idx) => (
+                  <div key={idx} className="flex items-start gap-3 bg-surface p-4 rounded-xl border border-border-base hover:border-brand/20 transition-all hover:shadow-sm">
+                    <div className={cn(
+                      "mt-1.5 w-2 h-2 rounded-full shrink-0",
+                      rec.type === 'critical' ? "bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.5)]" : 
+                      rec.type === 'warning' ? "bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.5)]" : 
+                      "bg-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.5)]"
+                    )} />
+                    <p className="text-xs text-text-secondary leading-relaxed font-medium">{rec.message}</p>
+                  </div>
+                ))}
+              </div>
+            </motion.div>
+          ) : (
+            <motion.div variants={item} className="text-center py-6 bg-surface rounded-2xl border border-dashed border-border-base">
+              <p className="text-sm text-text-muted font-medium">All metrics within normal range.</p>
+            </motion.div>
+          )}
         </div>
       </Card>
     </motion.div>

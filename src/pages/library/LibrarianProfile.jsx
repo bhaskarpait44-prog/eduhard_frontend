@@ -10,7 +10,7 @@ const LibrarianProfile = () => {
   usePageTitle('Librarian Profile')
   const { toastSuccess, toastError } = useToast()
   const [profile, setProfile] = useState(null)
-  const [passwords, setPasswords] = useState({ current_password: '', new_password: '', confirm_password: '' })
+  const [passwords, setPasswords] = useState({ currentPassword: '', newPassword: '', confirmPassword: '' })
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
 
@@ -20,7 +20,7 @@ const LibrarianProfile = () => {
 
   const fetchProfile = async () => {
     try {
-      const { data } = await axios.get('/admin/users/me')
+      const { data } = await axios.get('/auth/me')
       setProfile(data)
     } catch (err) {
       console.error('Failed to fetch profile', err)
@@ -32,23 +32,23 @@ const LibrarianProfile = () => {
   const handlePasswordChange = async (e) => {
     e.preventDefault()
     
-    if (passwords.new_password.length < 8) {
+    if (passwords.newPassword.length < 8) {
       return toastError('New password must be at least 8 characters long')
     }
 
-    if (passwords.new_password !== passwords.confirm_password) {
+    if (passwords.newPassword !== passwords.confirmPassword) {
       return toastError('Passwords do not match')
     }
 
-    if (passwords.new_password === passwords.current_password) {
+    if (passwords.newPassword === passwords.currentPassword) {
       return toastError('New password must be different from the current password')
     }
 
     setSaving(true)
     try {
-      await axios.patch('/admin/users/change-password', passwords)
+      await axios.post('/auth/change-password', passwords)
       toastSuccess('Password changed successfully')
-      setPasswords({ current_password: '', new_password: '', confirm_password: '' })
+      setPasswords({ currentPassword: '', newPassword: '', confirmPassword: '' })
     } catch (err) {
       toastError(err.response?.data?.message || 'Failed to change password')
     } finally {
@@ -89,22 +89,22 @@ const LibrarianProfile = () => {
           <Input
             label="Current Password"
             type="password"
-            value={passwords.current_password}
-            onChange={(e) => setPasswords(p => ({ ...p, current_password: e.target.value }))}
+            value={passwords.currentPassword}
+            onChange={(e) => setPasswords(p => ({ ...p, currentPassword: e.target.value }))}
             required
           />
           <Input
             label="New Password"
             type="password"
-            value={passwords.new_password}
-            onChange={(e) => setPasswords(p => ({ ...p, new_password: e.target.value }))}
+            value={passwords.newPassword}
+            onChange={(e) => setPasswords(p => ({ ...p, newPassword: e.target.value }))}
             required
           />
           <Input
             label="Confirm New Password"
             type="password"
-            value={passwords.confirm_password}
-            onChange={(e) => setPasswords(p => ({ ...p, confirm_password: e.target.value }))}
+            value={passwords.confirmPassword}
+            onChange={(e) => setPasswords(p => ({ ...p, confirmPassword: e.target.value }))}
             required
           />
           <Button type="submit" variant="primary" loading={saving}>Change Password</Button>
