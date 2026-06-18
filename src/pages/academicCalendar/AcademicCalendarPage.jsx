@@ -41,8 +41,7 @@ const AcademicCalendarPage = () => {
   const { can } = usePermissions()
   const { 
     events, isLoading, fetchEvents, deleteEvent, publishEvent,
-    activeMonth, activeYear, setMonth, filterType, setFilterType,
-    downloadPdf
+    filterType, setFilterType, downloadPdf
   } = useAcademicCalendarStore()
   const { sessions, currentSession, fetchSessions, fetchCurrentSession } = useSessionStore()
 
@@ -153,7 +152,7 @@ const AcademicCalendarPage = () => {
       // Pass the currently viewed month and year to the PDF download
       const month = viewDate.getMonth() + 1
       const year = viewDate.getFullYear()
-      const blob = await downloadPdf(selectedSessionId, filterType, month, year)
+      const blob = await downloadPdf(selectedSessionId, filterType, filterAudience, month, year)
       const sessionName = sessions.find(s => String(s.id) === String(selectedSessionId))?.name || 'Calendar'
       downloadBlob(blob, `Academic_Calendar_${sessionName.replace(/\s+/g, '_')}.pdf`)
       toast.success('PDF generated successfully')
@@ -433,7 +432,7 @@ const AcademicCalendarPage = () => {
                           )}
                         </div>
 
-                        {canEdit && (
+                        {canEdit && !event.is_readonly && (
                           <button
                             onClick={() => handleTogglePublish(event.id)}
                             className={cn(

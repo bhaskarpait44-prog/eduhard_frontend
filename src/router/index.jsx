@@ -232,6 +232,7 @@ const router = createBrowserRouter([
     children: [
       { index: true, element: <Navigate to="dashboard" replace /> },
       { path: 'dashboard', element: <Lazy component={StudentDashboard} /> },
+      { path: 'calendar', element: <Lazy component={StudentCalendarPage} /> },
       { path: 'attendance', element: <Lazy component={MyAttendance} /> },
       { path: 'results', element: <Lazy component={MyResults} /> },
       { path: 'results/report-card', element: <Lazy component={StudentReportCard} /> },

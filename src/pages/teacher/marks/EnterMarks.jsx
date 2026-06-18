@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useLocation } from 'react-router-dom'
 import { AlertTriangle, BookOpen, GraduationCap, Layout, Lock, Info, Search, FilterX, Users, ChevronRight, RefreshCw } from 'lucide-react'
 import usePageTitle from '@/hooks/usePageTitle'

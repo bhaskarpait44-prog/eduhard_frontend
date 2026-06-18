@@ -9,6 +9,7 @@ import usePageTitle from '@/hooks/usePageTitle'
 import useTeacherDashboard from '@/hooks/useTeacherDashboard'
 import useToast from '@/hooks/useToast'
 import PendingTasksList from '@/components/teacher/PendingTasksList'
+import RiskScoreWidget from '@/components/dashboard/RiskScoreWidget'
 import { ROUTES } from '@/constants/app'
 import { formatPercent, titleCase } from '@/utils/helpers'
 
@@ -366,7 +367,7 @@ const TeacherDashboard = () => {
             <PendingTasksList tasks={pendingTasks} loading={loading && !pendingTasks.length} />
           </SectionShell>
 
-          <RiskScoreWidget />
+          <RiskScoreWidget sessionId={dashboard?.current_session?.id} />
 
           <SectionShell
             title="Quick Actions"

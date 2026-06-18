@@ -30,6 +30,15 @@ const schema = z.object({
 }).refine(data => new Date(data.end_date) >= new Date(data.start_date), {
   message: "End date cannot be before start date",
   path: ["end_date"]
+}).refine(data => {
+  if (data.is_all_day || !data.start_time || !data.end_time) return true
+  if (data.start_date === data.end_date) {
+    return data.end_time >= data.start_time
+  }
+  return true
+}, {
+  message: "End time cannot be before start time on the same day",
+  path: ["end_time"]
 })
 
 const EVENT_TYPES = [
@@ -71,7 +80,7 @@ const EventFormModal = ({ isOpen, onClose, event, sessionId }) => {
       audience: 'everyone',
       is_published: false,
       notify_on_publish: false,
-      color: '#3b82f6'
+      color: '#2563eb'
     }
   })
 
@@ -89,7 +98,7 @@ const EventFormModal = ({ isOpen, onClose, event, sessionId }) => {
           target_class_id: event.target_class_id || '',
           start_time: event.start_time || '',
           end_time: event.end_time || '',
-          color: event.color || '#3b82f6'
+          color: event.color || '#2563eb'
         })
       } else {
         reset({
@@ -97,7 +106,7 @@ const EventFormModal = ({ isOpen, onClose, event, sessionId }) => {
           audience: 'everyone',
           is_published: false,
           notify_on_publish: false,
-          color: '#3b82f6',
+          color: '#2563eb',
           start_date: format(new Date(), 'yyyy-MM-dd'),
           end_date: format(new Date(), 'yyyy-MM-dd'),
         })
