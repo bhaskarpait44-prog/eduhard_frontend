@@ -81,8 +81,21 @@ const SettingsPage = () => {
   const { theme, setTheme, sidebarCollapsed, setSidebarCollapsed } = useUiStore()
   const { currentSession, fetchCurrentSession } = useSessionStore()
 
-  const [settings, setSettings] = useState(DEFAULT_SETTINGS)
+  const [settings, setSettings] = useState(() => {
+    try {
+      const saved = localStorage.getItem(SETTINGS_STORAGE_KEY)
+      if (saved) {
+        return { ...DEFAULT_SETTINGS, ...JSON.parse(saved) }
+      }
+    } catch {
+      // ignore
+    }
+    return DEFAULT_SETTINGS
+  })
   const [isLoading, setIsLoading] = useState(false)
+  const [isSavingProfile, setIsSavingProfile] = useState(false)
+  const [isSavingPayment, setIsSavingPayment] = useState(false)
+  const [isSavingAdmission, setIsSavingAdmission] = useState(false)
 
   // Password state
   const [pwdForm, setPwdForm] = useState({ currentPassword: '', newPassword: '', confirmPassword: '' })
@@ -112,15 +125,18 @@ const SettingsPage = () => {
       const res = await api.get('/settings')
       if (res.data?.data) {
         const data = res.data.data
-        setSettings((prev) => ({ 
-          ...prev, 
-          ...data,
-          schoolName: data.school_name || prev.schoolName,
-          schoolEmail: data.school_email || prev.schoolEmail,
-          schoolPhone: data.school_phone || prev.schoolPhone,
-          schoolAddress: data.school_address || prev.schoolAddress,
-        }))
-        localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(data))
+        setSettings((prev) => {
+          const updated = { 
+            ...prev, 
+            ...data,
+            schoolName: data.school_name || prev.schoolName,
+            schoolEmail: data.school_email || prev.schoolEmail,
+            schoolPhone: data.school_phone || prev.schoolPhone,
+            schoolAddress: data.school_address || prev.schoolAddress,
+          }
+          localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(updated))
+          return updated
+        })
       }
     } catch (err) {
       console.error('Failed to fetch settings from API, falling back to local storage', err)
@@ -141,6 +157,91 @@ const SettingsPage = () => {
     if (!id) return true // Allow empty
     const regex = /^[a-zA-Z0-9.\-_]{2,256}@[a-zA-Z]{2,64}$/
     return regex.test(id)
+  }
+
+  const handleSaveProfile = async () => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    if (settings.schoolEmail && !emailRegex.test(settings.schoolEmail)) {
+      toastError('Enter a valid school email address')
+      return
+    }
+
+    const phoneRegex = /^[6-9]\d{9}$/
+    const sanitizedPhone = (settings.schoolPhone || '').replace(/\D/g, '').replace(/^91/, '')
+    if (settings.schoolPhone && !phoneRegex.test(sanitizedPhone)) {
+      toastError('Enter a valid 10-digit school mobile number')
+      return
+    }
+
+    setIsSavingProfile(true)
+    try {
+      await api.put('/settings', { 
+        school_name: settings.schoolName,
+        school_email: settings.schoolEmail,
+        school_phone: settings.schoolPhone,
+        school_address: settings.schoolAddress,
+        // Include other fields to satisfy backend body if needed, or backend should support partial
+        upi_id: settings.upi_id,
+        upi_name: settings.upi_name,
+        upi_enabled: settings.upi_enabled,
+        online_admission_open: settings.online_admission_open,
+      })
+      localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(settings))
+      toastSuccess('School profile updated')
+    } catch (err) {
+      toastError(err.message || 'Failed to save profile')
+    } finally {
+      setIsSavingProfile(false)
+    }
+  }
+
+  const handleSavePayment = async () => {
+    if (!validateUpiId(settings.upi_id)) {
+      toastError('Invalid UPI ID format')
+      return
+    }
+
+    setIsSavingPayment(true)
+    try {
+      await api.put('/settings', { 
+        upi_id: settings.upi_id,
+        upi_name: settings.upi_name,
+        upi_enabled: settings.upi_enabled,
+        school_name: settings.schoolName,
+        school_email: settings.schoolEmail,
+        school_phone: settings.schoolPhone,
+        school_address: settings.schoolAddress,
+        online_admission_open: settings.online_admission_open,
+      })
+      localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(settings))
+      toastSuccess('Payment settings updated')
+    } catch (err) {
+      toastError(err.message || 'Failed to save payments')
+    } finally {
+      setIsSavingPayment(false)
+    }
+  }
+
+  const handleSaveAdmission = async () => {
+    setIsSavingAdmission(true)
+    try {
+      await api.put('/settings', { 
+        online_admission_open: settings.online_admission_open,
+        school_name: settings.schoolName,
+        school_email: settings.schoolEmail,
+        school_phone: settings.schoolPhone,
+        school_address: settings.schoolAddress,
+        upi_id: settings.upi_id,
+        upi_name: settings.upi_name,
+        upi_enabled: settings.upi_enabled,
+      })
+      localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(settings))
+      toastSuccess('Admission status updated')
+    } catch (err) {
+      toastError(err.message || 'Failed to update admission')
+    } finally {
+      setIsSavingAdmission(false)
+    }
   }
 
   const handleSave = async () => {
@@ -178,7 +279,7 @@ const SettingsPage = () => {
       toastSuccess('Server settings saved successfully')
     } catch (err) {
       console.error('Failed to save settings to API', err)
-      toastError(err.response?.data?.message || err.message || 'Failed to save settings to server')
+      toastError(err.message || 'Failed to save settings to server')
     } finally {
       setIsLoading(false)
     }
@@ -288,13 +389,13 @@ const SettingsPage = () => {
             description="Basic identity and contact information (Saved to school database)."
             action={
               <button
-                onClick={handleSave}
-                disabled={isLoading}
+                onClick={handleSaveProfile}
+                disabled={isSavingProfile}
                 className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold text-white transition-opacity hover:opacity-90 disabled:opacity-50"
                 style={{ backgroundColor: 'var(--color-brand)' }}
               >
                 <Save size={15} />
-                {isLoading ? 'Saving...' : 'Save to DB'}
+                {isSavingProfile ? 'Saving...' : 'Save Profile'}
               </button>
             }
           >
@@ -319,12 +420,6 @@ const SettingsPage = () => {
                 placeholder="+91 98765 43210"
                 icon={Phone}
               />
-              <Field
-                label="Timezone"
-                value={settings.timezone}
-                onChange={(value) => handleChange('timezone', value)}
-                placeholder="Asia/Kolkata"
-              />
             </div>
             <div className="mt-4">
               <Field
@@ -343,13 +438,13 @@ const SettingsPage = () => {
             description="Configure payment options (Saved to school database)."
             action={
               <button
-                onClick={handleSave}
-                disabled={isLoading}
+                onClick={handleSavePayment}
+                disabled={isSavingPayment}
                 className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold text-white transition-opacity hover:opacity-90 disabled:opacity-50"
                 style={{ backgroundColor: 'var(--color-brand)' }}
               >
                 <Save size={15} />
-                {isLoading ? 'Saving...' : 'Save to DB'}
+                {isSavingPayment ? 'Saving...' : 'Save Payments'}
               </button>
             }
           >
@@ -404,13 +499,13 @@ const SettingsPage = () => {
             description="Control public admission portal status (Saved to school database)."
             action={
               <button
-                onClick={handleSave}
-                disabled={isLoading}
+                onClick={handleSaveAdmission}
+                disabled={isSavingAdmission}
                 className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold text-white transition-opacity hover:opacity-90 disabled:opacity-50"
                 style={{ backgroundColor: 'var(--color-brand)' }}
               >
                 <Save size={15} />
-                {isLoading ? 'Saving...' : 'Save to DB'}
+                {isSavingAdmission ? 'Saving...' : 'Save Portal Status'}
               </button>
             }
           >
@@ -434,6 +529,16 @@ const SettingsPage = () => {
             icon={MonitorCog}
             title="Workspace Preferences"
             description="Personalize how the admin panel feels when you open it each day."
+            action={
+              <button
+                onClick={handleLocalSave}
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold text-white transition-opacity hover:opacity-90"
+                style={{ backgroundColor: 'var(--color-brand)' }}
+              >
+                <Save size={15} />
+                Save Preferences
+              </button>
+            }
           >
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <PreferenceBox
@@ -481,6 +586,15 @@ const SettingsPage = () => {
                   />
                 </div>
               </PreferenceBox>
+            </div>
+
+            <div className="mt-4 max-w-md">
+              <Field
+                label="Workspace Timezone"
+                value={settings.timezone}
+                onChange={(value) => handleChange('timezone', value)}
+                placeholder="Asia/Kolkata"
+              />
             </div>
           </SettingsCard>
 
@@ -538,7 +652,7 @@ const SettingsPage = () => {
                 </div>
                 <button
                   type="submit"
-                  disabled={isChangingPwd || !pwdForm.newPassword || pwdForm.newPassword !== pwdForm.confirmPassword}
+                  disabled={isChangingPwd || !pwdForm.currentPassword || !pwdForm.newPassword || pwdForm.newPassword !== pwdForm.confirmPassword}
                   className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-bold text-white transition-all hover:shadow-lg disabled:opacity-50 disabled:grayscale"
                   style={{ backgroundColor: 'var(--color-brand)' }}
                 >
@@ -553,6 +667,16 @@ const SettingsPage = () => {
             icon={Bell}
             title="Admin Reminders"
             description="Keep a couple of useful nudges visible for the admin team."
+            action={
+              <button
+                onClick={handleLocalSave}
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold text-white transition-opacity hover:opacity-90"
+                style={{ backgroundColor: 'var(--color-brand)' }}
+              >
+                <Save size={15} />
+                Save Preferences
+              </button>
+            }
           >
             <div className="space-y-3">
               <ToggleRow
