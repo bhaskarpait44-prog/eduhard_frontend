@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import DOMPurify from 'dompurify'
 import usePageTitle from '@/hooks/usePageTitle'
 import { getParentNotices, markParentNoticeRead } from '@/api/noticesApi'
 import { Bell, Calendar, User, ShieldCheck, ChevronRight, FileText, Paperclip } from 'lucide-react'
@@ -119,7 +120,7 @@ export default function ParentNotices() {
                 
                 <div 
                   className="text-sm text-gray-600 leading-relaxed prose max-w-none prose-p:mb-4 prose-strong:text-gray-900"
-                  dangerouslySetInnerHTML={{ __html: notice.body || notice.content }}
+                  dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(notice.body || notice.content || '') }}
                 />
 
                 {notice.attachment_path && (

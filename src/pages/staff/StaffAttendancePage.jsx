@@ -59,7 +59,8 @@ export default function StaffAttendancePage() {
   useEffect(() => {
     if (dailyAttendance) {
       setLocalRecords(dailyAttendance.map(s => ({
-        user_id: s.user_id,
+        staff_id: s.staff_id,
+        type: s.type,
         status: s.status || 'present',
         remarks: s.remarks || ''
       })))
@@ -75,15 +76,15 @@ export default function StaffAttendancePage() {
     )
   }, [dailyAttendance, registerData, searchQuery, activeTab])
 
-  const handleStatusChange = (userId, status) => {
+  const handleStatusChange = (staffId, status) => {
     setLocalRecords(prev => prev.map(r => 
-      r.user_id === userId ? { ...r, status } : r
+      r.staff_id === staffId ? { ...r, status } : r
     ))
   }
 
-  const handleRemarksChange = (userId, remarks) => {
+  const handleRemarksChange = (staffId, remarks) => {
     setLocalRecords(prev => prev.map(r => 
-      r.user_id === userId ? { ...r, remarks } : r
+      r.staff_id === staffId ? { ...r, remarks } : r
     ))
   }
 
@@ -106,7 +107,9 @@ export default function StaffAttendancePage() {
   const handleNextDate = () => {
     const d = new Date(selectedDate)
     d.setDate(d.getDate() + 1)
-    setSelectedDate(d.toISOString().split('T')[0])
+    const next = d.toISOString().split('T')[0]
+    const today = new Date().toISOString().split('T')[0]
+    if (next <= today) setSelectedDate(next)
   }
 
   return (
@@ -182,6 +185,7 @@ export default function StaffAttendancePage() {
               <input
                 type="date"
                 value={selectedDate}
+                max={new Date().toISOString().split('T')[0]}
                 onChange={e => setSelectedDate(e.target.value)}
                 className="bg-transparent border-none text-sm font-bold focus:ring-0 cursor-pointer"
               />
@@ -202,11 +206,20 @@ export default function StaffAttendancePage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-50 dark:divide-gray-800">
-                {filteredStaff.length > 0 ? (
+                {isLoading ? (
+                  <tr>
+                    <td colSpan="3" className="py-24 text-center">
+                      <div className="flex flex-col items-center gap-3">
+                        <div className="w-10 h-10 border-4 border-indigo-500/20 border-t-indigo-500 rounded-full animate-spin" />
+                        <p className="text-sm font-medium text-gray-400">Loading staff attendance...</p>
+                      </div>
+                    </td>
+                  </tr>
+                ) : filteredStaff.length > 0 ? (
                   filteredStaff.map((s) => {
-                    const localRec = localRecords.find(r => r.user_id === s.user_id) || { status: 'present', remarks: '' }
+                    const localRec = localRecords.find(r => r.staff_id === s.staff_id) || { status: 'present', remarks: '' }
                     return (
-                      <tr key={s.user_id} className="hover:bg-gray-50/50 dark:hover:bg-gray-800/30 transition-colors">
+                      <tr key={`${s.type}-${s.staff_id}`} className="hover:bg-gray-50/50 dark:hover:bg-gray-800/30 transition-colors">
                         <td className="px-6 py-4">
                           <div className="flex items-center gap-3">
                             <div className="w-10 h-10 rounded-xl bg-indigo-50 dark:bg-indigo-500/10 flex items-center justify-center text-indigo-600 dark:text-indigo-400 font-bold">
@@ -223,7 +236,7 @@ export default function StaffAttendancePage() {
                             {STATUS_OPTIONS.map((opt) => (
                               <button
                                 key={opt.value}
-                                onClick={() => handleStatusChange(s.user_id, opt.value)}
+                                onClick={() => handleStatusChange(s.staff_id, opt.value)}
                                 className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 ${
                                   localRec.status === opt.value
                                     ? `bg-white dark:bg-gray-700 shadow-sm text-${opt.color}-600 dark:text-${opt.color}-400`
@@ -243,7 +256,7 @@ export default function StaffAttendancePage() {
                             type="text"
                             placeholder="Add note..."
                             value={localRec.remarks}
-                            onChange={e => handleRemarksChange(s.user_id, e.target.value)}
+                            onChange={e => handleRemarksChange(s.staff_id, e.target.value)}
                             className="w-full bg-transparent border-none text-sm focus:ring-0 text-gray-600 dark:text-gray-400 placeholder:text-gray-300"
                           />
                         </td>
@@ -298,7 +311,10 @@ export default function StaffAttendancePage() {
                 onChange={e => setSelectedYear(Number(e.target.value))}
                 className="bg-gray-50 dark:bg-gray-800 border-none rounded-xl text-sm font-bold focus:ring-2 focus:ring-indigo-500/20"
               >
-                {[2024, 2025, 2026].map(y => (
+                {Array.from(
+                  { length: new Date().getFullYear() - 2023 + 1 },
+                  (_, i) => 2024 + i
+                ).map(y => (
                   <option key={y} value={y}>{y}</option>
                 ))}
               </select>
@@ -320,58 +336,75 @@ export default function StaffAttendancePage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-50 dark:divide-gray-800">
-                {filteredStaff.map((s) => {
-                  const daysInMonth = new Date(selectedYear, selectedMonth, 0).getDate()
-                  const pCount = s.records.filter(r => r.status === 'present').length
-                  const aCount = s.records.filter(r => r.status === 'absent').length
+                {isLoading ? (
+                  <tr>
+                    <td colSpan="35" className="py-24 text-center">
+                      <div className="flex flex-col items-center gap-3">
+                        <div className="w-10 h-10 border-4 border-indigo-500/20 border-t-indigo-500 rounded-full animate-spin" />
+                        <p className="text-sm font-medium text-gray-400">Loading register data...</p>
+                      </div>
+                    </td>
+                  </tr>
+                ) : filteredStaff.length > 0 ? (
+                  filteredStaff.map((s) => {
+                    const daysInMonth = new Date(selectedYear, selectedMonth, 0).getDate()
+                    const stats = s.records.reduce((acc, r) => {
+                      acc[r.status] = (acc[r.status] || 0) + 1
+                      return acc
+                    }, {})
                   
-                  return (
-                    <tr key={s.user_id} className="hover:bg-gray-50/50 dark:hover:bg-gray-800/30 transition-colors">
-                      <td className="px-6 py-3 sticky left-0 bg-white dark:bg-gray-900 z-10">
-                        <div>
-                          <p className="text-sm font-bold text-gray-900 dark:text-white">{s.name}</p>
-                          <p className="text-[10px] text-gray-500 uppercase tracking-wider">{s.employee_id}</p>
-                        </div>
-                      </td>
-                      {Array.from({ length: daysInMonth }, (_, i) => {
-                        const day = i + 1
-                        const dateStr = `${selectedYear}-${String(selectedMonth).padStart(2, '0')}-${String(day).padStart(2, '0')}`
-                        const record = s.records.find(r => r.date === dateStr)
-                        
-                        let color = 'text-gray-200 dark:text-gray-700'
-                        let char = '·'
-                        
-                        if (record?.status === 'present') { color = 'text-emerald-500'; char = 'P' }
-                        if (record?.status === 'absent') { color = 'text-red-500'; char = 'A' }
-                        if (record?.status === 'late') { color = 'text-amber-500'; char = 'L' }
-                        if (record?.status === 'half_day') { color = 'text-blue-500'; char = '½' }
-                        if (record?.status === 'leave') { color = 'text-purple-500'; char = 'V' }
+                    return (
+                      <tr key={`${s.type}-${s.staff_id}`} className="hover:bg-gray-50/50 dark:hover:bg-gray-800/30 transition-colors">
+                        <td className="px-6 py-3 sticky left-0 bg-white dark:bg-gray-900 z-10">
+                          <div>
+                            <p className="text-sm font-bold text-gray-900 dark:text-white">{s.name}</p>
+                            <p className="text-[10px] text-gray-500 uppercase tracking-wider">{s.employee_id}</p>
+                          </div>
+                        </td>
+                        {Array.from({ length: daysInMonth }, (_, i) => {
+                          const day = i + 1
+                          const dateStr = `${selectedYear}-${String(selectedMonth).padStart(2, '0')}-${String(day).padStart(2, '0')}`
+                          const record = s.records.find(r => r.date === dateStr)
+                          
+                          let color = 'text-gray-200 dark:text-gray-700'
+                          let char = '·'
+                          
+                          if (record?.status === 'present') { color = 'text-emerald-500'; char = 'P' }
+                          if (record?.status === 'absent') { color = 'text-red-500'; char = 'A' }
+                          if (record?.status === 'late') { color = 'text-amber-500'; char = 'L' }
+                          if (record?.status === 'half_day') { color = 'text-blue-500'; char = '½' }
+                          if (record?.status === 'leave') { color = 'text-purple-500'; char = 'V' }
 
-                        return (
-                          <td key={day} className={`px-2 py-3 text-center text-[11px] font-black ${color}`}>
-                            {char}
-                          </td>
-                        )
-                      })}
-                      <td className="px-4 py-3 text-center">
-                        <div className="flex items-center gap-1 justify-center">
-                          <Badge variant="green" size="sm">{pCount}P</Badge>
-                          <Badge variant="red" size="sm">{aCount}A</Badge>
-                        </div>
-                      </td>
-                    </tr>
-                  )
-                })}
+                          return (
+                            <td key={day} className={`px-2 py-3 text-center text-[11px] font-black ${color}`}>
+                              {char}
+                            </td>
+                          )
+                        })}
+                        <td className="px-4 py-3 text-center">
+                          <div className="flex items-center gap-1 justify-center">
+                            <Badge variant="green" size="sm" title="Present">{stats.present || 0}P</Badge>
+                            <Badge variant="red" size="sm" title="Absent">{stats.absent || 0}A</Badge>
+                            <Badge variant="amber" size="sm" title="Late">{stats.late || 0}L</Badge>
+                            <Badge variant="blue" size="sm" title="Half Day">{stats.half_day || 0}½</Badge>
+                            <Badge variant="purple" size="sm" title="Leave">{stats.leave || 0}V</Badge>
+                          </div>
+                        </td>
+                      </tr>
+                    )
+                  })
+                ) : (
+                  <tr>
+                    <td colSpan="35" className="py-24 text-center">
+                      <EmptyState 
+                        title="No records found" 
+                        description="Try adjusting your search query or month/year selection." 
+                      />
+                    </td>
+                  </tr>
+                )}
               </tbody>
             </table>
-          </div>
-          
-          <div className="p-4 bg-gray-50/50 dark:bg-gray-800/50 flex items-center gap-6 text-[10px] font-bold text-gray-400 uppercase tracking-widest">
-            <div className="flex items-center gap-2"><span className="text-emerald-500 font-black">P</span> Present</div>
-            <div className="flex items-center gap-2"><span className="text-red-500 font-black">A</span> Absent</div>
-            <div className="flex items-center gap-2"><span className="text-amber-500 font-black">L</span> Late</div>
-            <div className="flex items-center gap-2"><span className="text-blue-500 font-black">½</span> Half Day</div>
-            <div className="flex items-center gap-2"><span className="text-purple-500 font-black">V</span> Leave</div>
           </div>
         </div>
       )}
