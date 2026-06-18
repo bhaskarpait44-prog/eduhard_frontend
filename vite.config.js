@@ -2,6 +2,10 @@ import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 import path from 'path'
+import { fileURLToPath } from 'url'
+
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = path.dirname(__filename)
 
 export default defineConfig({
   base: '/',  // ← add this
@@ -23,12 +27,12 @@ export default defineConfig({
     open: true,
     proxy: {
       '/api': {
-        target: 'http://10.126.46.32:5000',
+        target: 'http://localhost:5000',
         changeOrigin: true,
         secure: false,
       },
       '/uploads': {
-        target: 'http://10.126.46.32:5000',
+        target: 'http://localhost:5000',
         changeOrigin: true,
         secure: false,
       },

@@ -26,7 +26,7 @@ const schema = z.object({
     }, 'Joining date cannot be more than 1 year in the future'),
   roll_number: z.string().optional(),
   subject_ids: z.array(z.string()).optional(),
-  medium: z.enum(['English', 'Assamese']).optional(),
+  medium: z.enum(['English', 'Assamese']).optional().or(z.literal('')),
   is_hostel: z.boolean().optional(),
   distance_km: z.preprocess((val) => (val === '' || val === null ? undefined : Number(val)), z.number().nonnegative().optional()),
   prev_attendance_days: z.preprocess((val) => (val === '' || val === null ? undefined : Number(val)), z.number().int().nonnegative().optional()),
@@ -69,6 +69,13 @@ const StepEnrollment = ({ defaultValues, currentSession, onSubmit, onBack, isPar
   const classId = watch('class_id')
   const subjectIds = watch('subject_ids')
   const selectedClass = classes.find((cls) => String(cls.value) === String(classId))
+
+  // Sync session_id if currentSession loads after mount
+  useEffect(() => {
+    if (currentSession?.id && !watch('session_id')) {
+      setValue('session_id', String(currentSession.id))
+    }
+  }, [currentSession?.id, setValue, watch])
 
   useEffect(() => {
     setLoadingC(true)

@@ -13,8 +13,8 @@ RUN npm install
 # Copy the rest of the application code
 COPY . .
 
-# Expose the port Vite runs on (default is 5173)
-EXPOSE 5173
+# Expose the port Vite runs on (configured as 3000 in vite.config.js)
+EXPOSE 3000
 
 # Command to run Vite with --host to allow external access
 CMD ["npm", "run", "dev"]
