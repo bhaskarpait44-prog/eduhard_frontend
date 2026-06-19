@@ -77,6 +77,8 @@ const UserManagementHomePage = lazy(() => import('@/pages/admin/users/UserManage
 const UserListPage = lazy(() => import('@/pages/admin/users/UserListPage'))
 const CreateUserPage = lazy(() => import('@/pages/admin/users/CreateUserPage'))
 const BulkImportPage = lazy(() => import('@/pages/admin/users/BulkImportPage'))
+const UserDetailPage = lazy(() => import('@/pages/admin/users/UserDetailPage'))
+const PermissionTemplatesPage = lazy(() => import('@/pages/admin/users/PermissionTemplatesPage'))
 const CreateTeacherPage = lazy(() => import('@/pages/admin/CreateTeacherPage'))
 const TeacherDetailPage = lazy(() => import('@/pages/admin/TeacherDetailPage'))
 const ClassDetailPage = lazy(() => import('@/pages/classes/ClassDetailPage'))
@@ -780,6 +782,22 @@ const router = createBrowserRouter([
         element: (
           <ProtectedRoute roles={[ROLES.ADMIN]}>
             <Lazy component={BulkImportPage} />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: ROUTES.USER_DETAIL,
+        element: (
+          <ProtectedRoute roles={[ROLES.ADMIN]}>
+            <Lazy component={UserDetailPage} />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: ROUTES.USER_PERMISSION_TEMPLATES,
+        element: (
+          <ProtectedRoute roles={[ROLES.ADMIN]}>
+            <Lazy component={PermissionTemplatesPage} />
           </ProtectedRoute>
         ),
       },

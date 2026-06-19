@@ -253,7 +253,14 @@ export const createUserSchema = z.object({
   name: z.string().min(1, 'Name is missing — please enter the full name'),
   email: z.string().email('Email is invalid — please enter a valid email address'),
   phone: phoneSchema,
-  role: z.enum(['admin', 'teacher', 'accountant', 'student', 'librarian', 'staff', 'receptionist', 'parent']),
+  role: z.enum(['admin', 'teacher', 'accountant', 'student', 'librarian', 'staff', 'receptionist', 'parent'], {
+    errorMap: (issue, ctx) => {
+      if (issue.code === 'invalid_enum_value' || issue.code === 'invalid_type_error') {
+        return { message: 'Role is required — please select a role' }
+      }
+      return { message: ctx.defaultError }
+    }
+  }),
   employee_id: z.string().optional(),
   department: z.string().optional(),
   designation: z.string().optional(),

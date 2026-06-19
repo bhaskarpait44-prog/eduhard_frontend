@@ -100,7 +100,7 @@ const CreateUserPage = () => {
   const { toastSuccess, toastError, toastInfo } = useToast()
   
   const requestedRole = searchParams.get('role')
-  const initialRole = ROLES.includes(requestedRole) ? requestedRole : 'staff'
+  const initialRole = ROLES.includes(requestedRole) ? requestedRole : ''
   
   const [permissions, setPermissions] = useState(getDefaultPermissionsForRole(initialRole))
   const [isSaving, setIsSaving] = useState(false)
@@ -197,12 +197,13 @@ const CreateUserPage = () => {
                 <Field label="Phone Number" error={errors.phone?.message} icon={Phone}>
                   <input {...register('phone')} placeholder="+91 98765 43210" className={inputClassName(!!errors.phone)} />
                 </Field>
-                <Field label="Assign Role" required icon={Shield}>
+                <Field label="Assign Role" required error={errors.role?.message} icon={Shield}>
                   <select 
                     {...register('role')} 
                     className={inputClassName(!!errors.role)} 
                     onChange={e => handleRoleChange(e.target.value)}
                   >
+                    <option value="">Select a role</option>
                     {ROLES.map(item => (
                       <option key={item} value={item}>{item.charAt(0).toUpperCase() + item.slice(1)}</option>
                     ))}

@@ -136,6 +136,7 @@ export const ROUTES = {
   ADMIN_USERS_NEW: '/users/new',
   ADMIN_USERS_IMPORT: '/users/import',
   USER_DETAIL: '/users/:id',
+  USER_PERMISSION_TEMPLATES: '/users/permission-templates',
   TEACHERS: '/teachers',
   TEACHER_DETAIL: '/teachers/:id',
   TEACHER_NEW: '/teachers/new',

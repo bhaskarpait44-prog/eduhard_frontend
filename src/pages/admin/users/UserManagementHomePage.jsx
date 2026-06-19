@@ -60,8 +60,11 @@ const USER_GROUPS = [
   },
 ]
 
-const StatCard = ({ label, value, icon: Icon, color }) => (
-  <div className="p-5 rounded-2xl bg-white border border-gray-100 shadow-sm flex items-center gap-4">
+const StatCard = ({ label, value, icon: Icon, color, onClick }) => (
+  <div 
+    onClick={onClick}
+    className={`p-5 rounded-2xl bg-white border border-gray-100 shadow-sm flex items-center gap-4 transition-all ${onClick ? 'cursor-pointer hover:shadow-md hover:border-gray-200 hover:-translate-y-0.5' : ''}`}
+  >
     <div className="p-3 rounded-xl" style={{ backgroundColor: `${color}10`, color }}>
       <Icon size={20} />
     </div>
@@ -124,9 +127,27 @@ const UserManagementHomePage = () => {
 
       {/* Stats Overview */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard label="Total Users" value={isLoading ? '...' : stats.total} icon={Users} color="#4f46e5" />
-        <StatCard label="Active Accounts" value={isLoading ? '...' : stats.active} icon={Activity} color="#10b981" />
-        <StatCard label="Administrators" value={isLoading ? '...' : stats.admin} icon={ShieldCheck} color="#3b82f6" />
+        <StatCard 
+          label="Total Users" 
+          value={isLoading ? '...' : stats.total} 
+          icon={Users} 
+          color="#4f46e5" 
+          onClick={() => navigate(ROUTES.USER_MANAGE)}
+        />
+        <StatCard 
+          label="Active Accounts" 
+          value={isLoading ? '...' : stats.active} 
+          icon={Activity} 
+          color="#10b981" 
+          onClick={() => navigate(`${ROUTES.USER_MANAGE}?status=active`)}
+        />
+        <StatCard 
+          label="Administrators" 
+          value={isLoading ? '...' : stats.admin} 
+          icon={ShieldCheck} 
+          color="#3b82f6" 
+          onClick={() => navigate(`${ROUTES.USER_MANAGE}?role=admin`)}
+        />
         <StatCard label="Roles" value={USER_GROUPS.length} icon={FileText} color="#f59e0b" />
       </div>
 
@@ -193,8 +214,11 @@ const UserManagementHomePage = () => {
         <div className="p-6 rounded-[24px] bg-emerald-50 border border-emerald-100">
           <h3 className="font-bold text-emerald-900 mb-2">Permissions & Security</h3>
           <p className="text-sm text-emerald-700/80 mb-4">Audit user activities, reset passwords, and manage global permission templates.</p>
-          <button className="text-sm font-bold text-emerald-700 flex items-center gap-1.5 hover:gap-2 transition-all">
-            Security Dashboard <ArrowRight size={16} />
+          <button 
+            onClick={() => navigate(ROUTES.USER_PERMISSION_TEMPLATES)}
+            className="text-sm font-bold text-emerald-700 flex items-center gap-1.5 hover:gap-2 transition-all"
+          >
+            Permission Templates <ArrowRight size={16} />
           </button>
         </div>
       </div>
