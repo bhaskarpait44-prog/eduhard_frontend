@@ -1,6 +1,30 @@
 // src/pages/students/StudentsPage.jsx
 import { useEffect, useState, useCallback, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { motion, AnimatePresence } from 'framer-motion'
+
+const containerVariants = {
+  hidden: { opacity: 0 },
+  show: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.04
+    }
+  }
+}
+
+const itemVariants = {
+  hidden: { opacity: 0, y: 12 },
+  show: { 
+    opacity: 1, 
+    y: 0, 
+    transition: { 
+      type: 'spring', 
+      stiffness: 100, 
+      damping: 15 
+    } 
+  }
+}
 import {
   Plus, Search, Users, ChevronRight,
   ChevronLeft, X, LayoutGrid, LayoutList,
@@ -247,7 +271,12 @@ const StudentTableRow = ({ student, onView, onEdit, onDelete, onToggleStatus, on
   const gCfg = GENDER_BADGE[student.gender] || { label: student.gender, variant: 'grey' }
 
   return (
-    <tr className="hover:bg-gray-50 dark:hover:bg-gray-800/40 transition-colors group">
+    <motion.tr 
+      variants={itemVariants}
+      layout
+      exit={{ opacity: 0, x: -10 }}
+      className="hover:bg-gray-50 dark:hover:bg-gray-800/40 transition-colors group"
+    >
       <td className="px-6 py-4">
         <div className="flex items-center gap-3">
           <div className="relative">
@@ -313,7 +342,7 @@ const StudentTableRow = ({ student, onView, onEdit, onDelete, onToggleStatus, on
           <CardMenu student={student} onView={onView} onEdit={onEdit} onDelete={onDelete} />
         </div>
       </td>
-    </tr>
+    </motion.tr>
   )
 }
 
@@ -462,7 +491,12 @@ const StudentsPage = () => {
   }
 
   return (
-    <div className="space-y-6">
+    <motion.div 
+      initial={{ opacity: 0, y: 15 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.35 }}
+      className="space-y-6"
+    >
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
@@ -628,18 +662,31 @@ const StudentsPage = () => {
             )}
           />
         ) : view === 'grid' ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {students.map(student => (
-              <StudentGridCard
-                key={student.id}
-                student={student}
-                onView={() => goToDetail(student.id)}
-                onEdit={() => goToEdit(student.id)}
-                onDelete={() => setConfirmDelete(student)}
-                onPreview={(url, title) => setPreviewImage({ url, title })}
-              />
-            ))}
-          </div>
+          <motion.div 
+            variants={containerVariants}
+            initial="hidden"
+            animate="show"
+            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
+          >
+            <AnimatePresence mode="popLayout">
+              {students.map(student => (
+                <motion.div 
+                  key={student.id}
+                  variants={itemVariants}
+                  layout
+                  exit={{ opacity: 0, scale: 0.95 }}
+                >
+                  <StudentGridCard
+                    student={student}
+                    onView={() => goToDetail(student.id)}
+                    onEdit={() => goToEdit(student.id)}
+                    onDelete={() => setConfirmDelete(student)}
+                    onPreview={(url, title) => setPreviewImage({ url, title })}
+                  />
+                </motion.div>
+              ))}
+            </AnimatePresence>
+          </motion.div>
         ) : (
           <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 overflow-hidden">
             <div className="overflow-x-auto">
@@ -652,18 +699,20 @@ const StudentsPage = () => {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100 dark:divide-gray-700/50">
-                  {students.map(student => (
-                    <StudentTableRow
-                      key={student.id}
-                      student={student}
-                      onView={() => goToDetail(student.id)}
-                      onEdit={() => goToEdit(student.id)}
-                      onDelete={() => setConfirmDelete(student)}
-                      onToggleStatus={() => handleToggleStatus(student)}
-                      onPreview={(url, title) => setPreviewImage({ url, title })}
-                      isSaving={isSaving}
-                    />
-                  ))}
+                  <AnimatePresence mode="popLayout">
+                    {students.map(student => (
+                      <StudentTableRow
+                        key={student.id}
+                        student={student}
+                        onView={() => goToDetail(student.id)}
+                        onEdit={() => goToEdit(student.id)}
+                        onDelete={() => setConfirmDelete(student)}
+                        onToggleStatus={() => handleToggleStatus(student)}
+                        onPreview={(url, title) => setPreviewImage({ url, title })}
+                        isSaving={isSaving}
+                      />
+                    ))}
+                  </AnimatePresence>
                 </tbody>
               </table>
             </div>
@@ -872,7 +921,7 @@ const StudentsPage = () => {
           </div>
         </div>
       )}
-    </div>
+    </motion.div>
   )
 }
 

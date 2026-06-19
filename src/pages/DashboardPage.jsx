@@ -1,5 +1,29 @@
 import { useEffect, useCallback, useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
+import { motion } from 'framer-motion'
+
+const containerVariants = {
+  hidden: { opacity: 0 },
+  show: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.08
+    }
+  }
+}
+
+const itemVariants = {
+  hidden: { opacity: 0, y: 15 },
+  show: { 
+    opacity: 1, 
+    y: 0, 
+    transition: { 
+      type: 'spring', 
+      stiffness: 100, 
+      damping: 15 
+    } 
+  }
+}
 import {
   Users, CalendarCheck, IndianRupee, ClipboardList,
   Plus, RefreshCw, ClipboardCheck, RefreshCcw,
@@ -108,7 +132,12 @@ const DashboardPage = () => {
   const showWarning = noStats || !currentSession
 
   return (
-    <div className="max-w-[1400px] mx-auto space-y-6 pb-12">
+    <motion.div 
+      initial={{ opacity: 0, y: 15 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.35 }}
+      className="max-w-[1400px] mx-auto space-y-6 pb-12"
+    >
       {showWarning && !isLoading && !sessionLoading && (
         <div className="bg-amber-50 border border-amber-200 text-amber-800 p-5 rounded-2xl text-sm font-medium flex items-center gap-4 shadow-sm">
           <div className="h-10 w-10 bg-amber-100 rounded-xl flex items-center justify-center text-amber-600 shrink-0">
@@ -178,35 +207,48 @@ const DashboardPage = () => {
       <AIBriefingPanel sessionId={currentSession?.id} />
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard
-          label="Total Students"
-          value={stats?.totalStudents || 0}
-          icon={Users}
-          color="var(--color-brand)"
-        />
-        <StatCard
-          label="Today's Attendance"
-          value={formatPercent(stats?.attendanceToday?.percentage || 0)}
-          sub={stats?.attendanceToday?.forecast ? `AI Forecast: ${stats.attendanceToday.forecast}%` : `${stats?.attendanceToday?.present || 0} present`}
-          icon={CalendarCheck}
-          color="#10b981"
-        />
-        <StatCard
-          label="Revenue (Month)"
-          value={formatCurrency(stats?.feeCollection?.collected || 0)}
-          sub={`${formatPercent(stats?.feeCollection?.percentage || 0)} of target`}
-          icon={IndianRupee}
-          color="#f59e0b"
-        />
-        <StatCard
-          label="Upcoming Exams"
-          value={stats?.upcomingExams?.count || 0}
-          sub={stats?.upcomingExams?.next ? `Next: ${stats.upcomingExams.next}` : 'None scheduled'}
-          icon={ClipboardList}
-          color="#8b5cf6"
-        />
-      </div>
+      <motion.div 
+        variants={containerVariants}
+        initial="hidden"
+        animate="show"
+        className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4"
+      >
+        <motion.div variants={itemVariants}>
+          <StatCard
+            label="Total Students"
+            value={stats?.totalStudents || 0}
+            icon={Users}
+            color="var(--color-brand)"
+          />
+        </motion.div>
+        <motion.div variants={itemVariants}>
+          <StatCard
+            label="Today's Attendance"
+            value={formatPercent(stats?.attendanceToday?.percentage || 0)}
+            sub={stats?.attendanceToday?.forecast ? `AI Forecast: ${stats.attendanceToday.forecast}%` : `${stats?.attendanceToday?.present || 0} present`}
+            icon={CalendarCheck}
+            color="#10b981"
+          />
+        </motion.div>
+        <motion.div variants={itemVariants}>
+          <StatCard
+            label="Revenue (Month)"
+            value={formatCurrency(stats?.feeCollection?.collected || 0)}
+            sub={`${formatPercent(stats?.feeCollection?.percentage || 0)} of target`}
+            icon={IndianRupee}
+            color="#f59e0b"
+          />
+        </motion.div>
+        <motion.div variants={itemVariants}>
+          <StatCard
+            label="Upcoming Exams"
+            value={stats?.upcomingExams?.count || 0}
+            sub={stats?.upcomingExams?.next ? `Next: ${stats.upcomingExams.next}` : 'None scheduled'}
+            icon={ClipboardList}
+            color="#8b5cf6"
+          />
+        </motion.div>
+      </motion.div>
 
       {/* Analytics Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -407,7 +449,7 @@ const DashboardPage = () => {
           </div>
         </div>
       </div>
-    </div>
+    </motion.div>
   )
 }
 

@@ -4,7 +4,6 @@ import {
   BellRing,
   Edit3,
   Eye,
-  Filter,
   Search,
   CalendarDays,
   User2,
@@ -15,6 +14,7 @@ import {
   FileText
 } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
+import { motion, AnimatePresence } from 'framer-motion'
 import useAuthStore from '@/store/authStore'
 import usePageTitle from '@/hooks/usePageTitle'
 import usePermissions from '@/hooks/usePermissions'
@@ -27,22 +27,27 @@ import EmptyState from '@/components/ui/EmptyState'
 import { ROUTES } from '@/constants/app'
 import { formatDate, getFileUrl } from '@/utils/helpers'
 
-const CATEGORY_OPTIONS = [
-  { value: 'general', label: 'General' },
-  { value: 'homework', label: 'Homework' },
-  { value: 'exam', label: 'Exam' },
-  { value: 'event', label: 'Event' },
-  { value: 'holiday', label: 'Holiday' },
-  { value: 'other', label: 'Other' },
-]
+const containerVariants = {
+  hidden: { opacity: 0 },
+  show: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.05
+    }
+  }
+}
 
-const CATEGORY_BADGE_VARIANT = {
-  general: 'blue',
-  homework: 'purple',
-  exam: 'red',
-  event: 'green',
-  holiday: 'teal',
-  other: 'grey',
+const itemVariants = {
+  hidden: { opacity: 0, y: 15 },
+  show: { 
+    opacity: 1, 
+    y: 0, 
+    transition: { 
+      type: 'spring', 
+      stiffness: 100, 
+      damping: 15 
+    } 
+  }
 }
 
 const NoticeList = () => {
@@ -56,7 +61,6 @@ const NoticeList = () => {
 
   const [filters, setFilters] = useState({
     search: '',
-    category: '',
   })
   const [selectedNotice, setSelectedNotice] = useState(null)
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(null)
@@ -75,8 +79,7 @@ const NoticeList = () => {
       notices.filter((notice) => {
         const haystack = `${notice.title} ${notice.body}`.toLowerCase()
         const matchesSearch = !filters.search.trim() || haystack.includes(filters.search.trim().toLowerCase())
-        const matchesCategory = !filters.category || notice.priority === filters.category // Map category to priority if needed, or just skip category filter if not in unified
-        return matchesSearch && matchesCategory
+        return matchesSearch
       }),
     [filters, notices],
   )
@@ -161,15 +164,30 @@ const NoticeList = () => {
         ) : filteredNotices.length === 0 ? (
           <EmptyState icon={BellRing} title="No notices found" description="Announcements and notices you post will appear here." />
         ) : (
-          filteredNotices.map((notice) => (
-            <NoticeCard
-              key={`${notice.source || 'unified'}-${notice.id}`}
-              notice={notice}
-              onOpen={() => handleOpenNotice(notice)}
-              onEdit={() => navigate(ROUTES.TEACHER_NOTICE_NEW, { state: { notice } })}
-              onDelete={() => setIsDeleteConfirmOpen(notice.id)}
-            />
-          ))
+          <motion.div
+            variants={containerVariants}
+            initial="hidden"
+            animate="show"
+            className="space-y-4"
+          >
+            <AnimatePresence mode="popLayout">
+              {filteredNotices.map((notice) => (
+                <motion.div
+                  key={`${notice.source || 'unified'}-${notice.id}`}
+                  variants={itemVariants}
+                  layout
+                  exit={{ opacity: 0, scale: 0.95 }}
+                >
+                  <NoticeCard
+                    notice={notice}
+                    onOpen={() => handleOpenNotice(notice)}
+                    onEdit={() => navigate(ROUTES.TEACHER_NOTICE_NEW, { state: { notice } })}
+                    onDelete={() => setIsDeleteConfirmOpen(notice.id)}
+                  />
+                </motion.div>
+              ))}
+            </AnimatePresence>
+          </motion.div>
         )}
       </section>
 

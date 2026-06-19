@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { BellRing, RefreshCw, CalendarDays, User2, Clock, FileText } from 'lucide-react'
+import { motion, AnimatePresence } from 'framer-motion'
 import Button from '@/components/ui/Button'
 import EmptyState from '@/components/ui/EmptyState'
 import Modal from '@/components/ui/Modal'
@@ -9,6 +10,29 @@ import useStudentNotices from '@/hooks/useStudentNotices'
 import useToast from '@/hooks/useToast'
 import { formatDate, getFileUrl } from '@/utils/helpers'
 import Badge from '@/components/ui/Badge'
+
+const containerVariants = {
+  hidden: { opacity: 0 },
+  show: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.05
+    }
+  }
+}
+
+const itemVariants = {
+  hidden: { opacity: 0, y: 15 },
+  show: { 
+    opacity: 1, 
+    y: 0, 
+    transition: { 
+      type: 'spring', 
+      stiffness: 100, 
+      damping: 15 
+    } 
+  }
+}
 
 const StudentNotices = () => {
   usePageTitle('Notice Board')
@@ -100,15 +124,30 @@ const StudentNotices = () => {
             <div key={index} className="h-44 animate-pulse rounded-[28px]" style={{ backgroundColor: 'var(--color-surface)' }} />
           ))
         ) : sortedNotices.length ? (
-          sortedNotices.map((notice) => (
-            <NoticeCard
-              key={`${notice.source || 'unified'}-${notice.id}`}
-              notice={notice}
-              onOpen={handleOpen}
-              onTogglePin={handleTogglePin}
-              loading={actionId === notice.id}
-            />
-          ))
+          <motion.div
+            variants={containerVariants}
+            initial="hidden"
+            animate="show"
+            className="space-y-4"
+          >
+            <AnimatePresence mode="popLayout">
+              {sortedNotices.map((notice) => (
+                <motion.div
+                  key={`${notice.source || 'unified'}-${notice.id}`}
+                  variants={itemVariants}
+                  layout
+                  exit={{ opacity: 0, scale: 0.95 }}
+                >
+                  <NoticeCard
+                    notice={notice}
+                    onOpen={handleOpen}
+                    onTogglePin={handleTogglePin}
+                    loading={actionId === notice.id}
+                  />
+                </motion.div>
+              ))}
+            </AnimatePresence>
+          </motion.div>
         ) : (
           <EmptyState
             icon={BellRing}

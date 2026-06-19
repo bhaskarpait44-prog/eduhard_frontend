@@ -84,6 +84,12 @@ const getNavGroups = (user) => {
         ],
       },
       {
+        label: 'Communication',
+        items: [
+          { label: 'Notices', icon: 'BellRing', path: ROUTES.LIBRARY_NOTICES },  // BUG-07
+        ],
+      },
+      {
         label: 'Account',
         items: [
           { label: 'My Library', icon: 'UserRound', path: '/library/my-books' },

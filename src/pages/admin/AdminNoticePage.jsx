@@ -377,12 +377,12 @@ const AdminNoticePage = () => {
             {/* Pagination */}
             {pagination.totalPages > 1 && (
               <div className="flex items-center justify-between border-t p-4" style={{ borderColor: 'var(--color-border)' }}>
-                <span className="text-xs text-slate-500">Page {pagination.page} of {pagination.totalPages}</span>
+                <span className="text-xs text-slate-500">Page {filters.page} of {pagination.totalPages}</span>
                 <div className="flex gap-2">
                   <Button 
                     variant="secondary" 
                     size="sm" 
-                    disabled={pagination.page === 1}
+                    disabled={filters.page === 1}
                     onClick={() => setFilters(p => ({ ...p, page: p.page - 1 }))}
                   >
                     Previous
@@ -390,7 +390,7 @@ const AdminNoticePage = () => {
                   <Button 
                     variant="secondary" 
                     size="sm" 
-                    disabled={pagination.page === pagination.totalPages}
+                    disabled={filters.page === pagination.totalPages}
                     onClick={() => setFilters(p => ({ ...p, page: p.page + 1 }))}
                   >
                     Next
@@ -508,6 +508,22 @@ const AdminNoticePage = () => {
 
             <div className="space-y-2">
               <span className="text-xs font-semibold text-slate-500">Attachment (PDF, Max 5MB)</span>
+              {/* BUG-10: Show existing attachment so editors know it exists and won't be lost */}
+              {editingNotice?.attachment_path && !form.attachment && (
+                <div className="flex items-center gap-2 p-3 rounded-xl bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 text-sm">
+                  <FileText size={16} className="text-brand shrink-0" />
+                  <span className="flex-1 text-slate-600 dark:text-slate-400 text-xs">Existing attachment (will be kept if no new file is uploaded)</span>
+                  <a
+                    href={getFileUrl(editingNotice.attachment_path)}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-brand underline text-xs font-semibold hover:opacity-70 transition-opacity"
+                    onClick={e => e.stopPropagation()}
+                  >
+                    View
+                  </a>
+                </div>
+              )}
               <div className="flex items-center gap-3">
                 <label className="flex flex-1 items-center justify-center gap-2 px-4 py-3 rounded-2xl border-2 border-dashed border-slate-300 dark:border-slate-700 hover:border-brand transition-colors cursor-pointer group">
                   <Paperclip size={18} className="text-slate-400 group-hover:text-brand" />

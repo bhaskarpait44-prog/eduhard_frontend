@@ -54,7 +54,7 @@ const NoticeForm = () => {
   }, [editingNotice, assignedSections])
 
   useEffect(() => {
-    if (form.audience === 'student' && form.target_key) {
+    if (form.audience === 'students' && form.target_key) {
       const [classId, sectionId] = form.target_key.split(':')
       teacherApi.getTeacherStudents({ 
         class_id: classId, 
@@ -87,12 +87,23 @@ const NoticeForm = () => {
     e.preventDefault()
     
     const [classId, sectionId] = form.target_key.split(':')
+
+    // BUG-03: For subject_wise, resolve class_id from the selected subject's metadata,
+    // not from the section-keyed target_key (which may belong to a different class).
+    const getClassIdForSubject = (subjectId) => {
+      const subj = assignedSubjects.find(s => s.value === String(subjectId))
+      return subj?.class_id || ''
+    }
+    const effectiveClassId = form.audience === 'subject_wise'
+      ? getClassIdForSubject(form.target_subject_id)
+      : classId
+
     const formData = new FormData()
     formData.append('title', form.title)
     formData.append('body', form.body)
     formData.append('audience', form.audience)
-    formData.append('target_class_id', classId || '')
-    // Bug 6 Fix: Clear section_id for class-level notices
+    formData.append('target_class_id', effectiveClassId || '')
+    // Clear section_id for class-level notices
     formData.append('target_section_id', form.audience === 'class' ? '' : (sectionId || ''))
     formData.append('target_subject_id', form.target_subject_id || '')
     formData.append('target_student_id', form.target_student_id || '')
@@ -150,7 +161,7 @@ const NoticeForm = () => {
                 { value: 'class', label: 'Whole Class' },
                 { value: 'section', label: 'Specific Section' },
                 { value: 'subject_wise', label: 'By Subject' },
-                { value: 'student', label: 'Specific Student' },
+                { value: 'students', label: 'Specific Student' },
               ]}
               disabled={isEditing}
               required
@@ -177,7 +188,7 @@ const NoticeForm = () => {
             )}
           </div>
 
-          {form.audience === 'student' && (
+          {form.audience === 'students' && (
             <Select
               label="Select Student"
               value={form.target_student_id}

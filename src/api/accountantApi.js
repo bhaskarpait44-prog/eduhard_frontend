@@ -46,7 +46,7 @@ export const sendReminderBulk = (data) => api.post('/accountant/defaulters/remin
 export const getAccountantNotices = (params) => api.get('/notices/accountant', { params })
 export const getAccountantPortalNotices = (params) => api.get('/notices/accountant-portal', { params })
 export const createAccountantNotice = (data) => api.post('/notices/accountant', data)
-export const markAccountantPortalNoticeRead = (id) => api.post(`/notices/accountant-portal/${id}/read`)
+export const markAccountantPortalNoticeRead = (id, source = 'unified') => api.post(`/notices/accountant-portal/${id}/read?source=${source}`)  // BUG-06: added source param
 
 export const getConcessions = (params) => api.get('/accountant/concessions', { params })
 export const applyConcession = (data) => api.post('/accountant/concessions/apply', data)

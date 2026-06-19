@@ -31,7 +31,7 @@ export const createStudentChatConversation = (data) => api.post('/student/chat/c
 export const getStudentChatMessages = (id) => api.get(`/student/chat/conversations/${id}/messages`)
 export const sendStudentChatMessage = (id, data) => api.post(`/student/chat/conversations/${id}/messages`, data)
 export const getStudentNotices = (params = {}) => api.get('/notices/student', { params })
-export const markStudentNoticeRead = (noticeId) => api.post(`/notices/student/${noticeId}/read`)
+export const markStudentNoticeRead = (noticeId, source = 'unified') => api.post(`/notices/student/${noticeId}/read?source=${source}`)
 export const pinStudentNotice = (noticeId) => api.post(`/notices/student/${noticeId}/pin`)
 export const unpinStudentNotice = (noticeId) => api.delete(`/notices/student/${noticeId}/pin`)
 export const getStudentProfile = () => api.get('/student/profile')

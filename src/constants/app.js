@@ -125,6 +125,7 @@ export const ROUTES = {
   LIBRARY_FINES: '/library/fines',
   LIBRARY_SETTINGS: '/library/settings',
   LIBRARY_MY_BOOKS: '/library/my-books',
+  LIBRARY_NOTICES: '/library/notices',
   STUDENT_LIBRARY: '/student/my-library',
 
   // Users

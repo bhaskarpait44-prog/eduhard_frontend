@@ -52,6 +52,12 @@ export const getParentNotices = (params) =>
 export const markParentNoticeRead = (id) => 
   api.post(`/notices/parent/${id}/read`)
 
+// Librarian portal
+export const getLibrarianNotices = (params) =>
+  api.get('/notices/librarian', { params })
+export const markLibrarianNoticeRead = (id, source = 'unified') =>
+  api.post(`/notices/librarian/${id}/read?source=${source}`)
+
 // Shared
 export const getNoticeById = (id) => 
   api.get(`/notices/${id}`)

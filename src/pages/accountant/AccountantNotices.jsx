@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { BellRing, Send, Eye, Paperclip, FileText, X } from 'lucide-react'
+import { motion, AnimatePresence } from 'framer-motion'
 import * as accountantApi from '@/api/accountantApi'
 import { getClasses, getClassList } from '@/api/classApi'
 import usePageTitle from '@/hooks/usePageTitle'
@@ -11,6 +12,29 @@ import Select from '@/components/ui/Select'
 import Badge from '@/components/ui/Badge'
 import Modal from '@/components/ui/Modal'
 import { getFileUrl } from '@/utils/helpers'
+
+const containerVariants = {
+  hidden: { opacity: 0 },
+  show: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.05
+    }
+  }
+}
+
+const itemVariants = {
+  hidden: { opacity: 0, y: 15 },
+  show: { 
+    opacity: 1, 
+    y: 0, 
+    transition: { 
+      type: 'spring', 
+      stiffness: 100, 
+      damping: 15 
+    } 
+  }
+}
 
 const initialForm = {
   audience: 'school_wide',
@@ -44,7 +68,7 @@ const AccountantNotices = () => {
       const [classesRes, studentsRes, noticesRes] = await Promise.all([
         getClasses(),
         accountantApi.getStudentFeesList({ sort: 'name' }),
-        accountantApi.getAccountantNotices(),
+        accountantApi.getAccountantPortalNotices(),  // BUG-05: use portal endpoint to match mark-read
       ])
       setClasses(getClassList(classesRes))
       setStudents(studentsRes?.data?.students || studentsRes?.data?.data || [])
@@ -82,7 +106,7 @@ const AccountantNotices = () => {
       const formData = new FormData()
       formData.append('audience', form.audience)
       formData.append('target_class_id', form.audience === 'class' ? Number(form.class_id) : '')
-      formData.append('target_student_id', form.audience === 'student' ? Number(form.student_id) : '')
+      formData.append('target_student_id', form.audience === 'students' ? Number(form.student_id) : '')
       formData.append('title', form.title.trim())
       formData.append('body', form.content.trim())
       formData.append('expires_at', form.expiry_date || '')
@@ -106,7 +130,7 @@ const AccountantNotices = () => {
     setSelectedNotice(notice)
     if (!notice.is_read) {
       try {
-        await accountantApi.markAccountantPortalNoticeRead(notice.id)
+        await accountantApi.markAccountantPortalNoticeRead(notice.id, notice.source || 'unified')
         // Update local state to show it's read
         setNotices(prev => prev.map(n => n.id === notice.id ? { ...n, is_read: true } : n))
       } catch (err) {
@@ -140,7 +164,7 @@ const AccountantNotices = () => {
               options={[
                 { value: 'school_wide', label: 'School Wide' },
                 { value: 'class', label: 'Class (Students & Parents)' },
-                { value: 'student', label: 'Student & Parent' },
+                { value: 'students', label: 'Student & Parent' },  // BUG-02: backend expects 'students'
                 { value: 'parents', label: 'All Parents' },
               ]}
               required
@@ -148,7 +172,7 @@ const AccountantNotices = () => {
             {form.audience === 'class' ? (
               <Select label="Class" value={form.class_id} onChange={(event) => setForm((prev) => ({ ...prev, class_id: event.target.value }))} options={classOptions} required />
             ) : null}
-            {form.audience === 'student' ? (
+            {form.audience === 'students' ? (  // BUG-02: was 'student'
               <Select label="Student" value={form.student_id} onChange={(event) => setForm((prev) => ({ ...prev, student_id: event.target.value }))} options={studentOptions} placeholder="Select student" required />
             ) : null}
             <Input label="Title" value={form.title} onChange={(event) => setForm((prev) => ({ ...prev, title: event.target.value }))} placeholder="Fee payment reminder" required />
@@ -203,42 +227,56 @@ const AccountantNotices = () => {
           ) : notices.length === 0 ? (
             <EmptyState icon={BellRing} title="No fee notices" description="Fee notices created by you or received from admin will appear here." />
           ) : (
-            <div className="space-y-3">
-              {notices.map((notice) => (
-                <article key={notice.id} className="rounded-[22px] border p-4 hover:shadow-sm transition-all" style={{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface-raised)', opacity: notice.is_read ? 0.8 : 1 }}>
-                  <div className="flex flex-wrap items-center gap-2">
-                    <Badge variant="yellow">Fee</Badge>
-                    <Badge variant="blue" className="capitalize">{notice.audience.replace('_', ' ')}</Badge>
-                    {notice.class_name && <Badge variant="teal">{notice.class_name}</Badge>}
-                    {!notice.is_read && <Badge variant="red">New</Badge>}
-                  </div>
-                  <h3 className="mt-2 text-sm font-semibold" style={{ color: 'var(--color-text-primary)' }}>{notice.title}</h3>
-                  <div className="mt-1">
-                    <p className="line-clamp-2 text-xs" style={{ color: 'var(--color-text-secondary)' }}>{notice.body}</p>
-                    <button
-                      onClick={() => handleViewDetail(notice)}
-                      className="mt-2 flex items-center gap-1.5 text-[10px] font-bold transition-all hover:opacity-70"
-                      style={{ color: 'var(--color-brand)' }}
-                    >
-                      <Eye size={12} strokeWidth={2.5} />
-                      <span className="underline decoration-1 underline-offset-2">View Detail</span>
-                    </button>
-                  </div>
-                  
-                  <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-[11px]" style={{ color: 'var(--color-text-muted)' }}>
-                    <span className="flex items-center gap-1">
-                      <span className="font-medium" style={{ color: 'var(--color-text-secondary)' }}>Posted:</span> {new Date(notice.created_at).toLocaleDateString()}
-                    </span>
-                    <span className="flex items-center gap-1">
-                      <span className="font-medium" style={{ color: 'var(--color-text-secondary)' }}>By:</span> {notice.posted_by_name}
-                    </span>
-                    <span className="flex items-center gap-1">
-                      <span className="font-bold text-brand">{notice.read_count || 0}</span> Views
-                    </span>
-                  </div>
-                </article>
-              ))}
-            </div>
+            <motion.div
+              variants={containerVariants}
+              initial="hidden"
+              animate="show"
+              className="space-y-3"
+            >
+              <AnimatePresence mode="popLayout">
+                {notices.map((notice) => (
+                  <motion.div
+                    key={notice.id}
+                    variants={itemVariants}
+                    layout
+                    exit={{ opacity: 0, scale: 0.95 }}
+                  >
+                    <article className="rounded-[22px] border p-4 hover:shadow-sm transition-all" style={{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface-raised)', opacity: notice.is_read ? 0.8 : 1 }}>
+                      <div className="flex flex-wrap items-center gap-2">
+                        <Badge variant="yellow">Fee</Badge>
+                        <Badge variant="blue" className="capitalize">{notice.audience.replace('_', ' ')}</Badge>
+                        {notice.class_name && <Badge variant="teal">{notice.class_name}</Badge>}
+                        {!notice.is_read && <Badge variant="red">New</Badge>}
+                      </div>
+                      <h3 className="mt-2 text-sm font-semibold" style={{ color: 'var(--color-text-primary)' }}>{notice.title}</h3>
+                      <div className="mt-1">
+                        <p className="line-clamp-2 text-xs" style={{ color: 'var(--color-text-secondary)' }}>{notice.body}</p>
+                        <button
+                          onClick={() => handleViewDetail(notice)}
+                          className="mt-2 flex items-center gap-1.5 text-[10px] font-bold transition-all hover:opacity-70"
+                          style={{ color: 'var(--color-brand)' }}
+                        >
+                          <Eye size={12} strokeWidth={2.5} />
+                          <span className="underline decoration-1 underline-offset-2">View Detail</span>
+                        </button>
+                      </div>
+                      
+                      <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-[11px]" style={{ color: 'var(--color-text-muted)' }}>
+                        <span className="flex items-center gap-1">
+                          <span className="font-medium" style={{ color: 'var(--color-text-secondary)' }}>Posted:</span> {new Date(notice.created_at).toLocaleDateString()}
+                        </span>
+                        <span className="flex items-center gap-1">
+                          <span className="font-medium" style={{ color: 'var(--color-text-secondary)' }}>By:</span> {notice.posted_by_name}
+                        </span>
+                        <span className="flex items-center gap-1">
+                          <span className="font-bold text-brand">{notice.read_count || 0}</span> Views
+                        </span>
+                      </div>
+                    </article>
+                  </motion.div>
+                ))}
+              </AnimatePresence>
+            </motion.div>
           )}
         </section>
       </div>
