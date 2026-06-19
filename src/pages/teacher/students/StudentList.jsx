@@ -1,19 +1,35 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Search, SlidersHorizontal, Users } from 'lucide-react'
 import { useLocation } from 'react-router-dom'
+import {
+  Card,
+  Table,
+  Button,
+  Select as AntSelect,
+  Input as AntInput,
+  ConfigProvider,
+  Tag,
+  Avatar,
+  Empty,
+  Skeleton,
+  theme as antdTheme
+} from 'antd'
+import {
+  SearchOutlined,
+  SlidersOutlined
+} from '@ant-design/icons'
 import usePageTitle from '@/hooks/usePageTitle'
 import useTeacherStudents from '@/hooks/useTeacherStudents'
-import Input from '@/components/ui/Input'
-import Select from '@/components/ui/Select'
-import EmptyState from '@/components/ui/EmptyState'
-import Badge from '@/components/ui/Badge'
 import StudentQuickPanel from '@/components/teacher/StudentQuickPanel'
+import { formatCurrency, formatDate, getInitials } from '@/utils/helpers'
+import useUiStore from '@/store/uiStore'
 
 const StudentList = () => {
   usePageTitle('Student List')
 
   const location = useLocation()
+  const { theme: storeTheme } = useUiStore()
   const { students, sections, subjects, loadingList, loadingStudentId, loadStudentBundle, getStudentBundle } = useTeacherStudents()
+  
   const [search, setSearch] = useState('')
   const [sectionKey, setSectionKey] = useState('')
   const [subjectId, setSubjectId] = useState('')
@@ -21,6 +37,8 @@ const StudentList = () => {
   const [attendanceRange, setAttendanceRange] = useState('')
   const [resultStatus, setResultStatus] = useState('')
   const [selectedStudent, setSelectedStudent] = useState(null)
+
+  const isDark = storeTheme === 'dark' || (storeTheme === 'system' && window.matchMedia?.('(prefers-color-scheme: dark)').matches)
 
   useEffect(() => {
     const classId = location.state?.class_id
@@ -54,193 +72,265 @@ const StudentList = () => {
     return matchesSearch && matchesSection && matchesSubject && matchesGender && matchesAttendance && matchesResult
   }), [students, search, sectionKey, subjectId, gender, attendanceRange, resultStatus])
 
-  return (
-    <div className="space-y-5">
-      <section
-        className="rounded-[28px] border p-5 sm:p-6"
-        style={{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface)' }}
-      >
-        <h1 className="text-2xl font-bold" style={{ color: 'var(--color-text-primary)' }}>
-          Student List
-        </h1>
-        <p className="mt-2 text-sm" style={{ color: 'var(--color-text-secondary)' }}>
-          View students from your assigned sections. Class teachers get full student context, while subject teachers stay limited to their teaching scope.
-        </p>
-
-        <div className="mt-5 grid grid-cols-1 gap-4 xl:grid-cols-6">
-          <Input
-            label="Search"
-            value={search}
-            onChange={(event) => setSearch(event.target.value)}
-            placeholder="Search by name or roll number"
-            icon={Search}
-          />
-          <Select
-            label="Section"
-            value={sectionKey}
-            onChange={(event) => setSectionKey(event.target.value)}
-            options={sections}
-            placeholder="All sections"
-          />
-          <Select
-            label="Subject"
-            value={subjectId}
-            onChange={(event) => setSubjectId(event.target.value)}
-            options={subjects}
-            placeholder="All subjects"
-          />
-          <Select
-            label="Gender"
-            value={gender}
-            onChange={(event) => setGender(event.target.value)}
-            options={[
-              { value: 'male', label: 'Male' },
-              { value: 'female', label: 'Female' },
-              { value: 'other', label: 'Other' },
-            ]}
-            placeholder="All genders"
-          />
-          <Select
-            label="Attendance"
-            value={attendanceRange}
-            onChange={(event) => setAttendanceRange(event.target.value)}
-            options={[
-              { value: 'below75', label: 'Below 75%' },
-              { value: '75to90', label: '75% to 89%' },
-              { value: '90plus', label: '90% and above' },
-            ]}
-            placeholder="All ranges"
-          />
-          <Select
-            label="Result Status"
-            value={resultStatus}
-            onChange={(event) => setResultStatus(event.target.value)}
-            options={[
-              { value: 'good', label: 'Good' },
-              { value: 'warning', label: 'Warning' },
-              { value: 'critical', label: 'Critical' },
-            ]}
-            placeholder="All statuses"
-          />
-        </div>
-      </section>
-
-      <section
-        className="rounded-[28px] border p-5 sm:p-6"
-        style={{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface)' }}
-      >
-        <div className="mb-4 flex items-center justify-between">
+  const tableColumns = [
+    {
+      title: 'Student',
+      dataIndex: 'student',
+      key: 'student',
+      render: (_, record) => (
+        <div className="flex items-center gap-3">
+          <div className="relative">
+            <Avatar 
+              size="large"
+              className="bg-teal-100 text-teal-800 font-extrabold dark:bg-teal-950/40 dark:text-teal-300 border border-teal-200/20"
+            >
+              {getInitials(`${record.first_name} ${record.last_name}`)}
+            </Avatar>
+            {record.is_online && (
+              <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-emerald-500 border-2 border-white dark:border-gray-800 rounded-full animate-pulse shadow-sm" />
+            )}
+          </div>
           <div>
-            <h2 className="text-lg font-semibold" style={{ color: 'var(--color-text-primary)' }}>
-              My Students
-            </h2>
-            <p className="mt-1 text-sm" style={{ color: 'var(--color-text-secondary)' }}>
-              {filteredStudents.length} student(s) match your current filters.
-            </p>
-          </div>
-          <div className="inline-flex items-center gap-2 rounded-2xl px-3 py-2" style={{ backgroundColor: 'var(--color-surface-raised)', color: 'var(--color-text-secondary)' }}>
-            <SlidersHorizontal size={16} />
-            Filtered view
+            <div className="text-sm font-extrabold text-gray-800 dark:text-gray-100 flex items-center gap-1.5">
+              {record.first_name} {record.last_name}
+              {record.is_online && (
+                <Tag color="processing" className="text-[9px] font-black uppercase tracking-wider border-0 rounded px-1.5 py-0 m-0">Online</Tag>
+              )}
+            </div>
+            <div className="text-xs font-semibold text-gray-400 dark:text-gray-500 mt-0.5">
+              Roll: {record.roll_number || '--'} • {record.class_name} {record.section_name}
+            </div>
           </div>
         </div>
+      )
+    },
+    {
+      title: 'Gender',
+      dataIndex: 'gender',
+      key: 'gender',
+      render: (text) => <span className="text-xs font-bold text-gray-500 dark:text-gray-400 capitalize">{text || '--'}</span>
+    },
+    {
+      title: 'Attendance',
+      dataIndex: 'attendance_percentage',
+      key: 'attendance_percentage',
+      render: (val) => {
+        const attendance = Number(val || 0)
+        const className = attendance < 75 
+          ? 'text-rose-600 dark:text-rose-400 font-extrabold text-xs'
+          : 'text-emerald-600 dark:text-emerald-400 font-extrabold text-xs'
+        return <span className={className}>{val ? `${attendance.toFixed(0)}%` : '--'}</span>
+      }
+    },
+    {
+      title: 'Last Result',
+      dataIndex: 'last_result_percentage',
+      key: 'last_result_percentage',
+      render: (val) => <span className="text-xs font-bold text-gray-500 dark:text-gray-400">{val != null ? `${Number(val).toFixed(0)}%` : '--'}</span>
+    },
+    {
+      title: 'Status',
+      dataIndex: 'status',
+      key: 'status',
+      render: (_, record) => {
+        const attendance = Number(record.attendance_percentage || 0)
+        const isWarning = attendance < 75
+        return (
+          <Tag color={isWarning ? 'red' : 'green'} className="rounded-full font-black text-[10px] uppercase border-0 px-2.5 py-0.5">
+            {isWarning ? 'Warning' : 'Good'}
+          </Tag>
+        )
+      }
+    },
+    {
+      title: 'Fee Balance',
+      dataIndex: 'fee_balance',
+      key: 'fee_balance',
+      render: (val) => {
+        if (val == null) return <span className="text-xs font-bold text-gray-400">Restricted</span>
+        const amount = Number(val)
+        if (amount > 0) {
+          return <Tag color="warning" className="rounded-full font-black text-[10px] border-0 px-2.5 py-0.5">Rs {amount.toFixed(0)}</Tag>
+        }
+        return <Tag color="green" className="rounded-full font-black text-[10px] border-0 px-2.5 py-0.5">Clear</Tag>
+      }
+    },
+    {
+      title: '',
+      key: 'action',
+      render: (_, record) => (
+        <Button
+          type="primary"
+          size="middle"
+          loading={loadingStudentId === record.id}
+          className="rounded-xl font-bold text-xs border-0"
+          onClick={async () => {
+            setSelectedStudent(record)
+            await loadStudentBundle(record.id)
+          }}
+        >
+          Quick View
+        </Button>
+      )
+    }
+  ]
 
-        {loadingList ? (
-          <ListSkeleton />
-        ) : filteredStudents.length === 0 ? (
-          <EmptyState
-            icon={Users}
-            title="No students found"
-            description="Adjust the search or filter values to see students from your assigned classes."
-          />
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="min-w-full">
-              <thead>
-                <tr>
-                  {['Student', 'Gender', 'Attendance', 'Last Result', 'Status', 'Fee', ''].map((head) => (
-                    <th key={head} className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-[0.16em]" style={{ color: 'var(--color-text-muted)' }}>
-                      {head}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {filteredStudents.map((student) => {
-                  const attendance = Number(student.attendance_percentage || 0)
-                  const result = Number(student.last_result_percentage || 0)
-                  return (
-                    <tr key={student.enrollment_id} style={{ borderTop: '1px solid var(--color-border)' }}>
-                      <td className="px-4 py-4">
-                        <div className="flex items-center gap-3">
-                          <div className="relative">
-                            <div className="flex h-11 w-11 items-center justify-center rounded-2xl text-sm font-bold" style={{ backgroundColor: '#0f766e', color: '#fff' }}>
-                              {student.first_name?.[0]}{student.last_name?.[0]}
-                            </div>
-                            {student.is_online && (
-                              <span className="absolute -bottom-1 -right-1 w-3.5 h-3.5 bg-indigo-500 border-2 border-white dark:border-gray-800 rounded-full animate-pulse shadow-[0_0_8px_rgba(99,102,241,0.6)]" />
-                            )}
-                          </div>
-                          <div>
-                            <p className="text-sm font-semibold flex items-center gap-1.5" style={{ color: 'var(--color-text-primary)' }}>
-                              {student.first_name} {student.last_name}
-                              {student.is_online && (
-                                <span className="text-[10px] font-bold text-indigo-500 uppercase tracking-tighter bg-indigo-50 px-1 rounded">Online</span>
-                              )}
-                            </p>
-                            <p className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>
-                              Roll {student.roll_number || '--'} | {student.class_name} {student.section_name}
-                            </p>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="px-4 py-4 text-sm" style={{ color: 'var(--color-text-secondary)' }}>{student.gender || '--'}</td>
-                      <td className="px-4 py-4 text-sm" style={{ color: attendance < 75 ? '#ef4444' : '#10b981' }}>{attendance ? `${attendance.toFixed(0)}%` : '--'}</td>
-                      <td className="px-4 py-4 text-sm" style={{ color: 'var(--color-text-secondary)' }}>{student.last_result_percentage != null ? `${result.toFixed(0)}%` : '--'}</td>
-                      <td className="px-4 py-4">
-                        <Badge variant={attendance < 75 ? 'red' : 'green'}>{attendance < 75 ? 'Warning' : 'Good'}</Badge>
-                      </td>
-                      <td className="px-4 py-4 text-sm" style={{ color: 'var(--color-text-secondary)' }}>
-                        {student.fee_balance == null ? 'Restricted' : Number(student.fee_balance) > 0 ? `Rs ${Number(student.fee_balance).toFixed(0)}` : 'Clear'}
-                      </td>
-                      <td className="px-4 py-4">
-                        <button
-                          type="button"
-                          onClick={async () => {
-                            setSelectedStudent(student)
-                            await loadStudentBundle(student.id)
-                          }}
-                          className="min-h-10 rounded-2xl px-4 text-sm font-semibold"
-                          style={{ backgroundColor: '#0f766e', color: '#fff' }}
-                        >
-                          Quick View
-                        </button>
-                      </td>
-                    </tr>
-                  )
-                })}
-              </tbody>
-            </table>
+  return (
+    <ConfigProvider
+      theme={{
+        algorithm: isDark ? antdTheme.darkAlgorithm : antdTheme.defaultAlgorithm,
+        token: {
+          colorPrimary: '#0f766e',
+          borderRadius: 24,
+          fontFamily: 'inherit',
+        },
+      }}
+    >
+      <div className="space-y-6">
+        {/* Header and Filter Card */}
+        <Card 
+          className="rounded-[32px] shadow-sm border-gray-100 dark:border-gray-800"
+          styles={{ body: { padding: '24px' } }}
+        >
+          <h1 className="text-2xl font-black text-gray-900 dark:text-white tracking-tight">Student List</h1>
+          <p className="mt-1 text-xs text-gray-500 dark:text-gray-400 font-semibold leading-relaxed">
+            View students from your assigned sections. Class teachers get full student context, while subject teachers stay limited to their teaching scope.
+          </p>
+
+          <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-6">
+            <div>
+              <label className="block text-[10px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-1.5">Search</label>
+              <AntInput
+                placeholder="Search by name or roll..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                prefix={<SearchOutlined className="text-gray-400" />}
+                allowClear
+                className="rounded-xl font-semibold text-xs h-[38px]"
+              />
+            </div>
+
+            <div>
+              <label className="block text-[10px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-1.5">Section</label>
+              <AntSelect
+                placeholder="All sections"
+                value={sectionKey || undefined}
+                onChange={(val) => setSectionKey(val || '')}
+                options={sections}
+                allowClear
+                className="w-full rounded-xl text-xs h-[38px]"
+              />
+            </div>
+
+            <div>
+              <label className="block text-[10px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-1.5">Subject</label>
+              <AntSelect
+                placeholder="All subjects"
+                value={subjectId || undefined}
+                onChange={(val) => setSubjectId(val || '')}
+                options={subjects}
+                allowClear
+                className="w-full rounded-xl text-xs h-[38px]"
+              />
+            </div>
+
+            <div>
+              <label className="block text-[10px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-1.5">Gender</label>
+              <AntSelect
+                placeholder="All genders"
+                value={gender || undefined}
+                onChange={(val) => setGender(val || '')}
+                options={[
+                  { value: 'male', label: 'Male' },
+                  { value: 'female', label: 'Female' },
+                  { value: 'other', label: 'Other' },
+                ]}
+                allowClear
+                className="w-full rounded-xl text-xs h-[38px]"
+              />
+            </div>
+
+            <div>
+              <label className="block text-[10px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-1.5">Attendance</label>
+              <AntSelect
+                placeholder="All ranges"
+                value={attendanceRange || undefined}
+                onChange={(val) => setAttendanceRange(val || '')}
+                options={[
+                  { value: 'below75', label: 'Below 75%' },
+                  { value: '75to90', label: '75% to 89%' },
+                  { value: '90plus', label: '90% and above' },
+                ]}
+                allowClear
+                className="w-full rounded-xl text-xs h-[38px]"
+              />
+            </div>
+
+            <div>
+              <label className="block text-[10px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-1.5">Result Status</label>
+              <AntSelect
+                placeholder="All statuses"
+                value={resultStatus || undefined}
+                onChange={(val) => setResultStatus(val || '')}
+                options={[
+                  { value: 'good', label: 'Good' },
+                  { value: 'warning', label: 'Warning' },
+                  { value: 'critical', label: 'Critical' },
+                ]}
+                allowClear
+                className="w-full rounded-xl text-xs h-[38px]"
+              />
+            </div>
           </div>
-        )}
-      </section>
+        </Card>
 
-      <StudentQuickPanel
-        open={!!selectedStudent}
-        student={selectedStudent}
-        bundle={selectedStudent ? getStudentBundle(selectedStudent.id) : null}
-        loading={loadingStudentId === selectedStudent?.id}
-        onClose={() => setSelectedStudent(null)}
-      />
-    </div>
+        {/* Results List Card */}
+        <Card
+          className="rounded-[32px] shadow-sm border-gray-100 dark:border-gray-800 overflow-hidden"
+          styles={{ header: { borderBottom: '1px solid rgba(0,0,0,0.06)' }, body: { padding: '0px' } }}
+          title={
+            <div className="flex items-center justify-between py-1">
+              <div>
+                <span className="text-base font-black text-gray-900 dark:text-white tracking-tight">My Students</span>
+                <span className="text-xs text-gray-400 dark:text-gray-500 font-semibold block mt-0.5">
+                  {filteredStudents.length} student(s) match current filter criteria.
+                </span>
+              </div>
+              <Tag icon={<SlidersOutlined />} color="default" className="font-extrabold uppercase text-[10px] rounded-full px-3 py-0.5">
+                Filtered View
+              </Tag>
+            </div>
+          }
+        >
+          {loadingList ? (
+            <div className="p-6"><Skeleton active paragraph={{ rows: 8 }} /></div>
+          ) : filteredStudents.length === 0 ? (
+            <div className="py-12">
+              <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="No students match selected filter criteria" />
+            </div>
+          ) : (
+            <Table
+              dataSource={filteredStudents}
+              columns={tableColumns}
+              rowKey="enrollment_id"
+              pagination={false}
+              size="middle"
+              className="premium-table"
+              rowClassName="hover:bg-teal-50/10 dark:hover:bg-teal-950/10 transition-colors"
+            />
+          )}
+        </Card>
+
+        <StudentQuickPanel
+          open={!!selectedStudent}
+          student={selectedStudent}
+          bundle={selectedStudent ? getStudentBundle(selectedStudent.id) : null}
+          loading={loadingStudentId === selectedStudent?.id}
+          onClose={() => setSelectedStudent(null)}
+        />
+      </div>
+    </ConfigProvider>
   )
 }
-
-const ListSkeleton = () => (
-  <div className="space-y-3 animate-pulse">
-    {[...Array(6)].map((_, index) => (
-      <div key={index} className="h-16 rounded-2xl" style={{ backgroundColor: 'var(--color-surface-raised)' }} />
-    ))}
-  </div>
-)
 
 export default StudentList

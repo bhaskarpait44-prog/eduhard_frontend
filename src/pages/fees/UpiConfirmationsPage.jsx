@@ -1,20 +1,36 @@
 import { useState, useEffect } from 'react'
-import { CheckCircle, XCircle, Clock, Filter, Search, MoreHorizontal, IndianRupee, QrCode, AlertCircle, Loader2 } from 'lucide-react'
+import {
+  Card,
+  Row,
+  Col,
+  Table,
+  Button,
+  Input as AntInput,
+  ConfigProvider,
+  Tag,
+  Modal as AntModal,
+  Segmented,
+  theme as antdTheme
+} from 'antd'
+import {
+  CheckCircleOutlined,
+  CloseCircleOutlined,
+  ClockCircleOutlined,
+  SearchOutlined,
+  CheckOutlined,
+  CloseOutlined,
+  AlertOutlined,
+  QrcodeOutlined
+} from '@ant-design/icons'
 import useToast from '@/hooks/useToast'
-import Button from '@/components/ui/Button'
-import Badge from '@/components/ui/Badge'
-import EmptyState from '@/components/ui/EmptyState'
-import TableSkeleton from '@/components/ui/TableSkeleton'
-import Modal from '@/components/ui/Modal'
-import Input from '@/components/ui/Input'
-import Textarea from '@/components/ui/Textarea'
 import { formatCurrency, formatDate } from '@/utils/helpers'
 import * as accountantApi from '@/api/accountantApi'
+import useUiStore from '@/store/uiStore'
 
 const STATUS_CONFIG = {
-  pending   : { label: 'Pending',   variant: 'yellow', icon: Clock },
-  confirmed : { label: 'Confirmed', variant: 'green',  icon: CheckCircle },
-  rejected  : { label: 'Rejected',  variant: 'red',    icon: XCircle },
+  pending   : { label: 'Pending',   color: 'gold',   icon: ClockCircleOutlined },
+  confirmed : { label: 'Confirmed', color: 'green',  icon: CheckCircleOutlined },
+  rejected  : { label: 'Rejected',  color: 'red',    icon: CloseCircleOutlined },
 }
 
 const UpiConfirmationsPage = () => {
@@ -23,6 +39,7 @@ const UpiConfirmationsPage = () => {
   const [isLoading, setIsLoading] = useState(false)
   const [status, setStatus] = useState('pending')
   const [search, setSearch] = useState('')
+  const { theme: storeTheme } = useUiStore()
 
   // Modal states
   const [confirmTarget, setConfirmTarget] = useState(null)
@@ -32,6 +49,8 @@ const UpiConfirmationsPage = () => {
   const [transactionRef, setTransactionRef] = useState('')
 
   const [pagination, setPagination] = useState({ total: 0, page: 1, limit: 15, pages: 1 })
+
+  const isDark = storeTheme === 'dark' || (storeTheme === 'system' && window.matchMedia?.('(prefers-color-scheme: dark)').matches)
 
   useEffect(() => {
     fetchRequests()
@@ -95,286 +114,308 @@ const UpiConfirmationsPage = () => {
 
   const pendingCount = requests.filter(r => r.status === 'pending').length
 
+  const tableColumns = [
+    {
+      title: 'Student / Class',
+      key: 'student',
+      render: (_, record) => (
+        <div>
+          <p className="text-sm font-bold text-gray-850 dark:text-gray-100">{record.student_name}</p>
+          <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">
+            {record.class_name} {record.section_name ? ` · ${record.section_name}` : ''}
+          </p>
+        </div>
+      )
+    },
+    {
+      title: 'Fee Details',
+      key: 'fee',
+      render: (_, record) => (
+        <div>
+          <p className="text-sm font-semibold text-gray-700 dark:text-gray-200">{record.fee_name}</p>
+          <p className="text-[11px] text-gray-400 dark:text-gray-500 mt-0.5">Due: {formatDate(record.due_date)}</p>
+        </div>
+      )
+    },
+    {
+      title: 'Amount',
+      dataIndex: 'amount',
+      key: 'amount',
+      render: (val) => (
+        <span className="font-extrabold text-cyan-600 dark:text-cyan-400">
+          {formatCurrency(val)}
+        </span>
+      )
+    },
+    {
+      title: 'Transaction ID',
+      dataIndex: 'upi_transaction_id',
+      key: 'upi_transaction_id',
+      render: (val) => (
+        <span className="text-xs font-mono bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 px-2 py-1 rounded-lg">
+          {val === 'PAYMENT_PENDING' ? 'Processing...' : (val || 'N/A')}
+        </span>
+      )
+    },
+    {
+      title: 'Submitted',
+      dataIndex: 'created_at',
+      key: 'created_at',
+      render: (val) => <span className="text-xs text-gray-500 dark:text-gray-400">{formatDate(val)}</span>
+    },
+    {
+      title: 'Status',
+      dataIndex: 'status',
+      key: 'status',
+      render: (val) => {
+        const config = STATUS_CONFIG[val]
+        const Icon = config.icon
+        return (
+          <Tag icon={<Icon />} color={config.color} className="rounded-full font-black text-[10px] uppercase border-0 px-2.5 py-0.5">
+            {config.label}
+          </Tag>
+        )
+      }
+    },
+    {
+      title: 'Actions',
+      key: 'action',
+      align: 'right',
+      render: (_, record) => {
+        if (record.status === 'pending') {
+          return (
+            <div className="flex items-center justify-end gap-2">
+              <Button
+                type="primary"
+                size="small"
+                icon={<CheckOutlined />}
+                onClick={() => {
+                  setConfirmTarget(record)
+                  setTransactionRef(record.upi_transaction_id === 'PAYMENT_PENDING' ? '' : record.upi_transaction_id)
+                }}
+                className="rounded-full font-bold text-xs border-0 bg-green-600 hover:bg-green-700 text-white"
+              >
+                Confirm
+              </Button>
+              <Button
+                type="default"
+                size="small"
+                danger
+                icon={<CloseOutlined />}
+                onClick={() => setRejectTarget(record)}
+                className="rounded-full font-bold text-xs"
+              >
+                Reject
+              </Button>
+            </div>
+          )
+        }
+        return (
+          <span className="text-xs text-gray-400 dark:text-gray-500 italic">
+            {record.status === 'confirmed' ? `By ${record.confirmed_by_name}` : 'Rejected'}
+          </span>
+        )
+      }
+    }
+  ]
+
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <section
-        className="rounded-[28px] p-6 sm:p-7 text-white"
-        style={{ background: 'linear-gradient(135deg, #7C3AED 0%, #4F46E5 100%)' }}
-      >
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div>
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold bg-white/12 text-white/90 mb-3">
-              <QrCode size={14} />
-              Finance Operations
-            </div>
-            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">UPI Payment Confirmations</h1>
-            <p className="text-sm text-purple-100/80 mt-2 max-w-xl">
-              Verify and confirm fee payments made via UPI QR codes from the mobile app.
-            </p>
-          </div>
-          <div className="flex items-center gap-3">
-            <div className="px-4 py-2 rounded-2xl bg-white/10 backdrop-blur-md border border-white/10 text-center">
-              <p className="text-[10px] uppercase tracking-wider text-purple-100/70">Pending Requests</p>
-              <p className="text-2xl font-bold">{pendingCount}</p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Filters & Search */}
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-        <div className="flex items-center p-1 rounded-2xl bg-surface border border-border w-fit">
-          {['all', 'pending', 'confirmed', 'rejected'].map((s) => (
-            <button
-              key={s}
-              onClick={() => { setStatus(s); setPagination(p => ({ ...p, page: 1 })); }}
-              className={`px-5 py-2 text-sm font-semibold rounded-xl transition-all capitalize ${
-                status === s 
-                  ? 'bg-brand text-white shadow-lg shadow-brand/20' 
-                  : 'text-text-secondary hover:text-text-primary'
-              }`}
-            >
-              {s}
-            </button>
-          ))}
-        </div>
-
-        <div className="relative flex-1 max-w-md">
-          <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-text-muted" />
-          <input
-            type="text"
-            placeholder="Search in current page..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-11 pr-4 py-3 rounded-2xl border border-border bg-surface outline-none focus:ring-2 focus:ring-brand/20 transition-all text-sm"
-          />
-        </div>
-      </div>
-
-      {/* Content */}
-      <div className="rounded-[24px] bg-surface border border-border overflow-hidden shadow-sm">
-        {isLoading ? (
-          <TableSkeleton cols={7} rows={6} />
-        ) : filteredRequests.length === 0 ? (
-          <EmptyState
-            icon={QrCode}
-            title={`No ${status !== 'all' ? status : ''} requests found`}
-            description={search ? "No results match your search criteria." : "When students pay via UPI, their requests will appear here."}
-            className="py-16"
-          />
-        ) : (
-          <>
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead>
-                  <tr className="border-b border-border bg-surface-raised/50">
-                    {['Student / Class', 'Fee Details', 'Amount', 'Transaction ID', 'Submitted', 'Status', 'Actions'].map(h => (
-                      <th key={h} className="px-6 py-4 text-left text-[11px] font-bold uppercase tracking-wider text-text-muted">
-                        {h}
-                      </th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-border">
-                  {filteredRequests.map((req) => {
-                    const cfg = STATUS_CONFIG[req.status]
-                    return (
-                      <tr key={req.id} className="hover:bg-surface-raised/30 transition-colors">
-                        <td className="px-6 py-4">
-                          <p className="text-sm font-bold text-text-primary">{req.student_name}</p>
-                          <p className="text-xs text-text-muted">{req.class_name} {req.section_name ? ` · ${req.section_name}` : ''}</p>
-                        </td>
-                        <td className="px-6 py-4">
-                          <p className="text-sm font-medium text-text-primary">{req.fee_name}</p>
-                          <p className="text-[11px] text-text-muted">Due: {formatDate(req.due_date)}</p>
-                        </td>
-                        <td className="px-6 py-4">
-                          <div className="flex items-center gap-1.5 font-bold text-brand">
-                            <IndianRupee size={14} />
-                            {formatCurrency(req.amount).replace('₹', '')}
-                          </div>
-                        </td>
-                        <td className="px-6 py-4">
-                          <p className="text-sm font-mono text-text-primary bg-surface-raised px-2 py-1 rounded-lg w-fit">
-                            {req.upi_transaction_id === 'PAYMENT_PENDING' ? 'Processing...' : (req.upi_transaction_id || 'N/A')}
-                          </p>
-                        </td>
-                        <td className="px-6 py-4 text-sm text-text-secondary">
-                          {formatDate(req.created_at)}
-                        </td>
-                        <td className="px-6 py-4">
-                          <Badge variant={cfg.variant} dot icon={cfg.icon}>
-                            {cfg.label}
-                          </Badge>
-                        </td>
-                        <td className="px-6 py-4">
-                          {req.status === 'pending' ? (
-                            <div className="flex items-center gap-2">
-                              <button
-                                onClick={() => {
-                                  setConfirmTarget(req)
-                                  setTransactionRef(req.upi_transaction_id === 'PAYMENT_PENDING' ? '' : req.upi_transaction_id)
-                                }}
-                                className="p-2 rounded-xl bg-success/10 text-success hover:bg-success hover:text-white transition-all"
-                                title="Confirm Payment"
-                              >
-                                <CheckCircle size={18} />
-                              </button>
-                              <button
-                                onClick={() => setRejectTarget(req)}
-                                className="p-2 rounded-xl bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white transition-all"
-                                title="Reject Request"
-                              >
-                                <XCircle size={18} />
-                              </button>
-                            </div>
-                          ) : (
-                            <div className="text-xs text-text-muted italic">
-                              {req.status === 'confirmed' ? `By ${req.confirmed_by_name}` : 'Rejected'}
-                            </div>
-                          )}
-                        </td>
-                      </tr>
-                    )
-                  })}
-                </tbody>
-              </table>
-            </div>
-
-            {pagination.pages > 1 && (
-              <div className="px-6 py-4 bg-surface-raised/30 border-t border-border flex items-center justify-between">
-                <p className="text-xs text-text-secondary font-medium">
-                  Showing <span className="text-text-primary">{(pagination.page - 1) * pagination.limit + 1}</span> to <span className="text-text-primary">{Math.min(pagination.page * pagination.limit, pagination.total)}</span> of <span className="text-text-primary">{pagination.total}</span> results
-                </p>
-                <div className="flex gap-2">
-                  <button
-                    disabled={pagination.page === 1}
-                    onClick={() => setPagination(p => ({ ...p, page: p.page - 1 }))}
-                    className="px-4 py-2 rounded-xl border border-border bg-surface text-xs font-bold transition-all hover:bg-surface-raised disabled:opacity-40 disabled:hover:bg-surface"
-                  >
-                    Previous
-                  </button>
-                  <button
-                    disabled={pagination.page === pagination.pages}
-                    onClick={() => setPagination(p => ({ ...p, page: p.page + 1 }))}
-                    className="px-4 py-2 rounded-xl border border-border bg-surface text-xs font-bold transition-all hover:bg-surface-raised disabled:opacity-40 disabled:hover:bg-surface"
-                  >
-                    Next
-                  </button>
-                </div>
+    <ConfigProvider
+      theme={{
+        algorithm: isDark ? antdTheme.darkAlgorithm : antdTheme.defaultAlgorithm,
+        token: {
+          colorPrimary: '#4CC0D4',
+          borderRadius: 24,
+          fontFamily: 'inherit',
+        },
+      }}
+    >
+      <div className="space-y-6">
+        {/* Header Section */}
+        <section
+          className="rounded-[32px] p-6 sm:p-7 text-white relative overflow-hidden shadow-sm"
+          style={{ background: 'linear-gradient(135deg, #4cc0d4 0%, #0891b2 100%)' }}
+        >
+          <div className="absolute -right-20 -top-20 w-64 h-64 rounded-full bg-white/5 blur-3xl pointer-events-none" />
+          
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 z-10 relative">
+            <div>
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold bg-white/12 text-white/90 mb-3">
+                <QrcodeOutlined />
+                Finance Operations
               </div>
-            )}
-          </>
-        )}
-      </div>
-
-      {/* Confirm Modal */}
-      <Modal
-        open={!!confirmTarget}
-        onClose={() => !isProcessing && setConfirmTarget(null)}
-        title="Confirm UPI Payment"
-        maxWidth="sm"
-      >
-        <div className="space-y-5">
-          <div className="p-4 rounded-2xl bg-success/5 border border-success/10 flex gap-3">
-            <CheckCircle className="text-success shrink-0" size={20} />
-            <div className="text-sm">
-              <p className="font-bold text-success">Verifying Transaction</p>
-              <p className="text-text-secondary mt-1">
-                Please ensure the amount <strong>{formatCurrency(confirmTarget?.amount)}</strong> has been received in the school's bank account for transaction ID <strong>{confirmTarget?.upi_transaction_id}</strong>.
+              <h1 className="text-2xl sm:text-3xl font-black tracking-tight">UPI Payment Confirmations</h1>
+              <p className="text-xs text-cyan-50/90 mt-1 max-w-xl font-medium leading-relaxed">
+                Verify and confirm fee payments made via UPI QR codes from the mobile app.
               </p>
             </div>
-          </div>
-
-          <div className="space-y-4">
-            <div className="grid grid-cols-2 gap-4 text-sm">
-              <div>
-                <p className="text-text-muted">Student</p>
-                <p className="font-semibold text-text-primary">{confirmTarget?.student_name}</p>
-              </div>
-              <div>
-                <p className="text-text-muted">Fee Type</p>
-                <p className="font-semibold text-text-primary">{confirmTarget?.fee_name}</p>
-              </div>
+            
+            <div className="px-4 py-2 rounded-2xl bg-white/10 backdrop-blur-md border border-white/10 text-center min-w-[120px]">
+              <p className="text-[10px] uppercase tracking-wider text-cyan-50/70 font-black">Pending Requests</p>
+              <p className="text-2xl font-black mt-0.5">{pendingCount}</p>
             </div>
+          </div>
+        </section>
 
-            <Input
-              label="Bank Reference / Transaction Ref"
-              placeholder="Enter bank reference number (optional)"
-              value={transactionRef}
-              onChange={(e) => setTransactionRef(e.target.value)}
-              hint="Defaults to the student-submitted UPI ID if left blank."
+        {/* Filters & Search */}
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <Segmented
+            value={status}
+            onChange={(val) => {
+              setStatus(val)
+              setPagination(p => ({ ...p, page: 1 }))
+            }}
+            options={[
+              { label: 'All Requests', value: 'all' },
+              { label: 'Pending', value: 'pending' },
+              { label: 'Confirmed', value: 'confirmed' },
+              { label: 'Rejected', value: 'rejected' }
+            ]}
+            className="p-1 rounded-2xl bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 w-fit font-bold"
+          />
+
+          <div className="relative flex-1 max-w-md">
+            <AntInput
+              placeholder="Search in current page..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              prefix={<SearchOutlined className="text-gray-400" />}
+              allowClear
+              className="rounded-xl font-semibold text-xs h-[38px]"
             />
           </div>
+        </div>
 
-          <div className="flex gap-3 pt-2">
-            <Button
-              variant="outline"
-              className="flex-1"
-              onClick={() => setConfirmTarget(null)}
-              disabled={isProcessing}
-            >
+        {/* Results Card */}
+        <Card
+          className="rounded-[28px] shadow-sm border-gray-100 dark:border-gray-800 overflow-hidden"
+          styles={{ body: { padding: '0px' } }}
+        >
+          <Table
+            dataSource={filteredRequests}
+            columns={tableColumns}
+            rowKey="id"
+            pagination={{
+              current: pagination.page,
+              pageSize: pagination.limit,
+              total: pagination.total,
+              onChange: (page) => setPagination(prev => ({ ...prev, page })),
+              showSizeChanger: false,
+              size: 'small',
+              className: 'px-6 py-4 mt-0 border-t border-gray-50 dark:border-gray-800'
+            }}
+            loading={isLoading}
+            size="middle"
+            className="premium-table"
+            rowClassName="hover:bg-indigo-50/10 dark:hover:bg-indigo-950/10 transition-colors"
+          />
+        </Card>
+
+        {/* Confirm Modal */}
+        <AntModal
+          open={!!confirmTarget}
+          onCancel={() => !isProcessing && setConfirmTarget(null)}
+          title={<span className="text-base font-black text-gray-900 dark:text-white">Confirm UPI Payment</span>}
+          footer={[
+            <Button key="cancel" disabled={isProcessing} onClick={() => setConfirmTarget(null)} className="rounded-xl font-bold">
               Cancel
-            </Button>
+            </Button>,
             <Button
-              className="flex-1"
-              onClick={handleConfirm}
+              key="submit"
+              type="primary"
               loading={isProcessing}
-              style={{ backgroundColor: 'var(--color-success)' }}
+              onClick={handleConfirm}
+              className="rounded-xl font-bold border-0 bg-green-600 hover:bg-green-700 text-white"
             >
               Confirm & Record
             </Button>
-          </div>
-        </div>
-      </Modal>
+          ]}
+          className="premium-modal"
+          centered
+        >
+          <div className="space-y-4 py-3">
+            <div className="p-4 rounded-2xl bg-green-50 dark:bg-green-950/20 border border-green-200/20 flex gap-3">
+              <CheckCircleOutlined className="text-green-600 text-lg mt-0.5 shrink-0" />
+              <div className="text-xs text-gray-700 dark:text-gray-300">
+                <p className="font-bold text-green-700 dark:text-green-400">Verifying Transaction</p>
+                <p className="mt-1 leading-relaxed">
+                  Please ensure the amount <strong>{formatCurrency(confirmTarget?.amount)}</strong> has been received in the school's bank account for transaction ID <strong>{confirmTarget?.upi_transaction_id}</strong>.
+                </p>
+              </div>
+            </div>
 
-      {/* Reject Modal */}
-      <Modal
-        open={!!rejectTarget}
-        onClose={() => !isProcessing && setRejectTarget(null)}
-        title="Reject UPI Payment Request"
-        maxWidth="sm"
-      >
-        <div className="space-y-5">
-          <div className="p-4 rounded-2xl bg-red-500/5 border border-red-500/10 flex gap-3">
-            <AlertCircle className="text-red-500 shrink-0" size={20} />
-            <div className="text-sm text-text-secondary">
-              Rejecting this request will notify the student. They will be able to re-submit if it was a mistake.
+            <div className="grid grid-cols-2 gap-4 text-xs mt-2 p-3 bg-gray-50 dark:bg-gray-800/30 rounded-xl">
+              <div>
+                <p className="text-gray-400 font-semibold uppercase tracking-wider text-[9px]">Student</p>
+                <p className="font-bold text-gray-800 dark:text-gray-200 mt-0.5">{confirmTarget?.student_name}</p>
+              </div>
+              <div>
+                <p className="text-gray-400 font-semibold uppercase tracking-wider text-[9px]">Fee Type</p>
+                <p className="font-bold text-gray-800 dark:text-gray-200 mt-0.5">{confirmTarget?.fee_name}</p>
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-[10px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-1.5">Bank Reference / Transaction Ref</label>
+              <AntInput
+                placeholder="Enter bank reference number (optional)"
+                value={transactionRef}
+                onChange={(e) => setTransactionRef(e.target.value)}
+                className="rounded-xl font-semibold text-xs h-[38px]"
+              />
+              <p className="text-[9px] text-gray-400 dark:text-gray-500 mt-1 font-semibold">
+                Defaults to the student-submitted UPI ID if left blank.
+              </p>
             </div>
           </div>
+        </AntModal>
 
-          <Textarea
-            label="Reason for Rejection"
-            placeholder="e.g. Transaction ID not found in bank records, incorrect amount..."
-            value={reason}
-            onChange={(e) => setReason(e.target.value)}
-            rows={4}
-            required
-          />
-
-          <div className="flex gap-3 pt-2">
-            <Button
-              variant="outline"
-              className="flex-1"
-              onClick={() => setRejectTarget(null)}
-              disabled={isProcessing}
-            >
+        {/* Reject Modal */}
+        <AntModal
+          open={!!rejectTarget}
+          onCancel={() => !isProcessing && setRejectTarget(null)}
+          title={<span className="text-base font-black text-gray-900 dark:text-white">Reject UPI Payment Request</span>}
+          footer={[
+            <Button key="cancel" disabled={isProcessing} onClick={() => setRejectTarget(null)} className="rounded-xl font-bold">
               Cancel
-            </Button>
+            </Button>,
             <Button
-              variant="danger"
-              className="flex-1"
-              onClick={handleReject}
+              key="submit"
+              type="primary"
+              danger
               loading={isProcessing}
               disabled={!reason.trim()}
+              onClick={handleReject}
+              className="rounded-xl font-bold border-0 bg-red-600 hover:bg-red-700 text-white"
             >
               Reject Request
             </Button>
+          ]}
+          className="premium-modal"
+          centered
+        >
+          <div className="space-y-4 py-3">
+            <div className="p-4 rounded-2xl bg-red-50 dark:bg-red-950/20 border border-red-200/20 flex gap-3">
+              <AlertOutlined className="text-red-600 text-lg mt-0.5 shrink-0" />
+              <div className="text-xs text-gray-700 dark:text-gray-300 leading-relaxed">
+                Rejecting this request will notify the student. They will be able to re-submit if it was a mistake.
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-[10px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-1.5">Reason for Rejection</label>
+              <AntInput.TextArea
+                placeholder="e.g. Transaction ID not found in bank records, incorrect amount..."
+                value={reason}
+                onChange={(e) => setReason(e.target.value)}
+                rows={4}
+                className="rounded-xl font-semibold text-xs"
+              />
+            </div>
           </div>
-        </div>
-      </Modal>
-    </div>
+        </AntModal>
+      </div>
+    </ConfigProvider>
   )
 }
 

@@ -1,25 +1,45 @@
 // src/pages/fees/FeeStructurePage.jsx
 import { useState, useEffect, useMemo, Fragment } from 'react'
-import { Plus, Trash2, Settings2, Download, Search, Pencil, Check, X } from 'lucide-react'
+import {
+  Card,
+  Row,
+  Col,
+  Table,
+  Button,
+  Select as AntSelect,
+  Input as AntInput,
+  ConfigProvider,
+  Tag,
+  Modal,
+  Empty,
+  Skeleton,
+  Space,
+  theme as antdTheme
+} from 'antd'
+import {
+  PlusOutlined,
+  DeleteOutlined,
+  DownloadOutlined,
+  SearchOutlined,
+  EditOutlined,
+  CheckOutlined,
+  CloseOutlined,
+  SlidersOutlined
+} from '@ant-design/icons'
 import useSessionStore from '@/store/sessionStore'
 import useToast from '@/hooks/useToast'
-import Button from '@/components/ui/Button'
-import Select from '@/components/ui/Select'
-import Badge from '@/components/ui/Badge'
-import EmptyState from '@/components/ui/EmptyState'
-import TableSkeleton from '@/components/ui/TableSkeleton'
-import ConfirmDialog from '@/components/ui/ConfirmDialog'
 import AddFeeComponentModal from './AddFeeComponentModal'
 import { formatCurrency } from '@/utils/helpers'
 import { getClasses, getClassOptions } from '@/api/classApi'
 import * as feesApi from '@/api/feesApi'
 import * as accountantApi from '@/api/accountantApi'
+import useUiStore from '@/store/uiStore'
 
 const FREQUENCY_BADGE = {
-  monthly    : { label: 'Monthly',    variant: 'blue'  },
-  quarterly  : { label: 'Quarterly',  variant: 'green' },
-  annual     : { label: 'Annual',     variant: 'yellow'},
-  one_time   : { label: 'One Time',   variant: 'grey'  },
+  monthly    : { label: 'Monthly',    color: 'blue'  },
+  quarterly  : { label: 'Quarterly',  color: 'green' },
+  annual     : { label: 'Annual',     color: 'gold'  },
+  one_time   : { label: 'One Time',   color: 'default' },
 }
 
 const ordinal = (n) => {
@@ -39,10 +59,10 @@ const EditableCell = ({ value, onSave, isLoading }) => {
 
   if (isEditing) {
     return (
-      <div className="flex items-center gap-1">
-        <input
+      <div className="flex items-center gap-1.5 max-w-[160px]">
+        <AntInput
+          size="small"
           autoFocus
-          className="w-full px-2 py-1 text-sm border border-gray-200 dark:border-gray-700 rounded outline-none focus:ring-1 focus:ring-brand"
           value={tempValue}
           onChange={(e) => setTempValue(e.target.value)}
           onKeyDown={(e) => {
@@ -56,31 +76,42 @@ const EditableCell = ({ value, onSave, isLoading }) => {
             }
           }}
           disabled={isLoading}
+          className="rounded-lg font-bold"
         />
-        <button onClick={() => { onSave(tempValue); setIsEditing(false) }} className="text-green-600 p-1 hover:bg-green-50 rounded">
-          <Check size={14} />
-        </button>
-        <button onClick={() => { setTempValue(value); setIsEditing(false) }} className="text-red-600 p-1 hover:bg-red-50 rounded">
-          <X size={14} />
-        </button>
+        <Button 
+          type="text" 
+          size="small"
+          onClick={() => { onSave(tempValue); setIsEditing(false) }} 
+          className="text-emerald-600 hover:text-emerald-700 flex items-center justify-center p-0 w-6 h-6 rounded-lg hover:bg-emerald-50 dark:hover:bg-emerald-950/20"
+          icon={<CheckOutlined className="text-xs" />}
+        />
+        <Button 
+          type="text" 
+          size="small"
+          onClick={() => { setTempValue(value); setIsEditing(false) }} 
+          className="text-rose-600 hover:text-rose-700 flex items-center justify-center p-0 w-6 h-6 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-950/20"
+          icon={<CloseOutlined className="text-xs" />}
+        />
       </div>
     )
   }
 
   return (
     <div 
-      className="group flex items-center gap-2 cursor-pointer min-h-[24px]"
+      className="group flex items-center gap-2 cursor-pointer min-h-[24px] font-bold text-gray-700 dark:text-gray-300"
       onDoubleClick={() => setIsEditing(true)}
     >
       <span>{value}</span>
-      <Pencil size={12} className="text-text-muted opacity-0 group-hover:opacity-100 transition-opacity" />
+      <EditOutlined className="text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity text-xs" />
     </div>
   )
 }
 
 const FeeStructurePage = ({ apiMode = 'default' }) => {
   const { toastSuccess, toastError } = useToast()
+  const { theme: storeTheme } = useUiStore()
   const { sessions, currentSession, fetchSessions } = useSessionStore()
+  
   const [structures, setStructures] = useState([])
   const [isLoading, setIsLoading] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
@@ -94,6 +125,7 @@ const FeeStructurePage = ({ apiMode = 'default' }) => {
   const [deleteTarget, setDeleteTarget] = useState(null)
   const [isDownloading, setIsDownloading] = useState(false)
 
+  const isDark = storeTheme === 'dark' || (storeTheme === 'system' && window.matchMedia?.('(prefers-color-scheme: dark)').matches)
   const apiClient = apiMode === 'accountant' ? accountantApi : feesApi
 
   useEffect(() => {
@@ -212,6 +244,13 @@ const FeeStructurePage = ({ apiMode = 'default' }) => {
     return { count: structures.length, annualTotal }
   }, [structures])
 
+  const calculateAnnual = (fee) => {
+    const amt = parseFloat(fee.amount) || 0
+    if (fee.frequency === 'monthly') return amt * 12
+    if (fee.frequency === 'quarterly') return amt * 4
+    return amt
+  }
+
   const groupedStructures = useMemo(() => {
     if (classId) return { [structures[0]?.class_name || 'Class']: filteredStructures }
     
@@ -223,13 +262,6 @@ const FeeStructurePage = ({ apiMode = 'default' }) => {
     }, {})
   }, [filteredStructures, classId])
 
-  const calculateAnnual = (fee) => {
-    const amt = parseFloat(fee.amount) || 0
-    if (fee.frequency === 'monthly') return amt * 12
-    if (fee.frequency === 'quarterly') return amt * 4
-    return amt
-  }
-
   const totalsFooter = useMemo(() => {
     const nonOptional = filteredStructures.filter(s => !s.is_optional)
     const amountSum = nonOptional.reduce((acc, curr) => acc + parseFloat(curr.amount || 0), 0)
@@ -237,256 +269,302 @@ const FeeStructurePage = ({ apiMode = 'default' }) => {
     return { count: filteredStructures.length, amountSum, annualSum }
   }, [filteredStructures])
 
+  const tableColumns = [
+    {
+      title: 'Fee Name',
+      dataIndex: 'name',
+      key: 'name',
+      render: (text) => <span className="font-extrabold text-gray-800 dark:text-gray-200">{text}</span>
+    },
+    {
+      title: 'Amount',
+      dataIndex: 'amount',
+      key: 'amount',
+      render: (val, record) => (
+        <EditableCell
+          value={val}
+          onSave={(newVal) => handleUpdate(record.id, { amount: newVal })}
+          isLoading={isSaving}
+        />
+      )
+    },
+    {
+      title: 'Annual Cost',
+      key: 'annual_cost',
+      render: (_, record) => {
+        const annual = calculateAnnual(record)
+        return (
+          <span className="font-extrabold text-orange-600 dark:text-orange-400">
+            {formatCurrency(annual)}
+            {record.frequency === 'one_time' && <span className="text-[10px] text-gray-400 font-semibold ml-1">(once)</span>}
+          </span>
+        )
+      }
+    },
+    {
+      title: 'Frequency',
+      dataIndex: 'frequency',
+      key: 'frequency',
+      render: (freq) => {
+        const cfg = FREQUENCY_BADGE[freq] || { label: freq, color: 'default' }
+        return <Tag color={cfg.color} className="rounded-full font-bold text-[10px] border-0 px-2.5">{cfg.label}</Tag>
+      }
+    },
+    {
+      title: 'Due Day',
+      dataIndex: 'due_day',
+      key: 'due_day',
+      render: (val) => <span className="font-bold text-gray-500 dark:text-gray-400">{ordinal(val)}</span>
+    },
+    {
+      title: 'Optional',
+      dataIndex: 'is_optional',
+      key: 'is_optional',
+      render: (val) => val ? <Tag className="rounded-full font-bold text-[10px] border-0 bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400 px-2.5">Optional</Tag> : <span className="text-gray-400 dark:text-gray-600 font-bold">•</span>
+    },
+    {
+      title: 'Remarks',
+      dataIndex: 'remarks',
+      key: 'remarks',
+      render: (val, record) => (
+        <div className="max-w-[200px]">
+          <EditableCell
+            value={val || '—'}
+            onSave={(newVal) => handleUpdate(record.id, { remarks: newVal === '—' ? null : newVal })}
+            isLoading={isSaving}
+          />
+        </div>
+      )
+    },
+    {
+      title: '',
+      key: 'action',
+      render: (_, record) => (
+        <Space size="small">
+          <Button
+            type="text"
+            size="small"
+            onClick={() => setEditTarget(record)}
+            icon={<EditOutlined />}
+            className="text-gray-400 hover:text-orange-500 flex items-center justify-center"
+          />
+          <Button
+            type="text"
+            size="small"
+            onClick={() => setDeleteTarget(record)}
+            icon={<DeleteOutlined />}
+            className="text-gray-400 hover:text-rose-600 flex items-center justify-center"
+          />
+        </Space>
+      )
+    }
+  ]
+
   return (
-    <div className="space-y-6">
-      {/* Hero Header */}
-      <div 
-        className="rounded-[32px] p-8 text-white relative overflow-hidden shadow-xl shadow-blue-900/10"
-        style={{ background: 'linear-gradient(135deg, #1e40af 0%, #4f46e5 100%)' }}
-      >
-        <div className="relative z-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight">Fee Structure</h1>
-            <p className="mt-2 text-blue-100 max-w-md">
+    <ConfigProvider
+      theme={{
+        algorithm: isDark ? antdTheme.darkAlgorithm : antdTheme.defaultAlgorithm,
+        token: {
+          colorPrimary: '#4CC0D4',
+          borderRadius: 24,
+          fontFamily: 'inherit',
+        },
+      }}
+    >
+      <div className="space-y-6">
+        {/* Welcome Header */}
+        <div 
+          className="flex flex-wrap items-center justify-between gap-6 rounded-[32px] border p-8 shadow-sm relative overflow-hidden backdrop-blur-md" 
+          style={{ 
+            background: isDark 
+              ? 'linear-gradient(135deg, rgba(76, 192, 212, 0.15) 0%, #1e1b4b 100%)'
+              : 'linear-gradient(135deg, #e0f7fa 0%, #fffdf9 100%)', 
+            borderColor: isDark ? 'rgba(76, 192, 212, 0.3)' : '#b2ebf2'
+          }}
+        >
+          <div className="absolute -right-20 -top-20 w-64 h-64 rounded-full bg-cyan-500/10 blur-3xl pointer-events-none" />
+          
+          <div className="z-10 max-w-md">
+            <h1 className="text-2xl font-black text-gray-900 dark:text-white tracking-tight">Fee Structure</h1>
+            <p className="mt-1.5 text-xs text-gray-500 dark:text-gray-400 font-semibold leading-relaxed">
               Manage fee components for each class and session. These components define what students are charged.
             </p>
           </div>
-          <div className="flex gap-4">
-            <div className="bg-white/10 backdrop-blur-md rounded-2xl p-4 border border-white/20">
-              <p className="text-xs font-semibold text-blue-100 uppercase tracking-wider">Total Components</p>
-              <p className="text-2xl font-bold mt-1">{stats.count}</p>
-            </div>
-            <div className="bg-white/10 backdrop-blur-md rounded-2xl p-4 border border-white/20">
-              <p className="text-xs font-semibold text-blue-100 uppercase tracking-wider">Est. Annual (Non-optional)</p>
-              <p className="text-2xl font-bold mt-1">{formatCurrency(stats.annualTotal)}</p>
-            </div>
-          </div>
-        </div>
-        {/* Decorative Circles */}
-        <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full -mr-32 -mt-32 blur-3xl"></div>
-        <div className="absolute bottom-0 left-0 w-48 h-48 bg-blue-400/10 rounded-full -ml-24 -mb-24 blur-2xl"></div>
-      </div>
 
-      {/* Filter Card */}
-      <div
-        className="grid grid-cols-1 md:grid-cols-12 gap-4 p-5 rounded-[24px] shadow-sm border border-border"
-        style={{ backgroundColor: 'var(--color-surface)' }}
-      >
-        <div className="md:col-span-3">
-          <Select
-            label="Academic Session"
-            value={sessionId}
-            onChange={e => setSessionId(e.target.value)}
-            options={(sessions || []).map(s => ({ 
-              value: String(s.id), 
-              label: `${s.name}${s.is_current ? ' (Current)' : ''}` 
-            }))}
-          />
+          <Space size="middle" className="z-10">
+            <div className="rounded-2xl bg-white/70 dark:bg-gray-900/60 border border-cyan-100/40 dark:border-cyan-950/20 p-4 min-w-[120px] shadow-sm">
+              <span className="text-[10px] font-black uppercase tracking-wider text-gray-400">Components</span>
+              <p className="text-xl font-black text-gray-900 dark:text-white mt-0.5">{stats.count}</p>
+            </div>
+            <div className="rounded-2xl bg-white/70 dark:bg-gray-900/60 border border-cyan-100/40 dark:border-cyan-950/20 p-4 min-w-[140px] shadow-sm">
+              <span className="text-[10px] font-black uppercase tracking-wider text-cyan-700 dark:text-cyan-400">Est. Annual (Non-opt)</span>
+              <p className="text-xl font-black text-cyan-600 dark:text-cyan-400 mt-0.5">{formatCurrency(stats.annualTotal)}</p>
+            </div>
+          </Space>
         </div>
-        <div className="md:col-span-3">
-          <Select
-            label="Target Class"
-            value={classId}
-            onChange={e => setClassId(e.target.value)}
-            options={classes}
-            placeholder="All classes"
-          />
-        </div>
-        <div className="md:col-span-3">
-          <div className="flex flex-col gap-1.5">
-            <label className="text-xs font-bold text-text-muted uppercase tracking-wider ml-1">Search Fee</label>
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted" size={16} />
-              <input
-                className="w-full pl-10 pr-4 py-2.5 text-sm border rounded-xl outline-none focus:ring-2 focus:ring-brand/20 transition-all"
-                style={{ backgroundColor: 'var(--color-bg-input)', borderColor: 'var(--color-border)' }}
+
+        {/* Filter Card */}
+        <Card 
+          className="rounded-[28px] shadow-sm border-gray-100 dark:border-gray-800"
+          styles={{ body: { padding: '24px' } }}
+        >
+          <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-end">
+            <div className="md:col-span-3">
+              <label className="block text-[10px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-1.5">Academic Session</label>
+              <AntSelect
+                value={sessionId || undefined}
+                onChange={val => setSessionId(val || '')}
+                options={(sessions || []).map(s => ({ 
+                  value: String(s.id), 
+                  label: `${s.name}${s.is_current ? ' (Current)' : ''}` 
+                }))}
+                className="w-full rounded-xl text-xs h-[38px]"
+              />
+            </div>
+
+            <div className="md:col-span-3">
+              <label className="block text-[10px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-1.5">Target Class</label>
+              <AntSelect
+                placeholder="All classes"
+                value={classId || undefined}
+                onChange={val => setClassId(val || '')}
+                options={classes}
+                allowClear
+                className="w-full rounded-xl text-xs h-[38px]"
+              />
+            </div>
+
+            <div className="md:col-span-3">
+              <label className="block text-[10px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-1.5">Search Fee</label>
+              <AntInput
                 placeholder="Search by name..."
                 value={search}
                 onChange={e => setSearch(e.target.value)}
+                prefix={<SearchOutlined className="text-gray-400" />}
+                allowClear
+                className="rounded-xl font-semibold text-xs h-[38px]"
               />
             </div>
-          </div>
-        </div>
-        <div className="md:col-span-3 flex items-end justify-end gap-2 pb-0.5">
-          <Button
-            variant="secondary"
-            icon={Download}
-            onClick={handleDownload}
-            loading={isDownloading}
-            disabled={!sessionId || structures.length === 0}
-            title={structures.length === 0 ? "No fee components to export" : "Download Fee Structure PDF"}
-          />
-          <Button 
-            variant="primary"
-            icon={Plus} 
-            onClick={() => setAddModal(true)}
-            disabled={!sessionId}
-          >
-            Add Component
-          </Button>
-        </div>
-      </div>
 
-      {/* Table Content */}
-      <div
-        className="rounded-[28px] overflow-hidden border border-border shadow-sm"
-        style={{ backgroundColor: 'var(--color-surface)' }}
-      >
+            <div className="md:col-span-3 flex gap-2">
+              <Button
+                size="large"
+                icon={<DownloadOutlined />}
+                onClick={handleDownload}
+                loading={isDownloading}
+                disabled={!sessionId || structures.length === 0}
+                title={structures.length === 0 ? "No components to export" : "Download PDF"}
+                className="rounded-xl font-bold flex items-center justify-center border-gray-200 dark:border-gray-800 text-gray-700 dark:text-gray-200"
+                style={{ height: '38px', width: '45px', padding: 0 }}
+              />
+              <Button 
+                type="primary"
+                size="large"
+                icon={<PlusOutlined />} 
+                onClick={() => setAddModal(true)}
+                disabled={!sessionId}
+                className="rounded-xl font-bold flex items-center justify-center flex-1 border-0"
+                style={{ height: '38px', background: 'linear-gradient(90deg, #4cc0d4 0%, #0891b2 100%)' }}
+              >
+                Add Component
+              </Button>
+            </div>
+          </div>
+        </Card>
+
+        {/* Structures Tables */}
         {isLoading ? (
-          <TableSkeleton cols={8} rows={6} />
+          <div className="p-6 bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-[28px]">
+            <Skeleton active paragraph={{ rows: 6 }} />
+          </div>
         ) : filteredStructures.length === 0 ? (
-          <EmptyState
-            icon={Settings2}
-            title={search ? "No matches found" : "No fee components found"}
-            description={search ? `No components match "${search}" in this selection.` : "Fee components define what invoices are generated for each student."}
-            action={
-              <div className="flex gap-3">
-                <Button variant="secondary" disabled={!sessionId || structures.length === 0} onClick={handleDownload} icon={Download}>Download PDF</Button>
-                <Button icon={Plus} onClick={() => setAddModal(true)} disabled={!sessionId}>Add Component</Button>
-              </div>
-            }
-            className="border-0 rounded-none py-16"
-          >
-            <p className="text-xs text-text-muted mt-4 italic">Tip: Use academic sessions to manage fees across different years.</p>
-          </EmptyState>
+          <Card className="rounded-[28px] border-gray-100 dark:border-gray-800 text-center py-8">
+            <Empty 
+              image={Empty.PRESENTED_IMAGE_SIMPLE} 
+              description={search ? "No matches found in this selection" : "No fee components found for this session"} 
+            />
+            <div className="flex justify-center gap-3 mt-4">
+              <Button type="default" disabled={!sessionId || structures.length === 0} onClick={handleDownload} icon={<DownloadOutlined />} className="rounded-full font-bold">Download PDF</Button>
+              <Button type="primary" icon={<PlusOutlined />} onClick={() => setAddModal(true)} disabled={!sessionId} className="rounded-full font-bold border-0" style={{ backgroundColor: '#4CC0D4' }}>Add Component</Button>
+            </div>
+          </Card>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="bg-surface-raised/30 border-b border-border">
-                  {['Fee Name', 'Amount', 'Annual Cost', 'Frequency', 'Due Day', 'Optional', 'Remarks', 'Actions'].map(h => (
-                    <th key={h} className="px-5 py-4 text-left text-[10px] font-bold uppercase tracking-[0.15em]"
-                      style={{ color: 'var(--color-text-muted)' }}>
-                      {h}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-border">
-                {Object.entries(groupedStructures).map(([className, classFees]) => (
-                  <Fragment key={className}>
-                    {!classId && (
-                      <tr>
-                        <td colSpan={8} className="px-5 py-2.5 bg-green-50/50 text-[11px] font-black uppercase text-green-700 border-y border-green-100 tracking-[0.2em] text-center">
-                          {className}
-                        </td>
-                      </tr>
-                    )}
-                    {classFees.map((fee) => {
-                      const freqCfg = FREQUENCY_BADGE[fee.frequency] || { label: fee.frequency, variant: 'grey' }
-                      const annual = calculateAnnual(fee)
-                      
-                      return (
-                        <tr key={fee.id} className="group hover:bg-surface-raised/30 transition-colors">
-                          <td className="px-5 py-4">
-                            <p className="text-sm font-semibold text-text-primary">
-                              {fee.name}
-                            </p>
-                          </td>
-                          <td className="px-5 py-4">
-                            <EditableCell
-                              value={fee.amount}
-                              onSave={(val) => handleUpdate(fee.id, { amount: val })}
-                              isLoading={isSaving}
-                            />
-                          </td>
-                          <td className="px-5 py-4">
-                            <span className="text-sm font-bold text-brand">
-                              {formatCurrency(annual)}
-                              {fee.frequency === 'one_time' && <span className="text-[10px] text-text-muted font-normal ml-1">(once)</span>}
-                            </span>
-                          </td>
-                          <td className="px-5 py-4">
-                            <Badge variant={freqCfg.variant} size="sm">{freqCfg.label}</Badge>
-                          </td>
-                          <td className="px-5 py-4 text-sm font-medium text-text-secondary">
-                            {ordinal(fee.due_day)}
-                          </td>
-                          <td className="px-5 py-4">
-                            {fee.is_optional ? (
-                              <Badge variant="grey" size="xs">Optional</Badge>
-                            ) : (
-                              <span className="text-xs text-text-muted opacity-40">—</span>
-                            )}
-                          </td>
-                          <td className="px-5 py-4">
-                            <div className="max-w-[200px]">
-                              <EditableCell
-                                value={fee.remarks || '—'}
-                                onSave={(val) => handleUpdate(fee.id, { remarks: val === '—' ? null : val })}
-                                isLoading={isSaving}
-                              />
-                            </div>
-                          </td>
-                          <td className="px-5 py-4">
-                            <div className="flex items-center gap-1">
-                              <button
-                                onClick={() => setEditTarget(fee)}
-                                className="p-1.5 rounded-lg text-text-muted hover:text-brand hover:bg-brand/5 transition-all"
-                                title="Edit"
-                              >
-                                <Pencil size={14} />
-                              </button>
-                              <button
-                                onClick={() => setDeleteTarget(fee)}
-                                className="p-1.5 rounded-lg text-text-muted hover:text-red-600 hover:bg-red-50 transition-all"
-                                title="Remove"
-                              >
-                                <Trash2 size={14} />
-                              </button>
-                            </div>
-                          </td>
-                        </tr>
-                      )
-                    })}
-                  </Fragment>
-                ))}
-              </tbody>
-              <tfoot className="bg-surface-raised/50 border-t border-border">
-                <tr className="font-bold text-text-primary text-sm">
-                  <td className="px-5 py-4">Total Components: {totalsFooter.count}</td>
-                  <td className="px-5 py-4">{formatCurrency(totalsFooter.amountSum)}</td>
-                  <td colSpan={6} className="px-5 py-4 text-right">
-                    <span className="text-text-muted font-semibold uppercase text-[10px] tracking-wider mr-2">Est. Annual (Non-optional):</span>
-                    <span className="text-lg text-brand">{formatCurrency(totalsFooter.annualSum)}</span>
-                  </td>
-                </tr>
-              </tfoot>
-            </table>
+          <div className="space-y-6">
+            {Object.entries(groupedStructures).map(([className, classFees]) => (
+              <div key={className} className="rounded-[28px] overflow-hidden border border-gray-100 dark:border-gray-800/80 bg-white dark:bg-gray-900 shadow-sm">
+                {!classId && (
+                  <div className="px-6 py-3 bg-cyan-50/40 dark:bg-cyan-950/10 border-b border-gray-100 dark:border-gray-850 text-[11px] font-black uppercase text-cyan-600 dark:text-cyan-400 tracking-[0.2em]">
+                    {className}
+                  </div>
+                )}
+                <Table
+                  dataSource={classFees}
+                  columns={tableColumns}
+                  rowKey="id"
+                  pagination={false}
+                  size="middle"
+                  className="premium-table"
+                />
+              </div>
+            ))}
+
+            {/* Totals Summary Panel */}
+            <div className="rounded-[28px] border border-cyan-100/50 dark:border-cyan-950/20 p-6 bg-cyan-50/30 dark:bg-cyan-950/10 flex flex-wrap items-center justify-between gap-6 shadow-sm">
+              <div className="flex items-center gap-6">
+                <div>
+                  <span className="text-[10px] font-black uppercase tracking-wider text-gray-400">Total Components</span>
+                  <p className="text-lg font-black text-gray-900 dark:text-white mt-0.5">{totalsFooter.count}</p>
+                </div>
+                <div className="w-px h-8 bg-gray-200 dark:bg-gray-800" />
+                <div>
+                  <span className="text-[10px] font-black uppercase tracking-wider text-gray-400">Sum of Base Amounts</span>
+                  <p className="text-lg font-black text-gray-900 dark:text-white mt-0.5">{formatCurrency(totalsFooter.amountSum)}</p>
+                </div>
+              </div>
+              <div className="text-left md:text-right">
+                <span className="text-[10px] font-black uppercase tracking-wider text-cyan-700 dark:text-cyan-400">Estimated Annual Dues (Non-optional)</span>
+                <p className="text-2xl font-black text-cyan-600 dark:text-cyan-400 mt-0.5">{formatCurrency(totalsFooter.annualSum)}</p>
+              </div>
+            </div>
           </div>
         )}
+
+        {/* Add/Edit modal */}
+        <AddFeeComponentModal
+          open={addModal || !!editTarget}
+          onClose={() => { setAddModal(false); setEditTarget(null) }}
+          sessionId={sessionId}
+          classId={classId}
+          apiMode={apiMode}
+          editTarget={editTarget}
+          onCreated={(structure) => {
+            if (editTarget) {
+               setStructures(prev => prev.map(s => s.id === structure.id ? structure : s))
+            } else {
+               setStructures((current) => [...current, structure])
+            }
+            setEditTarget(null)
+            setAddModal(false)
+          }}
+        />
+
+        {/* Delete confirm Modal */}
+        <Modal
+          open={!!deleteTarget}
+          onCancel={() => setDeleteTarget(null)}
+          onOk={handleDelete}
+          okText="Remove"
+          okButtonProps={{ danger: true, loading: isSaving }}
+          cancelButtonProps={{ disabled: isSaving }}
+          title={<span className="font-black text-lg tracking-tight">Remove Fee Component?</span>}
+          className="rounded-2xl"
+        >
+          <p className="text-sm text-gray-500 dark:text-gray-400 font-semibold mt-2 leading-relaxed">
+            Remove "{deleteTarget?.name}" from the fee structure? This won't affect already-generated invoices.
+          </p>
+        </Modal>
       </div>
-
-      {/* Add/Edit modal */}
-      <AddFeeComponentModal
-        open={addModal || !!editTarget}
-        onClose={() => { setAddModal(false); setEditTarget(null) }}
-        sessionId={sessionId}
-        classId={classId}
-        apiMode={apiMode}
-        editTarget={editTarget}
-        onCreated={(structure) => {
-          if (editTarget) {
-             setStructures(prev => prev.map(s => s.id === structure.id ? structure : s))
-          } else {
-             setStructures((current) => [...current, structure])
-          }
-          setEditTarget(null)
-          setAddModal(false)
-        }}
-      />
-
-      {/* Delete confirm */}
-      <ConfirmDialog
-        open={!!deleteTarget}
-        onClose={() => setDeleteTarget(null)}
-        onConfirm={handleDelete}
-        title="Remove Fee Component?"
-        description={`Remove "${deleteTarget?.name}" from the fee structure? This won't affect already-generated invoices.`}
-        confirmLabel="Remove"
-        loading={isSaving}
-      />
-    </div>
+    </ConfigProvider>
   )
 }
 

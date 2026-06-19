@@ -40,7 +40,7 @@ export default function StaffAttendancePage() {
   } = useStaffAttendanceStore()
 
   const [activeTab, setActiveTab] = useState('daily') // 'daily' | 'register'
-  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0])
+  const [selectedDate, setSelectedDate] = useState(new Date().toLocaleDateString('en-CA'))
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1)
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear())
   const [searchQuery, setSearchQuery] = useState('')
@@ -108,7 +108,7 @@ export default function StaffAttendancePage() {
     const d = new Date(selectedDate)
     d.setDate(d.getDate() + 1)
     const next = d.toISOString().split('T')[0]
-    const today = new Date().toISOString().split('T')[0]
+    const today = new Date().toLocaleDateString('en-CA')
     if (next <= today) setSelectedDate(next)
   }
 
@@ -185,7 +185,7 @@ export default function StaffAttendancePage() {
               <input
                 type="date"
                 value={selectedDate}
-                max={new Date().toISOString().split('T')[0]}
+                max={new Date().toLocaleDateString('en-CA')}
                 onChange={e => setSelectedDate(e.target.value)}
                 className="bg-transparent border-none text-sm font-bold focus:ring-0 cursor-pointer"
               />

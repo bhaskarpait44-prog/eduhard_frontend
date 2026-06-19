@@ -1,64 +1,61 @@
 import { useCallback, useMemo, useState } from 'react'
-import { Download, Bell, CheckSquare, Square, AlertCircle, Search, X, Users, CreditCard, AlertTriangle } from 'lucide-react'
-import { motion, AnimatePresence } from 'framer-motion'
+import {
+  Card,
+  Row,
+  Col,
+  Table,
+  Button,
+  Select as AntSelect,
+  Input as AntInput,
+  ConfigProvider,
+  Tag,
+  Avatar,
+  Empty,
+  Skeleton,
+  Space,
+  theme as antdTheme
+} from 'antd'
+import {
+  DownloadOutlined,
+  BellOutlined,
+  CheckSquareOutlined,
+  BorderOutlined,
+  SearchOutlined,
+  CloseOutlined,
+  UserOutlined,
+  CreditCardOutlined,
+  AlertOutlined,
+  SlidersOutlined
+} from '@ant-design/icons'
 import usePageTitle from '@/hooks/usePageTitle'
 import useDefaulters from '@/hooks/useDefaulters'
 import useSessionStore from '@/store/sessionStore'
 import ReminderModal from '@/components/accountant/ReminderModal'
-import AgTable from '@/components/ui/AgTable'
 import * as accountantApi from '@/api/accountantApi'
-import { formatCurrency, formatDate } from '@/utils/helpers'
+import { formatCurrency, formatDate, getInitials } from '@/utils/helpers'
 import { downloadBlob } from '@/utils/downloadBlob'
+import useUiStore from '@/store/uiStore'
 
 const SEVERITY = (balance) => {
-  if (balance >= 10000) return { label: 'Critical', tone: 'critical' }
-  if (balance >= 5000) return { label: 'High', tone: 'high' }
-  return { label: 'Moderate', tone: 'moderate' }
+  if (balance >= 10000) return { label: 'Critical', color: 'red' }
+  if (balance >= 5000) return { label: 'High', color: 'orange' }
+  return { label: 'Moderate', color: 'gold' }
 }
-
-const StatCard = ({ label, value, icon: Icon, accent, sub, index }) => (
-  <motion.div
-    initial={{ opacity: 0, y: 12 }}
-    animate={{ opacity: 1, y: 0 }}
-    transition={{ duration: 0.35, delay: index * 0.06 }}
-    className="relative rounded-2xl border p-5 flex items-center justify-between gap-4 shadow-sm hover:shadow-md transition-all group overflow-hidden"
-    style={{ 
-      backgroundColor: 'var(--color-surface)', 
-      borderColor: 'var(--color-border)',
-    }}
-  >
-    <div 
-      className="absolute left-0 top-0 bottom-0 w-1.5 transition-all group-hover:w-2"
-      style={{ backgroundColor: accent || 'var(--color-brand)' }}
-    />
-    <div className="flex flex-col gap-1 pl-1">
-      <span className="text-[10px] font-bold uppercase tracking-widest" style={{ color: 'var(--color-text-muted)' }}>{label}</span>
-      <span className="text-3xl font-extrabold leading-tight tracking-tight" style={{ color: accent || 'var(--color-text-primary)' }}>{value}</span>
-      {sub && <span className="text-[11px] font-medium" style={{ color: 'var(--color-text-muted)' }}>{sub}</span>}
-    </div>
-    {Icon && (
-      <div className="flex h-11 w-11 items-center justify-center rounded-xl transition-colors"
-        style={{ 
-          backgroundColor: accent ? `color-mix(in srgb, ${accent} 8%, var(--color-surface-raised))` : 'var(--color-accent-subtle)',
-          color: accent || 'var(--color-brand)' 
-        }}
-      >
-        <Icon size={20} className="transition-transform group-hover:scale-110" />
-      </div>
-    )}
-  </motion.div>
-)
 
 const DefaulterList = () => {
   usePageTitle('Defaulters')
-  const { defaulters = [] } = useDefaulters()
+  const { defaulters = [], isLoading = false } = useDefaulters()
   const { currentSession } = useSessionStore()
+  const { theme: storeTheme } = useUiStore()
+  
   const [selected, setSelected] = useState([])
   const [open, setOpen] = useState(false)
   const [downloading, setDownloading] = useState(false)
   const [selectedClass, setSelectedClass] = useState('')
   const [searchQuery, setSearchQuery] = useState('')
   const [severityFilter, setSeverityFilter] = useState('')
+
+  const isDark = storeTheme === 'dark' || (storeTheme === 'system' && window.matchMedia?.('(prefers-color-scheme: dark)').matches)
 
   const classes = useMemo(() => {
     const set = new Set(defaulters.map((r) => r.class_name).filter(Boolean))
@@ -86,110 +83,12 @@ const DefaulterList = () => {
 
   const toggleAll = () => setSelected(selected.length === filtered.length ? [] : filtered.map((r) => r.student_id))
 
-  const handleSelectionChanged = useCallback((rows) => {
-    setSelected(rows.map((row) => row.student_id))
-  }, [])
-
-  const getRowId = useCallback((params) => String(params.data.student_id), [])
-
-  const columnDefs = useMemo(() => [
-    {
-      headerName: 'Student Details',
-      field: 'student_name',
-      minWidth: 240,
-      flex: 1.5,
-      cellRenderer: ({ data }) => (
-        <div className="flex h-full items-center gap-3 py-1">
-          <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl text-xs font-bold shadow-sm transition-all group-hover:scale-105" 
-            style={{ 
-              backgroundColor: 'var(--color-accent-subtle)', 
-              color: 'var(--color-accent-emphasis)',
-              border: '1px solid color-mix(in srgb, var(--color-accent-emphasis) 15%, transparent)'
-            }}
-          >
-            {(data.student_name || '?').charAt(0).toUpperCase()}
-          </div>
-          <div className="flex flex-col justify-center leading-tight">
-            <span className="font-bold text-sm tracking-tight" style={{ color: 'var(--color-text-primary)' }}>{data.student_name}</span>
-            <span className="text-[10px] font-bold uppercase tracking-wider mt-0.5" style={{ color: 'var(--color-text-muted)' }}>{data.admission_no || '-'}</span>
-          </div>
-        </div>
-      ),
-    },
-    { headerName: 'Class', field: 'class_name', width: 130 },
-    {
-      headerName: 'Severity',
-      field: 'balance',
-      width: 145,
-      valueGetter: ({ data }) => SEVERITY(Number(data.balance)).label,
-      cellRenderer: ({ data }) => {
-        const sev = SEVERITY(Number(data.balance))
-        return (
-          <span className={`severity-pill severity-pill-${sev.tone}`}>
-            <span className="severity-dot" />
-            {sev.label}
-          </span>
-        )
-      },
-    },
-    {
-      headerName: 'Total Due',
-      field: 'balance',
-      width: 145,
-      sort: 'desc',
-      type: 'rightAligned',
-      valueFormatter: ({ value }) => formatCurrency(value),
-      cellClass: 'defaulter-amount-cell',
-    },
-    {
-      headerName: 'Overdue Since',
-      field: 'first_due_date',
-      width: 155,
-      valueFormatter: ({ value }) => value ? formatDate(value) : '-',
-    },
-    {
-      headerName: 'Open Invoices',
-      field: 'open_invoices',
-      width: 150,
-      type: 'rightAligned',
-      cellRenderer: ({ value }) => (
-        <span className="invoice-count-pill">
-          {value}
-        </span>
-      ),
-    },
-    {
-      headerName: 'Actions',
-      field: 'student_id',
-      width: 130,
-      sortable: false,
-      filter: false,
-      cellRenderer: ({ data }) => (
-        <button
-          type="button"
-          onClick={(event) => {
-            event.stopPropagation()
-            setSelected([data.student_id])
-            setOpen(true)
-          }}
-          className="defaulter-inline-action flex items-center justify-center gap-1.5 hover:scale-105 active:scale-95 transition-all shadow-sm cursor-pointer"
-          style={{ 
-            backgroundColor: 'var(--color-brand)',
-            borderRadius: '8px',
-            padding: '0.4rem 0.8rem'
-          }}
-        >
-          <Bell size={11} className="text-white" />
-          <span>Remind</span>
-        </button>
-      ),
-    },
-  ], [])
-
-  const getRowClass = useCallback((params) => {
-    const severity = SEVERITY(Number(params.data.balance)).label.toLowerCase()
-    return `defaulter-row-${severity}`
-  }, [])
+  const rowSelection = {
+    selectedRowKeys: selected,
+    onChange: (keys) => {
+      setSelected(keys)
+    }
+  }
 
   const send = async ({ type, message }) => {
     await accountantApi.sendReminderBulk({ student_ids: selected, type, message }).catch(() => {})
@@ -218,211 +117,308 @@ const DefaulterList = () => {
 
   const hasFilters = selectedClass || searchQuery || severityFilter
 
-  const inputStyle = {
-    backgroundColor: 'var(--color-bg-input)',
-    borderColor: 'var(--color-border)',
-    color: 'var(--color-text-primary)',
-  }
+  const tableColumns = [
+    {
+      title: 'Student Details',
+      dataIndex: 'student_name',
+      key: 'student_name',
+      render: (text, record) => (
+        <div className="flex items-center gap-3">
+          <Avatar 
+            className="bg-cyan-100 text-cyan-700 font-extrabold dark:bg-cyan-950/40 dark:text-cyan-300 border border-cyan-200/20"
+          >
+            {getInitials(text)}
+          </Avatar>
+          <div>
+            <div className="text-sm font-extrabold text-gray-800 dark:text-gray-100">{text}</div>
+            <div className="text-xs font-semibold text-gray-400 dark:text-gray-500 mt-0.5">{record.admission_no || '-'}</div>
+          </div>
+        </div>
+      )
+    },
+    {
+      title: 'Class',
+      dataIndex: 'class_name',
+      key: 'class_name',
+      render: (text) => <span className="text-xs font-bold text-gray-500 dark:text-gray-400">{text || '—'}</span>
+    },
+    {
+      title: 'Severity',
+      dataIndex: 'balance',
+      key: 'severity',
+      render: (val) => {
+        const sev = SEVERITY(Number(val))
+        return <Tag color={sev.color} className="rounded-full font-black text-[10px] uppercase border-0 px-2.5 py-0.5">{sev.label}</Tag>
+      }
+    },
+    {
+      title: 'Total Due',
+      dataIndex: 'balance',
+      key: 'balance',
+      render: (val) => <span className="font-extrabold text-rose-600 dark:text-rose-400">{formatCurrency(val)}</span>
+    },
+    {
+      title: 'Overdue Since',
+      dataIndex: 'first_due_date',
+      key: 'first_due_date',
+      render: (val) => <span className="text-xs font-bold text-gray-500 dark:text-gray-400">{val ? formatDate(val) : '-'}</span>
+    },
+    {
+      title: 'Open Invoices',
+      dataIndex: 'open_invoices',
+      key: 'open_invoices',
+      render: (val) => <Tag className="font-extrabold text-xs rounded-lg bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400 border-0 px-2.5 py-0.5">{val}</Tag>
+    },
+    {
+      title: '',
+      key: 'action',
+      render: (_, record) => (
+        <Button
+          type="primary"
+          size="small"
+          icon={<BellOutlined />}
+          onClick={(e) => {
+            e.stopPropagation()
+            setSelected([record.student_id])
+            setOpen(true)
+          }}
+          className="rounded-full font-bold text-[11px] border-0"
+          style={{ backgroundColor: '#4CC0D4' }}
+        >
+          Remind
+        </Button>
+      )
+    }
+  ]
 
   return (
-    <div className="defaulters-page space-y-6">
-      {/* Header */}
-      <div className="flex flex-wrap items-center justify-between gap-5 rounded-2xl border p-6 shadow-sm relative overflow-hidden" 
-        style={{ 
-          backgroundColor: 'var(--color-surface)', 
-          borderColor: 'var(--color-border)' 
-        }}
-      >
-        <div className="absolute right-0 top-0 w-64 h-64 bg-brand/5 rounded-full blur-3xl -z-10 pointer-events-none" />
-        
-        <div className="space-y-1">
-          <div className="flex items-center gap-2">
-            <h1 className="text-2xl font-extrabold tracking-tight" style={{ color: 'var(--color-text-primary)' }}>Defaulter Management</h1>
-            <span className="px-2 py-0.5 text-[10px] font-bold rounded-full bg-red-100 text-red-700 dark:bg-red-950/40 dark:text-red-300">Action Required</span>
+    <ConfigProvider
+      theme={{
+        algorithm: isDark ? antdTheme.darkAlgorithm : antdTheme.defaultAlgorithm,
+        token: {
+          colorPrimary: '#4CC0D4',
+          borderRadius: 24,
+          fontFamily: 'inherit',
+        },
+      }}
+    >
+      <div className="space-y-6">
+        {/* Header Block */}
+        <div
+          className="flex flex-wrap items-center justify-between gap-6 rounded-[32px] border p-6 shadow-sm relative overflow-hidden backdrop-blur-md"
+          style={{ 
+            background: isDark 
+              ? 'linear-gradient(135deg, rgba(76, 192, 212, 0.15) 0%, #1e1b4b 100%)'
+              : 'linear-gradient(135deg, #e0f7fa 0%, #fffdf9 100%)', 
+            borderColor: isDark ? 'rgba(76, 192, 212, 0.3)' : '#b2ebf2'
+          }}
+        >
+          <div className="absolute -right-20 -top-20 w-64 h-64 rounded-full bg-cyan-500/10 blur-3xl pointer-events-none" />
+          
+          <div className="z-10">
+            <div className="flex items-center gap-2">
+              <h1 className="text-2xl font-black text-gray-900 dark:text-white tracking-tight">Defaulter Management</h1>
+              <Tag color="red" className="font-extrabold uppercase text-[9px] border-0 px-2 rounded-full">Action Required</Tag>
+            </div>
+            <p className="mt-1 text-xs text-gray-500 dark:text-gray-400 font-semibold leading-relaxed">
+              Track pending fee dues, view detailed records, and dispatch reminders to guardians.
+            </p>
           </div>
-          <p className="text-sm" style={{ color: 'var(--color-text-muted)' }}>Track pending fee dues, view detailed records, and dispatch reminders to guardians.</p>
-        </div>
-        <div className="flex flex-wrap items-center gap-3">
-          <button
-            type="button"
-            onClick={handleDownload}
-            disabled={downloading}
-            className="defaulters-action-button hover:scale-[1.02] active:scale-[0.98] transition-all cursor-pointer"
-            style={{ borderColor: 'var(--color-border)', color: 'var(--color-text-primary)', borderRadius: '12px' }}
-          >
-            <Download size={15} />
-            {downloading ? 'Preparing PDF...' : 'Export List'}
-          </button>
 
-          <button
-            type="button"
-            onClick={toggleAll}
-            className="defaulters-action-button hover:scale-[1.02] active:scale-[0.98] transition-all cursor-pointer"
-            style={{ borderColor: 'var(--color-border)', color: 'var(--color-text-primary)', borderRadius: '12px' }}
-          >
-            {selected.length === filtered.length && filtered.length > 0 ? <CheckSquare size={15} className="text-brand" /> : <Square size={15} />}
-            {selected.length === filtered.length && filtered.length > 0 ? 'Deselect All' : 'Select All'}
-          </button>
-
-          <div className="group relative">
-            <button
-              type="button"
+          <Space size="small" className="z-10 flex-wrap">
+            <Button
+              type="default"
+              size="large"
+              icon={<DownloadOutlined />}
+              disabled={downloading || filtered.length === 0}
+              onClick={handleDownload}
+              className="rounded-xl font-bold flex items-center justify-center border-gray-200 dark:border-gray-800 text-gray-700 dark:text-gray-200"
+              style={{ height: '40px', padding: '0 16px' }}
+            >
+              {downloading ? 'Preparing...' : 'Export List'}
+            </Button>
+            <Button
+              type="default"
+              size="large"
+              icon={selected.length === filtered.length && filtered.length > 0 ? <CheckSquareOutlined /> : <BorderOutlined />}
+              onClick={toggleAll}
+              className="rounded-xl font-bold flex items-center justify-center border-gray-200 dark:border-gray-800 text-gray-700 dark:text-gray-200"
+              style={{ height: '40px', padding: '0 16px' }}
+            >
+              {selected.length === filtered.length && filtered.length > 0 ? 'Deselect All' : 'Select All'}
+            </Button>
+            <Button 
+              type="primary"
+              size="large"
+              icon={<BellOutlined />} 
               disabled={selected.length === 0}
               onClick={() => setOpen(true)}
-              className="flex items-center gap-2 rounded-xl px-5 py-2.5 text-sm font-bold text-white transition-all shadow-md hover:shadow-lg active:scale-95 disabled:cursor-not-allowed disabled:opacity-40 cursor-pointer"
-              style={{ backgroundColor: 'var(--color-brand)' }}
+              className="rounded-xl font-bold flex items-center justify-center border-0"
+              style={{ height: '40px', padding: '0 20px', background: 'linear-gradient(90deg, #4cc0d4 0%, #0891b2 100%)' }}
             >
-              <Bell size={15} />
               Send Reminders {selected.length > 0 && `(${selected.length})`}
-            </button>
-            {selected.length === 0 && (
-              <div className="absolute bottom-full left-1/2 mb-2.5 w-52 -translate-x-1/2 rounded-xl bg-slate-900 dark:bg-slate-800 px-3 py-2 text-[11px] font-semibold text-white opacity-0 shadow-2xl transition-opacity group-hover:opacity-100 pointer-events-none z-50 border border-slate-700/50">
-                <div className="flex items-start gap-2">
-                  <AlertCircle size={13} className="mt-0.5 text-amber-400 flex-shrink-0" />
-                  <span>Select one or more students to send manual notifications.</span>
-                </div>
-                <div className="absolute top-full left-1/2 -translate-x-1/2 border-8 border-transparent border-t-slate-900 dark:border-t-slate-800" />
-              </div>
+            </Button>
+          </Space>
+        </div>
+
+        {/* Stats Grid */}
+        <Row gutter={[16, 16]}>
+          <Col xs={12} md={6}>
+            <Card className="rounded-[24px] shadow-sm border-gray-100 dark:border-gray-800" styles={{ body: { padding: '20px' } }}>
+              <span className="text-[10px] font-black uppercase tracking-[0.18em] text-gray-400 block mb-1">Total Defaulters</span>
+              <p className="text-2xl font-black text-gray-900 dark:text-white mt-1">{filtered.length}</p>
+            </Card>
+          </Col>
+          <Col xs={12} md={6}>
+            <Card className="rounded-[24px] shadow-sm border-gray-100 dark:border-gray-800" styles={{ body: { padding: '20px' } }}>
+              <span className="text-[10px] font-black uppercase tracking-[0.18em] text-gray-400 block mb-1">Total Outstanding</span>
+              <p className="text-2xl font-black text-rose-600 dark:text-rose-400 mt-1">{formatCurrency(totalDue)}</p>
+            </Card>
+          </Col>
+          <Col xs={12} md={6}>
+            <Card className="rounded-[24px] shadow-sm border-gray-100 dark:border-gray-800" styles={{ body: { padding: '20px' } }}>
+              <span className="text-[10px] font-black uppercase tracking-[0.18em] text-gray-400 block mb-1">Critical Defaulters</span>
+              <p className="text-2xl font-black text-red-600 dark:text-red-400 mt-1">{criticalCount}</p>
+            </Card>
+          </Col>
+          <Col xs={12} md={6}>
+            <Card className="rounded-[24px] shadow-sm border-gray-100 dark:border-gray-800" styles={{ body: { padding: '20px' } }}>
+              <span className="text-[10px] font-black uppercase tracking-[0.18em] text-gray-400 block mb-1">Selected Students</span>
+              <p className="text-2xl font-black text-orange-600 dark:text-orange-400 mt-1">{selected.length}</p>
+            </Card>
+          </Col>
+        </Row>
+
+        {/* Filters Card */}
+        <Card 
+          className="rounded-[28px] shadow-sm border-gray-100 dark:border-gray-800"
+          styles={{ body: { padding: '20px' } }}
+        >
+          <div className="flex flex-wrap gap-4 items-end">
+            <div className="flex-1 min-w-[200px]">
+              <label className="block text-[10px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-1.5">Search Student</label>
+              <AntInput
+                placeholder="Type student name..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                prefix={<SearchOutlined className="text-gray-400" />}
+                allowClear
+                className="rounded-xl font-semibold text-xs h-[38px]"
+              />
+            </div>
+
+            <div className="min-w-[160px] flex-1 sm:flex-initial">
+              <label className="block text-[10px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-1.5">Class</label>
+              <AntSelect
+                placeholder="All Classes"
+                value={selectedClass || undefined}
+                onChange={(val) => setSelectedClass(val || '')}
+                options={classes.map((c) => ({ value: c, label: c }))}
+                allowClear
+                className="w-full rounded-xl text-xs h-[38px]"
+              />
+            </div>
+
+            <div className="min-w-[160px] flex-1 sm:flex-initial">
+              <label className="block text-[10px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-1.5">Severity Level</label>
+              <AntSelect
+                placeholder="All Levels"
+                value={severityFilter || undefined}
+                onChange={(val) => setSeverityFilter(val || '')}
+                options={[
+                  { value: 'Critical', label: 'Critical (≥ ₹10K)' },
+                  { value: 'High', label: 'High (≥ ₹5K)' },
+                  { value: 'Moderate', label: 'Moderate (< ₹5K)' }
+                ]}
+                allowClear
+                className="w-full rounded-xl text-xs h-[38px]"
+              />
+            </div>
+
+            {hasFilters && (
+              <Button
+                type="dashed"
+                onClick={clearFilters}
+                className="rounded-xl font-bold flex items-center justify-center text-xs h-[38px]"
+              >
+                Reset Filters
+              </Button>
             )}
           </div>
-        </div>
-      </div>
+        </Card>
 
-      {/* Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <StatCard index={0} label="Total Defaulters" value={filtered.length} icon={Users} />
-        <StatCard index={1} label="Total Due" value={formatCurrency(totalDue)} accent="#dc2626" icon={CreditCard} />
-        <StatCard index={2} label="Critical" value={criticalCount} accent="#e11d48" sub="≥ ₹10,000 due" icon={AlertTriangle} />
-        <StatCard index={3} label="Selected" value={selected.length} accent={selected.length > 0 ? 'var(--color-brand)' : undefined} sub={selected.length > 0 ? 'for bulk reminder' : 'none selected'} icon={CheckSquare} />
-      </div>
-
-      {/* Filters */}
-      <div className="rounded-2xl border p-5 shadow-sm" style={{ backgroundColor: 'var(--color-surface)', borderColor: 'var(--color-border)' }}>
-        <div className="flex flex-wrap gap-4 items-end">
-          {/* Search */}
-          <div className="flex-1 min-w-[200px]">
-            <label className="block text-[10px] font-bold mb-1.5 uppercase tracking-widest" style={{ color: 'var(--color-text-muted)' }}>Search Student</label>
-            <div className="relative">
-              <Search className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2" style={{ color: 'var(--color-text-muted)' }} />
-              <input type="text" placeholder="Type student name..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full rounded-xl pl-10 pr-9 py-2.5 text-sm border outline-none transition-all focus:ring-2 focus:ring-brand/20 focus:border-brand" style={inputStyle} />
-              {searchQuery && (
-                <button type="button" onClick={() => setSearchQuery('')} className="absolute right-3 top-1/2 -translate-y-1/2 p-0.5 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-slate-600 transition-colors">
-                  <X size={14} />
-                </button>
-              )}
+        {/* Results Card */}
+        <Card
+          className="rounded-[28px] shadow-sm border-gray-100 dark:border-gray-800 overflow-hidden"
+          styles={{ header: { borderBottom: '1px solid rgba(0,0,0,0.06)' }, body: { padding: '0px' } }}
+          title={
+            <div className="flex items-center justify-between py-1">
+              <div>
+                <span className="text-base font-black text-gray-900 dark:text-white tracking-tight">Defaulter Students</span>
+                <span className="text-xs text-gray-400 dark:text-gray-500 font-semibold block mt-0.5">
+                  Showing {filtered.length} students matching parameters.
+                </span>
+              </div>
+              <Tag icon={<SlidersOutlined />} color="default" className="font-extrabold uppercase text-[10px] rounded-full px-3 py-0.5">
+                Outstanding Dues View
+              </Tag>
             </div>
-          </div>
-
-          {/* Class */}
-          <div className="min-w-[160px]">
-            <label className="block text-[10px] font-bold mb-1.5 uppercase tracking-widest" style={{ color: 'var(--color-text-muted)' }}>Class</label>
-            <select value={selectedClass} onChange={(e) => setSelectedClass(e.target.value)} className="w-full rounded-xl px-3.5 py-2.5 text-sm border outline-none cursor-pointer focus:ring-2 focus:ring-brand/20 focus:border-brand" style={inputStyle}>
-              <option value="">All Classes</option>
-              {classes.map((c) => <option key={c} value={c}>{c}</option>)}
-            </select>
-          </div>
-
-          {/* Severity */}
-          <div className="min-w-[160px]">
-            <label className="block text-[10px] font-bold mb-1.5 uppercase tracking-widest" style={{ color: 'var(--color-text-muted)' }}>Severity Level</label>
-            <select value={severityFilter} onChange={(e) => setSeverityFilter(e.target.value)} className="w-full rounded-xl px-3.5 py-2.5 text-sm border outline-none cursor-pointer focus:ring-2 focus:ring-brand/20 focus:border-brand" style={inputStyle}>
-              <option value="">All Levels</option>
-              <option value="Critical">Critical (≥ ₹10K)</option>
-              <option value="High">High (≥ ₹5K)</option>
-              <option value="Moderate">Moderate (&lt; ₹5K)</option>
-            </select>
-          </div>
-
-          {hasFilters && (
-            <button type="button" onClick={clearFilters} className="defaulters-action-button px-5 py-2.5 hover:bg-slate-50 dark:hover:bg-slate-900 border border-dashed hover:border-solid hover:scale-105 active:scale-95 transition-all cursor-pointer" style={{ borderRadius: '12px' }}>
-              Reset Filters
-            </button>
+          }
+        >
+          {isLoading ? (
+            <div className="p-6"><Skeleton active paragraph={{ rows: 8 }} /></div>
+          ) : filtered.length === 0 ? (
+            <div className="py-16 flex flex-col items-center justify-center">
+              <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="No defaulters match selected filter criteria" />
+            </div>
+          ) : (
+            <>
+              <Table
+                rowSelection={rowSelection}
+                dataSource={filtered}
+                columns={tableColumns}
+                rowKey="student_id"
+                pagination={{ pageSize: 20 }}
+                size="middle"
+                className="premium-table"
+                rowClassName="hover:bg-orange-50/10 dark:hover:bg-orange-950/10 transition-colors"
+              />
+              <div className="flex flex-wrap items-center justify-between gap-3 border-t border-gray-100 dark:border-gray-800/80 px-6 py-4 text-xs font-semibold text-gray-400 dark:text-gray-500">
+                <span>Total outstanding: <span className="font-black text-rose-600 dark:text-rose-400 text-sm">{formatCurrency(totalDue)}</span></span>
+              </div>
+            </>
           )}
-        </div>
-      </div>
+        </Card>
 
-      {/* Table */}
-      <div className="rounded-2xl border p-4 shadow-sm" style={{ backgroundColor: 'var(--color-surface)', borderColor: 'var(--color-border)' }}>
-        {filtered.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-16 gap-3">
-            <svg className="w-10 h-10 opacity-25" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-            <p className="text-sm font-medium" style={{ color: 'var(--color-text-muted)' }}>No defaulters match your filters</p>
-          </div>
-        ) : (
-          <>
-            <AgTable
-              columns={columnDefs}
-              data={filtered}
-              height={560}
-              paginationPageSize={20}
-              selectedRowIds={selected}
-              onSelectionChanged={handleSelectionChanged}
-              getRowId={getRowId}
-              gridOptions={{
-                getRowClass,
-                rowHeight: 58,
-                headerHeight: 44,
-                selectionColumnDef: {
-                  width: 48,
-                  pinned: 'left',
-                  sortable: false,
-                  resizable: false,
-                },
-              }}
-            />
-            <div className="flex flex-wrap items-center justify-between gap-3 border-t px-2 pt-4 text-xs font-semibold" style={{ color: 'var(--color-text-muted)', borderColor: 'var(--color-border)' }}>
-              <span>Showing {filtered.length} students</span>
-              <span>Total outstanding: <span className="defaulter-total-amount text-sm">{formatCurrency(totalDue)}</span></span>
-            </div>
-          </>
-        )}
-      </div>
-
-      {/* Bulk action bar */}
-      <AnimatePresence>
+        {/* Bulk Action Footer Banner */}
         {selected.length > 0 && (
-          <motion.div
-            initial={{ opacity: 0, y: 40, x: '-50%' }}
-            animate={{ opacity: 1, y: 0, x: '-50%' }}
-            exit={{ opacity: 0, y: 40, x: '-50%' }}
-            className="fixed bottom-6 left-1/2 flex items-center gap-5 rounded-2xl border px-6 py-4 shadow-2xl z-50 backdrop-blur-md"
-            style={{ 
-              backgroundColor: 'var(--color-text-primary)', 
-              borderColor: 'var(--color-border)', 
-              color: 'var(--color-surface)',
-              boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.3), 0 10px 10px -5px rgba(0, 0, 0, 0.2)'
-            }}
-          >
+          <div className="fixed bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-5 rounded-2xl border border-gray-100 dark:border-gray-800 px-6 py-4 shadow-2xl z-50 bg-gray-900 text-white dark:bg-gray-950 dark:border-gray-800/80">
             <div className="flex flex-col">
-              <span className="text-sm font-extrabold">{selected.length} students selected</span>
-              <span className="text-[10px] opacity-70 font-semibold uppercase tracking-wider">Bulk reminder action</span>
+              <span className="text-xs font-black tracking-wide">{selected.length} students selected</span>
+              <span className="text-[9px] opacity-60 font-semibold uppercase tracking-wider mt-0.5">Bulk reminder action</span>
             </div>
-            <div className="w-px h-8 bg-white/20" />
-            <button 
-              type="button" 
+            <div className="w-px h-8 bg-white/10" />
+            <Button 
+              type="primary" 
+              icon={<BellOutlined />}
               onClick={() => setOpen(true)} 
-              className="flex items-center gap-2 text-sm font-extrabold text-orange-400 hover:text-orange-300 transition-colors cursor-pointer"
+              className="rounded-full font-bold text-xs border-0"
+              style={{ backgroundColor: '#4CC0D4' }}
             >
-              <Bell size={15} className="animate-bounce" />
               Send Bulk Reminder
-            </button>
-            <button 
-              type="button" 
+            </Button>
+            <Button 
+              type="text" 
               onClick={() => setSelected([])} 
-              className="flex items-center justify-center w-8 h-8 rounded-full bg-white/10 text-white hover:bg-white/20 hover:scale-105 active:scale-95 transition-all cursor-pointer"
-              title="Clear Selection"
-            >
-              ✕
-            </button>
-          </motion.div>
+              className="text-white hover:text-cyan-400 p-0 flex items-center justify-center w-8 h-8 rounded-full hover:bg-white/10"
+              icon={<CloseOutlined className="text-xs" />}
+            />
+          </div>
         )}
-      </AnimatePresence>
 
-      <ReminderModal open={open} onClose={() => { setOpen(false) }} onSend={send} selectedCount={selected.length} />
-    </div>
+        <ReminderModal open={open} onClose={() => setOpen(false)} onSend={send} selectedCount={selected.length} />
+      </div>
+    </ConfigProvider>
   )
 }
 

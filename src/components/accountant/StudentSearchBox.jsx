@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState } from 'react'
-import { Search, X } from 'lucide-react'
+import { SearchOutlined, CloseCircleOutlined } from '@ant-design/icons'
+import { Avatar } from 'antd'
 import * as accountantApi from '@/api/accountantApi'
 import { getStudents } from '@/api/studentsApi'
-import { formatCurrency } from '@/utils/helpers'
+import { formatCurrency, getInitials } from '@/utils/helpers'
 
 const normalizeStudent = (student = {}) => ({
   ...student,
@@ -88,65 +89,70 @@ const StudentSearchBox = ({ onSelect, autoFocus = false }) => {
   return (
     <div className="relative">
       <div
-        className="flex items-center gap-3 rounded-[22px] border px-4 py-3"
-        style={{ backgroundColor: 'var(--color-surface)', borderColor: 'var(--color-border)' }}
+        className="flex items-center gap-3 rounded-full border border-gray-200 dark:border-gray-700 px-5 py-3.5 focus-within:border-orange-400 focus-within:shadow-md transition-all bg-white dark:bg-gray-800"
       >
-        <Search size={18} style={{ color: 'var(--color-text-muted)' }} />
+        <SearchOutlined className="text-gray-400 dark:text-gray-500 text-base" />
         <input
           ref={inputRef}
           value={query}
           onChange={(event) => setQuery(event.target.value)}
           onKeyDown={handleKeyDown}
-          placeholder="Search by student name or admission number"
-          className="flex-1 bg-transparent text-sm outline-none"
-          style={{ color: 'var(--color-text-primary)' }}
+          placeholder="Search by student name or admission number (Ctrl + F)"
+          className="flex-1 bg-transparent text-sm outline-none text-gray-800 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 font-semibold"
         />
         {query && (
-          <button type="button" onClick={() => { setQuery(''); setResults([]) }}>
-            <X size={16} style={{ color: 'var(--color-text-muted)' }} />
+          <button type="button" onClick={() => { setQuery(''); setResults([]) }} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">
+            <CloseCircleOutlined className="text-base" />
           </button>
         )}
       </div>
 
       {results.length > 0 && (
         <div
-          className="absolute inset-x-0 top-full z-20 mt-2 overflow-hidden rounded-[22px] border"
-          style={{ backgroundColor: 'var(--color-surface)', borderColor: 'var(--color-border)' }}
+          className="absolute inset-x-0 top-full z-20 mt-2 overflow-hidden rounded-[24px] border border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900 shadow-xl max-h-[380px] overflow-y-auto"
         >
-          {results.map((student, index) => (
-            <button
-              key={student.id}
-              type="button"
-              onClick={() => {
-                onSelect(student)
-                setQuery(`${student.first_name} ${student.last_name}`)
-                setResults([])
-              }}
-              className="flex w-full items-center gap-3 px-4 py-3 text-left"
-              style={{ backgroundColor: index === activeIndex ? '#fff7ed' : 'transparent' }}
-            >
-              <div
-                className="flex h-10 w-10 items-center justify-center rounded-full text-sm font-bold text-white"
-                style={{ backgroundColor: 'var(--color-brand)' }}
+          {results.map((student, index) => {
+            const isActive = index === activeIndex
+            return (
+              <button
+                key={student.id}
+                type="button"
+                onClick={() => {
+                  onSelect(student)
+                  setQuery(`${student.first_name} ${student.last_name}`)
+                  setResults([])
+                }}
+                className={`flex w-full items-center gap-3.5 px-5 py-4 text-left transition-colors ${
+                  isActive 
+                    ? 'bg-orange-50/70 dark:bg-orange-950/20' 
+                    : 'hover:bg-gray-50 dark:hover:bg-gray-800/40'
+                }`}
               >
-                {student.first_name?.[0]}{student.last_name?.[0]}
-              </div>
-              <div className="flex-1">
-                <div className="text-sm font-semibold" style={{ color: 'var(--color-text-primary)' }}>
-                  {student.first_name} {student.last_name}
+                <Avatar 
+                  className="bg-orange-100 text-orange-700 font-extrabold dark:bg-orange-950/40 dark:text-orange-300 shadow-sm border border-orange-200/20"
+                >
+                  {getInitials(`${student.first_name} ${student.last_name}`)}
+                </Avatar>
+                <div className="flex-1">
+                  <div className="text-sm font-extrabold text-gray-800 dark:text-gray-100">
+                    {student.first_name} {student.last_name}
+                  </div>
+                  <div className="text-xs font-semibold text-gray-400 dark:text-gray-500 mt-0.5">
+                    {student.admission_no} • {student.class_name || '-'} {student.section_name ? `Section ${student.section_name}` : ''}
+                  </div>
                 </div>
-                <div className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>
-                  {student.admission_no} | {student.class_name || '-'} {student.section_name ? `Section ${student.section_name}` : ''}
+                <div
+                  className={`rounded-full px-3.5 py-1 text-[11px] font-black tracking-wide ${
+                    Number(student.pending_amount || 0) > 0 
+                      ? 'bg-rose-50 text-rose-600 dark:bg-rose-950/30 dark:text-rose-400' 
+                      : 'bg-emerald-50 text-emerald-600 dark:bg-emerald-950/30 dark:text-emerald-400'
+                  }`}
+                >
+                  {formatCurrency(student.pending_amount || 0)}
                 </div>
-              </div>
-              <div
-                className="rounded-full px-3 py-1 text-xs font-semibold"
-                style={{ backgroundColor: Number(student.pending_amount || 0) > 0 ? '#fef2f2' : '#ecfdf5', color: Number(student.pending_amount || 0) > 0 ? '#dc2626' : '#15803d' }}
-              >
-                {formatCurrency(student.pending_amount || 0)}
-              </div>
-            </button>
-          ))}
+              </button>
+            )
+          })}
         </div>
       )}
     </div>

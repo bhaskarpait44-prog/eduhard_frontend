@@ -1,45 +1,46 @@
 import { useEffect, useState, useMemo } from 'react'
+import {
+  Card,
+  Row,
+  Col,
+  Table,
+  Button,
+  Select as AntSelect,
+  Input as AntInput,
+  ConfigProvider,
+  Tag,
+  Modal as AntModal,
+  Tabs,
+  Avatar,
+  Statistic,
+  theme as antdTheme
+} from 'antd'
+import {
+  BankOutlined,
+  SettingOutlined,
+  SearchOutlined,
+  CheckCircleOutlined,
+  CalendarOutlined,
+  FileTextOutlined,
+  PlayCircleOutlined,
+  RiseOutlined,
+  ClockCircleOutlined,
+  ArrowRightOutlined,
+  PrinterOutlined,
+  EditOutlined,
+  DollarOutlined
+} from '@ant-design/icons'
 import usePageTitle from '@/hooks/usePageTitle'
 import useToast from '@/hooks/useToast'
 import usePayrollStore from '@/store/payrollStore'
-import { 
-  Banknote, 
-  Settings2, 
-  Search,
-  CheckCircle2,
-  CalendarDays,
-  FileText,
-  Play,
-  TrendingUp,
-  AlertCircle,
-  Clock,
-  ArrowRight,
-  Printer
-} from 'lucide-react'
-import Button from '@/components/ui/Button'
-import Badge from '@/components/ui/Badge'
-import EmptyState from '@/components/ui/EmptyState'
-import TableSkeleton from '@/components/ui/TableSkeleton'
-import Modal from '@/components/ui/Modal'
-import Input from '@/components/ui/Input'
-import Select from '@/components/ui/Select'
 import PayslipPrint from '@/components/accountant/PayslipPrint'
 import { formatCurrency, formatDate } from '@/utils/helpers'
-
-const StatCard = ({ label, value, sub, accent, icon: Icon }) => (
-  <div className="rounded-[24px] border p-4 flex flex-col gap-1" style={{ backgroundColor: 'var(--color-surface)', borderColor: 'var(--color-border)' }}>
-    <div className="flex items-center justify-between mb-1">
-      <span className="text-[10px] font-bold uppercase tracking-widest" style={{ color: 'var(--color-text-muted)' }}>{label}</span>
-      {Icon && <Icon size={14} style={{ color: accent || 'var(--color-text-muted)' }} />}
-    </div>
-    <span className="text-xl font-bold leading-tight truncate" style={{ color: accent || 'var(--color-text-primary)' }}>{value}</span>
-    {sub && <span className="text-[10px] font-medium" style={{ color: 'var(--color-text-muted)' }}>{sub}</span>}
-  </div>
-)
+import useUiStore from '@/store/uiStore'
 
 export default function PayrollDashboard() {
   usePageTitle('Salary & Payroll')
   const { toastSuccess, toastError } = useToast()
+  const { theme: storeTheme } = useUiStore()
   const { 
     structures, payrolls, isLoading, 
     fetchStructures, updateStructure, 
@@ -61,6 +62,8 @@ export default function PayrollDashboard() {
   const [payForm, setPayForm] = useState({ payment_mode: 'Bank Transfer', payment_date: new Date().toISOString().split('T')[0], remarks: '' })
 
   const [viewPayslip, setViewPayslip] = useState(null)
+
+  const isDark = storeTheme === 'dark' || (storeTheme === 'system' && window.matchMedia?.('(prefers-color-scheme: dark)').matches)
 
   useEffect(() => {
     if (activeTab === 'structures') fetchStructures()
@@ -143,368 +146,592 @@ export default function PayrollDashboard() {
     return [current - 1, current, current + 1]
   }, [])
 
-  return (
-    <div className="space-y-6">
-      {/* Header & Tabs */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 rounded-[28px] border p-4 shadow-sm" style={{ backgroundColor: 'var(--color-surface)', borderColor: 'var(--color-border)' }}>
-        <div className="flex p-1 bg-surface-raised rounded-2xl w-fit border" style={{ borderColor: 'var(--color-border)' }}>
-          <button
-            onClick={() => setActiveTab('payroll')}
-            className={`px-6 py-2 rounded-xl text-sm font-bold transition-all ${
-              activeTab === 'payroll' 
-                ? 'bg-surface shadow-sm' 
-                : 'text-text-muted hover:text-text-primary'
-            }`}
-            style={activeTab === 'payroll' ? { color: 'var(--color-brand)' } : {}}
-          >
-            Monthly Payroll
-          </button>
-          <button
-            onClick={() => setActiveTab('structures')}
-            className={`px-6 py-2 rounded-xl text-sm font-bold transition-all ${
-              activeTab === 'structures' 
-                ? 'bg-surface shadow-sm' 
-                : 'text-text-muted hover:text-text-primary'
-            }`}
-            style={activeTab === 'structures' ? { color: 'var(--color-brand)' } : {}}
-          >
-            Salary Structures
-          </button>
-        </div>
-
+  // Columns for Payroll table
+  const payrollColumns = [
+    {
+      title: 'Staff Member',
+      key: 'staff',
+      render: (_, record) => (
         <div className="flex items-center gap-3">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: 'var(--color-text-muted)' }} size={16} />
-            <input
-              type="text"
+          <Avatar className="bg-orange-100 text-orange-700 font-extrabold dark:bg-orange-950/40 dark:text-orange-300 border border-orange-200/20">
+            {record.name?.charAt(0).toUpperCase()}
+          </Avatar>
+          <div>
+            <p className="text-sm font-bold text-gray-800 dark:text-gray-100">{record.name}</p>
+            <p className="text-[10px] uppercase tracking-wider font-semibold text-gray-400 dark:text-gray-500 mt-0.5">
+              {record.employee_id} • {record.designation || record.role}
+            </p>
+          </div>
+        </div>
+      )
+    },
+    {
+      title: 'Basic',
+      dataIndex: 'basic',
+      key: 'basic',
+      align: 'right',
+      render: (val) => <span className="font-semibold text-gray-700 dark:text-gray-300">{formatCurrency(val)}</span>
+    },
+    {
+      title: 'Allowances',
+      key: 'allowances',
+      align: 'right',
+      render: (_, record) => {
+        const totalAllow = Number(record.hra) + Number(record.da) + Number(record.allowances)
+        return <span className="font-semibold text-green-600 dark:text-green-400">{formatCurrency(totalAllow)}</span>
+      }
+    },
+    {
+      title: 'Deductions',
+      dataIndex: 'deductions',
+      key: 'deductions',
+      align: 'right',
+      render: (val) => <span className="font-semibold text-red-650 dark:text-red-400">{formatCurrency(val)}</span>
+    },
+    {
+      title: 'Net Salary',
+      dataIndex: 'net_salary',
+      key: 'net_salary',
+      align: 'right',
+      render: (val) => (
+        <Tag color="orange" className="font-black text-xs px-2.5 py-0.5 rounded-lg border-0 m-0">
+          {formatCurrency(val)}
+        </Tag>
+      )
+    },
+    {
+      title: 'Status',
+      dataIndex: 'status',
+      key: 'status',
+      align: 'center',
+      render: (status, record) => (
+        <div>
+          <Tag color={status === 'paid' ? 'green' : 'gold'} className="rounded-full font-black text-[10px] uppercase border-0 px-2.5 py-0.5">
+            {status}
+          </Tag>
+          {record.payment_date && <p className="text-[9px] text-gray-400 dark:text-gray-500 mt-1 font-semibold">{formatDate(record.payment_date, 'short')}</p>}
+        </div>
+      )
+    },
+    {
+      title: 'Actions',
+      key: 'action',
+      align: 'right',
+      render: (_, record) => (
+        <div className="flex items-center justify-end gap-2">
+          {record.status === 'generated' && (
+            <Button
+              type="primary"
+              size="small"
+              icon={<ArrowRightOutlined />}
+              onClick={() => { setPayingRecord(record); setPayModalOpen(true) }}
+              className="rounded-full font-bold text-xs border-0"
+              style={{ backgroundColor: '#4CC0D4' }}
+            >
+              Mark Paid
+            </Button>
+          )}
+          {record.status === 'paid' && (
+            <Button
+              type="default"
+              size="small"
+              icon={<FileTextOutlined />}
+              onClick={() => handleViewPayslip(record.id)}
+              className="rounded-xl"
+              title="View Payslip"
+            />
+          )}
+        </div>
+      )
+    }
+  ]
+
+  // Columns for Templates table
+  const templateColumns = [
+    {
+      title: 'Staff Member',
+      key: 'staff',
+      render: (_, record) => (
+        <div className="flex items-center gap-3">
+          <Avatar className="bg-orange-100 text-orange-700 font-extrabold dark:bg-orange-950/40 dark:text-orange-300 border border-orange-200/20">
+            {record.name?.charAt(0).toUpperCase()}
+          </Avatar>
+          <div>
+            <p className="text-sm font-bold text-gray-800 dark:text-gray-100">{record.name}</p>
+            <p className="text-[10px] uppercase tracking-wider font-semibold text-gray-400 dark:text-gray-500 mt-0.5">
+              {record.employee_id} • {record.designation || record.role}
+            </p>
+          </div>
+        </div>
+      )
+    },
+    {
+      title: 'Basic',
+      dataIndex: 'basic',
+      key: 'basic',
+      align: 'right',
+      render: (val) => <span className="font-semibold text-gray-700 dark:text-gray-300">{formatCurrency(val || 0)}</span>
+    },
+    {
+      title: 'HRA',
+      dataIndex: 'hra',
+      key: 'hra',
+      align: 'right',
+      render: (val) => <span className="font-semibold text-gray-600 dark:text-gray-400">{formatCurrency(val || 0)}</span>
+    },
+    {
+      title: 'DA',
+      dataIndex: 'da',
+      key: 'da',
+      align: 'right',
+      render: (val) => <span className="font-semibold text-gray-600 dark:text-gray-400">{formatCurrency(val || 0)}</span>
+    },
+    {
+      title: 'Others',
+      dataIndex: 'allowances',
+      key: 'allowances',
+      align: 'right',
+      render: (val) => <span className="font-semibold text-gray-600 dark:text-gray-400">{formatCurrency(val || 0)}</span>
+    },
+    {
+      title: 'Deductions',
+      dataIndex: 'deductions',
+      key: 'deductions',
+      align: 'right',
+      render: (val) => <span className="font-bold text-red-650 dark:text-red-400">{formatCurrency(val || 0)}</span>
+    },
+    {
+      title: 'Actions',
+      key: 'action',
+      align: 'right',
+      render: (_, record) => (
+        <Button
+          type="default"
+          size="small"
+          icon={<EditOutlined />}
+          onClick={() => {
+            setEditingStruct({
+              staff_id: record.staff_id,
+              type: record.type,
+              name: record.name,
+              basic: record.basic || 0,
+              hra: record.hra || 0,
+              da: record.da || 0,
+              allowances: record.allowances || 0,
+              deductions: record.deductions || 0
+            })
+            setStructModalOpen(true)
+          }}
+          className="rounded-full font-bold text-xs"
+        >
+          Edit
+        </Button>
+      )
+    }
+  ]
+
+  return (
+    <ConfigProvider
+      theme={{
+        algorithm: isDark ? antdTheme.darkAlgorithm : antdTheme.defaultAlgorithm,
+        token: {
+          colorPrimary: '#4CC0D4',
+          borderRadius: 24,
+          fontFamily: 'inherit',
+        },
+      }}
+    >
+      <div className="space-y-6">
+        {/* Navigation & Search Row */}
+        <div
+          className="flex flex-wrap items-center justify-between gap-4 rounded-[32px] border p-4 shadow-sm"
+          style={{ backgroundColor: isDark ? '#111827' : '#ffffff', borderColor: isDark ? '#1f2937' : '#f3f4f6' }}
+        >
+          <Tabs
+            activeKey={activeTab}
+            onChange={(key) => {
+              setActiveTab(key)
+              setSearchQuery('')
+            }}
+            items={[
+              { label: 'Monthly Payroll', key: 'payroll' },
+              { label: 'Salary Templates', key: 'structures' }
+            ]}
+            className="font-bold border-b-0 custom-premium-tabs"
+            style={{ marginBottom: -16, marginTop: -8 }}
+          />
+
+          <div className="relative min-w-[240px]">
+            <AntInput
               placeholder="Search staff or ID..."
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
-              className="pl-10 pr-4 py-2 border rounded-2xl text-sm outline-none transition-all focus:ring-2 focus:ring-brand/20 w-full sm:w-64"
-              style={{ backgroundColor: 'var(--color-bg-input)', borderColor: 'var(--color-border)', color: 'var(--color-text-primary)' }}
+              prefix={<SearchOutlined className="text-gray-400" />}
+              allowClear
+              className="rounded-xl font-semibold text-xs h-[36px]"
             />
           </div>
         </div>
-      </div>
 
-      {activeTab === 'payroll' && (
-        <>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <StatCard label="Monthly Budget" value={formatCurrency(summary.total)} sub={`${summary.count} records generated`} icon={Banknote} accent="var(--color-brand)" />
-            <StatCard label="Disbursed" value={formatCurrency(summary.paid)} sub={`${summary.paidCount} salaries paid`} icon={CheckCircle2} accent="#15803d" />
-            <StatCard label="Pending" value={formatCurrency(summary.pending)} sub={`${summary.count - summary.paidCount} to be processed`} icon={Clock} accent="#b91c1c" />
-            <StatCard label="Avg Salary" value={formatCurrency(summary.total / (summary.count || 1))} sub="Per staff member" icon={TrendingUp} />
-          </div>
+        {activeTab === 'payroll' && (
+          <>
+            {/* Stats Dashboard Grid */}
+            <Row gutter={[16, 16]}>
+              <Col xs={12} md={6}>
+                <Card className="rounded-[24px] border border-cyan-200/10 shadow-sm" styles={{ body: { padding: '20px' } }}>
+                  <Statistic
+                    title={<span className="text-[10px] font-black uppercase tracking-[0.18em] text-gray-400 block mb-1">Monthly Budget</span>}
+                    value={summary.total}
+                    precision={2}
+                    formatter={(v) => formatCurrency(v)}
+                    valueStyle={{ fontSize: '1.25rem', fontWeight: 900, color: '#4CC0D4' }}
+                  />
+                  <span className="text-[10px] font-semibold text-gray-400 block mt-2">{summary.count} records generated</span>
+                </Card>
+              </Col>
+              <Col xs={12} md={6}>
+                <Card className="rounded-[24px] border border-cyan-200/10 shadow-sm" styles={{ body: { padding: '20px' } }}>
+                  <Statistic
+                    title={<span className="text-[10px] font-black uppercase tracking-[0.18em] text-gray-400 block mb-1">Disbursed</span>}
+                    value={summary.paid}
+                    precision={2}
+                    formatter={(v) => formatCurrency(v)}
+                    valueStyle={{ fontSize: '1.25rem', fontWeight: 900, color: '#16a34a' }}
+                  />
+                  <span className="text-[10px] font-semibold text-gray-400 block mt-2">{summary.paidCount} salaries paid</span>
+                </Card>
+              </Col>
+              <Col xs={12} md={6}>
+                <Card className="rounded-[24px] border border-cyan-200/10 shadow-sm" styles={{ body: { padding: '20px' } }}>
+                  <Statistic
+                    title={<span className="text-[10px] font-black uppercase tracking-[0.18em] text-gray-400 block mb-1">Pending</span>}
+                    value={summary.pending}
+                    precision={2}
+                    formatter={(v) => formatCurrency(v)}
+                    valueStyle={{ fontSize: '1.25rem', fontWeight: 900, color: '#dc2626' }}
+                  />
+                  <span className="text-[10px] font-semibold text-gray-400 block mt-2">{summary.count - summary.paidCount} to process</span>
+                </Card>
+              </Col>
+              <Col xs={12} md={6}>
+                <Card className="rounded-[24px] border border-cyan-200/10 shadow-sm" styles={{ body: { padding: '20px' } }}>
+                  <Statistic
+                    title={<span className="text-[10px] font-black uppercase tracking-[0.18em] text-gray-400 block mb-1">Avg Salary</span>}
+                    value={summary.total / (summary.count || 1)}
+                    precision={2}
+                    formatter={(v) => formatCurrency(v)}
+                    valueStyle={{ fontSize: '1.25rem', fontWeight: 900 }}
+                  />
+                  <span className="text-[10px] font-semibold text-gray-400 block mt-2">Per staff member</span>
+                </Card>
+              </Col>
+            </Row>
 
-          <div className="rounded-[28px] border shadow-sm overflow-hidden" style={{ backgroundColor: 'var(--color-surface)', borderColor: 'var(--color-border)' }}>
-            <div className="flex flex-wrap items-center justify-between p-6 border-b border-dashed" style={{ borderColor: 'var(--color-border)' }}>
-              <div className="flex items-center gap-4">
-                <div className="p-3 rounded-2xl shadow-sm" style={{ backgroundColor: 'var(--color-accent-subtle)', color: 'var(--color-accent-emphasis)' }}>
-                  <CalendarDays size={24} />
+            {/* Monthly Disbursal table Card */}
+            <Card
+              className="rounded-[28px] shadow-sm border-gray-100 dark:border-gray-800 overflow-hidden"
+              styles={{ header: { borderBottom: '1px solid rgba(0,0,0,0.06)' }, body: { padding: '0px' } }}
+              title={
+                <div className="flex flex-wrap items-center justify-between gap-4 py-1">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2.5 rounded-xl bg-cyan-500/10 text-cyan-600 dark:text-cyan-400">
+                      <CalendarOutlined className="text-lg" />
+                    </div>
+                    <div>
+                      <span className="text-base font-black text-gray-900 dark:text-white tracking-tight">Monthly Disbursal</span>
+                      <span className="text-xs text-gray-400 dark:text-gray-500 font-semibold block mt-0.5">
+                        Select month and process salary payments
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-3 z-10">
+                    <AntSelect
+                      value={selectedMonth}
+                      onChange={val => setSelectedMonth(val)}
+                      className="min-w-[120px] rounded-xl font-bold"
+                      options={Array.from({ length: 12 }, (_, i) => ({
+                        value: i + 1,
+                        label: new Date(0, i).toLocaleString('default', { month: 'long' })
+                      }))}
+                    />
+                    <AntSelect
+                      value={selectedYear}
+                      onChange={val => setSelectedYear(val)}
+                      className="min-w-[90px] rounded-xl font-bold"
+                      options={years.map(y => ({ value: y, label: String(y) }))}
+                    />
+                    <Button
+                      type="primary"
+                      icon={<PlayCircleOutlined />}
+                      onClick={handleGenerate}
+                      loading={isLoading}
+                      className="rounded-xl font-bold flex items-center justify-center border-0"
+                      style={{ height: '36px', background: 'linear-gradient(90deg, #4cc0d4 0%, #0891b2 100%)' }}
+                    >
+                      Generate
+                    </Button>
+                  </div>
+                </div>
+              }
+            >
+              <Table
+                dataSource={filteredPayrolls}
+                columns={payrollColumns}
+                rowKey="id"
+                pagination={{ pageSize: 15 }}
+                loading={isLoading && !viewPayslip}
+                size="middle"
+                className="premium-table"
+                rowClassName="hover:bg-cyan-50/10 dark:hover:bg-cyan-950/10 transition-colors"
+                summary={() => (
+                  <Table.Summary fixed>
+                    <Table.Summary.Row className="bg-cyan-500/5 font-bold">
+                      <Table.Summary.Cell index={0} className="px-6 py-4">Total Monthly Budget</Table.Summary.Cell>
+                      <Table.Summary.Cell index={1} colSpan={3} />
+                      <Table.Summary.Cell index={4} align="right">
+                        <span className="text-sm font-black text-cyan-600 dark:text-cyan-400">{formatCurrency(summary.total)}</span>
+                      </Table.Summary.Cell>
+                      <Table.Summary.Cell index={5} colSpan={2} />
+                    </Table.Summary.Row>
+                  </Table.Summary>
+                )}
+              />
+            </Card>
+          </>
+        )}
+
+        {activeTab === 'structures' && (
+          /* Salary Templates list card */
+          <Card
+            className="rounded-[28px] shadow-sm border-gray-100 dark:border-gray-800 overflow-hidden"
+            styles={{ header: { borderBottom: '1px solid rgba(0,0,0,0.06)' }, body: { padding: '0px' } }}
+            title={
+              <div className="flex items-center gap-3 py-1">
+                <div className="p-2.5 rounded-xl bg-orange-500/10 text-orange-600 dark:text-orange-400">
+                  <SettingOutlined className="text-lg" />
                 </div>
                 <div>
-                  <h2 className="text-lg font-bold" style={{ color: 'var(--color-text-primary)' }}>Monthly Disbursal</h2>
-                  <p className="text-sm" style={{ color: 'var(--color-text-muted)' }}>Select month and process payments</p>
+                  <span className="text-base font-black text-gray-900 dark:text-white tracking-tight">Salary Templates</span>
+                  <span className="text-xs text-gray-400 dark:text-gray-500 font-semibold block mt-0.5">
+                    Configure recurring basic salary, HRA, and deductions per employee
+                  </span>
                 </div>
               </div>
+            }
+          >
+            <Table
+              dataSource={filteredStructures}
+              columns={templateColumns}
+              rowKey="staff_id"
+              pagination={{ pageSize: 15 }}
+              loading={isLoading}
+              size="middle"
+              className="premium-table"
+              rowClassName="hover:bg-orange-50/10 dark:hover:bg-orange-950/10 transition-colors"
+            />
+          </Card>
+        )}
 
-              <div className="flex items-center gap-3 mt-4 sm:mt-0">
-                <select 
-                  value={selectedMonth} 
-                  onChange={e => setSelectedMonth(Number(e.target.value))} 
-                  className="rounded-xl px-3 py-2 text-sm font-bold border outline-none cursor-pointer"
-                  style={{ backgroundColor: 'var(--color-bg-input)', borderColor: 'var(--color-border)', color: 'var(--color-text-primary)' }}
-                >
-                  {Array.from({ length: 12 }, (_, i) => <option key={i+1} value={i+1}>{new Date(0, i).toLocaleString('default', { month: 'long' })}</option>)}
-                </select>
-                <select 
-                  value={selectedYear} 
-                  onChange={e => setSelectedYear(Number(e.target.value))} 
-                  className="rounded-xl px-3 py-2 text-sm font-bold border outline-none cursor-pointer"
-                  style={{ backgroundColor: 'var(--color-bg-input)', borderColor: 'var(--color-border)', color: 'var(--color-text-primary)' }}
-                >
-                  {years.map(y => <option key={y} value={y}>{y}</option>)}
-                </select>
-                <Button 
-                  icon={Play} 
-                  onClick={handleGenerate} 
-                  loading={isLoading} 
-                  className="rounded-full px-6 shadow-sm shadow-brand/20"
-                >
-                  Generate
+        {/* Edit Structure Modal */}
+        <AntModal
+          open={structModalOpen}
+          onCancel={() => !isLoading && setStructModalOpen(false)}
+          title={<span className="text-base font-black text-gray-900 dark:text-white">Edit Salary Structure</span>}
+          footer={null}
+          className="premium-modal"
+          centered
+        >
+          {editingStruct && (
+            <form onSubmit={handleStructSubmit} className="space-y-4 py-3">
+              <div className="p-4 rounded-2xl mb-4 text-center border border-dashed border-orange-200 bg-orange-50/50 dark:bg-orange-950/20 dark:border-orange-900/50">
+                <p className="text-[10px] font-black uppercase tracking-wider text-orange-700 dark:text-orange-300">Staff Member</p>
+                <p className="text-base font-black mt-1 text-orange-800 dark:text-orange-200">{editingStruct.name}</p>
+              </div>
+
+              <div>
+                <label className="block text-[10px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-1.5">Basic Salary</label>
+                <AntInput
+                  prefix={<DollarOutlined className="text-gray-400" />}
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  value={editingStruct.basic}
+                  onChange={e => setEditingStruct({ ...editingStruct, basic: e.target.value })}
+                  required
+                  className="rounded-xl font-semibold text-xs h-[38px]"
+                />
+              </div>
+
+              <Row gutter={16}>
+                <Col span={12}>
+                  <label className="block text-[10px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-1.5">HRA</label>
+                  <AntInput
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    value={editingStruct.hra}
+                    onChange={e => setEditingStruct({ ...editingStruct, hra: e.target.value })}
+                    required
+                    className="rounded-xl font-semibold text-xs h-[38px]"
+                  />
+                </Col>
+                <Col span={12}>
+                  <label className="block text-[10px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-1.5">DA</label>
+                  <AntInput
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    value={editingStruct.da}
+                    onChange={e => setEditingStruct({ ...editingStruct, da: e.target.value })}
+                    required
+                    className="rounded-xl font-semibold text-xs h-[38px]"
+                  />
+                </Col>
+              </Row>
+
+              <Row gutter={16}>
+                <Col span={12}>
+                  <label className="block text-[10px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-1.5">Other Allowances</label>
+                  <AntInput
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    value={editingStruct.allowances}
+                    onChange={e => setEditingStruct({ ...editingStruct, allowances: e.target.value })}
+                    required
+                    className="rounded-xl font-semibold text-xs h-[38px]"
+                  />
+                </Col>
+                <Col span={12}>
+                  <label className="block text-[10px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-1.5">Deductions</label>
+                  <AntInput
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    value={editingStruct.deductions}
+                    onChange={e => setEditingStruct({ ...editingStruct, deductions: e.target.value })}
+                    required
+                    className="rounded-xl font-semibold text-xs h-[38px]"
+                  />
+                </Col>
+              </Row>
+
+              <div className="pt-4 flex justify-end gap-3 border-t border-gray-100 dark:border-gray-800 mt-2">
+                <Button type="button" onClick={() => setStructModalOpen(false)} className="rounded-xl font-bold h-[38px]">
+                  Cancel
+                </Button>
+                <Button type="primary" htmlType="submit" loading={isLoading} className="rounded-xl font-bold h-[38px] border-0" style={{ background: 'linear-gradient(90deg, #4cc0d4 0%, #0891b2 100%)' }}>
+                  Save Changes
                 </Button>
               </div>
-            </div>
+            </form>
+          )}
+        </AntModal>
 
-            <div className="overflow-x-auto">
-              {isLoading && !viewPayslip ? (
-                <div className="p-6"><TableSkeleton rows={6} cols={7} /></div>
-              ) : filteredPayrolls.length > 0 ? (
-                <table className="w-full text-left border-collapse">
-                  <thead style={{ backgroundColor: 'var(--color-bg)' }}>
-                    <tr style={{ borderBottom: '1px solid var(--color-border)' }}>
-                      <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest" style={{ color: 'var(--color-text-muted)' }}>Staff Member</th>
-                      <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-right" style={{ color: 'var(--color-text-muted)' }}>Basic</th>
-                      <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-right" style={{ color: 'var(--color-text-muted)' }}>Allowances</th>
-                      <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-right" style={{ color: 'var(--color-text-muted)' }}>Deductions</th>
-                      <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-right" style={{ color: 'var(--color-text-muted)' }}>Net Salary</th>
-                      <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-center" style={{ color: 'var(--color-text-muted)' }}>Status</th>
-                      <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-right" style={{ color: 'var(--color-text-muted)' }}>Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y" style={{ borderColor: 'var(--color-border)' }}>
-                    {filteredPayrolls.map(p => {
-                      const totalAllow = Number(p.hra) + Number(p.da) + Number(p.allowances)
-                      return (
-                        <tr key={p.id} className="group hover:bg-brand/5 transition-colors">
-                          <td className="px-6 py-4">
-                            <div className="flex items-center gap-3">
-                              <div className="w-9 h-9 rounded-xl flex items-center justify-center text-xs font-bold shadow-sm" style={{ backgroundColor: 'var(--color-accent-subtle)', color: 'var(--color-accent-emphasis)' }}>
-                                {p.name?.charAt(0).toUpperCase()}
-                              </div>
-                              <div>
-                                <p className="text-sm font-bold" style={{ color: 'var(--color-text-primary)' }}>{p.name}</p>
-                                <p className="text-[10px] uppercase tracking-wider font-medium" style={{ color: 'var(--color-text-muted)' }}>{p.employee_id} • {p.designation || p.role}</p>
-                              </div>
-                            </div>
-                          </td>
-                          <td className="px-6 py-4 text-right font-medium" style={{ color: 'var(--color-text-secondary)' }}>{formatCurrency(p.basic)}</td>
-                          <td className="px-6 py-4 text-right font-medium" style={{ color: 'var(--color-success)' }}>{formatCurrency(totalAllow)}</td>
-                        <td className="px-6 py-4 text-right font-medium" style={{ color: 'var(--color-danger)' }}>{formatCurrency(p.deductions)}</td>
-                          <td className="px-6 py-4 text-right">
-                            <span className="px-3 py-1.5 rounded-xl font-black text-sm shadow-sm border" style={{ backgroundColor: 'var(--color-surface-2)', borderColor: 'var(--color-border)', color: 'var(--color-text-primary)' }}>
-                              {formatCurrency(p.net_salary)}
-                            </span>
-                          </td>
-                          <td className="px-6 py-4 text-center">
-                            <Badge variant={p.status === 'paid' ? 'green' : 'yellow'} size="sm" className="font-black">
-                              {p.status}
-                            </Badge>
-                            {p.payment_date && <p className="text-[10px] mt-1 font-medium" style={{ color: 'var(--color-text-muted)' }}>{formatDate(p.payment_date, 'short')}</p>}
-                          </td>
-                          <td className="px-6 py-4 text-right">
-                            <div className="flex items-center justify-end gap-2">
-                              {p.status === 'generated' && (
-                                <button
-                                  onClick={() => { setPayingRecord(p); setPayModalOpen(true) }}
-                                  className="group inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full text-xs font-bold text-white shadow-sm transition-all hover:shadow-md active:scale-95"
-                                  style={{ backgroundColor: 'var(--color-brand)' }}
-                                >
-                                  Mark Paid
-                                  <ArrowRight size={12} className="transition-transform group-hover:translate-x-0.5" />
-                                </button>
-                              )}
-                              {p.status === 'paid' && (
-                                <button 
-                                  onClick={() => handleViewPayslip(p.id)} 
-                                  className="p-2 rounded-xl transition-all border hover:shadow-sm" 
-                                  style={{ backgroundColor: 'var(--color-surface)', borderColor: 'var(--color-border)', color: 'var(--color-text-muted)' }}
-                                  title="View Payslip"
-                                >
-                                  <FileText size={16} />
-                                </button>
-                              )}
-                            </div>
-                          </td>
-                        </tr>
-                      )
-                    })}
-                  </tbody>
-                  <tfoot style={{ backgroundColor: 'var(--color-surface-2)' }}>
-                    <tr>
-                      <td className="px-6 py-4 text-[10px] font-black uppercase tracking-widest" style={{ color: 'var(--color-text-muted)' }}>Total Monthly Disbursal</td>
-                      <td colSpan={3} />
-                      <td className="px-6 py-4 text-right">
-                        <span className="text-base font-black" style={{ color: 'var(--color-brand)' }}>{formatCurrency(summary.total)}</span>
-                      </td>
-                      <td colSpan={2} />
-                    </tr>
-                  </tfoot>
-                </table>
-              ) : (
-                <div className="py-16">
-                  <EmptyState 
-                    title="No payroll records" 
-                    description={searchQuery ? "No staff records match your current search." : "Salaries for this month haven't been calculated yet."} 
-                    icon={Banknote}
-                    action={searchQuery ? (
-                      <Button variant="secondary" onClick={() => setSearchQuery('')}>Clear Search</Button>
-                    ) : (
-                      <Button onClick={handleGenerate}>Generate Now</Button>
-                    )}
+        {/* Mark Paid Modal */}
+        <AntModal
+          open={payModalOpen}
+          onCancel={() => !isLoading && setPayModalOpen(false)}
+          title={<span className="text-base font-black text-gray-900 dark:text-white">Process Salary Payment</span>}
+          footer={null}
+          className="premium-modal"
+          centered
+        >
+          {payingRecord && (
+            <form onSubmit={handlePaySubmit} className="space-y-4 py-3">
+              <div className="p-6 rounded-2xl mb-4 text-center border border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-800/30">
+                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400">Net Amount to Pay</p>
+                <p className="text-3xl font-black mt-2 text-cyan-600 dark:text-cyan-400">{formatCurrency(payingRecord.net_salary)}</p>
+                <div className="mt-4 pt-4 border-t border-gray-150/40 flex items-center justify-center gap-2">
+                  <Avatar size="small" className="bg-cyan-100 text-cyan-700 font-bold">
+                    {payingRecord.name?.charAt(0).toUpperCase()}
+                  </Avatar>
+                  <p className="text-sm font-bold text-gray-800 dark:text-gray-200">{payingRecord.name}</p>
+                </div>
+              </div>
+
+              <Row gutter={16}>
+                <Col span={12}>
+                  <label className="block text-[10px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-1.5">Payment Mode</label>
+                  <AntSelect
+                    value={payForm.payment_mode}
+                    onChange={val => setPayForm({ ...payForm, payment_mode: val })}
+                    className="w-full rounded-xl text-xs h-[38px]"
+                    options={[
+                      { value: 'Bank Transfer', label: 'Bank Transfer' },
+                      { value: 'Cheque', label: 'Cheque' },
+                      { value: 'Cash', label: 'Cash' },
+                      { value: 'UPI', label: 'UPI' }
+                    ]}
                   />
-                </div>
-              )}
-            </div>
-          </div>
-        </>
-      )}
+                </Col>
+                <Col span={12}>
+                  <label className="block text-[10px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-1.5">Payment Date</label>
+                  <AntInput
+                    type="date"
+                    value={payForm.payment_date}
+                    onChange={e => setPayForm({ ...payForm, payment_date: e.target.value })}
+                    required
+                    className="rounded-xl font-semibold text-xs h-[38px]"
+                  />
+                </Col>
+              </Row>
 
-      {/* Salary Structures View */}
-      {activeTab === 'structures' && (
-        <div className="rounded-[28px] border shadow-sm overflow-hidden" style={{ backgroundColor: 'var(--color-surface)', borderColor: 'var(--color-border)' }}>
-          <div className="flex items-center justify-between p-6 border-b border-dashed" style={{ borderColor: 'var(--color-border)' }}>
-            <div className="flex items-center gap-4">
-              <div className="p-3 rounded-2xl shadow-sm" style={{ backgroundColor: 'var(--color-accent-subtle)', color: 'var(--color-accent-emphasis)' }}>
-                <Settings2 size={24} />
-              </div>
               <div>
-                <h2 className="text-lg font-bold" style={{ color: 'var(--color-text-primary)' }}>Salary Templates</h2>
-                <p className="text-sm" style={{ color: 'var(--color-text-muted)' }}>Configure recurring pay components for staff</p>
+                <label className="block text-[10px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-1.5">Remarks / Ref No</label>
+                <AntInput
+                  prefix={<FileTextOutlined className="text-gray-400" />}
+                  value={payForm.remarks}
+                  onChange={e => setPayForm({ ...payForm, remarks: e.target.value })}
+                  placeholder="Transaction ID, Cheque No, etc."
+                  className="rounded-xl font-semibold text-xs h-[38px]"
+                />
               </div>
-            </div>
-          </div>
 
-          <div className="overflow-x-auto">
-            {isLoading ? (
-              <div className="p-6"><TableSkeleton rows={8} cols={7} /></div>
-            ) : (
-              <table className="w-full text-left border-collapse">
-                <thead style={{ backgroundColor: 'var(--color-bg)' }}>
-                  <tr style={{ borderBottom: '1px solid var(--color-border)' }}>
-                    <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest" style={{ color: 'var(--color-text-muted)' }}>Staff</th>
-                    <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-right" style={{ color: 'var(--color-text-muted)' }}>Basic</th>
-                    <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-right" style={{ color: 'var(--color-text-muted)' }}>HRA</th>
-                    <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-right" style={{ color: 'var(--color-text-muted)' }}>DA</th>
-                    <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-right" style={{ color: 'var(--color-text-muted)' }}>Others</th>
-                    <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-right" style={{ color: 'var(--color-text-muted)' }}>Deductions</th>
-                    <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-right" style={{ color: 'var(--color-text-muted)' }}>Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y" style={{ borderColor: 'var(--color-border)' }}>
-                  {filteredStructures.length > 0 ? filteredStructures.map(s => (
-                    <tr key={s.staff_id} className="hover:bg-brand/5 transition-colors">
-                      <td className="px-6 py-4">
-                        <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 rounded-lg flex items-center justify-center text-[10px] font-black shadow-sm" style={{ backgroundColor: 'var(--color-accent-subtle)', color: 'var(--color-accent-emphasis)' }}>
-                            {s.name?.charAt(0).toUpperCase()}
-                          </div>
-                          <div>
-                            <p className="text-sm font-bold" style={{ color: 'var(--color-text-primary)' }}>{s.name}</p>
-                            <p className="text-[10px] uppercase tracking-wider font-medium" style={{ color: 'var(--color-text-muted)' }}>{s.employee_id} • {s.designation || s.role}</p>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 text-right font-medium" style={{ color: 'var(--color-text-secondary)' }}>{formatCurrency(s.basic || 0)}</td>
-                      <td className="px-6 py-4 text-right font-medium" style={{ color: 'var(--color-text-secondary)' }}>{formatCurrency(s.hra || 0)}</td>
-                      <td className="px-6 py-4 text-right font-medium" style={{ color: 'var(--color-text-secondary)' }}>{formatCurrency(s.da || 0)}</td>
-                      <td className="px-6 py-4 text-right font-medium" style={{ color: 'var(--color-text-secondary)' }}>{formatCurrency(s.allowances || 0)}</td>
-                      <td className="px-6 py-4 text-right font-bold text-red-600 dark:text-red-400">{formatCurrency(s.deductions || 0)}</td>
-                      <td className="px-6 py-4 text-right">
-                        <button 
-                          onClick={() => {
-                            setEditingStruct({
-                              staff_id: s.staff_id,
-                              type: s.type,
-                              name: s.name,
-                              basic: s.basic || 0,
-                              hra: s.hra || 0,
-                              da: s.da || 0,
-                              allowances: s.allowances || 0,
-                              deductions: s.deductions || 0
-                            })
-                            setStructModalOpen(true)
-                          }} 
-                          className="px-4 py-1.5 rounded-full text-xs font-bold border transition-all hover:bg-surface-raised active:scale-95 shadow-sm"
-                          style={{ backgroundColor: 'var(--color-surface)', borderColor: 'var(--color-border)', color: 'var(--color-text-primary)' }}
-                        >
-                          Edit
-                        </button>
-                      </td>
-                    </tr>
-                  )) : (
-                    <tr>
-                      <td colSpan={7} className="py-16">
-                        <EmptyState title="No staff records found" description="Try a different search term." icon={Search} />
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* Edit Structure Modal */}
-      <Modal open={structModalOpen} onClose={() => !isLoading && setStructModalOpen(false)} title={`Edit Salary Structure`} size="sm">
-        {editingStruct && (
-          <form onSubmit={handleStructSubmit} className="space-y-4">
-            <div className="p-4 rounded-[20px] mb-4 text-center border-2 border-dashed" style={{ backgroundColor: 'var(--color-accent-subtle)', borderColor: 'var(--color-accent-muted)' }}>
-              <p className="text-xs font-black uppercase tracking-widest" style={{ color: 'var(--color-accent-emphasis)' }}>Staff Member</p>
-              <p className="text-base font-black mt-1" style={{ color: 'var(--color-accent-emphasis)' }}>{editingStruct.name}</p>
-            </div>
-            <Input label="Basic Salary" icon={Banknote} type="number" step="0.01" min="0" value={editingStruct.basic} onChange={e => setEditingStruct({ ...editingStruct, basic: e.target.value })} required />
-            <div className="grid grid-cols-2 gap-4">
-              <Input label="HRA" type="number" step="0.01" min="0" value={editingStruct.hra} onChange={e => setEditingStruct({ ...editingStruct, hra: e.target.value })} required />
-              <Input label="DA" type="number" step="0.01" min="0" value={editingStruct.da} onChange={e => setEditingStruct({ ...editingStruct, da: e.target.value })} required />
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <Input label="Other Allowances" type="number" step="0.01" min="0" value={editingStruct.allowances} onChange={e => setEditingStruct({ ...editingStruct, allowances: e.target.value })} required />
-              <Input label="Deductions" type="number" step="0.01" min="0" value={editingStruct.deductions} onChange={e => setEditingStruct({ ...editingStruct, deductions: e.target.value })} required />
-            </div>
-            <div className="pt-4 flex justify-end gap-3 border-t" style={{ borderColor: 'var(--color-border)' }}>
-              <Button type="button" variant="secondary" onClick={() => setStructModalOpen(false)}>Cancel</Button>
-              <Button type="submit" loading={isLoading}>Save Changes</Button>
-            </div>
-          </form>
-        )}
-      </Modal>
-
-      {/* Mark Paid Modal */}
-      <Modal open={payModalOpen} onClose={() => !isLoading && setPayModalOpen(false)} title="Process Salary Payment" size="sm">
-        {payingRecord && (
-          <form onSubmit={handlePaySubmit} className="space-y-4">
-            <div className="p-6 rounded-[24px] mb-4 text-center border" style={{ backgroundColor: 'var(--color-surface-2)', borderColor: 'var(--color-border)' }}>
-              <p className="text-xs font-black uppercase tracking-[0.2em]" style={{ color: 'var(--color-text-muted)' }}>Net Amount to Pay</p>
-              <p className="text-3xl font-black mt-2" style={{ color: '#15803d' }}>{formatCurrency(payingRecord.net_salary)}</p>
-              <div className="mt-4 pt-4 border-t flex items-center justify-center gap-2" style={{ borderColor: 'var(--color-border)' }}>
-                <div className="w-6 h-6 rounded-lg flex items-center justify-center text-[10px] font-black" style={{ backgroundColor: 'var(--color-accent-subtle)', color: 'var(--color-accent-emphasis)' }}>
-                  {payingRecord.name?.charAt(0).toUpperCase()}
-                </div>
-                <p className="text-sm font-bold" style={{ color: 'var(--color-text-primary)' }}>{payingRecord.name}</p>
+              <div className="pt-4 flex justify-end gap-3 border-t border-gray-100 dark:border-gray-800 mt-2">
+                <Button type="button" onClick={() => setPayModalOpen(false)} className="rounded-xl font-bold h-[38px]">
+                  Cancel
+                </Button>
+                <Button type="primary" htmlType="submit" loading={isLoading} icon={<CheckCircleOutlined />} className="rounded-xl font-bold h-[38px] border-0" style={{ background: 'linear-gradient(90deg, #4cc0d4 0%, #0891b2 100%)' }}>
+                  Confirm Payment
+                </Button>
               </div>
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <Select label="Payment Mode" value={payForm.payment_mode} onChange={e => setPayForm({ ...payForm, payment_mode: e.target.value })} options={[{value:'Bank Transfer',label:'Bank Transfer'},{value:'Cheque',label:'Cheque'},{value:'Cash',label:'Cash'},{value:'UPI',label:'UPI'}]} required />
-              <Input label="Payment Date" type="date" value={payForm.payment_date} onChange={e => setPayForm({ ...payForm, payment_date: e.target.value })} required />
-            </div>
-            <Input label="Remarks / Ref No" icon={FileText} value={payForm.remarks} onChange={e => setPayForm({ ...payForm, remarks: e.target.value })} placeholder="Transaction ID, Cheque No, etc." />
-            <div className="pt-4 flex justify-end gap-3 border-t" style={{ borderColor: 'var(--color-border)' }}>
-              <Button type="button" variant="secondary" onClick={() => setPayModalOpen(false)}>Cancel</Button>
-              <Button type="submit" loading={isLoading} icon={CheckCircle2}>Confirm Payment</Button>
-            </div>
-          </form>
-        )}
-      </Modal>
+            </form>
+          )}
+        </AntModal>
 
-      {/* Payslip View Modal */}
-      <Modal 
-        open={!!viewPayslip} 
-        onClose={() => setViewPayslip(null)} 
-        title="Payslip Preview"
-        size="md"
-      >
-        <div className="space-y-6">
-          <PayslipPrint payslip={viewPayslip} />
-          <div className="flex justify-center gap-3">
-            <Button 
-              variant="secondary" 
-              icon={Printer} 
-              onClick={() => window.print()}
-              className="rounded-full px-8"
-            >
-              Print Payslip
-            </Button>
-            <Button 
-              onClick={() => setViewPayslip(null)}
-              className="rounded-full px-8"
-            >
-              Close
-            </Button>
+        {/* Payslip View Modal */}
+        <AntModal
+          open={!!viewPayslip}
+          onCancel={() => setViewPayslip(null)}
+          title={<span className="text-base font-black text-gray-900 dark:text-white">Payslip Preview</span>}
+          footer={null}
+          width={700}
+          className="premium-modal"
+          centered
+        >
+          <div className="space-y-6 py-3">
+            <PayslipPrint payslip={viewPayslip} />
+            <div className="flex justify-center gap-3 pt-4 border-t border-gray-150/40">
+              <Button
+                icon={<PrinterOutlined />}
+                onClick={() => window.print()}
+                className="rounded-xl font-bold px-6"
+              >
+                Print Payslip
+              </Button>
+              <Button
+                type="primary"
+                onClick={() => setViewPayslip(null)}
+                className="rounded-xl font-bold px-6"
+              >
+                Close
+              </Button>
+            </div>
           </div>
-        </div>
-      </Modal>
-    </div>
+        </AntModal>
+      </div>
+    </ConfigProvider>
   )
 }

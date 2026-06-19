@@ -3,23 +3,23 @@ import AppLayout from '@/layouts/AppLayout'
 import useUiStore from '@/store/uiStore'
 
 const ACCOUNTANT_THEME_LIGHT = {
-  '--color-brand': '#d97706',
-  '--color-brand-light': '#f59e0b',
-  '--color-brand-dark': '#b45309',
-  '--color-sidebar-bg': '#fffaf0',
-  '--color-sidebar-active': '#d97706',
-  '--color-sidebar-hover': '#ffedd5',
-  '--color-sidebar-border': '#fed7aa',
+  '--color-brand': '#4CC0D4',
+  '--color-brand-light': '#67d3e5',
+  '--color-brand-dark': '#0891b2',
+  '--color-sidebar-bg': '#f0fdfa',
+  '--color-sidebar-active': '#4CC0D4',
+  '--color-sidebar-hover': '#ccfbf1',
+  '--color-sidebar-border': '#99f6e4',
 }
 
 const ACCOUNTANT_THEME_DARK = {
-  '--color-brand': '#fbbf24',
-  '--color-brand-light': '#fcd34d',
-  '--color-brand-dark': '#d97706',
+  '--color-brand': '#4CC0D4',
+  '--color-brand-light': '#67d3e5',
+  '--color-brand-dark': '#0891b2',
   '--color-sidebar-bg': '#0f172a',
-  '--color-sidebar-active': '#fbbf24',
+  '--color-sidebar-active': '#4CC0D4',
   '--color-sidebar-hover': '#1e293b',
-  '--color-sidebar-border': '#451a03',
+  '--color-sidebar-border': '#115e59',
 }
 
 const AccountantLayout = () => {

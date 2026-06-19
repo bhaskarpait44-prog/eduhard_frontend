@@ -1,49 +1,58 @@
 import { useEffect, useState, useMemo } from 'react'
+import {
+  Card,
+  Row,
+  Col,
+  Table,
+  Button,
+  Select as AntSelect,
+  Input as AntInput,
+  ConfigProvider,
+  Tag,
+  Modal as AntModal,
+  theme as antdTheme
+} from 'antd'
+import {
+  BankOutlined,
+  ToolOutlined,
+  ThunderboltOutlined,
+  ContainerOutlined,
+  CalendarOutlined,
+  EllipsisOutlined,
+  SearchOutlined,
+  PlusOutlined,
+  CheckCircleOutlined,
+  CloseCircleOutlined,
+  DeleteOutlined,
+  CreditCardOutlined,
+  CalculatorOutlined
+} from '@ant-design/icons'
 import usePageTitle from '@/hooks/usePageTitle'
 import useToast from '@/hooks/useToast'
 import useExpenseStore from '@/store/expenseStore'
-import { 
-  Receipt, 
-  Plus, 
-  Search, 
-  Calendar,
-  CheckCircle2,
-  XCircle,
-  CreditCard,
-  Banknote,
-  Wrench,
-  Zap,
-  Package,
-  CalendarDays,
-  MoreHorizontal
-} from 'lucide-react'
-import Button from '@/components/ui/Button'
-import Badge from '@/components/ui/Badge'
-import EmptyState from '@/components/ui/EmptyState'
-import Modal from '@/components/ui/Modal'
-import Input from '@/components/ui/Input'
-import Select from '@/components/ui/Select'
 import { formatDate, formatCurrency } from '@/utils/helpers'
+import useUiStore from '@/store/uiStore'
 
 const CATEGORY_MAP = {
-  salary:      { label: 'Salary',      icon: Banknote,   color: 'emerald' },
-  maintenance: { label: 'Maintenance', icon: Wrench,     color: 'amber' },
-  utilities:   { label: 'Utilities',   icon: Zap,        color: 'blue' },
-  supplies:    { label: 'Supplies',    icon: Package,    color: 'indigo' },
-  events:      { label: 'Events',      icon: CalendarDays, color: 'purple' },
-  misc:        { label: 'Miscellaneous',icon: MoreHorizontal, color: 'gray' }
+  salary:      { label: 'Salary',        icon: BankOutlined,        tagColor: 'green',  bgGradient: 'from-green-500/10 to-green-600/5' },
+  maintenance: { label: 'Maintenance',   icon: ToolOutlined,        tagColor: 'orange', bgGradient: 'from-orange-500/10 to-orange-600/5' },
+  utilities:   { label: 'Utilities',     icon: ThunderboltOutlined, tagColor: 'blue',   bgGradient: 'from-blue-500/10 to-blue-600/5' },
+  supplies:    { label: 'Supplies',      icon: ContainerOutlined,   tagColor: 'cyan',   bgGradient: 'from-cyan-500/10 to-cyan-600/5' },
+  events:      { label: 'Events',        icon: CalendarOutlined,    tagColor: 'purple', bgGradient: 'from-purple-500/10 to-purple-600/5' },
+  misc:        { label: 'Miscellaneous', icon: EllipsisOutlined,    tagColor: 'default',bgGradient: 'from-gray-500/10 to-gray-600/5' }
 }
 
 const STATUS_BADGE = {
-  submitted: 'blue',
-  approved: 'amber',
-  paid: 'green',
-  rejected: 'red'
+  submitted: 'processing',
+  approved: 'warning',
+  paid: 'success',
+  rejected: 'error'
 }
 
 export default function ExpenseTracker() {
   usePageTitle('Expense Tracker')
   const { toastSuccess, toastError } = useToast()
+  const { theme: storeTheme } = useUiStore()
   const { expenses, summary, fetchExpenses, fetchSummary, createExpense, updateStatus, deleteExpense, isLoading } = useExpenseStore()
 
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1)
@@ -57,6 +66,8 @@ export default function ExpenseTracker() {
     description: '',
     payment_mode: 'Cash'
   })
+
+  const isDark = storeTheme === 'dark' || (storeTheme === 'system' && window.matchMedia?.('(prefers-color-scheme: dark)').matches)
 
   useEffect(() => {
     fetchExpenses({ month: selectedMonth, year: selectedYear })
@@ -118,232 +129,335 @@ export default function ExpenseTracker() {
     }
   }
 
-  return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white dark:bg-gray-900 p-4 rounded-[28px] border border-gray-100 dark:border-gray-800 shadow-sm">
-        <div className="flex items-center gap-4">
-          <div className="p-3 bg-indigo-50 dark:bg-indigo-500/10 rounded-2xl">
-            <Receipt className="text-indigo-600 dark:text-indigo-400" size={24} />
+  const tableColumns = [
+    {
+      title: 'Date & Description',
+      key: 'description',
+      render: (_, record) => (
+        <div>
+          <p className="text-sm font-bold text-gray-800 dark:text-gray-100 mb-0.5">{record.description || 'No description'}</p>
+          <div className="flex items-center gap-2 text-[10px] text-gray-400 font-bold uppercase tracking-wider mt-1">
+            <CalendarOutlined /> {formatDate(record.date, 'short')}
+            {record.payment_mode && (
+              <>
+                <span className="w-1.5 h-1.5 rounded-full bg-gray-300 dark:bg-gray-700" />
+                <CreditCardOutlined /> {record.payment_mode}
+              </>
+            )}
           </div>
-          <div>
-            <h1 className="text-xl font-black text-gray-900 dark:text-white tracking-tight">Expense Tracker</h1>
-            <p className="text-sm font-medium text-gray-500">Manage school expenses and approvals</p>
-          </div>
         </div>
-
-        <div className="flex items-center gap-3">
-          <select
-            value={selectedMonth}
-            onChange={e => setSelectedMonth(Number(e.target.value))}
-            className="bg-gray-50 dark:bg-gray-800 border-none rounded-xl text-sm font-bold focus:ring-2 focus:ring-indigo-500/20"
-          >
-            {Array.from({ length: 12 }, (_, i) => (
-              <option key={i + 1} value={i + 1}>
-                {new Date(0, i).toLocaleString('default', { month: 'long' })}
-              </option>
-            ))}
-          </select>
-          <select
-            value={selectedYear}
-            onChange={e => setSelectedYear(Number(e.target.value))}
-            className="bg-gray-50 dark:bg-gray-800 border-none rounded-xl text-sm font-bold focus:ring-2 focus:ring-indigo-500/20"
-          >
-            {[2024, 2025, 2026].map(y => (
-              <option key={y} value={y}>{y}</option>
-            ))}
-          </select>
-          <Button icon={Plus} onClick={() => setModalOpen(true)} className="rounded-2xl">
-            Record Expense
-          </Button>
-        </div>
-      </div>
-
-      {/* Summary Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="p-6 bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-[28px] text-white shadow-sm flex flex-col justify-center">
-          <p className="text-xs font-bold uppercase tracking-widest text-indigo-100 mb-1">Total Expenses</p>
-          <p className="text-3xl font-black tracking-tight">{formatCurrency(totalExpense)}</p>
-          <p className="text-xs text-indigo-200 mt-2 font-medium">For {new Date(0, selectedMonth - 1).toLocaleString('default', { month: 'long' })} {selectedYear}</p>
-        </div>
-
-        {Object.entries(CATEGORY_MAP).slice(0, 3).map(([key, config]) => {
-          const sum = summary.find(s => s.category === key)?.total || 0
-          return (
-            <div key={key} className={`p-5 rounded-[28px] border bg-${config.color}-50/50 border-${config.color}-100 dark:bg-${config.color}-500/5 dark:border-${config.color}-500/10`}>
-              <div className="flex items-center gap-3 mb-3">
-                <div className={`p-2 rounded-xl bg-${config.color}-100 dark:bg-${config.color}-500/20`}>
-                  <config.icon className={`text-${config.color}-600 dark:text-${config.color}-400`} size={18} />
-                </div>
-                <p className={`text-[11px] font-black uppercase tracking-widest text-${config.color}-600 dark:text-${config.color}-400`}>
-                  {config.label}
-                </p>
-              </div>
-              <p className={`text-2xl font-black tracking-tighter text-${config.color}-700 dark:text-${config.color}-300`}>
-                {formatCurrency(sum)}
-              </p>
-            </div>
-          )
-        })}
-      </div>
-
-      {/* Main Content */}
-      <div className="bg-white dark:bg-gray-900 rounded-[28px] border border-gray-100 dark:border-gray-800 shadow-sm overflow-hidden">
-        <div className="p-4 border-b border-gray-50 dark:border-gray-800 flex items-center justify-between">
-          <h2 className="text-base font-bold text-gray-900 dark:text-white px-2">Expense Records</h2>
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
-            <input
+      )
+    },
+    {
+      title: 'Category',
+      dataIndex: 'category',
+      key: 'category',
+      render: (cat) => {
+        const conf = CATEGORY_MAP[cat] || CATEGORY_MAP.misc
+        const Icon = conf.icon
+        return (
+          <Tag icon={<Icon />} color={conf.tagColor} className="rounded-md font-bold uppercase text-[10px] border-0 px-2 py-0.5">
+            {conf.label}
+          </Tag>
+        )
+      }
+    },
+    {
+      title: 'Amount',
+      dataIndex: 'amount',
+      key: 'amount',
+      align: 'right',
+      render: (val) => <span className="font-extrabold text-sm text-gray-900 dark:text-gray-100">{formatCurrency(val)}</span>
+    },
+    {
+      title: 'Status',
+      dataIndex: 'status',
+      key: 'status',
+      render: (status) => (
+        <Tag color={STATUS_BADGE[status]} className="rounded-full font-black text-[10px] uppercase border-0 px-2.5 py-0.5">
+          {status}
+        </Tag>
+      )
+    },
+    {
+      title: 'Actions',
+      key: 'action',
+      align: 'right',
+      render: (_, record) => (
+        <div className="flex items-center justify-end gap-1.5">
+          {record.status === 'submitted' && (
+            <>
+              <Button
+                type="text"
+                size="small"
+                onClick={() => handleStatusUpdate(record.id, 'approved')}
+                className="text-green-600 hover:text-green-700 hover:bg-green-50 dark:hover:bg-green-950/20"
+                icon={<CheckCircleOutlined />}
+                title="Approve"
+              />
+              <Button
+                type="text"
+                size="small"
+                danger
+                onClick={() => handleStatusUpdate(record.id, 'rejected')}
+                className="hover:bg-red-50 dark:hover:bg-red-950/20"
+                icon={<CloseCircleOutlined />}
+                title="Reject"
+              />
+            </>
+          )}
+          {record.status === 'approved' && (
+            <Button
+              type="primary"
+              size="small"
+              onClick={() => handleStatusUpdate(record.id, 'paid')}
+              className="rounded-full font-bold text-[10px] border-0 bg-green-600 hover:bg-green-700"
+            >
+              Mark Paid
+            </Button>
+          )}
+          {record.status !== 'paid' && (
+            <Button
               type="text"
-              placeholder="Search descriptions..."
-              value={searchQuery}
-              onChange={e => setSearchQuery(e.target.value)}
-              className="pl-10 pr-4 py-2 bg-gray-50 dark:bg-gray-800 border-none rounded-xl text-sm focus:ring-2 focus:ring-indigo-500/20 w-64"
+              size="small"
+              danger
+              onClick={() => handleDelete(record.id)}
+              className="hover:bg-red-50 dark:hover:bg-red-950/20"
+              icon={<DeleteOutlined />}
+              title="Delete"
             />
+          )}
+        </div>
+      )
+    }
+  ]
+
+  return (
+    <ConfigProvider
+      theme={{
+        algorithm: isDark ? antdTheme.darkAlgorithm : antdTheme.defaultAlgorithm,
+        token: {
+          colorPrimary: '#4CC0D4',
+          borderRadius: 24,
+          fontFamily: 'inherit',
+        },
+      }}
+    >
+      <div className="space-y-6">
+        {/* Header Banner */}
+        <div
+          className="flex flex-wrap items-center justify-between gap-6 rounded-[32px] border p-6 shadow-sm relative overflow-hidden backdrop-blur-md"
+          style={{
+            background: isDark
+              ? 'linear-gradient(135deg, rgba(76, 192, 212, 0.15) 0%, #1e1b4b 100%)'
+              : 'linear-gradient(135deg, #e0f7fa 0%, #fffdf9 100%)',
+            borderColor: isDark ? 'rgba(76, 192, 212, 0.3)' : '#b2ebf2'
+          }}
+        >
+          <div className="absolute -right-20 -top-20 w-64 h-64 rounded-full bg-cyan-500/10 blur-3xl pointer-events-none" />
+
+          <div className="z-10">
+            <div className="flex items-center gap-2">
+              <h1 className="text-2xl font-black text-gray-900 dark:text-white tracking-tight">Expense Tracker</h1>
+              <Tag color="cyan" className="font-extrabold uppercase text-[9px] border-0 px-2 rounded-full">Outflow</Tag>
+            </div>
+            <p className="mt-1 text-xs text-gray-500 dark:text-gray-400 font-semibold leading-relaxed">
+              Track school expenditures, organize categories, and manage vendor/payroll approvals.
+            </p>
+          </div>
+
+          <div className="z-10 flex flex-wrap items-center gap-3">
+            <AntSelect
+              value={selectedMonth}
+              onChange={val => setSelectedMonth(val)}
+              className="min-w-[120px] rounded-xl font-bold"
+              options={Array.from({ length: 12 }, (_, i) => ({
+                value: i + 1,
+                label: new Date(0, i).toLocaleString('default', { month: 'long' })
+              }))}
+            />
+            <AntSelect
+              value={selectedYear}
+              onChange={val => setSelectedYear(val)}
+              className="min-w-[90px] rounded-xl font-bold"
+              options={[2024, 2025, 2026].map(y => ({ value: y, label: String(y) }))}
+            />
+            <Button
+              type="primary"
+              size="large"
+              icon={<PlusOutlined />}
+              onClick={() => setModalOpen(true)}
+              className="rounded-xl font-bold flex items-center justify-center border-0"
+              style={{ height: '40px', padding: '0 20px', background: 'linear-gradient(90deg, #4cc0d4 0%, #0891b2 100%)' }}
+            >
+              Record Expense
+            </Button>
           </div>
         </div>
 
-        <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse">
-            <thead className="bg-gray-50/50 dark:bg-gray-800/50">
-              <tr>
-                <th className="px-6 py-4 text-[11px] font-black uppercase tracking-widest text-gray-400">Date & Desc</th>
-                <th className="px-6 py-4 text-[11px] font-black uppercase tracking-widest text-gray-400">Category</th>
-                <th className="px-6 py-4 text-[11px] font-black uppercase tracking-widest text-gray-400 text-right">Amount</th>
-                <th className="px-6 py-4 text-[11px] font-black uppercase tracking-widest text-gray-400">Status</th>
-                <th className="px-6 py-4 text-[11px] font-black uppercase tracking-widest text-gray-400 text-right">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-50 dark:divide-gray-800">
-              {filteredExpenses.length > 0 ? (
-                filteredExpenses.map((exp) => (
-                  <tr key={exp.id} className="hover:bg-gray-50/50 dark:hover:bg-gray-800/30 transition-colors">
-                    <td className="px-6 py-4">
-                      <p className="text-sm font-bold text-gray-900 dark:text-white mb-0.5">{exp.description || 'No description'}</p>
-                      <div className="flex items-center gap-2 text-[11px] text-gray-500 font-medium uppercase tracking-wider">
-                        <Calendar size={12} /> {formatDate(exp.date, 'short')}
-                        {exp.payment_mode && (
-                          <>
-                            <span className="w-1 h-1 rounded-full bg-gray-300 dark:bg-gray-700" />
-                            <CreditCard size={12} /> {exp.payment_mode}
-                          </>
-                        )}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-2">
-                        {CATEGORY_MAP[exp.category] && (() => {
-                          const conf = CATEGORY_MAP[exp.category]
-                          return (
-                            <Badge variant={conf.color} size="sm" className="gap-1 rounded-md">
-                              <conf.icon size={10} /> {conf.label}
-                            </Badge>
-                          )
-                        })()}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 text-right">
-                      <p className="text-sm font-black text-gray-900 dark:text-white">{formatCurrency(exp.amount)}</p>
-                    </td>
-                    <td className="px-6 py-4">
-                      <Badge variant={STATUS_BADGE[exp.status]} size="sm" className="uppercase tracking-widest text-[9px] rounded-md">
-                        {exp.status}
-                      </Badge>
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="flex items-center justify-end gap-2">
-                        {exp.status === 'submitted' && (
-                          <>
-                            <button onClick={() => handleStatusUpdate(exp.id, 'approved')} className="p-1.5 text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors" title="Approve">
-                              <CheckCircle2 size={16} />
-                            </button>
-                            <button onClick={() => handleStatusUpdate(exp.id, 'rejected')} className="p-1.5 text-red-600 hover:bg-red-50 rounded-lg transition-colors" title="Reject">
-                              <XCircle size={16} />
-                            </button>
-                          </>
-                        )}
-                        {exp.status === 'approved' && (
-                          <Button size="sm" variant="secondary" onClick={() => handleStatusUpdate(exp.id, 'paid')} className="py-1 h-7">
-                            Mark Paid
-                          </Button>
-                        )}
-                        {exp.status !== 'paid' && (
-                          <button onClick={() => handleDelete(exp.id)} className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors" title="Delete">
-                            <XCircle size={16} />
-                          </button>
-                        )}
-                      </div>
-                    </td>
-                  </tr>
-                ))
-              ) : (
-                <tr>
-                  <td colSpan="5" className="py-12">
-                    <EmptyState title="No expenses found" description="Record a new expense to get started." />
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-      </div>
+        {/* Summary Grid */}
+        <Row gutter={[16, 16]}>
+          <Col xs={24} sm={12} lg={6}>
+            <Card
+              className="rounded-[24px] text-white border-0 overflow-hidden shadow-sm flex flex-col justify-center h-full"
+              style={{ background: 'linear-gradient(135deg, #4cc0d4 0%, #0891b2 100%)' }}
+            >
+              <p className="text-[10px] font-black uppercase tracking-[0.18em] opacity-80">Total Expenses</p>
+              <p className="text-2xl font-black mt-2 tracking-tight">{formatCurrency(totalExpense)}</p>
+              <p className="text-[10px] opacity-70 mt-3 font-bold uppercase tracking-wide">
+                For {new Date(0, selectedMonth - 1).toLocaleString('default', { month: 'long' })} {selectedYear}
+              </p>
+            </Card>
+          </Col>
 
-      <Modal open={modalOpen} onClose={() => !isLoading && setModalOpen(false)} title="Record Expense" size="md">
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
-            <Select
-              label="Category"
-              value={form.category}
-              onChange={e => setForm({ ...form, category: e.target.value })}
-              options={Object.entries(CATEGORY_MAP).map(([k, v]) => ({ value: k, label: v.label }))}
-              required
-            />
-            <Input
-              label="Amount"
-              type="number"
-              step="0.01"
-              min="0"
-              value={form.amount}
-              onChange={e => setForm({ ...form, amount: e.target.value })}
-              required
-              placeholder="0.00"
-            />
-          </div>
-          <div className="grid grid-cols-2 gap-4">
-            <Input
-              label="Date"
-              type="date"
-              value={form.date}
-              onChange={e => setForm({ ...form, date: e.target.value })}
-              required
-            />
-            <Select
-              label="Payment Mode"
-              value={form.payment_mode}
-              onChange={e => setForm({ ...form, payment_mode: e.target.value })}
-              options={[
-                { value: 'Cash', label: 'Cash' },
-                { value: 'Bank Transfer', label: 'Bank Transfer' },
-                { value: 'UPI', label: 'UPI' },
-                { value: 'Cheque', label: 'Cheque' },
-                { value: 'Card', label: 'Card' }
-              ]}
-              required
-            />
-          </div>
-          <Input
-            label="Description"
-            value={form.description}
-            onChange={e => setForm({ ...form, description: e.target.value })}
-            placeholder="Brief description of the expense..."
-            required
+          {Object.entries(CATEGORY_MAP).slice(0, 3).map(([key, config]) => {
+            const sum = summary.find(s => s.category === key)?.total || 0
+            const Icon = config.icon
+            return (
+              <Col xs={24} sm={12} lg={6} key={key}>
+                <Card
+                  className={`rounded-[24px] border border-cyan-200/10 shadow-sm h-full bg-gradient-to-b ${config.bgGradient}`}
+                  styles={{ body: { padding: '20px' } }}
+                >
+                  <div className="flex items-center gap-3 mb-3">
+                    <div className="p-2 rounded-xl bg-orange-500/10 text-orange-600 dark:text-orange-400">
+                      <Icon className="text-lg" />
+                    </div>
+                    <span className="text-[9px] font-black uppercase tracking-[0.15em] text-orange-700 dark:text-orange-300">
+                      {config.label}
+                    </span>
+                  </div>
+                  <p className="text-xl font-black text-gray-900 dark:text-white mt-1 tracking-tight">
+                    {formatCurrency(sum)}
+                  </p>
+                </Card>
+              </Col>
+            )
+          })}
+        </Row>
+
+        {/* Main Records Block */}
+        <Card
+          className="rounded-[28px] shadow-sm border-gray-100 dark:border-gray-800 overflow-hidden"
+          styles={{ header: { borderBottom: '1px solid rgba(0,0,0,0.06)' }, body: { padding: '0px' } }}
+          title={
+            <div className="flex flex-wrap items-center justify-between gap-4 py-1">
+              <div>
+                <span className="text-base font-black text-gray-900 dark:text-white tracking-tight">Expense Records</span>
+                <span className="text-xs text-gray-400 dark:text-gray-500 font-semibold block mt-0.5">
+                  Monthly expense ledgers and vendor receipts
+                </span>
+              </div>
+              <div className="relative min-w-[240px]">
+                <AntInput
+                  placeholder="Search descriptions..."
+                  value={searchQuery}
+                  onChange={e => setSearchQuery(e.target.value)}
+                  prefix={<SearchOutlined className="text-gray-400" />}
+                  allowClear
+                  className="rounded-xl font-semibold text-xs h-[36px]"
+                />
+              </div>
+            </div>
+          }
+        >
+          <Table
+            dataSource={filteredExpenses}
+            columns={tableColumns}
+            rowKey="id"
+            pagination={{ pageSize: 15 }}
+            loading={isLoading}
+            size="middle"
+            className="premium-table"
+            rowClassName="hover:bg-orange-50/10 dark:hover:bg-orange-950/10 transition-colors"
           />
-          <div className="pt-4 flex justify-end gap-3 border-t border-gray-100 dark:border-gray-800">
-            <Button type="button" variant="secondary" onClick={() => setModalOpen(false)}>Cancel</Button>
-            <Button type="submit" loading={isLoading}>Save Expense</Button>
-          </div>
-        </form>
-      </Modal>
-    </div>
+        </Card>
+
+        {/* Record Expense Modal */}
+        <AntModal
+          open={modalOpen}
+          onCancel={() => !isLoading && setModalOpen(false)}
+          title={<span className="text-base font-black text-gray-900 dark:text-white">Record Expense</span>}
+          footer={null}
+          className="premium-modal"
+          centered
+        >
+          <form onSubmit={handleSubmit} className="space-y-4 py-3">
+            <Row gutter={16}>
+              <Col span={12}>
+                <label className="block text-[10px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-1.5">Category</label>
+                <AntSelect
+                  value={form.category}
+                  onChange={val => setForm({ ...form, category: val })}
+                  className="w-full rounded-xl text-xs h-[38px]"
+                  options={Object.entries(CATEGORY_MAP).map(([k, v]) => ({ value: k, label: v.label }))}
+                />
+              </Col>
+              <Col span={12}>
+                <label className="block text-[10px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-1.5">Amount</label>
+                <AntInput
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  value={form.amount}
+                  onChange={e => setForm({ ...form, amount: e.target.value })}
+                  placeholder="0.00"
+                  required
+                  className="rounded-xl font-semibold text-xs h-[38px]"
+                />
+              </Col>
+            </Row>
+
+            <Row gutter={16}>
+              <Col span={12}>
+                <label className="block text-[10px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-1.5">Date</label>
+                <AntInput
+                  type="date"
+                  value={form.date}
+                  onChange={e => setForm({ ...form, date: e.target.value })}
+                  required
+                  className="rounded-xl font-semibold text-xs h-[38px]"
+                />
+              </Col>
+              <Col span={12}>
+                <label className="block text-[10px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-1.5">Payment Mode</label>
+                <AntSelect
+                  value={form.payment_mode}
+                  onChange={val => setForm({ ...form, payment_mode: val })}
+                  className="w-full rounded-xl text-xs h-[38px]"
+                  options={[
+                    { value: 'Cash', label: 'Cash' },
+                    { value: 'Bank Transfer', label: 'Bank Transfer' },
+                    { value: 'UPI', label: 'UPI' },
+                    { value: 'Cheque', label: 'Cheque' },
+                    { value: 'Card', label: 'Card' }
+                  ]}
+                />
+              </Col>
+            </Row>
+
+            <div>
+              <label className="block text-[10px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-1.5">Description</label>
+              <AntInput
+                value={form.description}
+                onChange={e => setForm({ ...form, description: e.target.value })}
+                placeholder="Brief description of the expense..."
+                required
+                className="rounded-xl font-semibold text-xs h-[38px]"
+              />
+            </div>
+
+            <div className="pt-4 flex justify-end gap-3 border-t border-gray-100 dark:border-gray-800 mt-2">
+              <Button type="button" onClick={() => setModalOpen(false)} className="rounded-xl font-bold h-[38px]">
+                Cancel
+              </Button>
+              <Button type="primary" htmlType="submit" loading={isLoading} className="rounded-xl font-bold h-[38px] border-0" style={{ background: 'linear-gradient(90deg, #4cc0d4 0%, #0891b2 100%)' }}>
+                Save Expense
+              </Button>
+            </div>
+          </form>
+        </AntModal>
+      </div>
+    </ConfigProvider>
   )
 }

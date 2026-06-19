@@ -1,121 +1,171 @@
 import { Link } from 'react-router-dom'
-import { 
-  Calendar, 
-  FileText, 
-  Users, 
-  Clock, 
-  AlertCircle, 
-  Percent, 
-  Settings2,
-  Wallet,
-  UserX,
-  FileDown,
-  ArrowRight
-} from 'lucide-react'
+import {
+  Card,
+  Row,
+  Col,
+  Button,
+  Tag,
+  ConfigProvider,
+  theme as antdTheme
+} from 'antd'
+import {
+  CalendarOutlined,
+  ClockCircleOutlined,
+  TeamOutlined,
+  FileTextOutlined,
+  AlertOutlined,
+  PercentageOutlined,
+  SettingOutlined,
+  WalletOutlined,
+  UserDeleteOutlined,
+  DownloadOutlined,
+  ArrowRightOutlined
+} from '@ant-design/icons'
 import usePageTitle from '@/hooks/usePageTitle'
 import { ROUTES } from '@/constants/app'
+import useUiStore from '@/store/uiStore'
 
 const REPORTS = [
   { 
     label: 'Daily Report', 
     path: ROUTES.ACCOUNTANT_REPORT_DAILY, 
-    icon: Calendar, 
+    icon: CalendarOutlined, 
     description: 'Summary of collections and expenses for today.' 
   },
   { 
     label: 'Monthly Report', 
     path: ROUTES.ACCOUNTANT_REPORT_MONTHLY, 
-    icon: Clock, 
+    icon: ClockCircleOutlined, 
     description: 'Detailed financial performance for the current month.' 
   },
   { 
     label: 'Class Wise Report', 
     path: ROUTES.ACCOUNTANT_REPORT_CLASSWISE, 
-    icon: Users, 
+    icon: TeamOutlined, 
     description: 'Fee status breakdown across different classes and sections.' 
   },
   { 
     label: 'Session Summary', 
     path: ROUTES.ACCOUNTANT_REPORT_SESSION, 
-    icon: FileText, 
+    icon: FileTextOutlined, 
     description: 'Comprehensive overview of the entire academic session.' 
   },
   { 
     label: 'Defaulter Report', 
     path: ROUTES.ACCOUNTANT_REPORT_DEFAULTERS, 
-    icon: AlertCircle, 
+    icon: AlertOutlined, 
     description: 'List of students with pending dues and overdue history.' 
   },
   { 
     label: 'Concession Report', 
     path: ROUTES.ACCOUNTANT_REPORT_CONCESSIONS, 
-    icon: Percent, 
+    icon: PercentageOutlined, 
     description: 'Tracking all fee waivers and discounts applied.' 
   },
   { 
     label: 'Custom Report', 
     path: ROUTES.ACCOUNTANT_REPORT_CUSTOM, 
-    icon: Settings2, 
+    icon: SettingOutlined, 
     description: 'Generate reports with custom date ranges and filters.' 
   },
 ]
 
 const QUICK_ACTIONS = [
-  { label: 'Collect Fee', path: ROUTES.ACCOUNTANT_COLLECTION, icon: Wallet, color: 'var(--color-brand)' },
-  { label: 'View Defaulters', path: ROUTES.ACCOUNTANT_DEFAULTERS, icon: UserX, color: '#dc2626' },
-  { label: "Today's Report", path: ROUTES.ACCOUNTANT_REPORT_DAILY, icon: FileDown, color: '#15803d' },
+  { label: 'Collect Fee', path: ROUTES.ACCOUNTANT_COLLECTION, icon: WalletOutlined, color: '#4CC0D4' },
+  { label: 'View Defaulters', path: ROUTES.ACCOUNTANT_DEFAULTERS, icon: UserDeleteOutlined, color: '#dc2626' },
+  { label: "Today's Report", path: ROUTES.ACCOUNTANT_REPORT_DAILY, icon: DownloadOutlined, color: '#16a34a' },
 ]
 
 const ReportsHome = () => {
   usePageTitle('Reports')
+  const { theme: storeTheme } = useUiStore()
+
+  const isDark = storeTheme === 'dark' || (storeTheme === 'system' && window.matchMedia?.('(prefers-color-scheme: dark)').matches)
 
   return (
-    <div className="space-y-6">
-      <div className="rounded-[28px] border p-6" style={{ backgroundColor: 'var(--color-surface)', borderColor: 'var(--color-border)' }}>
-        <h1 className="text-2xl font-bold" style={{ color: 'var(--color-text-primary)' }}>Reports Center</h1>
-        <p className="mt-1 text-sm" style={{ color: 'var(--color-text-secondary)' }}>Access financial summaries, collection trends, and student fee positions.</p>
-        
-        {/* Quick Actions Strip */}
-        <div className="mt-6 flex flex-wrap gap-3 border-t pt-6" style={{ borderColor: 'var(--color-border)' }}>
-          {QUICK_ACTIONS.map((action) => (
-            <Link
-              key={action.label}
-              to={action.path}
-              className="group flex items-center gap-3 rounded-2xl border px-4 py-3 text-sm font-semibold transition-all hover:shadow-md"
-              style={{ backgroundColor: 'var(--color-surface)', borderColor: 'var(--color-border)', color: 'var(--color-text-primary)' }}
-            >
-              <div className="flex h-8 w-8 items-center justify-center rounded-xl" style={{ backgroundColor: `${action.color}15`, color: action.color }}>
-                <action.icon size={18} />
-              </div>
-              {action.label}
-              <ArrowRight size={14} className="opacity-0 transition-all group-hover:translate-x-1 group-hover:opacity-100" />
-            </Link>
-          ))}
-        </div>
-      </div>
+    <ConfigProvider
+      theme={{
+        algorithm: isDark ? antdTheme.darkAlgorithm : antdTheme.defaultAlgorithm,
+        token: {
+          colorPrimary: '#4CC0D4',
+          borderRadius: 24,
+          fontFamily: 'inherit',
+        },
+      }}
+    >
+      <div className="space-y-6">
+        {/* Banner Block */}
+        <div
+          className="rounded-[32px] border p-6 shadow-sm relative overflow-hidden backdrop-blur-md"
+          style={{
+            background: isDark
+              ? 'linear-gradient(135deg, rgba(76, 192, 212, 0.15) 0%, #1e1b4b 100%)'
+              : 'linear-gradient(135deg, #e0f7fa 0%, #fffdf9 100%)',
+            borderColor: isDark ? 'rgba(76, 192, 212, 0.3)' : '#b2ebf2'
+          }}
+        >
+          <div className="absolute -right-20 -top-20 w-64 h-64 rounded-full bg-cyan-500/10 blur-3xl pointer-events-none" />
 
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-        {REPORTS.map((report) => (
-          <Link
-            key={report.path}
-            to={report.path}
-            className="group rounded-[24px] border p-6 transition-all hover:-translate-y-1 hover:shadow-lg"
-            style={{ backgroundColor: 'var(--color-surface)', borderColor: 'var(--color-border)' }}
-          >
-            <div className="flex items-start justify-between">
-              <div className="flex h-12 w-12 items-center justify-center rounded-[18px]" style={{ backgroundColor: 'var(--color-accent-subtle)', color: 'var(--color-accent-emphasis)' }}>
-                <report.icon size={24} />
-              </div>
-              <ArrowRight size={20} className="text-muted opacity-0 transition-all group-hover:translate-x-1 group-hover:opacity-100" />
+          <div className="z-10 relative">
+            <div className="flex items-center gap-2">
+              <h1 className="text-2xl font-black text-gray-900 dark:text-white tracking-tight">Reports Center</h1>
+              <Tag color="cyan" className="font-extrabold uppercase text-[9px] border-0 px-2 rounded-full">Analytics</Tag>
             </div>
-            <div className="mt-4">
-              <h3 className="text-base font-bold" style={{ color: 'var(--color-text-primary)' }}>{report.label}</h3>
-              <p className="mt-1 text-sm leading-relaxed" style={{ color: 'var(--color-text-secondary)' }}>{report.description}</p>
+            <p className="mt-1 text-xs text-gray-500 dark:text-gray-400 font-semibold leading-relaxed">
+              Access financial summaries, collection trends, concessions, and student fee positions.
+            </p>
+
+            {/* Quick Actions Strip */}
+            <div className="mt-6 flex flex-wrap gap-3 border-t border-dashed pt-6 border-cyan-200/50 dark:border-cyan-900/50">
+              {QUICK_ACTIONS.map((action) => (
+                <Link key={action.label} to={action.path}>
+                  <Button
+                    size="large"
+                    icon={<action.icon />}
+                    className="rounded-xl font-bold flex items-center justify-center border-gray-200 dark:border-gray-800 text-gray-700 dark:text-gray-200 hover:shadow-md transition-all"
+                    style={{ height: '42px', padding: '0 16px' }}
+                  >
+                    {action.label}
+                    <ArrowRightOutlined className="ml-1 text-xs" />
+                  </Button>
+                </Link>
+              ))}
             </div>
-          </Link>
-        ))}
+          </div>
+        </div>
+
+        {/* Reports Navigation Grid */}
+        <Row gutter={[16, 16]}>
+          {REPORTS.map((report) => {
+            const Icon = report.icon
+            return (
+              <Col xs={24} sm={12} lg={8} key={report.path}>
+                <Link to={report.path}>
+                  <Card
+                    hoverable
+                    className="rounded-[24px] border-gray-100 dark:border-gray-850 h-full flex flex-col justify-between"
+                    styles={{ body: { padding: '24px', flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' } }}
+                  >
+                    <div>
+                      <div className="flex items-center justify-between mb-4">
+                        <div className="p-3 bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 rounded-2xl w-fit">
+                          <Icon className="text-xl" />
+                        </div>
+                        <ArrowRightOutlined className="text-gray-450 dark:text-gray-500 text-sm" />
+                      </div>
+                      <h3 className="text-sm font-extrabold text-gray-900 dark:text-white mb-2">{report.label}</h3>
+                      <p className="text-xs text-gray-400 dark:text-gray-500 font-semibold leading-relaxed">
+                        {report.description}
+                      </p>
+                    </div>
+                  </Card>
+                </Link>
+              </Col>
+            )
+          })}
+        </Row>
       </div>
-    </div>
+    </ConfigProvider>
   )
 }
 
