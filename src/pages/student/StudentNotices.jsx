@@ -102,7 +102,7 @@ const StudentNotices = () => {
         ) : sortedNotices.length ? (
           sortedNotices.map((notice) => (
             <NoticeCard
-              key={notice.id}
+              key={`${notice.source || 'unified'}-${notice.id}`}
               notice={notice}
               onOpen={handleOpen}
               onTogglePin={handleTogglePin}

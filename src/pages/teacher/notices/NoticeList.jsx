@@ -76,7 +76,7 @@ const NoticeList = () => {
         const haystack = `${notice.title} ${notice.body}`.toLowerCase()
         const matchesSearch = !filters.search.trim() || haystack.includes(filters.search.trim().toLowerCase())
         const matchesCategory = !filters.category || notice.priority === filters.category // Map category to priority if needed, or just skip category filter if not in unified
-        return matchesSearch
+        return matchesSearch && matchesCategory
       }),
     [filters, notices],
   )

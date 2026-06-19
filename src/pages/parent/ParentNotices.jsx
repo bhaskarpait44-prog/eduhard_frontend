@@ -11,14 +11,17 @@ export default function ParentNotices() {
   usePageTitle('School Notices')
   const [notices, setNotices] = useState([])
   const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState(null)
 
   const fetchNotices = async () => {
     setIsLoading(true)
+    setError(null)
     try {
       const res = await getParentNotices()
       setNotices(res.data?.notices || [])
     } catch (e) {
       console.error('Failed to fetch notices', e)
+      setError('Unable to load notices. Please check your connection and try again.')
     } finally {
       setIsLoading(false)
     }
@@ -55,6 +58,17 @@ export default function ParentNotices() {
         <div className="flex flex-col items-center justify-center p-20">
           <div className="w-10 h-10 rounded-full border-4 border-amber-100 border-t-amber-600 animate-spin mb-4" />
           <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">Loading Updates...</p>
+        </div>
+      ) : error ? (
+        <div className="flex flex-col items-center justify-center text-center p-12 bg-red-50/50 rounded-[32px] border border-red-100/50 max-w-lg mx-auto">
+          <div className="w-12 h-12 rounded-2xl bg-red-100 text-red-600 flex items-center justify-center mb-4">
+            <Bell size={24} className="rotate-12 animate-pulse text-red-600" />
+          </div>
+          <h3 className="text-lg font-black text-red-950 mb-2">Connection Problem</h3>
+          <p className="text-sm font-medium text-red-600/80 mb-6">{error}</p>
+          <Button variant="secondary" onClick={fetchNotices}>
+            Try Again
+          </Button>
         </div>
       ) : !Array.isArray(notices) || notices.length === 0 ? (
         <EmptyState title="All clear!" description="You're all caught up. No new notices at this time." />
