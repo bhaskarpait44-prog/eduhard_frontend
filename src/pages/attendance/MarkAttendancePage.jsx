@@ -52,6 +52,12 @@ const MarkAttendancePage = () => {
   }, [])
 
   useEffect(() => {
+    if (classId && sectionId && date && currentSession?.id) {
+      loadStudents()
+    }
+  }, [classId, sectionId, date, currentSession?.id])
+
+  useEffect(() => {
     if (!classId) {
       setSections([])
       setSectionId('')

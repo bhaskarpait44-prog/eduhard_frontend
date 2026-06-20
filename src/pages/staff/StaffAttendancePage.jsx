@@ -27,6 +27,11 @@ const STATUS_OPTIONS = [
   { value: 'leave',   label: 'Leave',   color: 'purple', icon: Calendar },
 ]
 
+const localToday = () => {
+  const d = new Date()
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+}
+
 export default function StaffAttendancePage() {
   usePageTitle('Staff Attendance')
   const { toastSuccess, toastError } = useToast()
@@ -40,7 +45,7 @@ export default function StaffAttendancePage() {
   } = useStaffAttendanceStore()
 
   const [activeTab, setActiveTab] = useState('daily') // 'daily' | 'register'
-  const [selectedDate, setSelectedDate] = useState(new Date().toLocaleDateString('en-CA'))
+  const [selectedDate, setSelectedDate] = useState(localToday())
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1)
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear())
   const [searchQuery, setSearchQuery] = useState('')
@@ -99,17 +104,17 @@ export default function StaffAttendancePage() {
   }
 
   const handlePrevDate = () => {
-    const d = new Date(selectedDate)
-    d.setDate(d.getDate() - 1)
-    setSelectedDate(d.toISOString().split('T')[0])
+    const parts = selectedDate.split('-').map(Number)
+    const d = new Date(parts[0], parts[1] - 1, parts[2] - 1)
+    const prev = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+    setSelectedDate(prev)
   }
 
   const handleNextDate = () => {
-    const d = new Date(selectedDate)
-    d.setDate(d.getDate() + 1)
-    const next = d.toISOString().split('T')[0]
-    const today = new Date().toLocaleDateString('en-CA')
-    if (next <= today) setSelectedDate(next)
+    const parts = selectedDate.split('-').map(Number)
+    const d = new Date(parts[0], parts[1] - 1, parts[2] + 1)
+    const next = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+    if (next <= localToday()) setSelectedDate(next)
   }
 
   return (
@@ -185,7 +190,7 @@ export default function StaffAttendancePage() {
               <input
                 type="date"
                 value={selectedDate}
-                max={new Date().toLocaleDateString('en-CA')}
+                max={localToday()}
                 onChange={e => setSelectedDate(e.target.value)}
                 className="bg-transparent border-none text-sm font-bold focus:ring-0 cursor-pointer"
               />

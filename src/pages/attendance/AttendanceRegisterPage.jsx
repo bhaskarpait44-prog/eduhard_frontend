@@ -25,7 +25,7 @@ const STATUS_CELL = {
 const AttendanceRegisterPage = ({ mode = 'register' }) => {
   usePageTitle('Attendance Register')
   const { toastError } = useToast()
-  const { sessionReport, isLoading, fetchClassRegister } = useAttendanceStore()
+  const { registerStudents, isLoading, fetchClassRegister } = useAttendanceStore()
   const { sessions, currentSession, fetchSessions } = useSessionStore()
   const isOverrideMode = mode === 'override'
 
@@ -92,19 +92,20 @@ const AttendanceRegisterPage = ({ mode = 'register' }) => {
 
   const attendanceLookup = useMemo(() => {
     const map = {}
-    sessionReport.forEach((row) => {
+    registerStudents.forEach((row) => {
       map[row.enrollment_id || row.id] = {}
       ;(row.attendance || []).forEach((attendance) => {
         map[row.enrollment_id || row.id][attendance.date] = attendance
       })
     })
+
     return map
-  }, [sessionReport])
+  }, [registerStudents])
 
   const summary = useMemo(() => {
     const totals = { present: 0, absent: 0, late: 0, half_day: 0, holiday: 0 }
 
-    sessionReport.forEach((row) => {
+    registerStudents.forEach((row) => {
       ;(row.attendance || []).forEach((attendance) => {
         if (totals[attendance.status] !== undefined) {
           totals[attendance.status] += 1
@@ -113,7 +114,7 @@ const AttendanceRegisterPage = ({ mode = 'register' }) => {
     })
 
     return totals
-  }, [sessionReport])
+  }, [registerStudents])
 
   const selectedClassLabel = classes.find((item) => item.value === classId)?.label || 'No class selected'
   const selectedSectionLabel = sections.find((item) => item.value === sectionId)?.label || 'No section selected'
@@ -192,7 +193,7 @@ const AttendanceRegisterPage = ({ mode = 'register' }) => {
           </>
         )}
         meta={[
-          { label: 'Students', value: sessionReport.length },
+          { label: 'Students', value: registerStudents.length },
           { label: 'Present', value: summary.present },
           { label: 'Absent', value: summary.absent },
           { label: 'Late/Half', value: summary.late + summary.half_day },
@@ -307,7 +308,7 @@ const AttendanceRegisterPage = ({ mode = 'register' }) => {
                   </tr>
                 </thead>
                 <tbody>
-                  {sessionReport.length === 0 ? (
+                  {registerStudents.length === 0 ? (
                     <tr>
                       <td colSpan={daysInMonth.length + 2} className="px-6 py-20 text-center">
                         <p className="text-sm font-medium" style={{ color: 'var(--color-text-primary)' }}>
@@ -319,7 +320,7 @@ const AttendanceRegisterPage = ({ mode = 'register' }) => {
                       </td>
                     </tr>
                   ) : (
-                    sessionReport.map((row, rowIndex) => {
+                    registerStudents.map((row, rowIndex) => {
                       const enrollmentId = row.enrollment_id || row.id
                       const lookup = attendanceLookup[enrollmentId] || {}
                       const pct = parseFloat(row.percentage || row.attendance_percentage || 0)
@@ -328,7 +329,7 @@ const AttendanceRegisterPage = ({ mode = 'register' }) => {
                       return (
                         <tr
                           key={enrollmentId}
-                          style={{ borderBottom: rowIndex < sessionReport.length - 1 ? '1px solid var(--color-border)' : 'none' }}
+                          style={{ borderBottom: rowIndex < registerStudents.length - 1 ? '1px solid var(--color-border)' : 'none' }}
                         >
                           <td
                             className="sticky left-0 z-10 px-4 py-3"

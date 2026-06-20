@@ -5,6 +5,7 @@ import * as api from '@/api/attendanceApi'
 const useAttendanceStore = create((set) => ({
   classAttendance   : [],
   sessionReport     : [],
+  registerStudents  : [],
   studentSummary    : null,
   studentRecords    : [],
   isLoading         : false,
@@ -53,7 +54,7 @@ const useAttendanceStore = create((set) => ({
     try {
       const res = await api.getClassRegister(params)
       const rows = res.data?.students || []
-      set({ sessionReport: rows, isLoading: false })
+      set({ registerStudents: rows, isLoading: false })
       return rows
     } catch (err) {
       set({ error: err.message, isLoading: false })

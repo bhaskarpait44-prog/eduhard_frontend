@@ -60,8 +60,17 @@ export default function ParentAttendance() {
                     <td className="px-8 py-5 text-sm font-bold text-gray-900">{formatDate(record.date)}</td>
                     <td className="px-8 py-5 text-sm font-medium text-gray-500">{formatDate(record.date, 'EEEE')}</td>
                     <td className="px-8 py-5 text-center">
-                      <Badge variant={record.status === 'present' ? 'green' : record.status === 'absent' ? 'red' : 'amber'} className="rounded-lg">
-                        {record.status}
+                      <Badge
+                        variant={
+                          record.status === 'present' ? 'green' :
+                          record.status === 'absent' ? 'red' :
+                          record.status === 'late' ? 'yellow' :
+                          record.status === 'half_day' ? 'blue' :
+                          record.status === 'holiday' ? 'grey' : 'grey'
+                        }
+                        className="rounded-lg"
+                      >
+                        {record.status?.replace('_', ' ')}
                       </Badge>
                     </td>
                     <td className="px-8 py-5 text-sm text-gray-500 italic">{record.remarks || '-'}</td>

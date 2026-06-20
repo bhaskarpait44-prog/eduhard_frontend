@@ -95,14 +95,17 @@ const AttendanceReportPage = () => {
     doSearch(search)
   }, [search, doSearch])
 
+  useEffect(() => {
+    if (selected?.current_enrollment?.id) {
+      fetchStudentAttendance(selected.current_enrollment.id, { from: fromDate, to: toDate })
+        .catch(() => toastError('Failed to load attendance'))
+    }
+  }, [selected?.current_enrollment?.id, fromDate, toDate, fetchStudentAttendance, toastError])
+
   const selectStudent = (student) => {
     setSelected(student)
     setResults([])
     setSearch(`${student.first_name} ${student.last_name}`)
-
-    if (student.current_enrollment?.id) {
-      fetchStudentAttendance(student.current_enrollment.id, { from: fromDate, to: toDate }).catch(() => toastError('Failed to load attendance'))
-    }
   }
 
   const resetSearch = () => {
@@ -169,7 +172,7 @@ const AttendanceReportPage = () => {
     const monthMap = {}
 
     studentRecords.forEach((record) => {
-      const month = new Date(record.date).getMonth()
+      const month = parseInt(record.date.split('-')[1], 10) - 1
       if (!monthMap[month]) {
         monthMap[month] = { present: 0, absent: 0, late: 0, half_day: 0, holiday: 0, total: 0 }
       }
