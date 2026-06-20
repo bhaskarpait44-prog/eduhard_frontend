@@ -22,6 +22,12 @@ const schema = z.object({
   start_date: z.string().min(1, 'Start date required'),
   end_date: z.string().min(1, 'End date required'),
   status: z.enum(['draft', 'published'], { required_error: 'Status is required' }),
+  weightage: z.preprocess(
+    (val) => (val === '' ? undefined : Number(val)),
+    z.number({ required_error: 'Weightage is required' })
+      .min(0, 'Weightage must be at least 0')
+      .max(100, 'Weightage cannot exceed 100')
+  ),
 }).refine((data) => new Date(data.end_date) >= new Date(data.start_date), {
   message: 'End date must be on or after start date',
   path: ['end_date'],
@@ -34,6 +40,12 @@ const CreateExamModal = ({ open, onClose, sessionId, onCreated, prefillClassId }
   const [teachers, setTeachers] = useState([])
   const [classSubjects, setClassSubjects] = useState([])
   const [subjectConfigs, setSubjectConfigs] = useState({})
+
+  const [bulkTheoryTotal, setBulkTheoryTotal] = useState('')
+  const [bulkTheoryPassing, setBulkTheoryPassing] = useState('')
+  const [bulkPracticalTotal, setBulkPracticalTotal] = useState('')
+  const [bulkPracticalPassing, setBulkPracticalPassing] = useState('')
+  const [showBulkPanel, setShowBulkPanel] = useState(false)
 
   const {
     register,
@@ -50,6 +62,7 @@ const CreateExamModal = ({ open, onClose, sessionId, onCreated, prefillClassId }
       start_date: '',
       end_date: '',
       status: 'draft',
+      weightage: 100,
     },
   })
 
@@ -78,9 +91,15 @@ const CreateExamModal = ({ open, onClose, sessionId, onCreated, prefillClassId }
       start_date: '',
       end_date: '',
       status: 'draft',
+      weightage: 100,
     })
     setClassSubjects([])
     setSubjectConfigs({})
+    setBulkTheoryTotal('')
+    setBulkTheoryPassing('')
+    setBulkPracticalTotal('')
+    setBulkPracticalPassing('')
+    setShowBulkPanel(false)
   }, [open, reset])
 
   useEffect(() => {
@@ -132,6 +151,30 @@ const CreateExamModal = ({ open, onClose, sessionId, onCreated, prefillClassId }
     }))
   }
 
+  const handleBulkFillMarks = () => {
+    setSubjectConfigs((prev) => {
+      const next = { ...prev }
+      Object.keys(next).forEach((id) => {
+        if (next[id].selected) {
+          const patch = {}
+          const type = next[id].subject_type || 'theory'
+          if (type !== 'practical') {
+            if (bulkTheoryTotal !== '') patch.theory_total_marks = bulkTheoryTotal
+            if (bulkTheoryPassing !== '') patch.theory_passing_marks = bulkTheoryPassing
+          }
+          if (type !== 'theory') {
+            if (bulkPracticalTotal !== '') patch.practical_total_marks = bulkPracticalTotal
+            if (bulkPracticalPassing !== '') patch.practical_passing_marks = bulkPracticalPassing
+          }
+          next[id] = { ...next[id], ...patch }
+        }
+      })
+      return next
+    })
+    toastSuccess('Bulk marks applied to selected subjects')
+    setShowBulkPanel(false)
+  }
+
   const onSubmit = async (data) => {
     const examName = data.name.trim()
     const subjects = classSubjects
@@ -161,6 +204,7 @@ const CreateExamModal = ({ open, onClose, sessionId, onCreated, prefillClassId }
       start_date: data.start_date,
       end_date: data.end_date,
       status: data.status,
+      weightage: data.weightage,
       subjects,
     })
 
@@ -211,6 +255,16 @@ const CreateExamModal = ({ open, onClose, sessionId, onCreated, prefillClassId }
           </div>
           <Input label="Start Date" type="date" error={errors.start_date?.message} {...register('start_date')} />
           <Input label="End Date" type="date" error={errors.end_date?.message} {...register('end_date')} />
+          <Input
+            label="Exam Weightage (%)"
+            type="number"
+            min="0"
+            max="100"
+            placeholder="e.g. 100"
+            error={errors.weightage?.message}
+            hint="Set to 0 to exclude this exam from final results calculation"
+            {...register('weightage')}
+          />
         </div>
 
         <section className="space-y-3">
@@ -221,20 +275,78 @@ const CreateExamModal = ({ open, onClose, sessionId, onCreated, prefillClassId }
                 {selectedCount} subject(s) selected for this exam.
               </p>
             </div>
-            <Button
-              type="button"
-              variant="secondary"
-              onClick={() => {
-                const nextSelected = selectedCount !== classSubjects.length
-                setSubjectConfigs((prev) => Object.fromEntries(classSubjects.map((subject) => [subject.id, {
-                  ...prev[subject.id],
-                  selected: nextSelected,
-                }])))
-              }}
-            >
-              {selectedCount === classSubjects.length ? 'Clear All' : 'Select All'}
-            </Button>
+            <div className="flex gap-2">
+              {classId && classSubjects.length > 0 && (
+                <Button
+                  type="button"
+                  variant="secondary"
+                  onClick={() => setShowBulkPanel(!showBulkPanel)}
+                >
+                  {showBulkPanel ? 'Hide Bulk Fill' : 'Bulk Fill Marks'}
+                </Button>
+              )}
+              <Button
+                type="button"
+                variant="secondary"
+                onClick={() => {
+                  const nextSelected = selectedCount !== classSubjects.length
+                  setSubjectConfigs((prev) => Object.fromEntries(classSubjects.map((subject) => [subject.id, {
+                    ...prev[subject.id],
+                    selected: nextSelected,
+                  }])))
+                }}
+              >
+                {selectedCount === classSubjects.length ? 'Clear All' : 'Select All'}
+              </Button>
+            </div>
           </div>
+
+          {showBulkPanel && classId && classSubjects.length > 0 && (
+            <div 
+              className="p-4 rounded-2xl border-2 border-dashed flex flex-wrap items-end gap-4" 
+              style={{ borderColor: 'var(--color-border)', backgroundColor: 'rgba(67, 56, 202, 0.03)' }}
+            >
+              <Input
+                label="Bulk Theory Total"
+                type="number"
+                min="1"
+                value={bulkTheoryTotal}
+                onChange={(e) => setBulkTheoryTotal(e.target.value)}
+                containerClassName="w-36"
+              />
+              <Input
+                label="Bulk Theory Passing"
+                type="number"
+                min="1"
+                value={bulkTheoryPassing}
+                onChange={(e) => setBulkTheoryPassing(e.target.value)}
+                containerClassName="w-36"
+              />
+              <Input
+                label="Bulk Practical Total"
+                type="number"
+                min="1"
+                value={bulkPracticalTotal}
+                onChange={(e) => setBulkPracticalTotal(e.target.value)}
+                containerClassName="w-36"
+              />
+              <Input
+                label="Bulk Practical Passing"
+                type="number"
+                min="1"
+                value={bulkPracticalPassing}
+                onChange={(e) => setBulkPracticalPassing(e.target.value)}
+                containerClassName="w-36"
+              />
+              <Button
+                type="button"
+                onClick={handleBulkFillMarks}
+                disabled={bulkTheoryTotal === '' && bulkTheoryPassing === '' && bulkPracticalTotal === '' && bulkPracticalPassing === ''}
+              >
+                Apply to Selected
+              </Button>
+            </div>
+          )}
 
           {!classId ? (
             <div className="rounded-2xl px-4 py-6 text-sm" style={{ backgroundColor: 'var(--color-surface-raised)', color: 'var(--color-text-secondary)' }}>

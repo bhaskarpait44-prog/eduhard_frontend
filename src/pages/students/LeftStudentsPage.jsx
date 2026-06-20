@@ -11,6 +11,7 @@ import useSessionStore from '@/store/sessionStore'
 import Button from '@/components/ui/Button'
 import Select from '@/components/ui/Select'
 import Badge from '@/components/ui/Badge'
+import Input from '@/components/ui/Input'
 import EmptyState from '@/components/ui/EmptyState'
 import Modal from '@/components/ui/Modal'
 import TransferCertificateDownload from '@/components/pdf/TransferCertificateDownload'
@@ -207,20 +208,22 @@ export default function LeftStudentsPage() {
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div className="flex items-center gap-2">
             <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--color-text-muted)' }}>Date Range:</span>
-            <input
+            <Input
               type="date"
               className="px-3 py-1.5 rounded-lg border text-xs outline-none"
-              style={{ backgroundColor: 'var(--color-surface-raised)', borderColor: 'var(--color-border)', color: 'var(--color-text-primary)' }}
+              style={{ backgroundColor: 'var(--color-surface-raised)', borderColor: 'var(--color-border)', color: 'var(--color-text-primary)', height: '32px' }}
               value={filters.from_date}
               onChange={(e) => setFilters({ ...filters, from_date: e.target.value })}
+              containerClassName="!w-[130px]"
             />
             <span style={{ color: 'var(--color-text-muted)' }}>to</span>
-            <input
+            <Input
               type="date"
               className="px-3 py-1.5 rounded-lg border text-xs outline-none"
-              style={{ backgroundColor: 'var(--color-surface-raised)', borderColor: 'var(--color-border)', color: 'var(--color-text-primary)' }}
+              style={{ backgroundColor: 'var(--color-surface-raised)', borderColor: 'var(--color-border)', color: 'var(--color-text-primary)', height: '32px' }}
               value={filters.to_date}
               onChange={(e) => setFilters({ ...filters, to_date: e.target.value })}
+              containerClassName="!w-[130px]"
             />
           </div>
           <Button variant="ghost" size="sm" icon={X} onClick={clearFilters}>Clear Filters</Button>

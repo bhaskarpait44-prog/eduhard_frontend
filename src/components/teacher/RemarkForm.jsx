@@ -1,5 +1,6 @@
 import { useMemo } from 'react'
 import Select from '@/components/ui/Select'
+import Input from '@/components/ui/Input'
 import Textarea from '@/components/ui/Textarea'
 import Button from '@/components/ui/Button'
 
@@ -64,22 +65,12 @@ const RemarkForm = ({
           options={VISIBILITY_OPTIONS}
           placeholder="Select visibility"
         />
-        <div className="flex flex-col gap-1.5">
-          <label className="text-sm font-medium" style={{ color: 'var(--color-text-primary)' }}>
-            Date
-          </label>
-          <input
-            type="date"
-            value={value.date}
-            onChange={(event) => onChange('date', event.target.value)}
-            className="min-h-11 rounded-xl px-4 text-sm outline-none"
-            style={{
-              backgroundColor: 'var(--color-surface)',
-              border: '1.5px solid var(--color-border)',
-              color: 'var(--color-text-primary)',
-            }}
-          />
-        </div>
+        <Input
+          type="date"
+          label="Date"
+          value={value.date}
+          onChange={(event) => onChange('date', event.target.value)}
+        />
       </div>
 
       <div className="mt-4">

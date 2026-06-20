@@ -108,6 +108,7 @@ export const ROUTES = {
 
   // Exams
   EXAMS: '/exams',
+  EXAM_TIMETABLE: '/exams/:id/timetable',
   RESULTS: '/results',
   AI_RISK_ANALYSIS: '/analytics/risk-analysis',
 

@@ -5,6 +5,7 @@ import useToast from '@/hooks/useToast'
 import useAttendance from '@/hooks/useAttendance'
 import Select from '@/components/ui/Select'
 import Button from '@/components/ui/Button'
+import Input from '@/components/ui/Input'
 import { cn } from '@/utils/helpers'
 import { downloadAttendanceSummaryPdf } from '@/api/attendanceApi'
 
@@ -445,18 +446,20 @@ const AttendanceReports = () => {
           </div>
           <div className="space-y-2 xl:col-span-1">
             <label className="text-sm font-semibold ml-1" style={{ color: 'var(--color-text-primary)' }}>From Date</label>
-            <input 
+            <Input 
               type="date" 
               className="w-full h-11 bg-surface-raised border border-border/50 rounded-2xl px-4 text-sm text-text-primary outline-none focus:border-primary font-semibold transition-all" 
+              style={{ height: '44px' }}
               value={fromDate} 
               onChange={(e) => setFromDate(e.target.value)} 
             />
           </div>
           <div className="space-y-2 xl:col-span-1">
             <label className="text-sm font-semibold ml-1" style={{ color: 'var(--color-text-primary)' }}>To Date</label>
-            <input 
+            <Input 
               type="date" 
               className="w-full h-11 bg-surface-raised border border-border/50 rounded-2xl px-4 text-sm text-text-primary outline-none focus:border-primary font-semibold transition-all" 
+              style={{ height: '44px' }}
               value={toDate} 
               onChange={(e) => setToDate(e.target.value)} 
             />

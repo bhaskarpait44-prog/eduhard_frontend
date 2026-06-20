@@ -10,6 +10,7 @@ import usePageTitle from '@/hooks/usePageTitle'
 import useToast from '@/hooks/useToast'
 import { formatDate } from '@/utils/helpers'
 import PermissionSelector from '@/components/admin/PermissionSelector'
+import Input from '@/components/ui/Input'
 
 const ROLE_STYLES = {
   admin       : { label: 'Admin', color: 'var(--color-brand)', bg: 'color-mix(in srgb, var(--color-brand) 12%, var(--color-surface-raised))' },
@@ -383,7 +384,7 @@ const UserDetailPage = () => {
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <Field label="Joining Date">
-                    <input
+                    <Input
                       type="date"
                       className={inputClassName}
                       style={baseInputStyle}
@@ -392,7 +393,7 @@ const UserDetailPage = () => {
                     />
                   </Field>
                   <Field label="Date of Birth">
-                    <input
+                    <Input
                       type="date"
                       className={inputClassName}
                       style={baseInputStyle}

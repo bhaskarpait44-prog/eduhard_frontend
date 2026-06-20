@@ -11,6 +11,7 @@ import {
 } from 'lucide-react'
 import Cropper from 'react-easy-crop'
 import { getCroppedImg } from '@/utils/imageUtils'
+import Input from '@/components/ui/Input'
 import { APP_NAME } from '@/constants/app'
 import './AdmissionsPortal.css'
 
@@ -415,7 +416,17 @@ const AdmissionsPortal = () => {
                   </div>
                   <div className={`form-field ${errors.date_of_birth ? 'error' : ''}`}>
                     <label>Date of Birth <span className="text-red-500">*</span></label>
-                    <input type="date" {...register('date_of_birth')} />
+                    <Input
+                      type="date"
+                      {...register('date_of_birth')}
+                      className="!pl-[18px] !pr-[18px]"
+                      style={{
+                        height: '52px',
+                        borderRadius: '16px',
+                        backgroundColor: '#f8fafc',
+                        border: errors.date_of_birth ? '2px solid #fca5a5' : '2px solid #f1f5f9',
+                      }}
+                    />
                     {errors.date_of_birth && <span className="error-message">{errors.date_of_birth.message}</span>}
                   </div>
                   <div className={`form-field ${errors.gender ? 'error' : ''}`}>

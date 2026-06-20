@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import Modal from '@/components/ui/Modal'
 import Button from '@/components/ui/Button'
+import Input from '@/components/ui/Input'
 import useToast from '@/hooks/useToast'
 import { markAsGraduated } from '@/api/studentLeavingApi'
 import { GraduationCap, AlertTriangle } from 'lucide-react'
@@ -53,17 +54,13 @@ export default function MarkAsGraduatedModal({ open, student, onClose, onSuccess
           </p>
         </div>
 
-        <div className="flex flex-col gap-1.5">
-          <label className="text-sm font-semibold" style={{ color: 'var(--color-text-primary)' }}>Graduation Date</label>
-          <input
-            type="date"
-            className="w-full px-4 py-2 rounded-xl border outline-none text-sm transition-all focus:ring-2 focus:ring-indigo-500/20"
-            style={{ backgroundColor: 'var(--color-surface-raised)', borderColor: 'var(--color-border)', color: 'var(--color-text-primary)' }}
-            value={form.graduated_date}
-            onChange={e => setForm({ ...form, graduated_date: e.target.value })}
-            required
-          />
-        </div>
+        <Input
+          type="date"
+          label="Graduation Date"
+          value={form.graduated_date}
+          onChange={e => setForm({ ...form, graduated_date: e.target.value })}
+          required
+        />
 
         <div className="flex flex-col gap-1.5">
           <label className="text-sm font-semibold" style={{ color: 'var(--color-text-primary)' }}>Remarks (Optional)</label>

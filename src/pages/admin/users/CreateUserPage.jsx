@@ -15,6 +15,7 @@ import PermissionSelector from '@/components/admin/PermissionSelector'
 import { getDefaultPermissionsForRole } from '@/utils/permissions'
 import Button from '@/components/ui/Button'
 import Modal from '@/components/ui/Modal'
+import Input from '@/components/ui/Input'
 import { createUserSchema } from '@/utils/validations'
 
 const ROLES = ['admin', 'teacher', 'accountant', 'student', 'librarian', 'staff', 'receptionist', 'parent']
@@ -222,7 +223,11 @@ const CreateUserPage = () => {
                   <input {...register('employee_id')} placeholder="EMP-2024-001" className={inputClassName(false)} />
                 </Field>
                 <Field label="Joining Date" icon={Calendar}>
-                  <input {...register('joining_date')} type="date" className={inputClassName(false)} />
+                  <Input
+                    {...register('joining_date')}
+                    type="date"
+                    className="border border-gray-100 focus:border-indigo-400 focus:bg-white focus:ring-4 focus:ring-indigo-50 !bg-gray-50/50"
+                  />
                 </Field>
                 <Field label="Department" icon={Briefcase}>
                   <input {...register('department')} placeholder="e.g. Administration" className={inputClassName(false)} />

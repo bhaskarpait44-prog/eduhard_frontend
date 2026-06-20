@@ -6,6 +6,7 @@ import Modal from '@/components/ui/Modal'
 import { formatCurrency, formatDate } from '@/utils/helpers'
 import * as classApi from '@/api/classApi'
 import TableSkeleton from '@/components/ui/TableSkeleton'
+import Input from '@/components/ui/Input'
 
 const PAYMENT_MODE_COLORS = {
   cash: { bg: '#dcfce7', text: '#15803d' },
@@ -140,37 +141,23 @@ const ReceiptList = () => {
 
           {/* Date From */}
           <div className="min-w-[140px]">
-            <label className="block text-xs font-semibold mb-1.5 uppercase tracking-wider" style={{ color: 'var(--color-text-muted)' }}>
-              From Date
-            </label>
-            <input
+            <Input
               type="date"
+              label="From Date"
               value={dateFrom}
               onChange={(e) => { setDateFrom(e.target.value); resetPage() }}
-              className="w-full rounded-xl px-3 py-2 text-sm border outline-none focus:ring-2"
-              style={{
-                backgroundColor: 'var(--color-bg-input)',
-                borderColor: 'var(--color-border)',
-                color: 'var(--color-text-primary)',
-              }}
+              max={dateTo || undefined}
             />
           </div>
 
           {/* Date To */}
           <div className="min-w-[140px]">
-            <label className="block text-xs font-semibold mb-1.5 uppercase tracking-wider" style={{ color: 'var(--color-text-muted)' }}>
-              To Date
-            </label>
-            <input
+            <Input
               type="date"
+              label="To Date"
               value={dateTo}
               onChange={(e) => { setDateTo(e.target.value); resetPage() }}
-              className="w-full rounded-xl px-3 py-2 text-sm border outline-none focus:ring-2"
-              style={{
-                backgroundColor: 'var(--color-bg-input)',
-                borderColor: 'var(--color-border)',
-                color: 'var(--color-text-primary)',
-              }}
+              min={dateFrom || undefined}
             />
           </div>
 

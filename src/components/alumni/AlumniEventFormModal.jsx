@@ -7,6 +7,7 @@ import { X, Save, Calendar, MapPin, Clock } from 'lucide-react'
 import { alumniApi } from '@/api'
 import useToast from '@/hooks/useToast'
 import Button from '@/components/ui/Button'
+import Input from '@/components/ui/Input'
 
 const schema = z.object({
   title:       z.string().min(3, 'Title is too short').max(200),
@@ -91,15 +92,12 @@ const AlumniEventFormModal = ({ event, onClose, onSuccess }) => {
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1.5">
-              <label className="text-xs font-bold text-text-secondary ml-1 flex items-center gap-1">
-                <Calendar size={12} /> Date *
-              </label>
-              <input
+              <Input
                 type="date"
+                label={<span className="flex items-center gap-1 text-xs font-bold text-text-secondary"><Calendar size={12} /> Date *</span>}
+                error={errors.event_date?.message}
                 {...register('event_date')}
-                className="w-full px-4 py-2.5 bg-surface-raised border border-border-base rounded-xl text-sm outline-none focus:ring-2 focus:ring-brand/20 transition-all"
               />
-              {errors.event_date && <p className="text-[10px] text-red-500 ml-1">{errors.event_date.message}</p>}
             </div>
             <div className="space-y-1.5">
               <label className="text-xs font-bold text-text-secondary ml-1 flex items-center gap-1">

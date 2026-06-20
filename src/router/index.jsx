@@ -67,6 +67,7 @@ const FeeStructurePage = lazy(() => import('@/pages/fees/FeeStructurePage'))
 const FeeReportPage = lazy(() => import('@/pages/fees/FeeReportPage'))
 const ExamsPage = lazy(() => import('@/pages/exams/ExamsPage'))
 const ExamAnalyticsPage = lazy(() => import('@/pages/exams/ExamAnalyticsPage'))
+const ExamTimetablePage = lazy(() => import('@/pages/exams/ExamTimetablePage'))
 const StudentRiskPage = lazy(() => import('@/pages/analytics/StudentRiskPage'))
 const AuditPage = lazy(() => import('@/pages/audit/AuditPage'))
 const StudentFeePage = lazy(() => import('@/pages/fees/StudentFeePage'))
@@ -677,6 +678,14 @@ const router = createBrowserRouter([
         element: (
           <ProtectedRoute roles={[ROLES.ADMIN, ROLES.TEACHER]}>
             <Lazy component={ExamAnalyticsPage} />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: ROUTES.EXAM_TIMETABLE,
+        element: (
+          <ProtectedRoute roles={[ROLES.ADMIN, ROLES.TEACHER]}>
+            <Lazy component={ExamTimetablePage} />
           </ProtectedRoute>
         ),
       },

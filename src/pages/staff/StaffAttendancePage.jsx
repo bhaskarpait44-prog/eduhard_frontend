@@ -17,6 +17,7 @@ import {
 import Button from '@/components/ui/Button'
 import Badge from '@/components/ui/Badge'
 import EmptyState from '@/components/ui/EmptyState'
+import Input from '@/components/ui/Input'
 import { formatDate } from '@/utils/helpers'
 
 const STATUS_OPTIONS = [
@@ -187,12 +188,19 @@ export default function StaffAttendancePage() {
               <button onClick={handlePrevDate} className="p-2 hover:bg-white dark:hover:bg-gray-700 rounded-xl transition-all shadow-none hover:shadow-sm">
                 <ChevronLeft size={18} />
               </button>
-              <input
+              <Input
                 type="date"
                 value={selectedDate}
                 max={localToday()}
                 onChange={e => setSelectedDate(e.target.value)}
-                className="bg-transparent border-none text-sm font-bold focus:ring-0 cursor-pointer"
+                className="!text-sm !font-bold !bg-transparent"
+                containerClassName="!w-[130px] !gap-0"
+                style={{
+                  height: '32px',
+                  backgroundColor: 'transparent',
+                  border: 'none',
+                  boxShadow: 'none',
+                }}
               />
               <button onClick={handleNextDate} className="p-2 hover:bg-white dark:hover:bg-gray-700 rounded-xl transition-all shadow-none hover:shadow-sm">
                 <ChevronRight size={18} />

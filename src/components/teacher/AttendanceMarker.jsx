@@ -3,6 +3,7 @@ import {
   AlertTriangle, CalendarDays, CheckCircle2, Clock3, Loader2, Search, Send, Users, ChevronDown, Activity, RefreshCw, ClipboardCheck, Info, BookOpen
 } from 'lucide-react'
 import Button from '@/components/ui/Button'
+import Input from '@/components/ui/Input'
 import Select from '@/components/ui/Select'
 import EmptyState from '@/components/ui/EmptyState'
 import Modal from '@/components/ui/Modal'
@@ -173,12 +174,12 @@ const AttendanceMarker = ({
           </div>
 
           <div className="space-y-2 xl:col-span-2">
-            <label className="text-sm font-semibold ml-1" style={{ color: 'var(--color-text-primary)' }}>Attendance Date</label>
-            <input
+            <Input
               type="date"
+              label="Attendance Date"
               value={context.date}
               onChange={(e) => setContext((prev) => ({ ...prev, date: e.target.value }))}
-              className="w-full h-11 bg-surface-raised border border-border/50 rounded-2xl px-4 text-sm text-text-primary outline-none focus:border-primary font-semibold transition-all"
+              required
             />
           </div>
 

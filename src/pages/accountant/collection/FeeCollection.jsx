@@ -9,8 +9,10 @@ import {
   Result,
   Avatar,
   ConfigProvider,
-  theme as antdTheme
+  theme as antdTheme,
+  DatePicker
 } from 'antd'
+import dayjs from 'dayjs'
 import {
   ArrowLeftOutlined,
   ArrowRightOutlined,
@@ -382,15 +384,20 @@ const FeeCollection = () => {
 
                 <div>
                   <label className="block text-xs font-extrabold text-gray-400 dark:text-gray-500 uppercase mb-1.5">Payment Date *</label>
-                  <input 
-                    type="date"
-                    max={today} 
-                    value={paymentData.payment_date} 
-                    onChange={(e) => { setPaymentData({ ...paymentData, payment_date: e.target.value }); setErrors({ ...errors, payment_date: '' }) }} 
+                  <DatePicker 
+                    maxDate={dayjs(today)} 
+                    value={paymentData.payment_date ? dayjs(paymentData.payment_date) : null} 
+                    onChange={(date, dateString) => {
+                      const val = date ? date.format('YYYY-MM-DD') : '';
+                      setPaymentData({ ...paymentData, payment_date: val });
+                      setErrors({ ...errors, payment_date: '' });
+                    }} 
                     className={`w-full h-[40px] px-3.5 border rounded-xl font-bold text-sm bg-transparent outline-none focus:border-cyan-400 ${
                       errors.payment_date ? 'border-rose-500' : 'border-gray-200 dark:border-gray-700'
                     }`}
                     style={{ color: 'inherit' }}
+                    format="DD-MM-YYYY"
+                    allowClear={false}
                   />
                   {errors.payment_date && <p className="text-[11px] font-bold text-rose-500 mt-1">{errors.payment_date}</p>}
                 </div>
@@ -456,12 +463,16 @@ const FeeCollection = () => {
                     </div>
                     <div>
                       <label className="block text-xs font-extrabold text-gray-400 dark:text-gray-500 uppercase mb-1.5">Cheque Date</label>
-                      <input 
-                        type="date"
-                        value={paymentData.cheque_date} 
-                        onChange={(e) => setPaymentData({ ...paymentData, cheque_date: e.target.value })} 
+                      <DatePicker 
+                        value={paymentData.cheque_date ? dayjs(paymentData.cheque_date) : null} 
+                        onChange={(date, dateString) => {
+                          const val = date ? date.format('YYYY-MM-DD') : '';
+                          setPaymentData({ ...paymentData, cheque_date: val });
+                        }} 
                         className="w-full h-[40px] px-3.5 border border-gray-200 dark:border-gray-700 rounded-xl font-bold text-sm bg-transparent outline-none focus:border-cyan-400"
                         style={{ color: 'inherit' }}
+                        format="DD-MM-YYYY"
+                        allowClear={false}
                       />
                     </div>
                   </>

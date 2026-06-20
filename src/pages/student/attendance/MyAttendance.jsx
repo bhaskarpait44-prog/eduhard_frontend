@@ -10,6 +10,7 @@ import {
 import Button from '@/components/ui/Button'
 import EmptyState from '@/components/ui/EmptyState'
 import Modal from '@/components/ui/Modal'
+import Input from '@/components/ui/Input'
 import AttendanceRing from '@/components/student/AttendanceRing'
 import AttendanceCalendar from '@/components/student/AttendanceCalendar'
 import AttendanceTrend from '@/components/student/AttendanceTrend'
@@ -271,22 +272,22 @@ const MyAttendance = () => {
               <div className="grid grid-cols-2 gap-2">
                 <label className="relative">
                   <span className="sr-only">From date</span>
-                  <input
+                  <Input
                     type="date"
                     value={searchRange.from}
                     onChange={(event) => setSearchRange((prev) => ({ ...prev, from: event.target.value }))}
                     className="w-full rounded-2xl border px-3 py-2.5 text-sm"
-                    style={{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface)' }}
+                    style={{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface)', height: '40px' }}
                   />
                 </label>
                 <label className="relative">
                   <span className="sr-only">To date</span>
-                  <input
+                  <Input
                     type="date"
                     value={searchRange.to}
                     onChange={(event) => setSearchRange((prev) => ({ ...prev, to: event.target.value }))}
                     className="w-full rounded-2xl border px-3 py-2.5 text-sm"
-                    style={{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface)' }}
+                    style={{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface)', height: '40px' }}
                   />
                 </label>
               </div>

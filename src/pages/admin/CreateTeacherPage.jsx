@@ -15,6 +15,7 @@ import useToast from '@/hooks/useToast'
 import { getDefaultPermissionsForRole } from '@/utils/permissions'
 import Button from '@/components/ui/Button'
 import Modal from '@/components/ui/Modal'
+import Input from '@/components/ui/Input'
 import { formatDate } from '@/utils/helpers'
 import { teacherSchema } from '@/utils/validations'
 
@@ -419,7 +420,15 @@ const CreateTeacherPage = () => {
                         <TextInput {...register('designation')} placeholder="Class Teacher" />
                       </Field>
                       <Field label="Joining Date" hint="Optional">
-                        <TextInput {...register('joining_date')} type="date" />
+                        <Input
+                          {...register('joining_date')}
+                          type="date"
+                          style={{
+                            backgroundColor: 'var(--color-surface-raised)',
+                            border: '1px solid var(--color-border)',
+                            borderRadius: '14px',
+                          }}
+                        />
                       </Field>
                     </div>
                   )}

@@ -1,7 +1,9 @@
 // src/components/ui/Input.jsx
-import { forwardRef } from 'react'
+import { forwardRef, useState, useEffect, useImperativeHandle, useRef } from 'react'
 import { AlertCircle } from 'lucide-react'
 import { cn } from '@/utils/helpers'
+import { DatePicker } from 'antd'
+import dayjs from 'dayjs'
 
 const Input = forwardRef(({
   label,
@@ -11,8 +13,49 @@ const Input = forwardRef(({
   suffix,
   className,
   containerClassName,
+  value: controlledValue,
+  defaultValue,
+  onChange,
+  onBlur,
   ...props
 }, ref) => {
+  const isDate = props.type === 'date'
+  const isControlled = controlledValue !== undefined
+  const [localValue, setLocalValue] = useState(controlledValue ?? defaultValue ?? '')
+
+  useEffect(() => {
+    if (isControlled) {
+      setLocalValue(controlledValue ?? '')
+    }
+  }, [controlledValue, isControlled])
+
+  const inputRef = useRef(null)
+  const datePickerRef = useRef(null)
+
+  useImperativeHandle(ref, () => {
+    if (isDate) {
+      return {
+        focus: () => {
+          datePickerRef.current?.focus()
+        },
+        blur: () => {
+          datePickerRef.current?.blur()
+        },
+        get value() {
+          return isControlled ? controlledValue : localValue
+        },
+        set value(val) {
+          if (!isControlled) {
+            setLocalValue(val ?? '')
+          }
+        }
+      }
+    }
+    return inputRef.current
+  }, [isDate, isControlled, controlledValue, localValue])
+
+  const valueToUse = isControlled ? controlledValue : localValue
+
   return (
     <div className={cn('flex flex-col gap-1.5', containerClassName)}>
       {label && (
@@ -30,45 +73,102 @@ const Input = forwardRef(({
       <div className="relative">
         {Icon && (
           <div
-            className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none"
+            className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none z-10"
             style={{ color: 'var(--color-text-muted)' }}
           >
             <Icon size={15} />
           </div>
         )}
 
-        <input
-          ref={ref}
-          className={cn(
-            'w-full rounded-xl text-sm outline-none transition-all',
-            'placeholder:opacity-40',
-            Icon   ? 'pl-9'  : 'pl-4',
-            suffix ? 'pr-10' : 'pr-4',
-            'py-2.5',
-            className,
-          )}
-          style={{
-            backgroundColor : 'var(--color-surface)',
-            border          : `1.5px solid ${error ? '#dc2626' : 'var(--color-border)'}`,
-            color           : 'var(--color-text-primary)',
-            boxShadow       : error ? '0 0 0 3px #fecaca40' : 'none',
-          }}
-          onFocus={e => {
-            if (!error) {
-              e.target.style.borderColor = 'var(--color-brand)'
-              e.target.style.boxShadow   = '0 0 0 3px #2563eb20'
-            }
-          }}
-          onBlur={e => {
-            if (!error) {
-              e.target.style.borderColor = 'var(--color-border)'
-              e.target.style.boxShadow   = 'none'
-            }
-          }}
-          {...props}
-        />
+        {isDate ? (
+          <DatePicker
+            ref={datePickerRef}
+            value={valueToUse ? dayjs(valueToUse) : null}
+            onChange={(date, dateString) => {
+              const dbValue = date ? date.format('YYYY-MM-DD') : '';
+              if (!isControlled) {
+                setLocalValue(dbValue);
+              }
+              if (onChange) {
+                onChange({
+                  target: {
+                    name: props.name,
+                    value: dbValue,
+                  }
+                });
+              }
+            }}
+            placeholder={props.placeholder || 'Select date'}
+            disabled={props.disabled}
+            className={cn(
+              'w-full rounded-xl text-sm outline-none transition-all py-2.5',
+              Icon ? 'pl-9' : 'pl-4',
+              className
+            )}
+            style={{
+              backgroundColor : 'var(--color-surface)',
+              border          : `1.5px solid ${error ? '#dc2626' : 'var(--color-border)'}`,
+              color           : 'var(--color-text-primary)',
+              boxShadow       : error ? '0 0 0 3px #fecaca40' : 'none',
+              height          : '42px',
+              ...props.style,
+            }}
+            onFocus={props.onFocus}
+            onBlur={onBlur}
+            allowClear={!props.required}
+            format="DD-MM-YYYY"
+            disabledDate={(current) => {
+              if (!current) return false;
+              if (props.min) {
+                const minDay = dayjs(props.min).startOf('day');
+                if (current.isBefore(minDay)) return true;
+              }
+              if (props.max) {
+                const maxDay = dayjs(props.max).endOf('day');
+                if (current.isAfter(maxDay)) return true;
+              }
+              return false;
+            }}
+          />
+        ) : (
+          <input
+            ref={inputRef}
+            className={cn(
+              'w-full rounded-xl text-sm outline-none transition-all',
+              'placeholder:opacity-40',
+              Icon   ? 'pl-9'  : 'pl-4',
+              suffix ? 'pr-10' : 'pr-4',
+              'py-2.5',
+              className,
+            )}
+            style={{
+              backgroundColor : 'var(--color-surface)',
+              border          : `1.5px solid ${error ? '#dc2626' : 'var(--color-border)'}`,
+              color           : 'var(--color-text-primary)',
+              boxShadow       : error ? '0 0 0 3px #fecaca40' : 'none',
+              ...props.style,
+            }}
+            onFocus={e => {
+              if (!error) {
+                e.target.style.borderColor = 'var(--color-brand)'
+                e.target.style.boxShadow   = '0 0 0 3px #2563eb20'
+              }
+            }}
+            onBlur={e => {
+              if (!error) {
+                e.target.style.borderColor = 'var(--color-border)'
+                e.target.style.boxShadow   = 'none'
+              }
+              if (onBlur) onBlur(e)
+            }}
+            onChange={onChange}
+            value={controlledValue}
+            defaultValue={defaultValue}
+            {...props}
+          />
+        )}
 
-        {suffix && (
+        {suffix && !isDate && (
           <div
             className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-sm"
             style={{ color: 'var(--color-text-muted)' }}

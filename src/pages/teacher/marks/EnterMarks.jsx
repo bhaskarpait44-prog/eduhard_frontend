@@ -25,6 +25,7 @@ const EnterMarks = () => {
   const { toastError, toastSuccess } = useToast()
   const location = useLocation()
   const {
+    assignments,
     uniqueSections,
     exams,
     baseError,
@@ -41,7 +42,6 @@ const EnterMarks = () => {
   const [examId, setExamId] = useState('')
   const [sectionKey, setSectionKey] = useState('')
   const [subjectId, setSubjectId] = useState('')
-  const [subjectOptions, setSubjectOptions] = useState([])
   const [state, setState] = useState({})
   const [lastSavedAt, setLastSavedAt] = useState('')
   const autoSaveRef = useRef(null)
@@ -59,16 +59,7 @@ const EnterMarks = () => {
     exams.find((exam) => String(exam.id) === String(examId)) || null
   ), [examId, exams])
 
-  const visibleSections = useMemo(() => (
-    selectedExam
-      ? uniqueSections.filter((section) => String(section.class_id) === String(selectedExam.class_id))
-      : uniqueSections
-  ), [selectedExam, uniqueSections])
-
-  const selectionMismatch = useMemo(() => {
-    if (!selectedExam || !selectedSection) return false
-    return String(selectedExam.class_id) !== String(selectedSection.class_id)
-  }, [selectedExam, selectedSection])
+  const visibleSections = uniqueSections
 
   useEffect(() => {
     if (baseError) toastError(baseError)
@@ -92,15 +83,6 @@ const EnterMarks = () => {
   }, [preferredAssignment.assignment_role, preferredAssignment.class_id, preferredAssignment.section_id, uniqueSections, sectionKey])
 
   useEffect(() => {
-    if (!exams.length) return
-    const hasCurrentExam = exams.some((exam) => String(exam.id) === String(examId))
-    if (hasCurrentExam) return
-
-    const preferredExam = exams.find((exam) => String(exam.id) === String(preferredAssignment.exam_id || ''))
-    setExamId(String((preferredExam || exams[0]).id))
-  }, [examId, exams, preferredAssignment.exam_id])
-
-  useEffect(() => {
     if (!visibleSections.length) {
       if (sectionKey) setSectionKey('')
       return
@@ -119,42 +101,69 @@ const EnterMarks = () => {
     setSectionKey(`${nextSection.class_id}:${nextSection.section_id}:${nextSection.is_class_teacher ? 'class_teacher' : 'subject_teacher'}`)
   }, [preferredAssignment.class_id, preferredAssignment.section_id, sectionKey, visibleSections])
 
+  // Compute subject options based on the selected section and teacher assignments
+  const subjectOptions = useMemo(() => {
+    if (!selectedSection || !assignments.length) return []
+    const map = new Map()
+    assignments.forEach((assignment) => {
+      if (
+        String(assignment.class_id) === String(selectedSection.class_id) &&
+        String(assignment.section_id) === String(selectedSection.section_id) &&
+        assignment.subject_id
+      ) {
+        const key = String(assignment.subject_id)
+        if (!map.has(key)) {
+          map.set(key, {
+            id: Number(assignment.subject_id),
+            name: assignment.subject_name,
+            code: assignment.subject_code,
+          })
+        }
+      }
+    })
+    return Array.from(map.values())
+  }, [selectedSection, assignments])
+
+  // Automatically select a subject when subjectOptions changes
   useEffect(() => {
-    if (!selectedSection || !examId) {
-      setSubjectOptions([])
+    if (!subjectOptions.length) {
       setSubjectId('')
       return
     }
 
-    getAvailableSubjects({
-      examId,
-      classId: selectedSection.class_id,
-      section_id: selectedSection.section_id,
-    }).then((subjects) => {
-      setSubjectOptions(subjects)
-      if (!subjects.length) {
-        setSubjectId('')
-        return
-      }
+    const hasCurrentSubject = subjectOptions.some((sub) => String(sub.id) === String(subjectId))
+    if (hasCurrentSubject) return
 
-      const hasCurrentSubject = subjects.some((subject) => String(subject.id) === String(subjectId))
-      if (hasCurrentSubject) return
+    const preferredSubject = subjectOptions.find((sub) => String(sub.id) === String(preferredAssignment.subject_id || ''))
+    if (preferredSubject) {
+      setSubjectId(String(preferredSubject.id))
+    } else {
+      setSubjectId(String(subjectOptions[0].id))
+    }
+  }, [subjectOptions, subjectId, preferredAssignment.subject_id])
 
-      const preferredSubject = subjects.find((subject) => String(subject.id) === String(preferredAssignment.subject_id || ''))
-      if (preferredSubject) {
-        setSubjectId(String(preferredSubject.id))
-        return
-      }
+  // Automatically resolve the examId when selectedSection and subjectId change
+  useEffect(() => {
+    if (!selectedSection || !subjectId || !exams.length) {
+      setExamId('')
+      return
+    }
 
-      setSubjectId(String(subjects[0].id))
-    }).catch(() => {
-      setSubjectOptions([])
-      setSubjectId('')
-    })
-  }, [selectedSection, getAvailableSubjects, examId, preferredAssignment.subject_id])
+    const matched = exams.find((slot) =>
+      String(slot.class_id) === String(selectedSection.class_id) &&
+      String(slot.section_id) === String(selectedSection.section_id) &&
+      String(slot.subject_id) === String(subjectId)
+    )
+
+    if (matched) {
+      setExamId(String(matched.id))
+    } else {
+      setExamId('')
+    }
+  }, [selectedSection, subjectId, exams])
 
   useEffect(() => {
-    if (!examId || !selectedSection || !subjectId || selectionMismatch) return
+    if (!examId || !selectedSection || !subjectId) return
     loadEntry({
       exam_id: examId,
       class_id: selectedSection.class_id,
@@ -174,7 +183,7 @@ const EnterMarks = () => {
     }).catch((error) => {
       toastError(normalizeMarksError(error))
     })
-  }, [examId, selectedSection, subjectId, loadEntry, toastError, selectionMismatch])
+  }, [examId, selectedSection, subjectId, loadEntry, toastError])
 
   const currentSubject = useMemo(() => {
     if (!entryPayload?.students?.length) return subjectOptions.find((subject) => String(subject.id) === String(subjectId)) || null
@@ -260,17 +269,7 @@ const EnterMarks = () => {
 
         {/* ── Filters ── */}
         <div className="mt-5 grid grid-cols-1 gap-4 xl:grid-cols-6">
-          <div className="space-y-1.5 xl:col-span-2">
-            <label className="text-sm font-medium" style={{ color: 'var(--color-text-primary)' }}>Examination</label>
-            <Select
-              value={examId}
-              onChange={(e) => setExamId(e.target.value)}
-              options={exams.map((ex) => ({ value: String(ex.id), label: ex.name }))}
-              placeholder="Choose Exam"
-              className="h-9 px-3 py-1 rounded-xl bg-surface-raised border border-border/50 text-xs font-semibold focus:border-primary"
-            />
-          </div>
-          <div className="space-y-1.5 xl:col-span-2">
+          <div className="space-y-1.5 xl:col-span-3">
             <label className="text-sm font-medium" style={{ color: 'var(--color-text-primary)' }}>Class & Section</label>
             <Select
               value={sectionKey}
@@ -283,7 +282,7 @@ const EnterMarks = () => {
               className="h-9 px-3 py-1 rounded-xl bg-surface-raised border border-border/50 text-xs font-semibold focus:border-primary"
             />
           </div>
-          <div className="space-y-1.5 xl:col-span-2">
+          <div className="space-y-1.5 xl:col-span-3">
             <label className="text-sm font-medium" style={{ color: 'var(--color-text-primary)' }}>Subject</label>
             <Select
               value={subjectId}
@@ -310,19 +309,21 @@ const EnterMarks = () => {
             <h3 className="text-lg font-bold text-text-primary">No Assignments Found</h3>
             <p className="mt-1 text-sm text-text-muted">You are not assigned to any subjects for marks entry.</p>
           </div>
-        ) : !examId || !sectionKey || !subjectId ? (
+        ) : !sectionKey || !subjectId ? (
           <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed bg-surface-raised/20 py-24 text-center">
             <Search size={48} className="text-primary/30 mb-4" />
             <h3 className="text-xl font-bold text-text-primary">Select Configuration</h3>
             <p className="mt-2 text-sm text-text-muted max-w-xs mx-auto">
-              Choose an exam, section, and subject from the filters above to start entering marks.
+              Choose a section and subject from the filters above to start entering marks.
             </p>
           </div>
-        ) : selectionMismatch ? (
-          <div className="flex flex-col items-center justify-center rounded-2xl border border-amber-100 bg-amber-50/50 py-20 text-center">
-            <AlertTriangle size={48} className="text-amber-500 mb-4" />
-            <h3 className="text-lg font-bold text-amber-900">Mismatched Selection</h3>
-            <p className="mt-1 text-sm text-amber-700">The selected exam and section classes do not match.</p>
+        ) : !examId ? (
+          <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed bg-surface-raised/20 py-24 text-center">
+            <AlertTriangle size={48} className="text-amber-500/50 mb-4" />
+            <h3 className="text-xl font-bold text-text-primary">No Active Examination</h3>
+            <p className="mt-2 text-sm text-text-muted max-w-xs mx-auto">
+              There is no published examination configured for the selected class, section, and subject.
+            </p>
           </div>
         ) : loadingBase || loadingEntry ? (
           <div className="flex flex-col items-center justify-center py-32">

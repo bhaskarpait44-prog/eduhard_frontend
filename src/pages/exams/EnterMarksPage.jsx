@@ -144,8 +144,11 @@ const EnterMarksPage = () => {
 
   const filteredExams = useMemo(() => {
     if (!classId) return []
-    return exams.filter(e => String(e.class_id) === String(classId))
-  }, [exams, classId])
+    return exams.filter(e => 
+      String(e.class_id) === String(classId) && 
+      (user?.role !== 'teacher' || e.status !== 'draft')
+    )
+  }, [exams, classId, user])
 
   useEffect(() => {
     if (!examId || !classId || !sectionId || !sessionId || subjects.length === 0) { setStudents([]); return }

@@ -1,23 +1,21 @@
 import { useEffect, useState, useMemo } from 'react'
-import { Plus, ClipboardList, PenLine, Trash2, ShieldCheck, Send, BookOpen, AlertCircle, BarChart3, CalendarDays, Printer, Copy, ChevronDown, ChevronUp, Check, Wand2, Download } from 'lucide-react'
+import { Plus, ClipboardList, PenLine, Trash2, ShieldCheck, Send, BookOpen, AlertCircle, BarChart3, CalendarDays, Printer, Download } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
+import { ROUTES } from '@/constants/app'
 import useExamStore from '@/store/examStore'
 import useSessionStore from '@/store/sessionStore'
+import useAuthStore from '@/store/authStore'
 import useToast from '@/hooks/useToast'
 import Button from '@/components/ui/Button'
 import Badge from '@/components/ui/Badge'
 import Select from '@/components/ui/Select'
-import Input from '@/components/ui/Input'
-import Modal from '@/components/ui/Modal'
 import EmptyState from '@/components/ui/EmptyState'
 import ConfirmDialog from '@/components/ui/ConfirmDialog'
 import CreateExamModal from './CreateExamModal'
 import ReviewExamSubjectsModal from './ReviewExamSubjectsModal'
 import AdmitCardModal from './AdmitCardModal'
-import TimePicker12h from '@/components/shared/TimePicker12h'
-import { getExamSubjects, updateExamTimetable, downloadExamTimetablePdf, downloadClassTimetablePdf } from '@/api/examsApi'
-import { getUsers } from '@/api/userManagementApi'
-import { formatDate, getExamTypeLabel, formatTime } from '@/utils/helpers'
+import { downloadClassTimetablePdf } from '@/api/examsApi'
+import { formatDate, getExamTypeLabel } from '@/utils/helpers'
 import { downloadBlob } from '@/utils/downloadBlob'
 
 /* ─── Config ─────────────────────────────────────────────── */
@@ -70,8 +68,10 @@ const ActionBtn = ({ icon: Icon, onClick, children, danger = false, title }) => 
 )
 
 /* ─── Single exam row inside a class card ────────────────── */
-const ExamRow = ({ exam, isLast, onReview, onMarks, onTimetable, onAdmitCard, onToggleStatus, onDelete, onDownloadTimetable }) => {
+const ExamRow = ({ exam, isLast, onReview, onMarks, onTimetable, onAdmitCard, onToggleStatus, onDelete }) => {
   const navigate = useNavigate()
+  const { user } = useAuthStore()
+  const isTeacher = user?.role === 'teacher'
   const statusCfg = STATUS_CFG[exam.status] || { label: exam.status, variant: 'grey' }
   const pending   = Number(exam.pending_review_count || 0)
 
@@ -108,20 +108,30 @@ const ExamRow = ({ exam, isLast, onReview, onMarks, onTimetable, onAdmitCard, on
       {/* right: actions */}
       <div className="flex flex-wrap items-center gap-1.5 shrink-0 sm:justify-end">
         <ActionBtn icon={BarChart3} onClick={() => navigate(`/exams/${exam.id}/analytics`)} title="View Analytics">Stats</ActionBtn>
-        <ActionBtn icon={CalendarDays} onClick={() => onTimetable(exam)} title="Add timetable">Timetable</ActionBtn>
-        <ActionBtn icon={ShieldCheck} onClick={() => onReview(exam)} title="Review subjects">Review</ActionBtn>
+        {(!isTeacher || exam.status !== 'draft') && (
+          <ActionBtn icon={CalendarDays} onClick={() => onTimetable(exam)} title={isTeacher ? "View timetable" : "Add timetable"}>Timetable</ActionBtn>
+        )}
+        {!isTeacher && (
+          <ActionBtn icon={ShieldCheck} onClick={() => onReview(exam)} title="Review subjects">Review</ActionBtn>
+        )}
         {exam.status !== 'draft' && (
           <ActionBtn icon={PenLine} onClick={onMarks} title="Enter marks">Marks</ActionBtn>
         )}
-        <ActionBtn icon={Printer} onClick={() => onAdmitCard(exam)} title="Generate Admit Cards">Cards</ActionBtn>
-        <ActionBtn
-          icon={Send}
-          onClick={() => onToggleStatus(exam)}
-          title={exam.status === 'published' ? 'Move to draft' : 'Publish'}
-        >
-          {exam.status === 'published' ? 'Unpublish' : 'Publish'}
-        </ActionBtn>
-        <ActionBtn icon={Trash2} onClick={() => onDelete(exam)} danger title="Delete">Delete</ActionBtn>
+        {!isTeacher && (
+          <ActionBtn icon={Printer} onClick={() => onAdmitCard(exam)} title="Generate Admit Cards">Cards</ActionBtn>
+        )}
+        {!isTeacher && (
+          <ActionBtn
+            icon={Send}
+            onClick={() => onToggleStatus(exam)}
+            title={exam.status === 'published' ? 'Move to draft' : 'Publish'}
+          >
+            {exam.status === 'published' ? 'Unpublish' : 'Publish'}
+          </ActionBtn>
+        )}
+        {!isTeacher && (
+          <ActionBtn icon={Trash2} onClick={() => onDelete(exam)} danger title="Delete">Delete</ActionBtn>
+        )}
       </div>
     </div>
   )
@@ -129,7 +139,9 @@ const ExamRow = ({ exam, isLast, onReview, onMarks, onTimetable, onAdmitCard, on
 
 
 /* ─── Class card ─────────────────────────────────────────── */
-const ClassCard = ({ className, exams, onReview, onMarks, onTimetable, onAdmitCard, onToggleStatus, onDelete, onCreateForClass, onDownloadTimetable, onDownloadClassTimetable }) => {
+const ClassCard = ({ className, exams, onReview, onMarks, onTimetable, onAdmitCard, onToggleStatus, onDelete, onCreateForClass, onDownloadClassTimetable }) => {
+  const { user } = useAuthStore()
+  const isTeacher = user?.role === 'teacher'
   const total     = exams.length
   const published = exams.filter(e => ['published', 'ongoing'].includes(e.status)).length
   const draft     = exams.filter(e => e.status === 'draft').length
@@ -165,14 +177,16 @@ const ClassCard = ({ className, exams, onReview, onMarks, onTimetable, onAdmitCa
         </div>
 
         <div className="flex items-center gap-2">
-          <ActionBtn 
-            icon={Download} 
-            onClick={() => onDownloadClassTimetable(className)}
-            title="Download Class Timetable"
-          >
-            Class Timetable
-          </ActionBtn>
-          {pending > 0 && (
+          {(!isTeacher || published > 0) && (
+            <ActionBtn 
+              icon={Download} 
+              onClick={() => onDownloadClassTimetable(className)}
+              title="Download Class Timetable"
+            >
+              Class Timetable
+            </ActionBtn>
+          )}
+          {pending > 0 && !isTeacher && (
             <span
               className="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-semibold"
               style={{ background: '#fef9c3', color: '#a16207' }}
@@ -181,28 +195,30 @@ const ClassCard = ({ className, exams, onReview, onMarks, onTimetable, onAdmitCa
               {pending} pending
             </span>
           )}
-          <button
-            onClick={() => onCreateForClass(className)}
-            className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors"
-            style={{
-              background: 'var(--color-surface)',
-              border:     '1px solid var(--color-border)',
-              color:      'var(--color-text-secondary)',
-            }}
-            onMouseEnter={e => {
-              e.currentTarget.style.background = '#e0e7ff'
-              e.currentTarget.style.color      = '#4338ca'
-              e.currentTarget.style.borderColor= '#c7d2fe'
-            }}
-            onMouseLeave={e => {
-              e.currentTarget.style.background  = 'var(--color-surface)'
-              e.currentTarget.style.color       = 'var(--color-text-secondary)'
-              e.currentTarget.style.borderColor = 'var(--color-border)'
-            }}
-          >
-            <Plus size={12} strokeWidth={2.5} />
-            Add Exam
-          </button>
+          {!isTeacher && (
+            <button
+              onClick={() => onCreateForClass(className)}
+              className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors"
+              style={{
+                background: 'var(--color-surface)',
+                border:     '1px solid var(--color-border)',
+                color:      'var(--color-text-secondary)',
+              }}
+              onMouseEnter={e => {
+                e.currentTarget.style.background = '#e0e7ff'
+                e.currentTarget.style.color      = '#4338ca'
+                e.currentTarget.style.borderColor= '#c7d2fe'
+              }}
+              onMouseLeave={e => {
+                e.currentTarget.style.background  = 'var(--color-surface)'
+                e.currentTarget.style.color       = 'var(--color-text-secondary)'
+                e.currentTarget.style.borderColor = 'var(--color-border)'
+              }}
+            >
+              <Plus size={12} strokeWidth={2.5} />
+              Add Exam
+            </button>
+          )}
         </div>
       </div>
 
@@ -219,7 +235,6 @@ const ClassCard = ({ className, exams, onReview, onMarks, onTimetable, onAdmitCa
             onAdmitCard={onAdmitCard}
             onToggleStatus={onToggleStatus}
             onDelete={onDelete}
-            onDownloadTimetable={onDownloadTimetable}
           />
         ))}
       </div>
@@ -267,17 +282,23 @@ const SummaryStrip = ({ exams, classCount }) => {
    Main page
 ═══════════════════════════════════════════════════════════ */
 const ExamsListPage = ({ onNavigate }) => {
+  const navigate = useNavigate()
   const { toastError, toastSuccess } = useToast()
   const { exams, isLoading, isSaving, fetchExams, deleteExam, changeExamStatus } = useExamStore()
   const { sessions, currentSession, fetchSessions } = useSessionStore()
+  const { user } = useAuthStore()
+  const isTeacher = user?.role === 'teacher'
 
   const [sessionId,       setSessionId]       = useState('')
   const [createOpen,      setCreateOpen]       = useState(false)
   const [prefillClass,    setPrefillClass]     = useState(null)
   const [deleteTarget,    setDeleteTarget]     = useState(null)
   const [reviewTarget,    setReviewTarget]     = useState(null)
-  const [timetableTarget, setTimetableTarget]  = useState(null)
   const [admitCardTarget, setAdmitCardTarget]  = useState(null)
+
+  const handleNavigateTimetable = (exam) => {
+    navigate(ROUTES.EXAM_TIMETABLE.replace(':id', exam.id))
+  }
 
   useEffect(() => { fetchSessions().catch(() => {}) }, [fetchSessions])
 
@@ -343,14 +364,7 @@ const ExamsListPage = ({ onNavigate }) => {
     setCreateOpen(true)
   }
 
-  const handleDownloadTimetable = async (exam) => {
-    try {
-      const res = await downloadExamTimetablePdf(exam.id)
-      downloadBlob(res, `${exam.name.replace(/\s+/g, '_')}_Timetable.pdf`)
-    } catch (err) {
-      toastError('Failed to download exam timetable')
-    }
-  }
+
 
   const handleDownloadClassTimetable = async (groupKey) => {
     const examsInGroup = examsByGroup[groupKey]
@@ -386,9 +400,11 @@ const ExamsListPage = ({ onNavigate }) => {
           }))}
           containerClassName="flex-1"
         />
-        <Button icon={Plus} onClick={() => { setPrefillClass(null); setCreateOpen(true) }}>
-          Create Exam
-        </Button>
+        {!isTeacher && (
+          <Button icon={Plus} onClick={() => { setPrefillClass(null); setCreateOpen(true) }}>
+            Create Exam
+          </Button>
+        )}
       </div>
 
       {/* content */}
@@ -425,12 +441,11 @@ const ExamsListPage = ({ onNavigate }) => {
               exams={examsByGroup[gk]}
               onReview={setReviewTarget}
               onMarks={() => onNavigate('marks')}
-              onTimetable={setTimetableTarget}
+              onTimetable={handleNavigateTimetable}
               onAdmitCard={setAdmitCardTarget}
               onToggleStatus={handleToggleStatus}
               onDelete={setDeleteTarget}
               onCreateForClass={handleCreateForClass}
-              onDownloadTimetable={handleDownloadTimetable}
               onDownloadClassTimetable={handleDownloadClassTimetable}
             />
           ))}
@@ -441,17 +456,11 @@ const ExamsListPage = ({ onNavigate }) => {
       <CreateExamModal
         open={createOpen}
         onClose={() => { setCreateOpen(false); setPrefillClass(null) }}
-        onCreated={(createdExam) => setTimetableTarget(createdExam)}
+        onCreated={handleNavigateTimetable}
         sessionId={sessionId}
         prefillClassId={prefillClass}
       />
       <ReviewExamSubjectsModal exam={reviewTarget} open={!!reviewTarget} onClose={() => setReviewTarget(null)} />
-      <ExamTimetableModal 
-        exam={timetableTarget} 
-        open={!!timetableTarget} 
-        onClose={() => setTimetableTarget(null)} 
-        onDownloadTimetable={handleDownloadTimetable}
-      />
       <AdmitCardModal exam={admitCardTarget} open={!!admitCardTarget} onClose={() => setAdmitCardTarget(null)} />
       <ConfirmDialog
         open={!!deleteTarget}
@@ -468,400 +477,6 @@ const ExamsListPage = ({ onNavigate }) => {
         variant="danger"
       />
     </div>
-  )
-}
-
-const ExamTimetableModal = ({ exam, open, onClose, onDownloadTimetable }) => {
-  const { toastError, toastSuccess } = useToast()
-  const [rows, setRows] = useState([])
-  const [teachers, setTeachers] = useState([])
-  const [loading, setLoading] = useState(false)
-  const [saving, setSaving] = useState(false)
-  const [downloading, setDownloading] = useState(false)
-  const [showQuickFill, setShowQuickFill] = useState(false)
-  const [copiedId, setCopiedId] = useState(null)
-
-  // Quick fill state
-  const [bulkStart, setBulkStart] = useState('')
-  const [bulkEnd, setBulkEnd] = useState('')
-  const [bulkTeacher, setBulkTeacher] = useState('')
-
-  /* ── Utility: Duration & Dates ── */
-  const calcDuration = (start, end) => {
-    if (!start || !end) return '—'
-    try {
-      const [sh, sm] = start.split(':').map(Number)
-      const [eh, em] = end.split(':').map(Number)
-      const diff = (eh * 60 + em) - (sh * 60 + sm)
-      if (diff <= 0) return '—'
-      const h = Math.floor(diff / 60), m = diff % 60
-      return h > 0 ? `${h}h ${m > 0 ? m + 'm' : ''}`.trim() : `${m}m`
-    } catch (e) { return '—' }
-  }
-
-  const addWorkingDays = (startDate, count) => {
-    const dates = []
-    const d = new Date(startDate)
-    if (isNaN(d.getTime())) return []
-    while (dates.length < count) {
-      if (d.getDay() !== 0) dates.push(d.toISOString().slice(0, 10))
-      d.setDate(d.getDate() + 1)
-    }
-    return dates
-  }
-
-  useEffect(() => {
-    if (!open || !exam?.id) return
-    setLoading(true)
-    Promise.all([
-      getExamSubjects(exam.id),
-      getUsers({ role: 'teacher', status: 'active', page: 1, perPage: 200 }),
-    ])
-      .then(([subjectResponse, teacherResponse]) => {
-        const subjects = subjectResponse.data?.subjects || []
-        setRows(subjects.map((row) => ({
-          subject_id: row.subject_id,
-          name: row.name,
-          code: row.code,
-          exam_date: row.exam_date || '',
-          start_time: row.start_time ? String(row.start_time).slice(0, 5) : '',
-          end_time: row.end_time ? String(row.end_time).slice(0, 5) : '',
-          invigilator_teacher_id: row.invigilator_teacher_id ? String(row.invigilator_teacher_id) : '',
-        })))
-        setTeachers(teacherResponse.data?.users || [])
-      })
-      .catch((error) => {
-        setRows([])
-        toastError(error.message || 'Failed to load exam timetable')
-      })
-      .finally(() => setLoading(false))
-  }, [open, exam?.id, toastError])
-
-  const teacherOptions = useMemo(
-    () => teachers.map((teacher) => ({
-      value: String(teacher.source_id || teacher.id).replace(/^teacher-/, ''),
-      label: teacher.name,
-    })),
-    [teachers]
-  )
-
-  const stats = useMemo(() => {
-    const total = rows.length
-    const scheduled = rows.filter(r => r.exam_date && r.start_time && r.end_time).length
-    return { total, scheduled, incomplete: total - scheduled, percent: total > 0 ? (scheduled / total) * 100 : 0 }
-  }, [rows])
-
-  const updateRow = (subjectId, patch) => {
-    setRows((prev) => prev.map((row) => (
-      Number(row.subject_id) === Number(subjectId) ? { ...row, ...patch } : row
-    )))
-  }
-
-  const handleAutoFillDates = () => {
-    if (!exam?.start_date) return toastError('Exam start date is missing.')
-    const emptyRows = rows.filter(r => !r.exam_date)
-    if (!emptyRows.length) return
-    const newDates = addWorkingDays(exam.start_date, emptyRows.length)
-    let dateIdx = 0
-    setRows(prev => prev.map(row => {
-      if (!row.exam_date) return { ...row, exam_date: newDates[dateIdx++] }
-      return row
-    }))
-    toastSuccess(`Assigned dates to ${newDates.length} subjects`)
-  }
-
-  const handleBulkFill = () => {
-    let count = 0
-    setRows(prev => prev.map(row => {
-      const patch = {}
-      if (!row.start_time && bulkStart) patch.start_time = bulkStart
-      if (!row.end_time && bulkEnd)     patch.end_time = bulkEnd
-      if (!row.invigilator_teacher_id && bulkTeacher) patch.invigilator_teacher_id = bulkTeacher
-      if (Object.keys(patch).length > 0) {
-        count++
-        return { ...row, ...patch }
-      }
-      return row
-    }))
-    toastSuccess(`Updated ${count} empty rows`)
-    setShowQuickFill(false)
-  }
-
-  const handleCopyRow = (idx) => {
-    if (idx >= rows.length - 1) return
-    const current = rows[idx]
-    const next = rows[idx + 1]
-    updateRow(next.subject_id, {
-      start_time: current.start_time,
-      end_time: current.end_time,
-      invigilator_teacher_id: current.invigilator_teacher_id
-    })
-    setCopiedId(current.subject_id)
-    setTimeout(() => setCopiedId(null), 1500)
-  }
-
-  const handleDownload = async () => {
-    if (!exam?.id) return
-    setDownloading(true)
-    try {
-      await onDownloadTimetable(exam)
-    } finally {
-      setDownloading(false)
-    }
-  }
-
-  const handleSave = async () => {
-    if (!exam?.id) return
-    
-    // Validation
-    for (const row of rows) {
-      if ((row.start_time && !row.end_time) || (!row.start_time && row.end_time)) {
-        return toastError(`Please set both start and end time for ${row.name}`)
-      }
-      if (row.start_time && row.end_time) {
-        const [sh, sm] = row.start_time.split(':').map(Number)
-        const [eh, em] = row.end_time.split(':').map(Number)
-        if ((eh * 60 + em) <= (sh * 60 + sm)) {
-          return toastError(`${row.name}: end time must be after start time`)
-        }
-      }
-    }
-
-    setSaving(true)
-    try {
-      await updateExamTimetable(exam.id, {
-        subjects: rows.map((row) => ({
-          subject_id: Number(row.subject_id),
-          exam_date: row.exam_date || null,
-          start_time: row.start_time || null,
-          end_time: row.end_time || null,
-          invigilator_teacher_id: row.invigilator_teacher_id ? Number(row.invigilator_teacher_id) : null,
-        })),
-      })
-      toastSuccess('Exam timetable saved')
-      onClose()
-    } catch (error) {
-      toastError(error.message || 'Failed to save timetable')
-    } finally {
-      setSaving(false)
-    }
-  }
-
-  return (
-    <Modal
-      open={open}
-      onClose={onClose}
-      title={exam ? `Exam Timetable - ${exam.name} (${exam.class_name}${exam.class_stream ? ` ${exam.class_stream.charAt(0).toUpperCase() + exam.class_stream.slice(1)}` : ''})` : 'Exam Timetable'}
-      size="xl"
-      footer={(
-        <>
-          <Button variant="secondary" onClick={onClose} disabled={saving || downloading}>Cancel</Button>
-          <div className="flex gap-2">
-            <Button 
-              variant="outline" 
-              icon={Download} 
-              onClick={handleDownload} 
-              loading={downloading}
-              disabled={loading || rows.length === 0}
-            >
-              Download PDF
-            </Button>
-            <Button 
-              icon={CalendarDays} 
-              onClick={handleSave} 
-              loading={saving} 
-              disabled={loading || rows.length === 0 || downloading}
-            >
-              Save Timetable
-            </Button>
-          </div>
-        </>
-      )}
-    >
-      {loading ? (
-        <div className="space-y-3">
-          {[1, 2, 3].map((item) => (
-            <div key={item} className="h-24 animate-pulse rounded-2xl" style={{ background: 'var(--color-surface-raised)' }} />
-          ))}
-        </div>
-      ) : rows.length === 0 ? (
-        <div className="rounded-2xl px-4 py-8 text-sm" style={{ background: 'var(--color-surface-raised)', color: 'var(--color-text-secondary)' }}>
-          No subjects found for this exam.
-        </div>
-      ) : (
-        <div className="space-y-4">
-          
-          {/* ── Progress Header ── */}
-          <div className="rounded-2xl border p-4 space-y-3" style={{ borderColor: 'var(--color-border)', background: 'var(--color-surface)' }}>
-            <div className="flex justify-between items-center text-xs font-bold uppercase tracking-wider">
-              <span style={{ color: stats.percent === 100 ? '#15803d' : 'var(--color-text-primary)' }}>
-                {stats.percent === 100 ? '✓ All subjects scheduled' : `✓ ${stats.scheduled} of ${stats.total} subjects scheduled`}
-              </span>
-              {stats.incomplete > 0 && <span style={{ color: '#b45309' }}>⚠ {stats.incomplete} incomplete</span>}
-            </div>
-            <div className="h-1.5 w-full rounded-full overflow-hidden" style={{ background: 'var(--color-surface-raised)' }}>
-              <div 
-                className="h-full transition-all duration-500" 
-                style={{ 
-                  width: `${stats.percent}%`, 
-                  background: stats.percent === 100 ? '#22c55e' : '#f59e0b' 
-                }} 
-              />
-            </div>
-          </div>
-
-          {/* ── Tools Toolbar ── */}
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => setShowQuickFill(!showQuickFill)}
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold border transition-all"
-              style={{ 
-                background: showQuickFill ? 'var(--color-surface-raised)' : 'var(--color-surface)',
-                borderColor: 'var(--color-border)',
-                color: 'var(--color-text-secondary)'
-              }}
-            >
-              {showQuickFill ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
-              Quick Fill Tools
-            </button>
-            <button
-              onClick={handleAutoFillDates}
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold border transition-all"
-              style={{ background: 'var(--color-surface)', borderColor: 'var(--color-border)', color: '#4338ca' }}
-            >
-              <Wand2 size={14} />
-              Auto-fill Dates
-            </button>
-          </div>
-
-          {/* ── Quick Fill Panel ── */}
-          {showQuickFill && (
-            <div className="p-4 rounded-2xl border-2 border-dashed flex flex-wrap items-end gap-4 animate-in slide-in-from-top-2" style={{ borderColor: 'var(--color-border)', background: 'rgba(67, 56, 202, 0.03)' }}>
-              <TimePicker12h label="Bulk Start" value={bulkStart} onChange={setBulkStart} />
-              <TimePicker12h label="Bulk End"   value={bulkEnd}   onChange={setBulkEnd} />
-              <Select 
-                label="Bulk Invigilator" 
-                value={bulkTeacher} 
-                onChange={e => setBulkTeacher(e.target.value)} 
-                options={teacherOptions} 
-                placeholder="Select teacher"
-                containerClassName="min-w-[180px]"
-              />
-              <Button 
-                variant="primary" 
-                size="sm" 
-                className="h-10 px-6 rounded-xl"
-                onClick={handleBulkFill}
-                disabled={!bulkStart && !bulkEnd && !bulkTeacher}
-              >
-                Apply to Empty Rows
-              </Button>
-            </div>
-          )}
-
-          {/* ── Timetable Table ── */}
-          <div className="rounded-2xl border overflow-hidden" style={{ borderColor: 'var(--color-border)' }}>
-            <div className="max-h-[60vh] overflow-y-auto">
-              <table className="w-full text-sm border-collapse">
-                <thead className="sticky top-0 z-10" style={{ background: 'var(--color-surface-raised)' }}>
-                  <tr>
-                    <th className="px-3 py-3 text-left text-[10px] font-extrabold uppercase tracking-widest text-muted border-b" style={{ borderColor: 'var(--color-border)', width: 40 }}>#</th>
-                    <th className="px-3 py-3 text-left text-[10px] font-extrabold uppercase tracking-widest text-muted border-b" style={{ borderColor: 'var(--color-border)' }}>Subject</th>
-                    <th className="px-3 py-3 text-left text-[10px] font-extrabold uppercase tracking-widest text-muted border-b" style={{ borderColor: 'var(--color-border)' }}>Date</th>
-                    <th className="px-3 py-3 text-left text-[10px] font-extrabold uppercase tracking-widest text-muted border-b" style={{ borderColor: 'var(--color-border)' }}>Start</th>
-                    <th className="px-3 py-3 text-left text-[10px] font-extrabold uppercase tracking-widest text-muted border-b" style={{ borderColor: 'var(--color-border)' }}>End</th>
-                    <th className="px-3 py-3 text-left text-[10px] font-extrabold uppercase tracking-widest text-muted border-b" style={{ borderColor: 'var(--color-border)' }}>Dur.</th>
-                    <th className="px-3 py-3 text-left text-[10px] font-extrabold uppercase tracking-widest text-muted border-b" style={{ borderColor: 'var(--color-border)' }}>Invigilator</th>
-                    <th className="px-3 py-3 text-center text-[10px] font-extrabold uppercase tracking-widest text-muted border-b" style={{ borderColor: 'var(--color-border)', width: 80 }}>Status</th>
-                    <th className="px-3 py-3 border-b" style={{ borderColor: 'var(--color-border)', width: 40 }}></th>
-                  </tr>
-                </thead>
-                <tbody style={{ background: 'var(--color-surface)' }}>
-                  {rows.map((row, idx) => {
-                    const isSet = row.exam_date && row.start_time && row.end_time
-                    const isPartial = !isSet && (row.exam_date || row.start_time || row.end_time)
-                    const duration = calcDuration(row.start_time, row.end_time)
-
-                    return (
-                      <tr 
-                        key={row.subject_id}
-                        className="transition-colors group"
-                        style={{ background: idx % 2 === 1 ? 'var(--color-surface-raised)' : 'transparent' }}
-                        onMouseEnter={e => e.currentTarget.style.background = 'rgba(67, 56, 202, 0.05)'}
-                        onMouseLeave={e => e.currentTarget.style.background = idx % 2 === 1 ? 'var(--color-surface-raised)' : 'transparent'}
-                      >
-                        <td className="px-3 py-2 text-xs font-mono text-muted">{idx + 1}</td>
-                        <td className="px-3 py-2">
-                          <p className="font-bold text-[13px] leading-tight" style={{ color: 'var(--color-text-primary)' }}>{row.name}</p>
-                          <p className="text-[10px] font-bold opacity-50 uppercase tracking-widest" style={{ color: 'var(--color-text-muted)' }}>{row.code || '—'}</p>
-                        </td>
-                        <td className="px-3 py-2">
-                          <input
-                            type="date"
-                            min={exam?.start_date}
-                            max={exam?.end_date}
-                            value={row.exam_date}
-                            onChange={(e) => updateRow(row.subject_id, { exam_date: e.target.value })}
-                            className="w-full min-w-[120px] rounded-lg border px-2 py-1.5 text-xs outline-none focus:ring-2 focus:ring-brand/20 transition-all"
-                            style={{ borderColor: 'var(--color-border)', background: 'var(--color-surface)' }}
-                          />
-                        </td>
-                        <td className="px-3 py-2">
-                          <TimePicker12h value={row.start_time} onChange={(val) => updateRow(row.subject_id, { start_time: val })} />
-                        </td>
-                        <td className="px-3 py-2">
-                          <TimePicker12h value={row.end_time} onChange={(val) => updateRow(row.subject_id, { end_time: val })} />
-                        </td>
-                        <td className="px-3 py-2 text-xs font-bold text-muted">{duration}</td>
-                        <td className="px-3 py-2">
-                          <Select
-                            value={row.invigilator_teacher_id}
-                            onChange={(e) => updateRow(row.subject_id, { invigilator_teacher_id: e.target.value })}
-                            options={teacherOptions}
-                            placeholder="Assign"
-                            containerClassName="min-w-[140px]"
-                          />
-                        </td>
-                        <td className="px-3 py-2 text-center">
-                          {isSet ? (
-                            <span className="inline-flex px-2 py-0.5 rounded-full text-[9px] font-black uppercase bg-green-100 text-green-700">Set</span>
-                          ) : isPartial ? (
-                            <span className="inline-flex px-2 py-0.5 rounded-full text-[9px] font-black uppercase bg-amber-100 text-amber-700">Partial</span>
-                          ) : (
-                            <span className="inline-flex px-2 py-0.5 rounded-full text-[9px] font-black uppercase bg-gray-100 text-gray-500">Empty</span>
-                          )}
-                        </td>
-                        <td className="px-3 py-2">
-                          <div className="flex items-center gap-1">
-                            {idx < rows.length - 1 && (
-                              <button
-                                onClick={() => handleCopyRow(idx)}
-                                title="Copy time & invigilator to next row"
-                                className="p-1.5 rounded-lg text-muted hover:text-brand hover:bg-brand/10 transition-all opacity-0 group-hover:opacity-100"
-                              >
-                                <Copy size={12} />
-                              </button>
-                            )}
-                            {copiedId === row.subject_id && (
-                              <span className="absolute right-12 text-[10px] font-bold text-green-600 animate-out fade-out duration-1000">Copied!</span>
-                            )}
-                          </div>
-                        </td>
-                      </tr>
-                    )
-                  })}
-                </tbody>
-              </table>
-            </div>
-          </div>
-
-          <p className="text-[10px] text-muted leading-relaxed font-medium">
-            * Sundays are automatically skipped when using Auto-fill Dates. Duration is calculated based on start and end times.
-            Partial timetables can be saved, but both times must be set for a subject if one is provided.
-          </p>
-        </div>
-      )}
-    </Modal>
   )
 }
 

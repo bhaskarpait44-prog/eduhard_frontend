@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import Modal from '@/components/ui/Modal'
 import Button from '@/components/ui/Button'
+import Input from '@/components/ui/Input'
 import Select from '@/components/ui/Select'
 import useToast from '@/hooks/useToast'
 import { markAsLeft } from '@/api/studentLeavingApi'
@@ -66,17 +67,13 @@ export default function MarkAsLeftModal({ open, student, onClose, onSuccess }) {
           </p>
         </div>
 
-        <div className="flex flex-col gap-1.5">
-          <label className="text-sm font-semibold" style={{ color: 'var(--color-text-primary)' }}>Left Date</label>
-          <input
-            type="date"
-            className="w-full px-4 py-2 rounded-xl border outline-none text-sm transition-all focus:ring-2 focus:ring-indigo-500/20"
-            style={{ backgroundColor: 'var(--color-surface-raised)', borderColor: 'var(--color-border)', color: 'var(--color-text-primary)' }}
-            value={form.left_date}
-            onChange={e => setForm({ ...form, left_date: e.target.value })}
-            required
-          />
-        </div>
+        <Input
+          type="date"
+          label="Left Date"
+          value={form.left_date}
+          onChange={e => setForm({ ...form, left_date: e.target.value })}
+          required
+        />
 
         <Select
           label="Leaving Reason"
