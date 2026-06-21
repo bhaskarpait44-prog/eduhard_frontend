@@ -107,13 +107,25 @@ const AdminPromotionPage = () => {
 
         const sessionRows = Array.isArray(sessionRes?.data) ? sessionRes.data : (sessionRes?.data?.sessions || [])
         const classOpts = getClassOptions(classRes)
-        const currentSession = sessionRows.find((row) => row.is_current) || sessionRows[0] || null
-        const fallbackTarget = sessionRows.find((row) => String(row.id) !== String(currentSession?.id)) || null
+        const currentSession = sessionRows.find((row) => row.is_current || row.status === 'active') || sessionRows[0] || null
+        
+        // Sort sessions chronologically to identify the previous session
+        const sortedSessions = [...sessionRows].sort((a, b) => new Date(a.start_date) - new Date(b.start_date))
+        let previousSession = null
+        if (currentSession) {
+          const currentIndex = sortedSessions.findIndex((row) => String(row.id) === String(currentSession.id))
+          if (currentIndex > 0) {
+            previousSession = sortedSessions[currentIndex - 1]
+          }
+        }
+
+        const defaultSource = previousSession || currentSession
+        const defaultTarget = currentSession
 
         setSessions(sessionRows)
         setClassOptions(classOpts)
-        setSourceSessionId(currentSession ? String(currentSession.id) : '')
-        setTargetSessionId(fallbackTarget ? String(fallbackTarget.id) : '')
+        setSourceSessionId(defaultSource ? String(defaultSource.id) : '')
+        setTargetSessionId(defaultTarget ? String(defaultTarget.id) : '')
       } catch (error) {
         toastError(error?.message || 'Failed to load promotion setup.')
       } finally {
@@ -129,6 +141,15 @@ const AdminPromotionPage = () => {
       value: String(row.id),
       label: `${row.name}${row.is_current ? ' (Current)' : ''}`,
     }))
+  ), [sessions])
+
+  const targetSessionOptions = useMemo(() => (
+    sessions
+      .filter((row) => row.status === 'active' || row.is_current)
+      .map((row) => ({
+        value: String(row.id),
+        label: `${row.name}${row.is_current ? ' (Current)' : ''}`,
+      }))
   ), [sessions])
 
   const selectedCount = useMemo(() => (
@@ -347,7 +368,7 @@ const AdminPromotionPage = () => {
             label="Target Session"
             value={targetSessionId}
             onChange={(e) => setTargetSessionId(e.target.value)}
-            options={sessionOptions.filter((option) => option.value !== String(sourceSessionId))}
+            options={targetSessionOptions.filter((option) => option.value !== String(sourceSessionId))}
             required
             disabled={loadingMeta}
           />

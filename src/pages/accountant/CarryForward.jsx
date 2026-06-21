@@ -19,9 +19,6 @@ const CarryForward = () => {
   useEffect(() => {
     fetchSessions().catch(() => {})
     fetchCurrentSession().catch(() => {})
-    accountantApi.getCarryForwardEligible()
-      .then((response) => setRows(response.data?.students || []))
-      .catch(() => toastError('Failed to fetch eligible students'))
   }, [])
 
   useEffect(() => {
@@ -34,8 +31,16 @@ const CarryForward = () => {
   )
 
   useEffect(() => {
-    if (nextSession?.id && !toSessionId) setToSessionId(String(nextSession.id))
-  }, [nextSession, toSessionId])
+    if (nextSession?.id) setToSessionId(String(nextSession.id))
+  }, [nextSession])
+
+  useEffect(() => {
+    if (!fromSessionId) return
+    setRows([])
+    accountantApi.getCarryForwardEligible({ session_id: fromSessionId })
+      .then((response) => setRows(response.data?.students || []))
+      .catch(() => toastError('Failed to fetch eligible students'))
+  }, [fromSessionId])
 
   const handleCarryForward = async (studentId) => {
     if (!fromSessionId || !toSessionId) {
