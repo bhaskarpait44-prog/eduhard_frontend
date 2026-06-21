@@ -85,7 +85,8 @@ const AttendanceMarker = ({
   const hasStudents = (payload?.students || []).length > 0
   const hasLoadedPayload = !!payload
   const needsReason = !!payload?.requires_reason
-  const canSubmit = hasStudents && (!needsReason || reason.trim())
+  const isDisableMarking = !!payload?.is_holiday || !!payload?.is_non_working_day
+  const canSubmit = hasStudents && (!needsReason || reason.trim()) && !isDisableMarking
 
   const handleAssignmentChange = (value) => {
     const [role, classId, sectionId, subjectId] = value.split(':')
@@ -237,7 +238,16 @@ const AttendanceMarker = ({
           tone="error"
           icon={CalendarDays}
           title={`Holiday: ${payload?.holiday?.name || 'School Holiday'}`}
-          message="Submission is allowed but please verify if mandatory reporting is required today."
+          message="Cannot mark attendance on a holiday."
+        />
+      )}
+
+      {payload?.is_non_working_day && (
+        <Banner
+          tone="error"
+          icon={CalendarDays}
+          title="Non-Working Day"
+          message={`Cannot mark attendance. Selected date (${payload?.date}) is not a working day.`}
         />
       )}
 
@@ -290,20 +300,32 @@ const AttendanceMarker = ({
             <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between pb-8 border-b border-dashed border-border mb-8">
               <div className="flex flex-wrap gap-3">
                 <button
+                  disabled={isDisableMarking}
                   onClick={() => bulkSet('present')}
-                  className="h-10 px-5 rounded-2xl bg-emerald-500 text-white text-[11px] font-bold uppercase tracking-wider flex items-center gap-2 shadow-lg shadow-emerald-500/20 active:scale-95 transition-all hover:bg-emerald-600"
+                  className={cn(
+                    "h-10 px-5 rounded-2xl bg-emerald-500 text-white text-[11px] font-bold uppercase tracking-wider flex items-center gap-2 shadow-lg shadow-emerald-500/20 transition-all",
+                    isDisableMarking ? "opacity-30 cursor-not-allowed" : "active:scale-95 hover:bg-emerald-600"
+                  )}
                 >
                   <CheckCircle2 size={16} /> Mark All Present
                 </button>
                 <button
+                  disabled={isDisableMarking}
                   onClick={() => bulkSet('absent')}
-                  className="h-10 px-5 rounded-2xl bg-rose-500 text-white text-[11px] font-bold uppercase tracking-wider flex items-center gap-2 shadow-lg shadow-rose-500/20 active:scale-95 transition-all hover:bg-rose-600"
+                  className={cn(
+                    "h-10 px-5 rounded-2xl bg-rose-500 text-white text-[11px] font-bold uppercase tracking-wider flex items-center gap-2 shadow-lg shadow-rose-500/20 transition-all",
+                    isDisableMarking ? "opacity-30 cursor-not-allowed" : "active:scale-95 hover:bg-rose-600"
+                  )}
                 >
                   <AlertTriangle size={16} /> Mark All Absent
                 </button>
                 <button 
+                  disabled={isDisableMarking}
                   onClick={resetToDefaults}
-                  className="h-10 px-5 rounded-2xl text-[11px] font-bold uppercase tracking-wider text-text-muted hover:bg-surface-raised transition-all border border-transparent hover:border-border active:scale-95"
+                  className={cn(
+                    "h-10 px-5 rounded-2xl text-[11px] font-bold uppercase tracking-wider text-text-muted transition-all border border-transparent",
+                    isDisableMarking ? "opacity-30 cursor-not-allowed" : "hover:bg-surface-raised hover:border-border active:scale-95"
+                  )}
                 >
                   Reset Defaults
                 </button>
@@ -369,16 +391,19 @@ const AttendanceMarker = ({
                           <button
                             key={option.key}
                             type="button"
-                            onClick={() => setStatusForStudent(student.enrollment_id, option.key)}
+                            disabled={isDisableMarking}
+                            onClick={() => !isDisableMarking && setStatusForStudent(student.enrollment_id, option.key)}
                             className={cn(
-                              'h-11 rounded-[14px] border text-xs font-bold transition-all active:scale-90 flex items-center justify-center',
-                              selected ? 'shadow-lg text-white' : 'opacity-60 hover:opacity-100 hover:bg-surface-raised'
+                              'h-11 rounded-[14px] border text-xs font-bold transition-all flex items-center justify-center',
+                              !isDisableMarking && 'active:scale-90',
+                              selected ? 'shadow-lg text-white' : (isDisableMarking ? 'opacity-30 cursor-not-allowed' : 'opacity-60 hover:opacity-100 hover:bg-surface-raised')
                             )}
                             style={{
                               borderColor: selected ? option.tone : 'var(--color-border)',
-                              backgroundColor: selected ? option.tone : 'transparent',
-                              color: selected ? '#fff' : option.tone,
-                              boxShadow: selected ? `0 8px 16px ${option.tone}33` : 'none'
+                              backgroundColor: selected ? option.tone : (isDisableMarking ? 'var(--color-surface-raised)' : 'transparent'),
+                              color: selected ? '#fff' : (isDisableMarking ? 'var(--color-text-muted)' : option.tone),
+                              boxShadow: selected ? `0 8px 16px ${option.tone}33` : 'none',
+                              cursor: isDisableMarking ? 'not-allowed' : 'pointer'
                             }}
                             title={option.full}
                           >

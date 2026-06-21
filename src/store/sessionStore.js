@@ -210,14 +210,14 @@ const useSessionStore = create((set, get) => ({
     set({ isSaving: true })
     try {
       const res = await api.addHoliday(sessionId, data)
-      const newHoliday = res.data?.holiday
+      const newHolidays = res.data?.holidays || (res.data?.holiday ? [res.data.holiday] : [])
       
       set(s => {
         if (s.selectedSession?.id !== Number(sessionId)) {
           return { isSaving: false }
         }
 
-        const updatedHolidays = [...(s.selectedSession.holidays || []).filter(Boolean), newHoliday]
+        const updatedHolidays = [...(s.selectedSession.holidays || []).filter(Boolean), ...newHolidays]
           .sort((a, b) => new Date(a.holiday_date) - new Date(b.holiday_date))
 
         return {

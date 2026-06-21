@@ -17,6 +17,10 @@ const CarryForwardModal = ({ open, onClose, student, pendingInvoices, onSuccess 
 
   const [toSessionId, setToSessionId] = useState('')
 
+  const fromSessionId = student?.current_enrollment?.session_id
+  const fromSessionName = student?.current_enrollment?.session || 'Unknown Session'
+  const toSessionName = sessions?.find(s => String(s.id) === String(toSessionId))?.name || 'Select target session...'
+
   useEffect(() => {
     fetchSessions().catch(() => {})
   }, [])
@@ -27,7 +31,7 @@ const CarryForwardModal = ({ open, onClose, student, pendingInvoices, onSuccess 
 
   // Sessions that could be the "to" session
   const availableSessions = (sessions || []).filter(s =>
-    s.status === 'upcoming' || s.status === 'active'
+    (s.status === 'upcoming' || s.status === 'active') && s.id !== fromSessionId
   )
 
   const totalCarried = pendingInvoices.reduce((sum, inv) => {
@@ -41,7 +45,6 @@ const CarryForwardModal = ({ open, onClose, student, pendingInvoices, onSuccess 
       return
     }
 
-    const fromSessionId = student?.current_enrollment?.session_id
     if (!fromSessionId) {
       toastError('Could not determine current session')
       return
@@ -117,6 +120,25 @@ const CarryForwardModal = ({ open, onClose, student, pendingInvoices, onSuccess 
             </div>
           </div>
         )}
+
+        {/* Session Flow Visualizer */}
+        <div className="flex items-center justify-between p-4 rounded-xl border text-sm" style={{ backgroundColor: 'var(--color-surface-raised)', borderColor: 'var(--color-border)' }}>
+          <div className="flex-1">
+            <span className="text-[10px] uppercase font-bold tracking-wider block mb-0.5" style={{ color: 'var(--color-text-muted)' }}>From Session</span>
+            <span className="font-semibold text-sm" style={{ color: 'var(--color-text-primary)' }}>{fromSessionName}</span>
+          </div>
+          <div className="flex items-center justify-center px-4">
+            <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{ backgroundColor: 'var(--color-surface)' }}>
+              <ArrowRightLeft size={14} className="text-gray-400" />
+            </div>
+          </div>
+          <div className="flex-1 text-right">
+            <span className="text-[10px] uppercase font-bold tracking-wider block mb-0.5" style={{ color: 'var(--color-text-muted)' }}>To Session</span>
+            <span className="font-semibold text-sm" style={{ color: toSessionId ? 'var(--color-brand)' : 'var(--color-text-muted)' }}>
+              {toSessionName}
+            </span>
+          </div>
+        </div>
 
         {/* Target session */}
         <Select

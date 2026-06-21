@@ -38,6 +38,9 @@ const MarkAttendancePage = () => {
   const [alreadyMarked, setAlreadyMarked] = useState(false)
   const [loadingStudents, setLoadingStudents] = useState(false)
   const [submitted, setSubmitted] = useState(false)
+  const [isHoliday, setIsHoliday] = useState(false)
+  const [holidayName, setHolidayName] = useState('')
+  const [isNonWorkingDay, setIsNonWorkingDay] = useState(false)
 
   useEffect(() => {
     if (!currentSession?.id) {
@@ -83,6 +86,9 @@ const MarkAttendancePage = () => {
     if (!isAutoReload) {
       setAlreadyMarked(false)
       setSubmitted(false)
+      setIsHoliday(false)
+      setHolidayName('')
+      setIsNonWorkingDay(false)
     }
 
     try {
@@ -97,6 +103,9 @@ const MarkAttendancePage = () => {
       const studentRows = payload.students || []
 
       setAlreadyMarked(Boolean(payload.already_marked))
+      setIsHoliday(Boolean(payload.is_holiday))
+      setHolidayName(payload.holiday?.name || '')
+      setIsNonWorkingDay(Boolean(payload.is_non_working_day))
 
       const studentList = studentRows.map((row) => ({
         enrollment_id: row.enrollment_id,
@@ -228,13 +237,19 @@ const MarkAttendancePage = () => {
           />
         </div>
 
-        {(alreadyMarked || submitted) ? (
+        {(alreadyMarked || submitted || isHoliday || isNonWorkingDay) ? (
           <div className="mt-4 flex flex-wrap gap-3">
-            {alreadyMarked && !submitted ? (
+            {alreadyMarked && !submitted && !isHoliday && !isNonWorkingDay ? (
               <Badge variant="yellow" size="md">Attendance already exists for this date. New submission will replace it.</Badge>
             ) : null}
             {submitted ? (
               <Badge variant="green" size="md">Attendance submitted successfully.</Badge>
+            ) : null}
+            {isHoliday ? (
+              <Badge variant="red" size="md">Cannot mark attendance. Selected date is a holiday: {holidayName || 'School Holiday'}.</Badge>
+            ) : null}
+            {isNonWorkingDay ? (
+              <Badge variant="red" size="md">Cannot mark attendance. Selected date ({formatDate(date)}) is not a working day.</Badge>
             ) : null}
           </div>
         ) : null}
@@ -246,10 +261,10 @@ const MarkAttendancePage = () => {
           description={`${selectedClassLabel} • ${selectedSectionLabel} • ${formatDate(date)}`}
           action={(
             <>
-              <Button variant="outline" icon={RefreshCw} onClick={markAllPresent}>
+              <Button variant="outline" icon={RefreshCw} onClick={markAllPresent} disabled={isHoliday || isNonWorkingDay}>
                 Mark All Present
               </Button>
-              <Button icon={Send} onClick={handleSubmit} loading={isSaving}>
+              <Button icon={Send} onClick={handleSubmit} loading={isSaving} disabled={isHoliday || isNonWorkingDay}>
                 Submit Attendance
               </Button>
             </>
@@ -271,6 +286,7 @@ const MarkAttendancePage = () => {
                 status={statuses[student.enrollment_id] || 'present'}
                 onStatusChange={(status) => setStatus(student.enrollment_id, status)}
                 isLast={index === students.length - 1}
+                disabled={isHoliday || isNonWorkingDay}
               />
             ))}
           </div>
@@ -289,7 +305,7 @@ const MarkAttendancePage = () => {
   )
 }
 
-const StudentAttendanceRow = ({ student, status, onStatusChange, isLast }) => {
+const StudentAttendanceRow = ({ student, status, onStatusChange, isLast, disabled }) => {
   const currentStatus = STATUS_OPTIONS.find((option) => option.key === status) || STATUS_OPTIONS[0]
 
   return (
@@ -298,7 +314,7 @@ const StudentAttendanceRow = ({ student, status, onStatusChange, isLast }) => {
       style={{
         backgroundColor: 'var(--color-surface)',
         borderBottom: isLast ? 'none' : '1px solid var(--color-border)',
-        borderLeft: `4px solid ${currentStatus.color}`,
+        borderLeft: `4px solid ${disabled ? 'var(--color-border)' : currentStatus.color}`,
       }}
     >
       <div className="flex min-w-0 flex-1 items-center gap-3">
@@ -331,16 +347,18 @@ const StudentAttendanceRow = ({ student, status, onStatusChange, isLast }) => {
           return (
             <button
               key={option.key}
-              onClick={() => onStatusChange(option.key)}
+              disabled={disabled}
+              onClick={() => !disabled && onStatusChange(option.key)}
               title={option.fullLabel}
               className={cn(
                 'inline-flex h-10 min-w-[44px] items-center justify-center rounded-2xl border px-3 text-xs font-semibold transition-all duration-150',
-                isSelected ? 'shadow-sm' : 'hover:-translate-y-0.5',
+                isSelected ? 'shadow-sm' : (disabled ? '' : 'hover:-translate-y-0.5'),
               )}
               style={{
-                backgroundColor: isSelected ? option.color : option.bg,
-                borderColor: isSelected ? option.color : option.border,
-                color: isSelected ? '#fff' : option.color,
+                backgroundColor: isSelected ? (disabled ? 'var(--color-text-muted)' : option.color) : (disabled ? 'var(--color-surface-raised)' : option.bg),
+                borderColor: isSelected ? (disabled ? 'var(--color-text-muted)' : option.color) : (disabled ? 'var(--color-border)' : option.border),
+                color: isSelected ? '#fff' : (disabled ? 'var(--color-text-muted)' : option.color),
+                cursor: disabled ? 'not-allowed' : 'pointer',
               }}
             >
               {option.label}

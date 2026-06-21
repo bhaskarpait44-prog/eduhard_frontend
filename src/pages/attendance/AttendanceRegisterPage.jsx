@@ -25,7 +25,7 @@ const STATUS_CELL = {
 const AttendanceRegisterPage = ({ mode = 'register' }) => {
   usePageTitle('Attendance Register')
   const { toastError } = useToast()
-  const { registerStudents, isLoading, fetchClassRegister } = useAttendanceStore()
+  const { registerStudents, registerHolidays = [], isLoading, fetchClassRegister } = useAttendanceStore()
   const { sessions, currentSession, fetchSessions } = useSessionStore()
   const isOverrideMode = mode === 'override'
 
@@ -82,7 +82,7 @@ const AttendanceRegisterPage = ({ mode = 'register' }) => {
     for (let day = 1; day <= count; day += 1) {
       const date = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`
       const dow = new Date(date).getDay()
-      days.push({ date, day, isWeekend: dow === 0 || dow === 6 })
+      days.push({ date, day, isWeekend: dow === 0 })
     }
 
     return days
@@ -119,7 +119,45 @@ const AttendanceRegisterPage = ({ mode = 'register' }) => {
   const selectedClassLabel = classes.find((item) => item.value === classId)?.label || 'No class selected'
   const selectedSectionLabel = sections.find((item) => item.value === sectionId)?.label || 'No section selected'
 
+  const selectedSessionData = useMemo(() => {
+    return sessions.find((s) => String(s.id) === sessionId)
+  }, [sessions, sessionId])
+
+  const sessionLimits = useMemo(() => {
+    if (!selectedSessionData?.start_date || !selectedSessionData?.end_date) return null
+    const start = new Date(selectedSessionData.start_date)
+    const end = new Date(selectedSessionData.end_date)
+    return {
+      startYear: start.getFullYear(),
+      startMonth: start.getMonth(), // 0-indexed
+      endYear: end.getFullYear(),
+      endMonth: end.getMonth(), // 0-indexed
+    }
+  }, [selectedSessionData])
+
+  useEffect(() => {
+    if (!sessionLimits) return
+    const current = new Date(year, month, 1)
+    const start = new Date(sessionLimits.startYear, sessionLimits.startMonth, 1)
+    const end = new Date(sessionLimits.endYear, sessionLimits.endMonth, 1)
+    if (current < start || current > end) {
+      setMonth(sessionLimits.startMonth)
+      setYear(sessionLimits.startYear)
+    }
+  }, [sessionLimits, month, year])
+
+  const isPrevDisabled = useMemo(() => {
+    if (!sessionLimits) return false
+    return year === sessionLimits.startYear && month === sessionLimits.startMonth
+  }, [sessionLimits, year, month])
+
+  const isNextDisabled = useMemo(() => {
+    if (!sessionLimits) return false
+    return year === sessionLimits.endYear && month === sessionLimits.endMonth
+  }, [sessionLimits, year, month])
+
   const prevMonth = () => {
+    if (isPrevDisabled) return
     if (month === 0) {
       setMonth(11)
       setYear((value) => value - 1)
@@ -129,6 +167,7 @@ const AttendanceRegisterPage = ({ mode = 'register' }) => {
   }
 
   const nextMonth = () => {
+    if (isNextDisabled) return
     if (month === 11) {
       setMonth(0)
       setYear((value) => value + 1)
@@ -235,7 +274,8 @@ const AttendanceRegisterPage = ({ mode = 'register' }) => {
             >
               <button
                 onClick={prevMonth}
-                className="rounded-xl p-2 transition-colors"
+                disabled={isPrevDisabled}
+                className="rounded-xl p-2 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
                 style={{ color: 'var(--color-text-secondary)' }}
               >
                 <ChevronLeft size={16} />
@@ -247,7 +287,8 @@ const AttendanceRegisterPage = ({ mode = 'register' }) => {
               </div>
               <button
                 onClick={nextMonth}
-                className="rounded-xl p-2 transition-colors"
+                disabled={isNextDisabled}
+                className="rounded-xl p-2 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
                 style={{ color: 'var(--color-text-secondary)' }}
               >
                 <ChevronRight size={16} />
@@ -290,18 +331,22 @@ const AttendanceRegisterPage = ({ mode = 'register' }) => {
                     >
                       Student
                     </th>
-                    {daysInMonth.map(({ day, date, isWeekend }) => (
-                      <th
-                        key={date}
-                        className="w-10 min-w-[40px] px-1 py-3 text-center text-xs font-semibold"
-                        style={{
-                          color: isWeekend ? 'var(--color-text-muted)' : 'var(--color-text-secondary)',
-                          backgroundColor: isWeekend ? 'var(--color-surface-raised)' : 'var(--color-surface)',
-                        }}
-                      >
-                        {day}
-                      </th>
-                    ))}
+                    {daysInMonth.map(({ day, date, isWeekend }) => {
+                      const isHoliday = (registerHolidays || []).includes(date)
+                      const isHighlight = isWeekend || isHoliday
+                      return (
+                        <th
+                          key={date}
+                          className="w-10 min-w-[40px] px-1 py-3 text-center text-xs font-semibold"
+                          style={{
+                            color: isHighlight ? 'var(--color-text-muted)' : 'var(--color-text-secondary)',
+                            backgroundColor: isHighlight ? 'var(--color-surface-raised)' : 'var(--color-surface)',
+                          }}
+                        >
+                          {day}
+                        </th>
+                      )
+                    })}
                     <th className="px-3 py-3 text-center text-xs font-semibold" style={{ color: 'var(--color-text-muted)' }}>
                       %
                     </th>
@@ -348,14 +393,16 @@ const AttendanceRegisterPage = ({ mode = 'register' }) => {
 
                           {daysInMonth.map(({ date, isWeekend }) => {
                             const record = lookup[date]
-                            const status = record?.status || (isWeekend ? 'holiday' : 'none')
+                            const isHoliday = (registerHolidays || []).includes(date)
+                            const isSunday = new Date(date).getDay() === 0
+                            const status = record?.status || ((isHoliday || isSunday) ? 'holiday' : 'none')
                             const config = STATUS_CELL[status] || STATUS_CELL.none
 
                             return (
                               <td
                                 key={date}
                                 className="px-1 py-1.5 text-center"
-                                style={{ backgroundColor: isWeekend ? 'var(--color-surface-raised)' : 'transparent' }}
+                                style={{ backgroundColor: (isWeekend || isHoliday) ? 'var(--color-surface-raised)' : 'transparent' }}
                               >
                                 <button
                                   onClick={() => record && setOverride({ record, student: row })}

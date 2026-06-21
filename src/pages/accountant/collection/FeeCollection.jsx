@@ -74,9 +74,15 @@ const FeeCollection = () => {
 
   const isDark = storeTheme === 'dark' || (storeTheme === 'system' && window.matchMedia?.('(prefers-color-scheme: dark)').matches)
 
+  const allInvoices = useMemo(() => {
+    const pending = invoicePayload?.pending_invoices || []
+    const carried = invoicePayload?.carried_forward_invoices || []
+    return [...pending, ...carried]
+  }, [invoicePayload])
+
   const selectedRows = useMemo(
-    () => (invoicePayload?.pending_invoices || []).filter((row) => selectedInvoices.includes(row.id)),
-    [invoicePayload, selectedInvoices]
+    () => allInvoices.filter((row) => selectedInvoices.includes(row.id)),
+    [allInvoices, selectedInvoices]
   )
   const selectedTotal = selectedRows.reduce((sum, row) => sum + Number(row.balance || 0), 0)
 
@@ -249,7 +255,7 @@ const FeeCollection = () => {
                 <Button 
                   size="small" 
                   className="rounded-full font-bold text-xs"
-                  onClick={() => setSelectedInvoices((invoicePayload?.pending_invoices || []).map((row) => row.id))}
+                  onClick={() => setSelectedInvoices(allInvoices.map((row) => row.id))}
                 >
                   Select All Pending
                 </Button>
@@ -264,9 +270,10 @@ const FeeCollection = () => {
 
               {/* Invoices List */}
               <div className="space-y-3">
-                {(invoicePayload?.pending_invoices || []).map((invoice) => {
+                {allInvoices.map((invoice) => {
                   const overdue = new Date(invoice.due_date) < new Date(today)
                   const selected = selectedInvoices.includes(invoice.id)
+                  const isCarriedForward = !!invoice.carry_from_invoice_id
                   return (
                     <div
                       key={invoice.id}
@@ -286,6 +293,7 @@ const FeeCollection = () => {
                         <div className="flex flex-wrap items-center gap-2">
                           <span className="text-sm font-extrabold text-gray-800 dark:text-gray-100">{invoice.fee_name}</span>
                           {overdue && <Tag color="error" className="rounded-full font-black text-[9px] px-2 py-0 border-0">OVERDUE</Tag>}
+                          {isCarriedForward && <Tag color="warning" className="rounded-full font-black text-[9px] px-2 py-0 border-0">CARRIED FORWARD</Tag>}
                         </div>
                         <div className="mt-1 text-xs font-semibold text-gray-400 dark:text-gray-500">
                           Due Date: {formatDate(invoice.due_date)} • Balance: <span className="font-extrabold text-gray-700 dark:text-gray-300">{formatCurrency(invoice.balance)}</span>

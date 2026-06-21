@@ -43,7 +43,7 @@ const ProtectedRoute = ({ children, roles = [] }) => {
   }
 
   // 2. Role check — redirect to dashboard if not allowed
-  if (roles.length > 0 && user && !roles.includes(user.role)) {
+  if (roles.length > 0 && (!user || !roles.includes(user.role))) {
     return <Navigate to={ROUTES.DASHBOARD} replace />
   }
 

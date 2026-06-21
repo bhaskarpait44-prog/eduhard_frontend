@@ -82,15 +82,15 @@ export default function StaffAttendancePage() {
     )
   }, [dailyAttendance, registerData, searchQuery, activeTab])
 
-  const handleStatusChange = (staffId, status) => {
+  const handleStatusChange = (staffId, type, status) => {
     setLocalRecords(prev => prev.map(r => 
-      r.staff_id === staffId ? { ...r, status } : r
+      (r.staff_id === staffId && r.type === type) ? { ...r, status } : r
     ))
   }
 
-  const handleRemarksChange = (staffId, remarks) => {
+  const handleRemarksChange = (staffId, type, remarks) => {
     setLocalRecords(prev => prev.map(r => 
-      r.staff_id === staffId ? { ...r, remarks } : r
+      (r.staff_id === staffId && r.type === type) ? { ...r, remarks } : r
     ))
   }
 
@@ -230,7 +230,7 @@ export default function StaffAttendancePage() {
                   </tr>
                 ) : filteredStaff.length > 0 ? (
                   filteredStaff.map((s) => {
-                    const localRec = localRecords.find(r => r.staff_id === s.staff_id) || { status: 'present', remarks: '' }
+                    const localRec = localRecords.find(r => r.staff_id === s.staff_id && r.type === s.type) || { status: 'present', remarks: '' }
                     return (
                       <tr key={`${s.type}-${s.staff_id}`} className="hover:bg-gray-50/50 dark:hover:bg-gray-800/30 transition-colors">
                         <td className="px-6 py-4">
@@ -249,7 +249,7 @@ export default function StaffAttendancePage() {
                             {STATUS_OPTIONS.map((opt) => (
                               <button
                                 key={opt.value}
-                                onClick={() => handleStatusChange(s.staff_id, opt.value)}
+                                onClick={() => handleStatusChange(s.staff_id, s.type, opt.value)}
                                 className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 ${
                                   localRec.status === opt.value
                                     ? `bg-white dark:bg-gray-700 shadow-sm text-${opt.color}-600 dark:text-${opt.color}-400`
@@ -269,7 +269,7 @@ export default function StaffAttendancePage() {
                             type="text"
                             placeholder="Add note..."
                             value={localRec.remarks}
-                            onChange={e => handleRemarksChange(s.staff_id, e.target.value)}
+                            onChange={e => handleRemarksChange(s.staff_id, s.type, e.target.value)}
                             className="w-full bg-transparent border-none text-sm focus:ring-0 text-gray-600 dark:text-gray-400 placeholder:text-gray-300"
                           />
                         </td>

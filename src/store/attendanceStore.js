@@ -6,6 +6,7 @@ const useAttendanceStore = create((set) => ({
   classAttendance   : [],
   sessionReport     : [],
   registerStudents  : [],
+  registerHolidays  : [],
   studentSummary    : null,
   studentRecords    : [],
   isLoading         : false,
@@ -54,7 +55,8 @@ const useAttendanceStore = create((set) => ({
     try {
       const res = await api.getClassRegister(params)
       const rows = res.data?.students || []
-      set({ registerStudents: rows, isLoading: false })
+      const holidays = res.data?.holidays || []
+      set({ registerStudents: rows, registerHolidays: holidays, isLoading: false })
       return rows
     } catch (err) {
       set({ error: err.message, isLoading: false })

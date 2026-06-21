@@ -1,5 +1,5 @@
 // src/pages/sessions/AddHolidayModal.jsx
-import { useEffect } from 'react'
+import { useEffect, useMemo } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -9,14 +9,24 @@ import useToast from '@/hooks/useToast'
 import Modal from '@/components/ui/Modal'
 import Button from '@/components/ui/Button'
 import Input from '@/components/ui/Input'
+import { formatDate } from '@/utils/helpers'
 
 const schema = z.object({
-  holiday_date : z.string().min(1, 'Date is required'),
+  holiday_date : z.string().min(1, 'Start Date is required'),
+  end_date     : z.string().optional().or(z.literal('')),
   name         : z.string().min(1, 'Holiday name is required').max(150),
   type         : z.enum(['national', 'regional', 'school'], {
     required_error: 'Please select a type',
   }),
-})
+}).refine((data) => {
+  if (data.end_date && data.holiday_date) {
+    return new Date(data.end_date) >= new Date(data.holiday_date);
+  }
+  return true;
+}, {
+  message: "End date must be on or after start date",
+  path: ["end_date"],
+});
 
 const AddHolidayModal = ({ open, onClose, sessionId, existingHolidays = [] }) => {
   const { toastSuccess, toastError } = useToast()
@@ -31,11 +41,28 @@ const AddHolidayModal = ({ open, onClose, sessionId, existingHolidays = [] }) =>
   } = useForm({ resolver: zodResolver(schema) })
 
   const selectedDate = watch('holiday_date')
+  const watchEndDate = watch('end_date')
 
   // Check for date conflict
-  const isDateConflict = selectedDate && existingHolidays.some(
-    h => h && String(h.holiday_date).slice(0, 10) === selectedDate
-  )
+  const conflictingDates = useMemo(() => {
+    if (!selectedDate) return []
+    const start = new Date(selectedDate)
+    const end = watchEndDate ? new Date(watchEndDate) : start
+    if (isNaN(start.getTime()) || isNaN(end.getTime()) || end < start) return []
+
+    const dates = []
+    let curr = new Date(start)
+    while (curr <= end) {
+      dates.push(curr.toISOString().slice(0, 10))
+      curr.setUTCDate(curr.getUTCDate() + 1)
+    }
+
+    return dates.filter(d => 
+      existingHolidays.some(h => h && String(h.holiday_date).slice(0, 10) === d)
+    )
+  }, [selectedDate, watchEndDate, existingHolidays])
+
+  const isDateConflict = conflictingDates.length > 0
 
   // Reset form when modal opens
   useEffect(() => {
@@ -43,7 +70,11 @@ const AddHolidayModal = ({ open, onClose, sessionId, existingHolidays = [] }) =>
   }, [open])
 
   const onSubmit = async (data) => {
-    const result = await addHoliday(sessionId, data)
+    const payload = {
+      ...data,
+      end_date: data.end_date || undefined
+    }
+    const result = await addHoliday(sessionId, payload)
     if (result.success) {
       toastSuccess(`Holiday "${data.name}" added`)
       onClose()
@@ -76,13 +107,21 @@ const AddHolidayModal = ({ open, onClose, sessionId, existingHolidays = [] }) =>
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
 
         {/* Date */}
-        <Input
-          label="Holiday Date"
-          type="date"
-          error={errors.holiday_date?.message}
-          required
-          {...register('holiday_date')}
-        />
+        <div className="grid grid-cols-2 gap-4">
+          <Input
+            label="Start Date"
+            type="date"
+            error={errors.holiday_date?.message}
+            required
+            {...register('holiday_date')}
+          />
+          <Input
+            label="End Date (Optional)"
+            type="date"
+            error={errors.end_date?.message}
+            {...register('end_date')}
+          />
+        </div>
 
         {/* Date conflict warning */}
         {isDateConflict && (
@@ -95,7 +134,9 @@ const AddHolidayModal = ({ open, onClose, sessionId, existingHolidays = [] }) =>
             }}
           >
             <AlertTriangle size={15} className="shrink-0" />
-            A holiday is already declared on this date. Choose a different date.
+            <span>
+              A holiday is already declared on: {conflictingDates.map(d => formatDate(d)).join(', ')}. Choose a different range.
+            </span>
           </div>
         )}
 

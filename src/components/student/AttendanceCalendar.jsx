@@ -30,7 +30,7 @@ const AttendanceCalendar = ({
       record,
       isToday: dateKey === String(today || ''),
       isFuture,
-      isWeekend: date.getDay() === 0 || date.getDay() === 6,
+      isWeekend: date.getDay() === 0,
     })
   }
 

@@ -35,7 +35,7 @@ const AttendanceGrid = ({
       const now = new Date()
       const dayDate = new Date(date)
       const isFuture = dayDate > new Date(now.getFullYear(), now.getMonth(), now.getDate())
-      const weekend = dayDate.getDay() === 0 || dayDate.getDay() === 6
+      const weekend = dayDate.getDay() === 0
       return { day, date, weekend, isFuture }
     })
   }, [month, year])
@@ -56,8 +56,10 @@ const AttendanceGrid = ({
           if (day.isFuture) return ''
           const record = recordMap.get(day.date)
           if (record) return STATUS_STYLE[record.status]?.label || ''
-          if (day.weekend) return '-'
-          return STATUS_STYLE['holiday']?.label || ''
+          const isHoliday = (registerData?.holidays || []).includes(day.date)
+          const isSunday = new Date(day.date).getDay() === 0
+          if (isHoliday || isSunday) return '-'
+          return ''
         }),
         stats.present,
         stats.absent,
@@ -112,17 +114,20 @@ const AttendanceGrid = ({
                   <th className="sticky left-0 z-10 min-w-[220px] px-6 py-5 text-left text-[10px] font-bold uppercase tracking-[0.15em] text-text-muted shadow-[2px_0_10px_rgba(0,0,0,0.03)] backdrop-blur-md bg-white/95" style={{ backgroundColor: 'inherit' }}>
                     Student Information
                   </th>
-                  {days.map((day) => (
-                    <th
-                      key={day.date}
-                      className={cn(
-                        "min-w-[38px] px-1 py-5 text-center text-[11px] font-bold",
-                        day.weekend ? 'text-rose-400' : 'text-text-muted'
-                      )}
-                    >
-                      {day.day}
-                    </th>
-                  ))}
+                  {days.map((day) => {
+                    const isHoliday = (registerData?.holidays || []).includes(day.date)
+                    return (
+                      <th
+                        key={day.date}
+                        className={cn(
+                          "min-w-[38px] px-1 py-5 text-center text-[11px] font-bold",
+                          (day.weekend || isHoliday) ? 'text-rose-400' : 'text-text-muted'
+                        )}
+                      >
+                        {day.day}
+                      </th>
+                    )
+                  })}
                   <th className="min-w-[120px] px-6 py-5 text-center text-[10px] font-bold uppercase tracking-[0.15em] text-text-muted bg-surface-raised/10">
                     Summary
                   </th>
@@ -148,8 +153,16 @@ const AttendanceGrid = ({
 
                       {days.map((day) => {
                         const record = recordMap.get(day.date)
-                        const type = day.isFuture ? 'future' : day.weekend && !record ? 'holiday' : (record?.status || 'holiday')
-                        const style = STATUS_STYLE[type] || STATUS_STYLE.holiday
+                        const isHoliday = (registerData?.holidays || []).includes(day.date)
+                        const isSunday = new Date(day.date).getDay() === 0
+                        const type = day.isFuture 
+                          ? 'future' 
+                          : record 
+                            ? record.status 
+                            : (isHoliday || isSunday) 
+                              ? 'holiday' 
+                              : 'future'
+                        const style = STATUS_STYLE[type] || STATUS_STYLE.future
 
                         return (
                           <td key={day.date} className="px-0.5 py-1 text-center">

@@ -7,6 +7,7 @@ import Select from '@/components/ui/Select'
 import Button from '@/components/ui/Button'
 import AttendanceGrid from '@/components/teacher/AttendanceGrid'
 import { downloadAttendanceRegisterPdf } from '@/api/attendanceApi'
+import useSessionStore from '@/store/sessionStore'
 
 const AttendanceRegister = () => {
   usePageTitle('Attendance Register')
@@ -24,6 +25,82 @@ const AttendanceRegister = () => {
   const [month, setMonth] = useState(String(new Date().getMonth() + 1))
   const [year, setYear]   = useState(String(new Date().getFullYear()))
   const [downloading, setDownloading] = useState(false)
+
+  const { currentSession, fetchCurrentSession } = useSessionStore()
+
+  useEffect(() => {
+    fetchCurrentSession().catch(() => {})
+  }, [fetchCurrentSession])
+
+  const sessionLimits = useMemo(() => {
+    if (!currentSession?.start_date || !currentSession?.end_date) return null
+    const start = new Date(currentSession.start_date)
+    const end = new Date(currentSession.end_date)
+    return {
+      start,
+      end,
+      startYear: start.getFullYear(),
+      startMonth: start.getMonth() + 1, // 1-indexed for teacher view state
+      endYear: end.getFullYear(),
+      endMonth: end.getMonth() + 1, // 1-indexed for teacher view state
+    }
+  }, [currentSession])
+
+  // Automatically adjust selected month and year to fall within the session bounds
+  useEffect(() => {
+    if (!sessionLimits) return
+    const curYearNum = parseInt(year)
+    const curMonthNum = parseInt(month)
+    if (isNaN(curYearNum) || isNaN(curMonthNum)) return
+    const dateToCheck = new Date(curYearNum, curMonthNum - 1, 1)
+    const startToCheck = new Date(sessionLimits.startYear, sessionLimits.startMonth - 1, 1)
+    const endToCheck = new Date(sessionLimits.endYear, sessionLimits.endMonth - 1, 1)
+    
+    if (dateToCheck < startToCheck || dateToCheck > endToCheck) {
+      setYear(String(sessionLimits.startYear))
+      setMonth(String(sessionLimits.startMonth))
+    }
+  }, [sessionLimits, year, month])
+
+  const yearOptions = useMemo(() => {
+    if (!sessionLimits) {
+      const cur = new Date().getFullYear()
+      return [cur - 1, cur, cur + 1].map(y => ({ value: String(y), label: String(y) }))
+    }
+    const options = []
+    for (let y = sessionLimits.startYear; y <= sessionLimits.endYear; y++) {
+      options.push({ value: String(y), label: String(y) })
+    }
+    return options
+  }, [sessionLimits])
+
+  const monthOptions = useMemo(() => {
+    const allMonths = [...Array(12)].map((_, index) => ({
+      value: String(index + 1),
+      label: new Date(2024, index, 1).toLocaleString('en-IN', { month: 'long' }),
+    }))
+
+    if (!sessionLimits || !year) return allMonths
+
+    const selectedYearNum = parseInt(year)
+    return allMonths.filter((opt) => {
+      const mVal = parseInt(opt.value)
+      const dateToCheck = new Date(selectedYearNum, mVal - 1, 1)
+      const startToCheck = new Date(sessionLimits.startYear, sessionLimits.startMonth - 1, 1)
+      const endToCheck = new Date(sessionLimits.endYear, sessionLimits.endMonth - 1, 1)
+      return dateToCheck >= startToCheck && dateToCheck <= endToCheck
+    })
+  }, [sessionLimits, year])
+
+  // Auto-adjust selected month if year changes and current month is no longer valid
+  useEffect(() => {
+    if (monthOptions.length > 0) {
+      const exists = monthOptions.some((opt) => opt.value === month)
+      if (!exists) {
+        setMonth(monthOptions[0].value)
+      }
+    }
+  }, [monthOptions, month])
 
   const registerAssignments = useMemo(
     () => dedupeAssignmentsForRegister(assignmentOptions),
@@ -159,10 +236,7 @@ const AttendanceRegister = () => {
             <Select
               value={month}
               onChange={(e) => setMonth(e.target.value)}
-              options={[...Array(12)].map((_, index) => ({
-                value: String(index + 1),
-                label: new Date(2024, index, 1).toLocaleString('en-IN', { month: 'long' }),
-              }))}
+              options={monthOptions}
               className="h-11 px-4 rounded-2xl bg-surface-raised border border-border/50 text-sm font-semibold focus:border-primary transition-all"
             />
           </div>
@@ -171,7 +245,7 @@ const AttendanceRegister = () => {
             <Select
               value={year}
               onChange={(e) => setYear(e.target.value)}
-              options={buildYearOptions()}
+              options={yearOptions}
               className="h-11 px-4 rounded-2xl bg-surface-raised border border-border/50 text-sm font-semibold focus:border-primary transition-all"
             />
           </div>
