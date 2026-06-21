@@ -78,13 +78,24 @@ const StatusBadge = ({ passed, failed, absent }) => {
   )
 }
 
+const isStudentAbsentOnDate = (student, examDate) => {
+  if (!examDate || !student?.attendance || !Array.isArray(student.attendance)) return false
+  const targetDate = typeof examDate === 'string' ? examDate.split('T')[0] : ''
+  if (!targetDate) return false
+  return student.attendance.some(att => {
+    if (!att.date) return false
+    const attDate = typeof att.date === 'string' ? att.date.split('T')[0] : ''
+    return attDate === targetDate && att.status === 'absent'
+  })
+}
+
 // ─── Main Component ──────────────────────────────────────────────────────────
 const EnterMarksPage = () => {
   const { toastSuccess, toastError } = useToast()
   const { 
     exams, subjects, examSubjects, isSaving, 
     fetchExams, fetchExamSubjects, enterMarks, approveAllExamSubjects,
-    fetchSubjects
+    fetchSubjects, fetchExamMarks
   } = useExamStore()
   const { sessions, currentSession, fetchSessions } = useSessionStore()
   const { user } = useAuthStore()
@@ -108,6 +119,25 @@ const EnterMarksPage = () => {
   const isAdmin = user?.role === ROLES.ADMIN || user?.role === 'super_admin'
 
   const currentExamSubjects = examSubjects[examId] || []
+
+  const activeSubjects = useMemo(() => {
+    return subjects.map(sub => {
+      const examSub = currentExamSubjects.find(es => es.subject_id === sub.id)
+      if (!examSub) return null
+      return {
+        ...sub,
+        passing_marks: examSub.combined_passing_marks,
+        total_marks: examSub.combined_total_marks,
+        theory_total_marks: examSub.theory_total_marks,
+        theory_passing_marks: examSub.theory_passing_marks,
+        practical_total_marks: examSub.practical_total_marks,
+        practical_passing_marks: examSub.practical_passing_marks,
+        subject_type: examSub.subject_type,
+        review_status: examSub.review_status,
+        exam_date: examSub.exam_date,
+      }
+    }).filter(Boolean)
+  }, [subjects, currentExamSubjects])
 
   useEffect(() => {
     fetchSessions().catch(() => {})
@@ -151,23 +181,37 @@ const EnterMarksPage = () => {
   }, [exams, classId, user])
 
   useEffect(() => {
-    if (!examId || !classId || !sectionId || !sessionId || subjects.length === 0) { setStudents([]); return }
+    if (!examId || !classId || !sectionId || !sessionId || activeSubjects.length === 0) { setStudents([]); return }
     setLoading(true)
-    getSessionReport(sessionId, { class_id: classId, section_id: sectionId })
-      .then(r => {
-        const rows = r.data || []
+    Promise.all([
+      getSessionReport(sessionId, { class_id: classId, section_id: sectionId }),
+      fetchExamMarks({ exam_id: examId, class_id: classId, section_id: sectionId })
+    ])
+      .then(([studentsRes, existingMarks]) => {
+        const rows = studentsRes.data || []
         setStudents(rows)
         const init = {}
         rows.forEach(s => {
-          subjects.forEach(sub => {
-            init[`${s.enrollment_id}-${sub.id}`] = { marks: '', isAbsent: false }
+          activeSubjects.forEach(sub => {
+            const isClassAbsent = isStudentAbsentOnDate(s, sub.exam_date)
+            init[`${s.enrollment_id}-${sub.id}`] = { marks: '', isAbsent: isClassAbsent }
           })
+        })
+        ;(existingMarks || []).forEach(m => {
+          const key = `${m.enrollment_id}-${m.subject_id}`
+          const s = rows.find(r => r.enrollment_id === m.enrollment_id)
+          const sub = activeSubjects.find(as => as.id === m.subject_id)
+          const isClassAbsent = s && sub ? isStudentAbsentOnDate(s, sub.exam_date) : false
+          init[key] = {
+            marks: isClassAbsent ? '' : (m.marks_obtained !== null && m.marks_obtained !== undefined ? String(m.marks_obtained) : ''),
+            isAbsent: isClassAbsent || !!m.is_absent
+          }
         })
         setMarks(init)
       })
-      .catch(() => toastError('Failed to load students'))
+      .catch(() => toastError('Failed to load students and marks'))
       .finally(() => setLoading(false))
-  }, [examId, classId, sectionId, sessionId, subjects, toastError])
+  }, [examId, classId, sectionId, sessionId, activeSubjects, fetchExamMarks, toastError])
 
   const marksRef = useRef(marks)
   useEffect(() => { marksRef.current = marks }, [marks])
@@ -176,7 +220,7 @@ const EnterMarksPage = () => {
     async (enrollmentId, examId) => {
       if (!examId) return
       const currentMarks = marksRef.current
-      const studentResults = subjects
+      const studentResults = activeSubjects
         .map(sub => {
           const cell = currentMarks[`${enrollmentId}-${sub.id}`]
           if (!cell) return null
@@ -190,7 +234,7 @@ const EnterMarksPage = () => {
         setTimeout(() => setSaved(prev => { const n = { ...prev }; delete n[enrollmentId]; return n }), 2000)
       }
     },
-    [subjects, enterMarks]
+    [activeSubjects, enterMarks]
   )
 
   const updateCell = (enrollmentId, subjectId, field, value) => {
@@ -207,7 +251,7 @@ const EnterMarksPage = () => {
       const res = await enterMarks({
         exam_id: parseInt(examId),
         enrollment_id: student.enrollment_id,
-        results: subjects.map(sub => {
+        results: activeSubjects.map(sub => {
           const cell = marks[`${student.enrollment_id}-${sub.id}`] || { marks: '', isAbsent: false }
           return { subject_id: sub.id, marks_obtained: cell.isAbsent ? null : parseFloat(cell.marks || 0), is_absent: cell.isAbsent }
         }),
@@ -278,7 +322,7 @@ const EnterMarksPage = () => {
     if (e.key === 'Tab') {
       e.preventDefault()
       let nr = rowIdx, nc = colIdx + 1
-      if (nc >= subjects.length) { nc = 0; nr++ }
+      if (nc >= activeSubjects.length) { nc = 0; nr++ }
       if (nr >= students.length) nr = 0
       document.getElementById(`cell-${nr}-${nc}`)?.focus()
     }
@@ -294,7 +338,7 @@ const EnterMarksPage = () => {
 
   const getRowTotal = (enrollmentId) => {
     let total = 0, allAbsent = true
-    subjects.forEach(sub => {
+    activeSubjects.forEach(sub => {
       const cell = marks[`${enrollmentId}-${sub.id}`]
       if (cell && !cell.isAbsent) { total += parseFloat(cell.marks || 0); allAbsent = false }
     })
@@ -302,7 +346,7 @@ const EnterMarksPage = () => {
   }
 
   const isRowPassing = (enrollmentId) =>
-    subjects.every(sub => {
+    activeSubjects.every(sub => {
       const cell = marks[`${enrollmentId}-${sub.id}`]
       if (!cell || cell.isAbsent) return false
       return parseFloat(cell.marks || 0) >= sub.passing_marks
@@ -418,7 +462,7 @@ const EnterMarksPage = () => {
                 <div style={{ width: 28, height: 28, borderRadius: 8, backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                   <BookOpen size={13} style={{ color: 'var(--color-text-muted)' }} />
                 </div>
-                <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--color-text-secondary)' }}>{subjects.length} subjects</span>
+                <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--color-text-secondary)' }}>{activeSubjects.length} subjects</span>
               </div>
               {selectedExam && (
                 <span style={{ fontSize: 12, padding: '3px 10px', borderRadius: 99, backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)', color: 'var(--color-text-muted)', fontWeight: 500 }}>
@@ -507,9 +551,8 @@ const EnterMarksPage = () => {
                       Student
                     </th>
                     {/* Subject cols */}
-                    {subjects.map(sub => {
-                      const meta = currentExamSubjects.find(s => s.subject_id === sub.id)
-                      const status = meta?.review_status || 'draft'
+                    {activeSubjects.map(sub => {
+                      const status = sub.review_status || 'draft'
                       return (
                         <th key={sub.id} style={{
                           padding: '10px 8px', textAlign: 'center', minWidth: 110,
@@ -602,17 +645,23 @@ const EnterMarksPage = () => {
                             }}>
                               {(student.student_name || '?')[0].toUpperCase()}
                             </div>
-                            <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--color-text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: 120 }}>
-                              {student.student_name}
-                            </span>
+                            <div style={{ display: 'flex', flexDirection: 'column' }}>
+                              <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--color-text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: 120 }}>
+                                {student.student_name}
+                              </span>
+                              <span style={{ fontSize: 10, color: 'var(--color-text-muted)', marginTop: 2 }}>
+                                ID: {student.admission_no || '—'}
+                              </span>
+                            </div>
                           </div>
                         </td>
 
                         {/* Mark cells */}
-                        {subjects.map((sub, colIdx) => {
+                        {activeSubjects.map((sub, colIdx) => {
                           const key    = `${student.enrollment_id}-${sub.id}`
                           const cell   = marks[key] || { marks: '', isAbsent: false }
-                          const styles = getInputStyle(cell.marks, sub.passing_marks, cell.isAbsent)
+                          const isClassAbsent = isStudentAbsentOnDate(student, sub.exam_date)
+                          const styles = getInputStyle(cell.marks, sub.passing_marks, cell.isAbsent || isClassAbsent)
 
                           return (
                             <td key={sub.id} style={{ padding: '8px 6px', textAlign: 'center' }}>
@@ -622,11 +671,11 @@ const EnterMarksPage = () => {
                                 min="0"
                                 max={sub.total_marks}
                                 step="0.5"
-                                value={cell.isAbsent ? '' : (cell.marks || '')}
-                                disabled={cell.isAbsent}
+                                value={(cell.isAbsent || isClassAbsent) ? '' : (cell.marks || '')}
+                                disabled={cell.isAbsent || isClassAbsent}
                                 onChange={e => updateCell(student.enrollment_id, sub.id, 'marks', e.target.value)}
                                 onKeyDown={e => handleKeyDown(e, rowIdx, colIdx)}
-                                placeholder={cell.isAbsent ? 'AB' : '—'}
+                                placeholder={(cell.isAbsent || isClassAbsent) ? 'AB' : '—'}
                                 style={{
                                   display: 'block', width: 72, margin: '0 auto',
                                   textAlign: 'center', fontSize: 13, fontWeight: 500,
@@ -635,20 +684,38 @@ const EnterMarksPage = () => {
                                   backgroundColor: styles.background,
                                   color: styles.color,
                                   outline: 'none', transition: 'all 0.15s',
-                                  opacity: cell.isAbsent ? 0.45 : 1,
+                                  opacity: (cell.isAbsent || isClassAbsent) ? 0.45 : 1,
                                 }}
-                                onFocus={e => { if (!cell.isAbsent) e.target.style.boxShadow = '0 0 0 3px rgba(99,102,241,0.12)' }}
+                                onFocus={e => { if (!(cell.isAbsent || isClassAbsent)) e.target.style.boxShadow = '0 0 0 3px rgba(99,102,241,0.12)' }}
                                 onBlur={e => { e.target.style.boxShadow = 'none' }}
                               />
-                              <label style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4, marginTop: 5, cursor: 'pointer' }}>
+                              <label style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4, marginTop: 5, cursor: isClassAbsent ? 'not-allowed' : 'pointer' }}>
                                 <input
                                   type="checkbox"
-                                  checked={cell.isAbsent || false}
+                                  checked={cell.isAbsent || isClassAbsent || false}
+                                  disabled={isClassAbsent}
                                   onChange={e => updateCell(student.enrollment_id, sub.id, 'isAbsent', e.target.checked)}
                                   style={{ width: 11, height: 11, accentColor: '#64748b' }}
                                 />
                                 <span style={{ fontSize: 9.5, fontWeight: 600, letterSpacing: '0.05em', color: 'var(--color-text-muted)', textTransform: 'uppercase' }}>AB</span>
                               </label>
+                              {isClassAbsent && (
+                                <div style={{ 
+                                  marginTop: 4,
+                                  fontSize: 8.5, 
+                                  fontWeight: 700, 
+                                  color: '#dc2626', 
+                                  backgroundColor: '#fef2f2', 
+                                  border: '1px solid #fecaca', 
+                                  borderRadius: 4, 
+                                  padding: '2px 5px',
+                                  display: 'inline-block',
+                                  textTransform: 'uppercase',
+                                  letterSpacing: '0.02em'
+                                }}>
+                                  Absent in Class
+                                </div>
+                              )}
                             </td>
                           )
                         })}
@@ -703,7 +770,7 @@ const EnterMarksPage = () => {
         open={bulkOpen}
         onClose={() => setBulkOpen(false)}
         examId={examId}
-        subjects={subjects}
+        subjects={activeSubjects}
       />
 
       <ConfirmDialog

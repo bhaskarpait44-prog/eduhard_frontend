@@ -244,6 +244,11 @@ const MarksEntryTable = ({
                         </span>
                         <div className="flex items-center gap-2 mt-0.5">
                           <span className="text-[10px] text-text-muted uppercase tracking-widest">ID: {row.student_id}</span>
+                          {row.attendance_status === 'absent' && (
+                            <span className="rounded bg-red-100 px-1.5 py-0.5 text-[9px] font-black text-red-700 uppercase tracking-wider animate-pulse">
+                              Absent in Class
+                            </span>
+                          )}
                         </div>
                       </div>
                     </td>
@@ -314,7 +319,7 @@ const MarksEntryTable = ({
                         <input
                           type="checkbox"
                           checked={!!record.is_absent}
-                          disabled={locked}
+                          disabled={locked || row.attendance_status === 'absent'}
                           onChange={(event) => onChange(row.enrollment_id, 'is_absent', event.target.checked)}
                           className="h-4 w-4 cursor-pointer rounded border-border text-primary focus:ring-primary disabled:opacity-30"
                         />

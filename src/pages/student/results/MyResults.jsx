@@ -59,25 +59,44 @@ const MyResults = () => {
       {isWithheld && (
         <section
           className="rounded-[28px] border p-5 flex items-start gap-4 animate-in fade-in slide-in-from-top-4 duration-500"
-          style={{ borderColor: '#ef444455', backgroundColor: '#fef2f2' }}
+          style={{ 
+            borderColor: totalPending > 0 ? '#ef444455' : '#f59e0b55', 
+            backgroundColor: totalPending > 0 ? '#fef2f2' : '#fffbeb' 
+          }}
         >
-          <div className="h-12 w-12 rounded-2xl bg-red-100 flex items-center justify-center text-red-600 shrink-0">
+          <div 
+            className={`h-12 w-12 rounded-2xl flex items-center justify-center shrink-0 ${
+              totalPending > 0 ? 'bg-red-100 text-red-600' : 'bg-amber-100 text-amber-600'
+            }`}
+          >
             <CircleAlert size={24} />
           </div>
           <div>
-            <h2 className="text-lg font-bold text-red-900">Result Withheld</h2>
-            <p className="mt-1 text-sm text-red-700 leading-relaxed">
-              Your results for the current session are withheld due to a pending balance of <span className="font-bold">₹{totalPending}</span>. 
-              Please clear your dues in the Fees section to view your marks and download the report card.
+            <h2 className={`text-lg font-bold ${totalPending > 0 ? 'text-red-900' : 'text-amber-900'}`}>
+              {totalPending > 0 ? 'Result Withheld' : 'Result Awaiting Release'}
+            </h2>
+            <p className={`mt-1 text-sm leading-relaxed ${totalPending > 0 ? 'text-red-700' : 'text-amber-700'}`}>
+              {totalPending > 0 ? (
+                <>
+                  Your results for the current session are withheld due to a pending balance of <span className="font-bold">₹{totalPending}</span>. 
+                  Please clear your dues in the Fees section to view your marks and download the report card.
+                </>
+              ) : (
+                <>
+                  Your final results have not been officially released yet by the school administration. Please check back later.
+                </>
+              )}
             </p>
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              className="mt-3 text-red-700 hover:bg-red-100"
-              onClick={() => navigate(ROUTES.STUDENT_FEES)}
-            >
-              Go to Fees <ArrowRight size={14} className="ml-1" />
-            </Button>
+            {totalPending > 0 && (
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                className="mt-3 text-red-700 hover:bg-red-100"
+                onClick={() => navigate(ROUTES.STUDENT_FEES)}
+              >
+                Go to Fees <ArrowRight size={14} className="ml-1" />
+              </Button>
+            )}
           </div>
         </section>
       )}

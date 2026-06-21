@@ -9,6 +9,7 @@ const useExamStore = create((set, get) => ({
   examSubjects : {},
   classResults : [],
   classResultsMeta: null,
+  examSummary: null,
   studentResult: null,
   isLoading    : false,
   isSaving     : false,
@@ -31,6 +32,25 @@ const useExamStore = create((set, get) => ({
     try {
       const res = await api.createExam(data)
       set(s => ({ exams: [res.data, ...s.exams], isSaving: false }))
+      return { success: true, data: res.data }
+    } catch (err) {
+      set({ isSaving: false })
+      return { success: false, message: err.message }
+    }
+  },
+
+  updateExam: async (id, data) => {
+    set({ isSaving: true })
+    try {
+      const res = await api.updateExamStatus(id, data)
+      set(s => ({
+        exams: s.exams.map(exam =>
+          exam.id === Number(id)
+            ? { ...exam, ...res.data }
+            : exam
+        ),
+        isSaving: false,
+      }))
       return { success: true, data: res.data }
     } catch (err) {
       set({ isSaving: false })
@@ -102,11 +122,12 @@ const useExamStore = create((set, get) => ({
       set({
         classResults: data,
         classResultsMeta: res.data?.review_summary || res.data?.data?.review_summary || null,
+        examSummary: res.data?.exam_summary || res.data?.data?.exam_summary || null,
         isLoading: false,
       })
       return data
     } catch (err) {
-      set({ error: err.message, isLoading: false }); throw err
+      set({ error: err.message, isLoading: false, examSummary: null }); throw err
     }
   },
 
@@ -296,6 +317,19 @@ const useExamStore = create((set, get) => ({
       return { success: true };
     } catch (err) {
       return { success: false, message: err.message };
+    }
+  },
+
+  fetchExamMarks: async (params = {}) => {
+    try {
+      const res = await api.getExamMarks(params)
+      console.log('fetchExamMarks RAW:', res)
+      const data = Array.isArray(res.data) ? res.data : (res.data?.marks || res.data?.data || res.marks || [])
+      console.log('fetchExamMarks Parsed:', data)
+      return data
+    } catch (err) {
+      console.error('fetchExamMarks Error:', err)
+      return []
     }
   },
 

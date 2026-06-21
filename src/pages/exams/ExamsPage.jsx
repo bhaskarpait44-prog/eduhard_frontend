@@ -1,16 +1,18 @@
 // src/pages/exams/ExamsPage.jsx
 import { useState } from 'react'
-import { ClipboardList, PenLine, BarChart3 } from 'lucide-react'
+import { ClipboardList, PenLine, BarChart3, GraduationCap } from 'lucide-react'
 import usePageTitle from '@/hooks/usePageTitle'
 import { cn } from '@/utils/helpers'
 import ExamsListPage   from './ExamsListPage'
 import EnterMarksPage  from './EnterMarksPage'
 import ResultsPage     from './ResultsPage'
+import FinalResultsPage from './FinalResultsPage'
 
 const TABS = [
-  { key: 'exams',   label: 'Exams',        icon: ClipboardList },
-  { key: 'marks',   label: 'Enter Marks',  icon: PenLine       },
-  { key: 'results', label: 'Results',      icon: BarChart3     },
+  { key: 'exams',         label: 'Exams',          icon: ClipboardList },
+  { key: 'marks',         label: 'Enter Marks',    icon: PenLine       },
+  { key: 'results',       label: 'Exam Results',   icon: BarChart3     },
+  { key: 'final-results', label: 'Final Results',  icon: GraduationCap },
 ]
 
 const ExamsPage = () => {
@@ -49,9 +51,10 @@ const ExamsPage = () => {
         </div>
       </div>
 
-      {tab === 'exams'   && <ExamsListPage   onNavigate={setTab} />}
-      {tab === 'marks'   && <EnterMarksPage  />}
-      {tab === 'results' && <ResultsPage     />}
+      {tab === 'exams'         && <ExamsListPage   onNavigate={setTab} />}
+      {tab === 'marks'         && <EnterMarksPage  />}
+      {tab === 'results'       && <ResultsPage     />}
+      {tab === 'final-results' && <FinalResultsPage />}
     </div>
   )
 }

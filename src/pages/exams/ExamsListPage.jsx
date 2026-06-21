@@ -1,5 +1,5 @@
 import { useEffect, useState, useMemo } from 'react'
-import { Plus, ClipboardList, PenLine, Trash2, ShieldCheck, Send, BookOpen, AlertCircle, BarChart3, CalendarDays, Printer, Download } from 'lucide-react'
+import { Plus, ClipboardList, PenLine, Pencil, Trash2, ShieldCheck, Send, BookOpen, AlertCircle, BarChart3, CalendarDays, Printer, Download } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { ROUTES } from '@/constants/app'
 import useExamStore from '@/store/examStore'
@@ -68,7 +68,7 @@ const ActionBtn = ({ icon: Icon, onClick, children, danger = false, title }) => 
 )
 
 /* ─── Single exam row inside a class card ────────────────── */
-const ExamRow = ({ exam, isLast, onReview, onMarks, onTimetable, onAdmitCard, onToggleStatus, onDelete }) => {
+const ExamRow = ({ exam, isLast, onEdit, onReview, onMarks, onTimetable, onAdmitCard, onToggleStatus, onDelete }) => {
   const navigate = useNavigate()
   const { user } = useAuthStore()
   const isTeacher = user?.role === 'teacher'
@@ -108,6 +108,9 @@ const ExamRow = ({ exam, isLast, onReview, onMarks, onTimetable, onAdmitCard, on
       {/* right: actions */}
       <div className="flex flex-wrap items-center gap-1.5 shrink-0 sm:justify-end">
         <ActionBtn icon={BarChart3} onClick={() => navigate(`/exams/${exam.id}/analytics`)} title="View Analytics">Stats</ActionBtn>
+        {!isTeacher && (
+          <ActionBtn icon={Pencil} onClick={() => onEdit(exam)} title="Edit Exam">Edit</ActionBtn>
+        )}
         {(!isTeacher || exam.status !== 'draft') && (
           <ActionBtn icon={CalendarDays} onClick={() => onTimetable(exam)} title={isTeacher ? "View timetable" : "Add timetable"}>Timetable</ActionBtn>
         )}
@@ -115,7 +118,7 @@ const ExamRow = ({ exam, isLast, onReview, onMarks, onTimetable, onAdmitCard, on
           <ActionBtn icon={ShieldCheck} onClick={() => onReview(exam)} title="Review subjects">Review</ActionBtn>
         )}
         {exam.status !== 'draft' && (
-          <ActionBtn icon={PenLine} onClick={onMarks} title="Enter marks">Marks</ActionBtn>
+          <ActionBtn icon={ClipboardList} onClick={onMarks} title="Enter marks">Marks</ActionBtn>
         )}
         {!isTeacher && (
           <ActionBtn icon={Printer} onClick={() => onAdmitCard(exam)} title="Generate Admit Cards">Cards</ActionBtn>
@@ -139,7 +142,7 @@ const ExamRow = ({ exam, isLast, onReview, onMarks, onTimetable, onAdmitCard, on
 
 
 /* ─── Class card ─────────────────────────────────────────── */
-const ClassCard = ({ className, exams, onReview, onMarks, onTimetable, onAdmitCard, onToggleStatus, onDelete, onCreateForClass, onDownloadClassTimetable }) => {
+const ClassCard = ({ className, exams, onEdit, onReview, onMarks, onTimetable, onAdmitCard, onToggleStatus, onDelete, onCreateForClass, onDownloadClassTimetable }) => {
   const { user } = useAuthStore()
   const isTeacher = user?.role === 'teacher'
   const total     = exams.length
@@ -229,6 +232,7 @@ const ClassCard = ({ className, exams, onReview, onMarks, onTimetable, onAdmitCa
             key={exam.id}
             exam={exam}
             isLast={idx === exams.length - 1}
+            onEdit={onEdit}
             onReview={onReview}
             onMarks={onMarks}
             onTimetable={onTimetable}
@@ -291,6 +295,7 @@ const ExamsListPage = ({ onNavigate }) => {
 
   const [sessionId,       setSessionId]       = useState('')
   const [createOpen,      setCreateOpen]       = useState(false)
+  const [editTarget,      setEditTarget]       = useState(null)
   const [prefillClass,    setPrefillClass]     = useState(null)
   const [deleteTarget,    setDeleteTarget]     = useState(null)
   const [reviewTarget,    setReviewTarget]     = useState(null)
@@ -439,6 +444,7 @@ const ExamsListPage = ({ onNavigate }) => {
               key={gk}
               className={gk}
               exams={examsByGroup[gk]}
+              onEdit={setEditTarget}
               onReview={setReviewTarget}
               onMarks={() => onNavigate('marks')}
               onTimetable={handleNavigateTimetable}
@@ -454,11 +460,19 @@ const ExamsListPage = ({ onNavigate }) => {
 
       {/* modals */}
       <CreateExamModal
-        open={createOpen}
-        onClose={() => { setCreateOpen(false); setPrefillClass(null) }}
-        onCreated={handleNavigateTimetable}
+        open={createOpen || !!editTarget}
+        onClose={() => { 
+          setCreateOpen(false)
+          setEditTarget(null)
+          setPrefillClass(null) 
+        }}
+        onCreated={() => {
+          setCreateOpen(false)
+          setEditTarget(null)
+        }}
         sessionId={sessionId}
         prefillClassId={prefillClass}
+        editingExam={editTarget}
       />
       <ReviewExamSubjectsModal exam={reviewTarget} open={!!reviewTarget} onClose={() => setReviewTarget(null)} />
       <AdmitCardModal exam={admitCardTarget} open={!!admitCardTarget} onClose={() => setAdmitCardTarget(null)} />

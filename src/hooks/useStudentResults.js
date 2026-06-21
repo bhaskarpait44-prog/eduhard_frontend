@@ -22,7 +22,12 @@ const useStudentResults = () => {
     const exam = examList.find((item) => Number(item.id) === Number(examId))
     setSelectedExamId(Number(examId))
 
-    if (!exam || exam.student_status !== 'published' || isWithheld) {
+    const nextIsWithheld = exam?.is_withheld || false
+    const nextTotalPending = exam?.pending_balance || 0
+    setIsWithheld(nextIsWithheld)
+    setTotalPending(nextTotalPending)
+
+    if (!exam || exam.student_status !== 'published' || nextIsWithheld) {
       setResult(null)
       return null
     }
@@ -38,7 +43,7 @@ const useStudentResults = () => {
       setDetailLoading(false)
       throw err
     }
-  }, [exams, isWithheld])
+  }, [exams])
 
   const load = useCallback(async ({ silent = false, examId } = {}) => {
     setError(null)
@@ -48,9 +53,11 @@ const useStudentResults = () => {
     try {
       const response = await studentApi.getStudentResults()
       const nextExams = response?.data?.exams || []
-      const nextIsWithheld = response?.data?.is_withheld || false
-      const nextTotalPending = response?.data?.total_pending || 0
       const nextExamId = examId || selectedExamId || getDefaultSelection(nextExams)
+      
+      const currentSelected = nextExams.find((item) => Number(item.id) === Number(nextExamId))
+      const nextIsWithheld = currentSelected?.is_withheld || false
+      const nextTotalPending = currentSelected?.pending_balance || 0
 
       setExams(nextExams)
       setIsWithheld(nextIsWithheld)

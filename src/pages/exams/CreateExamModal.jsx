@@ -10,6 +10,7 @@ import useExamStore from '@/store/examStore'
 import useToast from '@/hooks/useToast'
 import { getClasses, getClassOptions, getSubjectList, getSubjects } from '@/api/classApi'
 import { getUsers } from '@/api/userManagementApi'
+import { getExamSubjects } from '@/api/examsApi'
 
 const STATUS_OPTIONS = [
   { value: 'draft', label: 'Draft' },
@@ -33,9 +34,9 @@ const schema = z.object({
   path: ['end_date'],
 })
 
-const CreateExamModal = ({ open, onClose, sessionId, onCreated, prefillClassId }) => {
+const CreateExamModal = ({ open, onClose, sessionId, onCreated, prefillClassId, editingExam }) => {
   const { toastSuccess, toastError } = useToast()
-  const { createExam, isSaving } = useExamStore()
+  const { createExam, updateExam, isSaving } = useExamStore()
   const [classes, setClasses] = useState([])
   const [teachers, setTeachers] = useState([])
   const [classSubjects, setClassSubjects] = useState([])
@@ -46,6 +47,8 @@ const CreateExamModal = ({ open, onClose, sessionId, onCreated, prefillClassId }
   const [bulkPracticalTotal, setBulkPracticalTotal] = useState('')
   const [bulkPracticalPassing, setBulkPracticalPassing] = useState('')
   const [showBulkPanel, setShowBulkPanel] = useState(false)
+
+  const isEditing = !!editingExam
 
   const {
     register,
@@ -58,7 +61,7 @@ const CreateExamModal = ({ open, onClose, sessionId, onCreated, prefillClassId }
     resolver: zodResolver(schema),
     defaultValues: {
       name: '',
-      class_id: prefillClassId ? String(prefillClassId) : '',
+      class_id: '',
       start_date: '',
       end_date: '',
       status: 'draft',
@@ -67,10 +70,21 @@ const CreateExamModal = ({ open, onClose, sessionId, onCreated, prefillClassId }
   })
 
   useEffect(() => {
-    if (open && prefillClassId) {
-      setValue('class_id', String(prefillClassId))
+    if (open) {
+      if (isEditing) {
+        reset({
+          name: editingExam.name,
+          class_id: String(editingExam.class_id),
+          start_date: editingExam.start_date?.split('T')[0] || '',
+          end_date: editingExam.end_date?.split('T')[0] || '',
+          status: editingExam.status === 'published' ? 'published' : 'draft',
+          weightage: Number(editingExam.weightage),
+        })
+      } else if (prefillClassId) {
+        setValue('class_id', String(prefillClassId))
+      }
     }
-  }, [open, prefillClassId, setValue])
+  }, [open, isEditing, editingExam, prefillClassId, reset, setValue])
 
   const classId = watch('class_id')
 
@@ -84,49 +98,73 @@ const CreateExamModal = ({ open, onClose, sessionId, onCreated, prefillClassId }
   }, [open])
 
   useEffect(() => {
-    if (!open) return
-    reset({
-      name: '',
-      class_id: '',
-      start_date: '',
-      end_date: '',
-      status: 'draft',
-      weightage: 100,
-    })
-    setClassSubjects([])
-    setSubjectConfigs({})
-    setBulkTheoryTotal('')
-    setBulkTheoryPassing('')
-    setBulkPracticalTotal('')
-    setBulkPracticalPassing('')
-    setShowBulkPanel(false)
-  }, [open, reset])
+    if (!open) {
+      if (!isEditing) {
+        reset({
+          name: '',
+          class_id: '',
+          start_date: '',
+          end_date: '',
+          status: 'draft',
+          weightage: 100,
+        })
+        setClassSubjects([])
+        setSubjectConfigs({})
+      }
+      setBulkTheoryTotal('')
+      setBulkTheoryPassing('')
+      setBulkPracticalTotal('')
+      setBulkPracticalPassing('')
+      setShowBulkPanel(false)
+    }
+  }, [open, isEditing, reset])
 
   useEffect(() => {
-    if (!classId) {
-      setClassSubjects([])
-      setSubjectConfigs({})
+    if (!classId || !open) {
+      if (!isEditing) {
+        setClassSubjects([])
+        setSubjectConfigs({})
+      }
       return
     }
 
-    getSubjects(classId)
-      .then((response) => {
-        const subjects = getSubjectList(response)
-        setClassSubjects(subjects)
-        setSubjectConfigs(Object.fromEntries(subjects.map((subject) => [subject.id, {
-          selected: true,
-          subject_type: subject.subject_type || 'theory',
-          theory_total_marks: subject.theory_total_marks ?? '',
-          theory_passing_marks: subject.theory_passing_marks ?? '',
-          practical_total_marks: subject.practical_total_marks ?? '',
-          practical_passing_marks: subject.practical_passing_marks ?? '',
-        }])))
-      })
-      .catch(() => {
-        setClassSubjects([])
-        setSubjectConfigs({})
-      })
-  }, [classId])
+    const loadSubjects = async () => {
+      try {
+        const [classSubsRes, examSubsRes] = await Promise.all([
+          getSubjects(classId),
+          isEditing ? getExamSubjects(editingExam.id) : Promise.resolve({ data: { subjects: [] } })
+        ])
+
+        const allSubjects = getSubjectList(classSubsRes)
+        const examSubs = examSubsRes.data?.subjects || []
+        const examSubMap = new Map(examSubs.map(s => [Number(s.subject_id), s]))
+
+        setClassSubjects(allSubjects)
+        
+        const configs = {}
+        allSubjects.forEach(subject => {
+          const existing = examSubMap.get(Number(subject.id))
+          configs[subject.id] = {
+            selected: !!existing,
+            subject_type: existing?.subject_type || subject.subject_type || 'theory',
+            theory_total_marks: existing?.theory_total_marks ?? subject.theory_total_marks ?? '',
+            theory_passing_marks: existing?.theory_passing_marks ?? subject.theory_passing_marks ?? '',
+            practical_total_marks: existing?.practical_total_marks ?? subject.practical_total_marks ?? '',
+            practical_passing_marks: existing?.practical_passing_marks ?? subject.practical_passing_marks ?? '',
+          }
+        })
+        setSubjectConfigs(configs)
+      } catch (err) {
+        console.error('Failed to load subjects', err)
+        if (!isEditing) {
+          setClassSubjects([])
+          setSubjectConfigs({})
+        }
+      }
+    }
+
+    loadSubjects()
+  }, [classId, open, isEditing, editingExam?.id])
 
   const selectedCount = useMemo(
     () => Object.values(subjectConfigs).filter((item) => item.selected).length,
@@ -196,24 +234,28 @@ const CreateExamModal = ({ open, onClose, sessionId, onCreated, prefillClassId }
       return
     }
 
-    const result = await createExam({
+    const payload = {
       session_id: Number(sessionId),
       class_id: Number(data.class_id),
       name: examName,
-      exam_type: 'term',
+      exam_type: isEditing ? editingExam.exam_type : 'term',
       start_date: data.start_date,
       end_date: data.end_date,
       status: data.status,
       weightage: data.weightage,
       subjects,
-    })
+    }
+
+    const result = isEditing 
+      ? await updateExam(editingExam.id, payload)
+      : await createExam(payload)
 
     if (result.success) {
-      toastSuccess(`Exam "${examName}" created`)
+      toastSuccess(`Exam "${examName}" ${isEditing ? 'updated' : 'created'}`)
       onCreated?.(result.data)
       onClose()
     } else {
-      toastError(result.message || 'Failed to create exam')
+      toastError(result.message || `Failed to ${isEditing ? 'update' : 'create'} exam`)
     }
   }
 
@@ -221,12 +263,14 @@ const CreateExamModal = ({ open, onClose, sessionId, onCreated, prefillClassId }
     <Modal
       open={open}
       onClose={onClose}
-      title="Create Exam"
+      title={isEditing ? 'Edit Exam' : 'Create Exam'}
       size="xl"
       footer={(
         <>
           <Button variant="secondary" onClick={onClose} disabled={isSaving}>Cancel</Button>
-          <Button onClick={handleSubmit(onSubmit)} loading={isSaving}>Create Exam</Button>
+          <Button onClick={handleSubmit(onSubmit)} loading={isSaving}>
+            {isEditing ? 'Save Changes' : 'Create Exam'}
+          </Button>
         </>
       )}
     >
@@ -248,6 +292,7 @@ const CreateExamModal = ({ open, onClose, sessionId, onCreated, prefillClassId }
             label="Class"
             options={classes}
             error={errors.class_id?.message}
+            disabled={isEditing}
             {...register('class_id')}
           />
           <div className="rounded-2xl px-4 py-3 text-sm" style={{ backgroundColor: 'var(--color-surface-raised)', color: 'var(--color-text-secondary)' }}>

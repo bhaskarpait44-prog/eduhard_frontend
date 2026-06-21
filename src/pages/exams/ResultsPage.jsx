@@ -1,6 +1,6 @@
 // src/pages/exams/ResultsPage.jsx
 import { useState, useEffect, useMemo } from 'react'
-import { Calculator, BarChart3, Download } from 'lucide-react'
+import { Calculator, BarChart3, Download, Send, FileText } from 'lucide-react'
 import useExamStore from '@/store/examStore'
 import useSessionStore from '@/store/sessionStore'
 import useToast from '@/hooks/useToast'
@@ -10,11 +10,12 @@ import Select from '@/components/ui/Select'
 import EmptyState from '@/components/ui/EmptyState'
 import TableSkeleton from '@/components/ui/TableSkeleton'
 import ConfirmDialog from '@/components/ui/ConfirmDialog'
+import Modal from '@/components/ui/Modal'
 import OverrideResultModal from './OverrideResultModal'
 import ReportCardModal from './ReportCardModal'
 import { getClasses, getClassOptions } from '@/api/classApi'
 import { downloadClassResultSheetPdf, downloadExamTimetablePdf, downloadClassTimetablePdf } from '@/api/examsApi'
-import { formatPercent, formatCurrency } from '@/utils/helpers'
+import { formatPercent, formatCurrency, formatDate } from '@/utils/helpers'
 import { downloadBlob } from '@/utils/downloadBlob'
 
 const RESULT_CFG = {
@@ -30,8 +31,8 @@ const GRADE_COLOR = { 'A+':'#15803d','A':'#16a34a','B+':'#2563eb','B':'#1d4ed8',
 const ResultsPage = () => {
   const { toastSuccess, toastError } = useToast()
   const { 
-    exams, classResults, classResultsMeta, isLoading, isSaving, 
-    fetchExams, fetchClassResults, calculateResults, bulkCalculateResults, releaseResult 
+    exams, classResults, classResultsMeta, examSummary, isLoading, isSaving, 
+    fetchExams, fetchClassResults, calculateResults, bulkCalculateResults, releaseResult, changeExamStatus
   } = useExamStore()
   const { sessions, currentSession, fetchSessions } = useSessionStore()
 
@@ -41,7 +42,6 @@ const ResultsPage = () => {
   const [classes,      setClasses]      = useState([])
   const [overrideTarget, setOverrideTarget] = useState(null)
   const [reportTarget, setReportTarget] = useState(null)
-  const [calcConfirm,  setCalcConfirm]  = useState(false)
   const [downloading,  setDownloading]  = useState(false)
   const [downloadingTimetable, setDownloadingTimetable] = useState(false)
 
@@ -63,15 +63,44 @@ const ResultsPage = () => {
 
   useEffect(() => {
     setExamId('')
-    if (!sessionId || !classId) return
-    fetchClassResults({ session_id: sessionId, class_id: classId })
+  }, [sessionId, classId])
+
+  useEffect(() => {
+    if (!sessionId || !classId || !examId) {
+      useExamStore.setState({ classResults: [], examSummary: null })
+      return
+    }
+    fetchClassResults({ session_id: sessionId, class_id: classId, exam_id: examId })
       .catch(() => toastError('Failed to load results'))
-  }, [sessionId, classId, fetchClassResults, toastError])
+  }, [sessionId, classId, examId, fetchClassResults, toastError])
 
   const filteredExams = useMemo(() => {
     if (!classId) return []
     return exams.filter(e => String(e.class_id) === String(classId))
   }, [exams, classId])
+
+  const selectedExam = useMemo(() => {
+    if (!examId || !filteredExams.length) return null
+    return filteredExams.find(e => String(e.id) === String(examId)) || null
+  }, [filteredExams, examId])
+
+  const handleToggleExamStatus = async () => {
+    if (!selectedExam) return
+    const currentPublishControls = selectedExam.publish_controls || {}
+    const isPublished = currentPublishControls.results_published === true
+    const nextPublishControls = {
+      ...currentPublishControls,
+      results_published: !isPublished
+    }
+    const res = await changeExamStatus(selectedExam.id, { publish_controls: nextPublishControls })
+    if (res.success) {
+      toastSuccess(isPublished ? 'Results unpublished' : 'Results published successfully!')
+      fetchClassResults({ session_id: sessionId, class_id: classId, exam_id: examId }).catch(() => {})
+      fetchExams({ session_id: sessionId }).catch(() => {})
+    } else {
+      toastError(res.message || 'Failed to update results publish status')
+    }
+  }
 
   const handleDownloadTimetable = async () => {
     if (!examId) return
@@ -97,37 +126,6 @@ const ResultsPage = () => {
     } finally { setDownloadingTimetable(false) }
   }
 
-  const handleCalculate = async () => {
-    setCalcConfirm(false)
-    const res = await bulkCalculateResults({ 
-      session_id: parseInt(sessionId), 
-      class_id: parseInt(classId),
-      calculate: true,
-      release: false 
-    })
-    if (res.success) {
-      toastSuccess(`Results calculated for ${res.data.calculated} students.`)
-      fetchClassResults({ session_id: sessionId, class_id: classId }).catch(() => {})
-    } else {
-      toastError(res.message || 'Failed to calculate results')
-    }
-  }
-
-  const handlePushAll = async () => {
-    const res = await bulkCalculateResults({ 
-      session_id: parseInt(sessionId), 
-      class_id: parseInt(classId),
-      calculate: false,
-      release: true 
-    })
-    if (res.success) {
-      toastSuccess(`Results pushed (released) for ${res.data.released} students.`)
-      fetchClassResults({ session_id: sessionId, class_id: classId }).catch(() => {})
-    } else {
-      toastError(res.message || 'Failed to push results')
-    }
-  }
-
   const handleRelease = async (row) => {
     const res = await releaseResult({
       enrollment_id: row.enrollment_id,
@@ -144,9 +142,17 @@ const ResultsPage = () => {
     if (!sessionId || !classId) return
     setDownloading(true)
     try {
-      const res = await downloadClassResultSheetPdf({ session_id: sessionId, class_id: classId })
+      const params = { session_id: sessionId, class_id: classId }
+      if (examId) {
+        params.exam_id = examId
+      }
+      const res = await downloadClassResultSheetPdf(params)
       const className = classes.find(c => String(c.value) === String(classId))?.label || 'Class'
-      downloadBlob(res, `Result_Sheet_${className.replace(/\s+/g, '_')}.pdf`)
+      const examName = examId ? filteredExams.find(e => String(e.id) === String(examId))?.name : ''
+      const fileName = examName
+        ? `Result_Sheet_${className.replace(/\s+/g, '_')}_${examName.replace(/\s+/g, '_')}.pdf`
+        : `Result_Sheet_${className.replace(/\s+/g, '_')}.pdf`
+      downloadBlob(res, fileName)
     } catch (err) {
       toastError('Failed to download result sheet')
     } finally { setDownloading(false) }
@@ -159,69 +165,50 @@ const ResultsPage = () => {
 
   return (
     <div className="space-y-5">
-      {/* Filters + actions */}
+      {/* Filters */}
       <div
-        className="flex flex-col sm:flex-row gap-3 p-4 rounded-2xl"
+        className="flex flex-col sm:flex-row items-end gap-3 p-4 rounded-2xl"
         style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)' }}
       >
-        <Select
-          label="Session"
-          value={sessionId}
-          onChange={e => setSessionId(e.target.value)}
-          options={(sessions || []).map(s => ({ 
-            value: String(s.id), 
-            label: `${s.name}${s.is_current ? ' (Current)' : ''}` 
-          }))}
-          containerClassName="flex-1"
-        />
-        <Select
-          label="Class"
-          value={classId}
-          onChange={e => setClassId(e.target.value)}
-          options={classes}
-          placeholder="Select class"
-          containerClassName="flex-1"
-        />
-        <Select
-          label="Exam Timetable"
-          value={examId}
-          onChange={e => setExamId(e.target.value)}
-          options={filteredExams.map(e => ({ 
-            value: String(e.id), 
-            label: e.name 
-          }))}
-          placeholder="Select exam"
-          containerClassName="flex-1"
-          disabled={!classId}
-        />
-        <div className="flex items-end gap-2 flex-wrap">
-          {examId && (
-            <Button
-              variant="secondary"
-              icon={Download}
-              onClick={handleDownloadTimetable}
-              loading={downloadingTimetable}
-            >
-              Timetable
-            </Button>
-          )}
-          <Button
-            variant="outline"
-            icon={Calculator}
-            onClick={() => setCalcConfirm(true)}
-            disabled={!classId || classResults.length === 0 || hasPendingReview}
-          >
-            Calculate Results
-          </Button>
-          <Button
-            variant="primary"
-            icon={BarChart3}
-            onClick={handlePushAll}
-            disabled={!classId || classResults.length === 0}
-          >
-            Push All Results
-          </Button>
-          {classResults.length > 0 && (
+        <div className="flex-1 w-full">
+          <Select
+            label="Session"
+            value={sessionId}
+            onChange={e => setSessionId(e.target.value)}
+            options={(sessions || []).map(s => ({ 
+              value: String(s.id), 
+              label: `${s.name}${s.is_current ? ' (Current)' : ''}` 
+            }))}
+            containerClassName="w-full"
+          />
+        </div>
+        <div className="flex-1 w-full">
+          <Select
+            label="Class"
+            value={classId}
+            onChange={e => setClassId(e.target.value)}
+            options={classes}
+            placeholder="Select class"
+            containerClassName="w-full"
+          />
+        </div>
+        {classId && (
+          <div className="flex-1 w-full">
+            <Select
+              label="Exam"
+              value={examId}
+              onChange={e => setExamId(e.target.value)}
+              options={filteredExams.map(e => ({ 
+                value: String(e.id), 
+                label: `${e.name} (${e.status.charAt(0).toUpperCase() + e.status.slice(1)})`
+              }))}
+              placeholder="Select exam"
+              containerClassName="w-full"
+            />
+          </div>
+        )}
+        {classId && classResults.length > 0 && (
+          <div className="flex items-end shrink-0">
             <Button
               variant="outline"
               icon={Download}
@@ -230,9 +217,51 @@ const ResultsPage = () => {
             >
               Result Sheet
             </Button>
-          )}
-        </div>
+          </div>
+        )}
       </div>
+
+      {/* Selected Exam Banner */}
+      {selectedExam && examSummary && (
+        <div
+          className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-5 rounded-2xl border transition-all duration-300"
+          style={{
+            backgroundColor: 'var(--color-surface)',
+            borderColor: selectedExam.publish_controls?.results_published ? '#16a34a44' : 'var(--color-border)',
+            boxShadow: 'var(--shadow-sm)'
+          }}
+        >
+          <div className="space-y-1">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-sm font-bold" style={{ color: 'var(--color-text-primary)' }}>
+                Exam: {selectedExam.name}
+              </span>
+              <Badge variant={selectedExam.status === 'published' ? 'green' : 'grey'} dot className="uppercase text-[10px] tracking-wider">
+                Timetable: {selectedExam.status}
+              </Badge>
+              <Badge variant={selectedExam.publish_controls?.results_published ? 'green' : 'grey'} dot className="uppercase text-[10px] tracking-wider">
+                Results: {selectedExam.publish_controls?.results_published ? 'Published' : 'Draft'}
+              </Badge>
+            </div>
+            <p className="text-xs" style={{ color: 'var(--color-text-muted)' }}>
+              Exam Dates: {formatDate(selectedExam.start_date)} to {formatDate(selectedExam.end_date)} · 
+              Marks Entry Progress: <span className="font-semibold text-text-primary" style={{ color: 'var(--color-text-primary)' }}>{examSummary.progress_percent || 0}% filled</span>
+            </p>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <Button
+              variant={selectedExam.publish_controls?.results_published ? 'outline' : 'primary'}
+              icon={Send}
+              onClick={handleToggleExamStatus}
+              loading={isSaving}
+            >
+              {selectedExam.publish_controls?.results_published ? 'Unpublish Results' : 'Publish Results'}
+            </Button>
+          </div>
+        </div>
+      )}
+
 
       {/* Summary badges */}
       {classResults.length > 0 && (
@@ -278,210 +307,215 @@ const ResultsPage = () => {
           </div>
         </section>
       )}
+      {/* Results table */}
+      {classId && !examId && (
+        <EmptyState
+          icon={BarChart3}
+          title="Select an exam"
+          description="Choose an exam from the dropdown to view result details."
+          className="py-12 border rounded-2xl"
+          style={{ backgroundColor: 'var(--color-surface)', borderColor: 'var(--color-border)' }}
+        />
+      )}
 
-      {/* Results table */}
-      <div
-        className="rounded-2xl overflow-hidden"
-        style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)' }}
-      >
-        {isLoading ? (
-          <TableSkeleton cols={7} rows={5} />
-        ) : classResults.length === 0 ? (
-          <EmptyState
-            icon={BarChart3}
-            title={!classId ? 'Select a class' : 'No results found'}
-            description={!classId ? 'Choose session and class to view results.' : 'Click "Calculate Results" to compute final results.'}
-            className="border-0 rounded-none py-12"
-          />
-        ) : (
-          <div className="space-y-4">
-            {/* Mobile: Card View */}
-            <div className="grid grid-cols-1 gap-4 sm:hidden">
-              {classResults.map((row, i) => {
-                const resultCfg = RESULT_CFG[row.result] || { label: row.result || 'Not Calc', variant: 'grey' }
-                const gradeColor = GRADE_COLOR[row.grade] || 'var(--color-text-secondary)'
-                const hasFeeDue = parseFloat(row.pending_balance) > 0
+      {classId && examId && (
+        <div
+          className="rounded-2xl overflow-hidden"
+          style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)' }}
+        >
+          {isLoading ? (
+            <TableSkeleton cols={7} rows={5} />
+          ) : classResults.length === 0 ? (
+            <EmptyState
+              icon={BarChart3}
+              title="No results found"
+              description="No marks have been entered or calculated for this exam yet."
+              className="border-0 rounded-none py-12"
+            />
+          ) : (
+            <div className="space-y-4">
+              {/* Mobile: Card View */}
+              <div className="grid grid-cols-1 gap-4 sm:hidden">
+                {classResults.map((row, i) => {
+                  const resultCfg = RESULT_CFG[row.result] || { label: row.result || 'Not Calc', variant: 'grey' }
+                  const gradeColor = GRADE_COLOR[row.grade] || 'var(--color-text-secondary)'
+                  const hasFeeDue = parseFloat(row.pending_balance) > 0
 
-                return (
-                  <div key={row.enrollment_id || i} className="bg-surface border border-border rounded-2xl p-4 flex flex-col gap-3 shadow-sm">
-                    <div className="flex justify-between items-start">
-                      <div className="min-w-0">
-                        <div className="flex items-center gap-2 mb-0.5">
-                           <span className="text-[10px] font-mono bg-surface-raised px-1.5 py-0.5 rounded text-text-muted">#{row.roll_number || '--'}</span>
-                           <h3 className="font-bold text-text-primary truncate">{row.student_name || row.name}</h3>
-                        </div>
-                        <p className="text-[10px] font-mono text-text-muted uppercase tracking-wider">{row.admission_no}</p>
-                      </div>
-                      <Badge variant={resultCfg.variant} dot className="uppercase text-[10px]">{resultCfg.label}</Badge>
-                    </div>
-
-                    <div className="grid grid-cols-3 gap-2 py-2 border-y border-border/50">
-                       <div className="flex flex-col gap-0.5">
-                          <span className="text-[9px] uppercase font-bold text-text-muted tracking-tight">Marks</span>
-                          <span className="text-xs font-semibold text-text-primary">{row.marks_obtained || 0}/{row.total_marks || 0}</span>
-                       </div>
-                       <div className="flex flex-col gap-0.5">
-                          <span className="text-[9px] uppercase font-bold text-text-muted tracking-tight">Percent</span>
-                          <span className="text-xs font-bold" style={{ color: parseFloat(row.percentage) >= 40 ? '#16a34a' : '#dc2626' }}>{formatPercent(row.percentage)}</span>
-                       </div>
-                       <div className="flex flex-col gap-0.5">
-                          <span className="text-[9px] uppercase font-bold text-text-muted tracking-tight">Grade</span>
-                          <span className="text-xs font-black" style={{ color: gradeColor }}>{row.grade || '—'}</span>
-                       </div>
-                    </div>
-
-                    {hasFeeDue && (
-                      <div className="flex items-center justify-between bg-red-500/5 p-2 rounded-xl border border-red-500/10">
-                        <span className="text-[10px] text-red-600 font-bold uppercase tracking-wider">Fee Due: {formatCurrency(row.pending_balance)}</span>
-                        <Badge variant={row.release_result ? 'green' : 'grey'} className="text-[9px]">{row.release_result ? 'Result Released' : 'Result Withheld'}</Badge>
-                      </div>
-                    )}
-
-                    <div className="flex gap-2">
-                       <Button 
-                         variant="secondary" size="sm" className="flex-1"
-                         onClick={() => row.result && setReportTarget(row)}
-                         disabled={!row.result || row.is_withheld || (parseFloat(row.pending_balance) > 0 && !row.release_result)}
-                       >
-                         Report
-                       </Button>
-                       <Button 
-                         variant="secondary" size="sm" className="flex-1"
-                         onClick={() => setOverrideTarget(row)}
-                       >
-                         Override
-                       </Button>
-                       {hasFeeDue && (
-                          <Button 
-                            variant="ghost" size="sm" className="px-3"
-                            onClick={() => handleRelease(row)}
-                            style={{ color: row.release_result ? '#d97706' : '#2563eb' }}
-                            loading={isSaving}
-                          >
-                            {row.release_result ? 'Lock' : 'Push'}
-                          </Button>
-                       )}
-                    </div>
-                  </div>
-                )
-              })}
-            </div>
-
-            {/* Desktop: Table View */}
-            <div className="hidden sm:block overflow-x-auto">
-              <table className="w-full">
-                <thead>
-                  <tr style={{ borderBottom: '1px solid var(--color-border)' }}>
-                    {['Roll','Student','Total Marks','Percentage','Grade','Result',''].map(h => (
-                      <th key={h} className="px-4 py-3.5 text-left text-xs font-semibold uppercase tracking-wider"
-                        style={{ color: 'var(--color-text-muted)' }}>
-                        {h}
-                      </th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {classResults.map((row, i) => {
-                    const resultCfg = RESULT_CFG[row.result] || { label: row.result, variant: 'grey' }
-                    const gradeColor = GRADE_COLOR[row.grade] || 'var(--color-text-secondary)'
-
-                    return (
-                      <tr
-                        key={row.enrollment_id || i}
-                        style={{ borderBottom: i < classResults.length - 1 ? '1px solid var(--color-border)' : 'none' }}
-                      >
-                        <td className="px-4 py-3.5 text-sm font-mono" style={{ color: 'var(--color-text-muted)' }}>
-                          {row.roll_number || '—'}
-                        </td>
-                        <td className="px-4 py-3.5">
-                          <p className="text-sm font-medium" style={{ color: 'var(--color-text-primary)' }}>
-                            {row.student_name || row.name}
-                          </p>
-                          <p className="text-xs font-mono" style={{ color: 'var(--color-text-muted)' }}>
-                            {row.admission_no}
-                          </p>
-                        </td>
-                        <td className="px-4 py-3.5 text-sm" style={{ color: 'var(--color-text-secondary)' }}>
-                          {row.marks_obtained}/{row.total_marks}
-                        </td>
-                        <td className="px-4 py-3.5">
-                          <span
-                            className="text-sm font-bold"
-                            style={{ color: parseFloat(row.percentage) >= 40 ? '#16a34a' : '#dc2626' }}
-                          >
-                            {formatPercent(row.percentage)}
-                          </span>
-                        </td>
-                        <td className="px-4 py-3.5">
-                          <span className="text-sm font-bold" style={{ color: gradeColor }}>
-                            {row.grade || '—'}
-                          </span>
-                        </td>
-                        <td className="px-4 py-3.5">
-                          {parseFloat(row.pending_balance) > 0 ? (
-                            <div className="flex flex-col gap-1">
-                              <Badge variant={row.release_result ? 'green' : 'grey'} dot>
-                                {row.release_result ? 'Released' : 'Withheld'}
-                              </Badge>
-                              <span className="text-[10px] text-red-600 font-semibold uppercase tracking-wider">
-                                Fee Due: {formatCurrency(row.pending_balance)}
-                              </span>
-                            </div>
-                          ) : row.result ? (
-                            <Badge variant={resultCfg.variant} dot>{resultCfg.label}</Badge>
-                          ) : (
-                            <span className="text-xs" style={{ color: 'var(--color-text-muted)' }}>Not calculated</span>
-                          )}
-                        </td>
-                        <td className="px-4 py-3.5">
-                          <div className="flex items-center gap-2">
-                            <Button
-                              variant="ghost" size="xs"
-                              onClick={() => row.result && setReportTarget(row)}
-                              disabled={!row.result || row.is_withheld || (parseFloat(row.pending_balance) > 0 && !row.release_result)}
-                            >
-                              Report
-                            </Button>
-                            <Button
-                              variant="ghost" size="xs"
-                              onClick={() => setOverrideTarget(row)}
-                            >
-                              Override
-                            </Button>
-                            {parseFloat(row.pending_balance) > 0 && (
-                              <Button
-                                variant="ghost" size="xs"
-                                onClick={() => handleRelease(row)}
-                                style={{ color: row.release_result ? '#d97706' : '#2563eb' }}
-                                loading={isSaving}
-                              >
-                                {row.release_result ? 'Lock' : 'Push'}
-                              </Button>
-                            )}
+                  return (
+                    <div key={row.enrollment_id || i} className="bg-surface border border-border rounded-2xl p-4 flex flex-col gap-3 shadow-sm">
+                      <div className="flex justify-between items-start">
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-2 mb-0.5">
+                             <span className="text-[10px] font-mono bg-surface-raised px-1.5 py-0.5 rounded text-text-muted">#{row.roll_number || '--'}</span>
+                             <h3 className="font-bold text-text-primary truncate">{row.student_name || row.name}</h3>
                           </div>
-                        </td>
-                      </tr>
-                    )
-                  })}
-                </tbody>
-              </table>
+                          <p className="text-[10px] font-mono text-text-muted uppercase tracking-wider">{row.admission_no}</p>
+                        </div>
+                        <Badge variant={resultCfg.variant} dot className="uppercase text-[10px]">{resultCfg.label}</Badge>
+                      </div>
+
+                      <div className="grid grid-cols-3 gap-2 py-2 border-y border-border/50">
+                         <div className="flex flex-col gap-0.5">
+                            <span className="text-[9px] uppercase font-bold text-text-muted tracking-tight">Marks</span>
+                            <span className="text-xs font-semibold text-text-primary">{row.marks_obtained || 0}/{row.total_marks || 0}</span>
+                         </div>
+                         <div className="flex flex-col gap-0.5">
+                            <span className="text-[9px] uppercase font-bold text-text-muted tracking-tight">Percent</span>
+                            <span className="text-xs font-bold" style={{ color: parseFloat(row.percentage) >= 40 ? '#16a34a' : '#dc2626' }}>{formatPercent(row.percentage)}</span>
+                         </div>
+                         <div className="flex flex-col gap-0.5">
+                            <span className="text-[9px] uppercase font-bold text-text-muted tracking-tight">Grade</span>
+                            <span className="text-xs font-black" style={{ color: gradeColor }}>{row.grade || '—'}</span>
+                         </div>
+                      </div>
+
+                      {hasFeeDue && (
+                        <div className="flex items-center justify-between bg-red-500/5 p-2 rounded-xl border border-red-500/10">
+                          <span className="text-[10px] text-red-600 font-bold uppercase tracking-wider">Fee Due: {formatCurrency(row.pending_balance)}</span>
+                          <Badge variant={row.release_result ? 'green' : 'grey'} className="text-[9px]">{row.release_result ? 'Result Released' : 'Result Withheld'}</Badge>
+                        </div>
+                      )}
+
+                      <div className="flex gap-2">
+                         <Button 
+                            variant="secondary" size="sm" className="flex-1"
+                            icon={FileText}
+                            onClick={() => row.result && setReportTarget(row)}
+                            disabled={!row.result || row.is_withheld || (parseFloat(row.pending_balance) > 0 && !row.release_result)}
+                         >
+                           Report Card
+                         </Button>
+                         {!examId && (
+                           <Button 
+                             variant="secondary" size="sm" className="flex-1"
+                             onClick={() => setOverrideTarget(row)}
+                           >
+                             Override
+                           </Button>
+                         )}
+                         {hasFeeDue && !examId && (
+                            <Button 
+                              variant="ghost" size="sm" className="px-3"
+                              onClick={() => handleRelease(row)}
+                              style={{ color: row.release_result ? '#d97706' : '#2563eb' }}
+                              loading={isSaving}
+                            >
+                              {row.release_result ? 'Lock' : 'Push'}
+                            </Button>
+                         )}
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+
+              {/* Desktop: Table View */}
+              <div className="hidden sm:block overflow-x-auto">
+                <table className="w-full">
+                  <thead>
+                    <tr style={{ borderBottom: '1px solid var(--color-border)' }}>
+                      {['Roll','Student','Total Marks','Percentage','Grade','Result',''].map(h => (
+                        <th key={h} className="px-4 py-3.5 text-left text-xs font-semibold uppercase tracking-wider"
+                          style={{ color: 'var(--color-text-muted)' }}>
+                          {h}
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {classResults.map((row, i) => {
+                      const resultCfg = RESULT_CFG[row.result] || { label: row.result, variant: 'grey' }
+                      const gradeColor = GRADE_COLOR[row.grade] || 'var(--color-text-secondary)'
+
+                      return (
+                        <tr
+                          key={row.enrollment_id || i}
+                          style={{ borderBottom: i < classResults.length - 1 ? '1px solid var(--color-border)' : 'none' }}
+                        >
+                          <td className="px-4 py-3.5 text-sm font-mono" style={{ color: 'var(--color-text-muted)' }}>
+                            {row.roll_number || '—'}
+                          </td>
+                          <td className="px-4 py-3.5">
+                            <p className="text-sm font-medium" style={{ color: 'var(--color-text-primary)' }}>
+                              {row.student_name || row.name}
+                            </p>
+                            <p className="text-xs font-mono" style={{ color: 'var(--color-text-muted)' }}>
+                              {row.admission_no}
+                            </p>
+                          </td>
+                          <td className="px-4 py-3.5 text-sm" style={{ color: 'var(--color-text-secondary)' }}>
+                            {row.marks_obtained}/{row.total_marks}
+                          </td>
+                          <td className="px-4 py-3.5">
+                            <span
+                              className="text-sm font-bold"
+                              style={{ color: parseFloat(row.percentage) >= 40 ? '#16a34a' : '#dc2626' }}
+                            >
+                              {formatPercent(row.percentage)}
+                            </span>
+                          </td>
+                          <td className="px-4 py-3.5">
+                            <span className="text-sm font-bold" style={{ color: gradeColor }}>
+                              {row.grade || '—'}
+                            </span>
+                          </td>
+                          <td className="px-4 py-3.5">
+                            {parseFloat(row.pending_balance) > 0 ? (
+                              <div className="flex flex-col gap-1">
+                                <Badge variant={row.release_result ? 'green' : 'grey'} dot>
+                                  {row.release_result ? 'Released' : 'Withheld'}
+                                </Badge>
+                                <span className="text-[10px] text-red-600 font-semibold uppercase tracking-wider">
+                                  Fee Due: {formatCurrency(row.pending_balance)}
+                                </span>
+                              </div>
+                            ) : row.result ? (
+                              <Badge variant={resultCfg.variant} dot>{resultCfg.label}</Badge>
+                            ) : (
+                              <span className="text-xs" style={{ color: 'var(--color-text-muted)' }}>Not calculated</span>
+                            )}
+                          </td>
+                          <td className="px-4 py-3.5">
+                            <div className="flex items-center gap-2">
+                               <Button
+                                 variant="outline" size="xs"
+                                 icon={FileText}
+                                 onClick={() => row.result && setReportTarget(row)}
+                                 disabled={!row.result || row.is_withheld || (parseFloat(row.pending_balance) > 0 && !row.release_result)}
+                               >
+                                 Report Card
+                               </Button>
+                              {!examId && (
+                                <Button
+                                  variant="ghost" size="xs"
+                                  onClick={() => setOverrideTarget(row)}
+                                >
+                                  Override
+                                </Button>
+                              )}
+                              {parseFloat(row.pending_balance) > 0 && !examId && (
+                                <Button
+                                  variant="ghost" size="xs"
+                                  onClick={() => handleRelease(row)}
+                                  style={{ color: row.release_result ? '#d97706' : '#2563eb' }}
+                                  loading={isSaving}
+                                >
+                                  {row.release_result ? 'Lock' : 'Push'}
+                                </Button>
+                              )}
+                            </div>
+                          </td>
+                        </tr>
+                      )
+                    })}
+                  </tbody>
+                </table>
+              </div>
             </div>
-          </div>
-        )}
+          )}
+        </div>
+      )}
 
-      </div>
-
-      {/* Calculate confirm */}
-      <ConfirmDialog
-        open={calcConfirm}
-        onClose={() => setCalcConfirm(false)}
-        onConfirm={handleCalculate}
-        title="Calculate Results?"
-        description={`This will calculate final results for all ${classResults.length} students in this class based on their marks and attendance.`}
-        confirmLabel="Calculate"
-        variant="primary"
-        loading={isSaving}
-      />
 
       {/* Override modal */}
       <OverrideResultModal

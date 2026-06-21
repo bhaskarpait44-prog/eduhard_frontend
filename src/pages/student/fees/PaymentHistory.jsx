@@ -4,7 +4,7 @@ import Button from '@/components/ui/Button'
 import EmptyState from '@/components/ui/EmptyState'
 import Modal from '@/components/ui/Modal'
 import usePageTitle from '@/hooks/usePageTitle'
-import useStudentFees from '@/hooks/useStudentFees'
+import useStudentPayments from '@/hooks/useStudentPayments'
 import useToast from '@/hooks/useToast'
 import { formatCurrency, formatDate } from '@/utils/helpers'
 
@@ -20,7 +20,7 @@ const PaymentHistory = () => {
     error,
     refresh,
     fetchReceipt,
-  } = useStudentFees()
+  } = useStudentPayments()
 
   const [modeFilter, setModeFilter] = useState('all')
   const [receipt, setReceipt] = useState(null)

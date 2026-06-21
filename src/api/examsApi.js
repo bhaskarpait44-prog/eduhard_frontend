@@ -26,3 +26,4 @@ export const overrideResult   = (data)    => api.patch('/results/override', data
 export const releaseResult    = (data)    => api.patch('/results/release', data)
 export const overrideExamMark = (data)    => api.patch('/results/marks/override', data)
 export const deleteResult     = (enrollmentId, sessionId) => api.delete(`/results/${enrollmentId}`, { params: { session_id: sessionId } })
+export const getExamMarks     = (params) => api.get('/results/exam-marks', { params })

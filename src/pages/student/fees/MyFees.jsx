@@ -1,5 +1,17 @@
 import { useEffect, useMemo, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { CreditCard, Download, Receipt, RefreshCw, QrCode, Info, ChevronRight } from 'lucide-react'
+import Button from '@/components/ui/Button'
+import Badge from '@/components/ui/Badge'
+import EmptyState from '@/components/ui/EmptyState'
+import Modal from '@/components/ui/Modal'
+import usePageTitle from '@/hooks/usePageTitle'
+import useStudentMyFees from '@/hooks/useStudentMyFees'
+import useToast from '@/hooks/useToast'
+import { ROUTES } from '@/constants/app'
+import { formatCurrency, formatDate } from '@/utils/helpers'
+import FeeProgressBar from '@/components/student/FeeProgressBar'
+import FeeInvoiceCard from '@/components/student/FeeInvoiceCard'
 
 const filters = ['all', 'pending', 'paid', 'partial', 'waived', 'carried_forward']
 

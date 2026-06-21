@@ -172,11 +172,12 @@ const EnterMarks = () => {
     }).then((data) => {
       const next = {}
       ;(data?.students || []).forEach((row) => {
+        const isAbsentDay = row.attendance_status === 'absent'
         next[row.enrollment_id] = {
-          marks_obtained: row.marks_obtained ?? '',
-          theory_marks_obtained: row.theory_marks_obtained ?? '',
-          practical_marks_obtained: row.practical_marks_obtained ?? '',
-          is_absent: !!row.is_absent,
+          marks_obtained: isAbsentDay ? '' : (row.marks_obtained ?? ''),
+          theory_marks_obtained: isAbsentDay ? '' : (row.theory_marks_obtained ?? ''),
+          practical_marks_obtained: isAbsentDay ? '' : (row.practical_marks_obtained ?? ''),
+          is_absent: isAbsentDay || !!row.is_absent,
         }
       })
       setState(next)
@@ -377,12 +378,15 @@ const EnterMarks = () => {
                     section_id: selectedSection.section_id,
                     subject_id: subjectId,
                   })
-                  setState(Object.fromEntries((refreshed?.students || []).map((row) => [row.enrollment_id, {
-                    marks_obtained: row.marks_obtained ?? '',
-                    theory_marks_obtained: row.theory_marks_obtained ?? '',
-                    practical_marks_obtained: row.practical_marks_obtained ?? '',
-                    is_absent: !!row.is_absent,
-                  }])))
+                  setState(Object.fromEntries((refreshed?.students || []).map((row) => {
+                    const isAbsentDay = row.attendance_status === 'absent'
+                    return [row.enrollment_id, {
+                      marks_obtained: isAbsentDay ? '' : (row.marks_obtained ?? ''),
+                      theory_marks_obtained: isAbsentDay ? '' : (row.theory_marks_obtained ?? ''),
+                      practical_marks_obtained: isAbsentDay ? '' : (row.practical_marks_obtained ?? ''),
+                      is_absent: isAbsentDay || !!row.is_absent,
+                    }]
+                  })))
                 } catch (error) {
                   toastError(error?.message || 'Failed to submit.')
                 }

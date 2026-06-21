@@ -170,7 +170,7 @@ const ReportCardModal = ({ open, student, onClose }) => {
                     >
                       <td className="px-4 py-3">
                         <p className="text-sm font-medium" style={{ color: 'var(--color-text-primary)' }}>
-                          {sr.subject}
+                          {sr.subject_name || sr.subject}
                         </p>
                         {sr.is_core && (
                           <p className="text-[10px]" style={{ color: 'var(--color-brand)' }}>Core Subject</p>
