@@ -15,12 +15,12 @@ const CollectionChart = ({ items = [] }) => {
               <span className="text-gray-700 dark:text-gray-300">{item.payment_mode || item.label}</span>
               <span className="text-gray-500 dark:text-gray-400 font-extrabold">{formatCurrency(item.amount || 0)} • {percentage.toFixed(1)}%</span>
             </div>
-            <div className="h-2 w-full rounded-full bg-cyan-100/50 dark:bg-cyan-950/20 overflow-hidden">
+            <div className="h-2 w-full rounded-full bg-indigo-100/50 dark:bg-indigo-950/20 overflow-hidden">
               <div 
                 className="h-full rounded-full transition-all duration-500 ease-out" 
                 style={{ 
                   width: `${percentage}%`, 
-                  background: 'linear-gradient(90deg, #22d3ee 0%, #4cc0d4 100%)' 
+                  background: 'linear-gradient(90deg, #5a73f0 0%, #4361ee 100%)' 
                 }} 
               />
             </div>

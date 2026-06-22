@@ -142,7 +142,7 @@ const UpiConfirmationsPage = () => {
       dataIndex: 'amount',
       key: 'amount',
       render: (val) => (
-        <span className="font-extrabold text-cyan-600 dark:text-cyan-400">
+        <span className="font-extrabold text-indigo-600 dark:text-indigo-400">
           {formatCurrency(val)}
         </span>
       )
@@ -224,9 +224,9 @@ const UpiConfirmationsPage = () => {
       theme={{
         algorithm: isDark ? antdTheme.darkAlgorithm : antdTheme.defaultAlgorithm,
         token: {
-          colorPrimary: '#4CC0D4',
-          borderRadius: 24,
-          fontFamily: 'inherit',
+          colorPrimary: '#4361ee',
+          borderRadius: 10,
+          fontFamily: 'Roboto, system-ui, sans-serif',
         },
       }}
     >
@@ -234,7 +234,7 @@ const UpiConfirmationsPage = () => {
         {/* Header Section */}
         <section
           className="rounded-[32px] p-6 sm:p-7 text-white relative overflow-hidden shadow-sm"
-          style={{ background: 'linear-gradient(135deg, #4cc0d4 0%, #0891b2 100%)' }}
+          style={{ background: 'linear-gradient(135deg, #4361ee 0%, #1d4ed8 100%)' }}
         >
           <div className="absolute -right-20 -top-20 w-64 h-64 rounded-full bg-white/5 blur-3xl pointer-events-none" />
           
@@ -245,13 +245,13 @@ const UpiConfirmationsPage = () => {
                 Finance Operations
               </div>
               <h1 className="text-2xl sm:text-3xl font-black tracking-tight">UPI Payment Confirmations</h1>
-              <p className="text-xs text-cyan-50/90 mt-1 max-w-xl font-medium leading-relaxed">
+              <p className="text-xs text-indigo-50/90 mt-1 max-w-xl font-medium leading-relaxed">
                 Verify and confirm fee payments made via UPI QR codes from the mobile app.
               </p>
             </div>
             
             <div className="px-4 py-2 rounded-2xl bg-white/10 backdrop-blur-md border border-white/10 text-center min-w-[120px]">
-              <p className="text-[10px] uppercase tracking-wider text-cyan-50/70 font-black">Pending Requests</p>
+              <p className="text-[10px] uppercase tracking-wider text-indigo-50/70 font-black">Pending Requests</p>
               <p className="text-2xl font-black mt-0.5">{pendingCount}</p>
             </div>
           </div>

@@ -125,7 +125,7 @@ const DefaulterList = () => {
       render: (text, record) => (
         <div className="flex items-center gap-3">
           <Avatar 
-            className="bg-cyan-100 text-cyan-700 font-extrabold dark:bg-cyan-950/40 dark:text-cyan-300 border border-cyan-200/20"
+            className="bg-indigo-100 text-indigo-700 font-extrabold dark:bg-indigo-950/40 dark:text-indigo-300 border border-indigo-200/20"
           >
             {getInitials(text)}
           </Avatar>
@@ -183,7 +183,7 @@ const DefaulterList = () => {
             setOpen(true)
           }}
           className="rounded-full font-bold text-[11px] border-0"
-          style={{ backgroundColor: '#4CC0D4' }}
+          style={{ backgroundColor: '#4361ee' }}
         >
           Remind
         </Button>
@@ -196,9 +196,9 @@ const DefaulterList = () => {
       theme={{
         algorithm: isDark ? antdTheme.darkAlgorithm : antdTheme.defaultAlgorithm,
         token: {
-          colorPrimary: '#4CC0D4',
-          borderRadius: 24,
-          fontFamily: 'inherit',
+          colorPrimary: '#4361ee',
+          borderRadius: 10,
+          fontFamily: 'Roboto, system-ui, sans-serif',
         },
       }}
     >
@@ -208,12 +208,12 @@ const DefaulterList = () => {
           className="flex flex-wrap items-center justify-between gap-6 rounded-[32px] border p-6 shadow-sm relative overflow-hidden backdrop-blur-md"
           style={{ 
             background: isDark 
-              ? 'linear-gradient(135deg, rgba(76, 192, 212, 0.15) 0%, #1e1b4b 100%)'
-              : 'linear-gradient(135deg, #e0f7fa 0%, #fffdf9 100%)', 
-            borderColor: isDark ? 'rgba(76, 192, 212, 0.3)' : '#b2ebf2'
+              ? 'linear-gradient(135deg, rgba(67, 97, 238, 0.15) 0%, #1e1b4b 100%)'
+              : 'linear-gradient(135deg, #eef2ff 0%, #fffdf9 100%)', 
+            borderColor: isDark ? 'rgba(67, 97, 238, 0.3)' : '#c7d2fe'
           }}
         >
-          <div className="absolute -right-20 -top-20 w-64 h-64 rounded-full bg-cyan-500/10 blur-3xl pointer-events-none" />
+          <div className="absolute -right-20 -top-20 w-64 h-64 rounded-full bg-indigo-500/10 blur-3xl pointer-events-none" />
           
           <div className="z-10">
             <div className="flex items-center gap-2">
@@ -254,7 +254,7 @@ const DefaulterList = () => {
               disabled={selected.length === 0}
               onClick={() => setOpen(true)}
               className="rounded-xl font-bold flex items-center justify-center border-0"
-              style={{ height: '40px', padding: '0 20px', background: 'linear-gradient(90deg, #4cc0d4 0%, #0891b2 100%)' }}
+              style={{ height: '40px', padding: '0 20px', background: 'linear-gradient(90deg, #4361ee 0%, #1d4ed8 100%)' }}
             >
               Send Reminders {selected.length > 0 && `(${selected.length})`}
             </Button>
@@ -403,14 +403,14 @@ const DefaulterList = () => {
               icon={<BellOutlined />}
               onClick={() => setOpen(true)} 
               className="rounded-full font-bold text-xs border-0"
-              style={{ backgroundColor: '#4CC0D4' }}
+              style={{ backgroundColor: '#4361ee' }}
             >
               Send Bulk Reminder
             </Button>
             <Button 
               type="text" 
               onClick={() => setSelected([])} 
-              className="text-white hover:text-cyan-400 p-0 flex items-center justify-center w-8 h-8 rounded-full hover:bg-white/10"
+              className="text-white hover:text-indigo-400 p-0 flex items-center justify-center w-8 h-8 rounded-full hover:bg-white/10"
               icon={<CloseOutlined className="text-xs" />}
             />
           </div>

@@ -620,7 +620,9 @@ const SidebarContent = ({ collapsed, toggleCollapsed, user, initials, navGroups,
           >
             {user?.role === ROLES.TEACHER
               ? 'Teacher Portal'
-              : 'Academic Suite'}
+              : user?.role === ROLES.ACCOUNTANT
+                ? 'Accountant Portal'
+                : 'Academic Suite'}
           </p>
         </div>
       )}

@@ -71,7 +71,7 @@ const REPORTS = [
 ]
 
 const QUICK_ACTIONS = [
-  { label: 'Collect Fee', path: ROUTES.ACCOUNTANT_COLLECTION, icon: WalletOutlined, color: '#4CC0D4' },
+  { label: 'Collect Fee', path: ROUTES.ACCOUNTANT_COLLECTION, icon: WalletOutlined, color: '#4361ee' },
   { label: 'View Defaulters', path: ROUTES.ACCOUNTANT_DEFAULTERS, icon: UserDeleteOutlined, color: '#dc2626' },
   { label: "Today's Report", path: ROUTES.ACCOUNTANT_REPORT_DAILY, icon: DownloadOutlined, color: '#16a34a' },
 ]
@@ -87,9 +87,9 @@ const ReportsHome = () => {
       theme={{
         algorithm: isDark ? antdTheme.darkAlgorithm : antdTheme.defaultAlgorithm,
         token: {
-          colorPrimary: '#4CC0D4',
-          borderRadius: 24,
-          fontFamily: 'inherit',
+          colorPrimary: '#4361ee',
+          borderRadius: 10,
+          fontFamily: 'Roboto, system-ui, sans-serif',
         },
       }}
     >
@@ -99,24 +99,24 @@ const ReportsHome = () => {
           className="rounded-[32px] border p-6 shadow-sm relative overflow-hidden backdrop-blur-md"
           style={{
             background: isDark
-              ? 'linear-gradient(135deg, rgba(76, 192, 212, 0.15) 0%, #1e1b4b 100%)'
-              : 'linear-gradient(135deg, #e0f7fa 0%, #fffdf9 100%)',
-            borderColor: isDark ? 'rgba(76, 192, 212, 0.3)' : '#b2ebf2'
+              ? 'linear-gradient(135deg, rgba(67, 97, 238, 0.15) 0%, #1e1b4b 100%)'
+              : 'linear-gradient(135deg, #eef2ff 0%, #fffdf9 100%)',
+            borderColor: isDark ? 'rgba(67, 97, 238, 0.3)' : '#c7d2fe'
           }}
         >
-          <div className="absolute -right-20 -top-20 w-64 h-64 rounded-full bg-cyan-500/10 blur-3xl pointer-events-none" />
+          <div className="absolute -right-20 -top-20 w-64 h-64 rounded-full bg-indigo-500/10 blur-3xl pointer-events-none" />
 
           <div className="z-10 relative">
             <div className="flex items-center gap-2">
               <h1 className="text-2xl font-black text-gray-900 dark:text-white tracking-tight">Reports Center</h1>
-              <Tag color="cyan" className="font-extrabold uppercase text-[9px] border-0 px-2 rounded-full">Analytics</Tag>
+              <Tag color="blue" className="font-extrabold uppercase text-[9px] border-0 px-2 rounded-full">Analytics</Tag>
             </div>
             <p className="mt-1 text-xs text-gray-500 dark:text-gray-400 font-semibold leading-relaxed">
               Access financial summaries, collection trends, concessions, and student fee positions.
             </p>
 
             {/* Quick Actions Strip */}
-            <div className="mt-6 flex flex-wrap gap-3 border-t border-dashed pt-6 border-cyan-200/50 dark:border-cyan-900/50">
+            <div className="mt-6 flex flex-wrap gap-3 border-t border-dashed pt-6 border-indigo-200/50 dark:border-indigo-900/50">
               {QUICK_ACTIONS.map((action) => (
                 <Link key={action.label} to={action.path}>
                   <Button
@@ -148,7 +148,7 @@ const ReportsHome = () => {
                   >
                     <div>
                       <div className="flex items-center justify-between mb-4">
-                        <div className="p-3 bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 rounded-2xl w-fit">
+                        <div className="p-3 bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 rounded-2xl w-fit">
                           <Icon className="text-xl" />
                         </div>
                         <ArrowRightOutlined className="text-gray-450 dark:text-gray-500 text-sm" />

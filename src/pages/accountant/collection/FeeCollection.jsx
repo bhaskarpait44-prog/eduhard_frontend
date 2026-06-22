@@ -201,9 +201,9 @@ const FeeCollection = () => {
       theme={{
         algorithm: isDark ? antdTheme.darkAlgorithm : antdTheme.defaultAlgorithm,
         token: {
-          colorPrimary: '#4CC0D4',
-          borderRadius: 24,
-          fontFamily: 'inherit',
+          colorPrimary: '#4361ee',
+          borderRadius: 10,
+          fontFamily: 'Roboto, system-ui, sans-serif',
         },
       }}
     >
@@ -213,12 +213,12 @@ const FeeCollection = () => {
           className="flex flex-wrap items-center justify-between gap-6 rounded-[32px] border p-6 shadow-sm relative overflow-hidden backdrop-blur-md"
           style={{ 
             background: isDark 
-              ? 'linear-gradient(135deg, rgba(76, 192, 212, 0.15) 0%, #1e1b4b 100%)'
-              : 'linear-gradient(135deg, #e0f7fa 0%, #fffdf9 100%)', 
-            borderColor: isDark ? '#4cc0d430' : '#b2ebf2'
+              ? 'linear-gradient(135deg, rgba(67, 97, 238, 0.15) 0%, #1e1b4b 100%)'
+              : 'linear-gradient(135deg, #eef2ff 0%, #fffdf9 100%)', 
+            borderColor: isDark ? '#4361ee30' : '#c7d2fe'
           }}
         >
-          <div className="absolute -right-20 -top-20 w-64 h-64 rounded-full bg-cyan-500/10 blur-3xl pointer-events-none" />
+          <div className="absolute -right-20 -top-20 w-64 h-64 rounded-full bg-indigo-500/10 blur-3xl pointer-events-none" />
           
           <div className="z-10">
             <h1 className="text-2xl font-black text-gray-900 dark:text-white tracking-tight">Counter Fee Collection</h1>
@@ -256,11 +256,11 @@ const FeeCollection = () => {
           {step === 1 && student && (
             <div className="space-y-6">
               {/* Student Profile Hero Card */}
-              <div className="flex flex-wrap items-center justify-between gap-4 p-5 rounded-2xl bg-cyan-50/60 dark:bg-cyan-950/20 border border-cyan-100/50 dark:border-cyan-950/30">
+              <div className="flex flex-wrap items-center justify-between gap-4 p-5 rounded-2xl bg-indigo-50/60 dark:bg-indigo-950/20 border border-indigo-100/50 dark:border-indigo-950/30">
                 <div className="flex items-center gap-3.5">
                   <Avatar 
                     size="large"
-                    className="bg-cyan-100 text-cyan-700 font-extrabold dark:bg-cyan-950/40 dark:text-cyan-300"
+                    className="bg-indigo-100 text-indigo-700 font-extrabold dark:bg-indigo-950/40 dark:text-indigo-300"
                   >
                     {getInitials(`${student.first_name} ${student.last_name}`)}
                   </Avatar>
@@ -307,9 +307,9 @@ const FeeCollection = () => {
                     <div
                       key={invoice.id}
                       onClick={() => toggleInvoice(invoice.id)}
-                      className={`flex cursor-pointer items-start gap-4 rounded-2xl border p-4 transition-all hover:border-cyan-400 hover:shadow-sm ${
+                      className={`flex cursor-pointer items-start gap-4 rounded-2xl border p-4 transition-all hover:border-indigo-400 hover:shadow-sm ${
                         selected 
-                          ? 'border-cyan-500 bg-cyan-50/20 dark:bg-cyan-950/10' 
+                          ? 'border-indigo-500 bg-indigo-50/20 dark:bg-indigo-950/10' 
                           : 'border-gray-100 dark:border-gray-800/80 bg-white dark:bg-gray-900'
                       }`}
                     >
@@ -334,12 +334,12 @@ const FeeCollection = () => {
               </div>
 
               {/* Selected Total Summary Card */}
-              <div className="flex items-center justify-between p-5 rounded-2xl bg-cyan-50/60 dark:bg-cyan-950/20 border border-cyan-100/50 dark:border-cyan-950/30">
+              <div className="flex items-center justify-between p-5 rounded-2xl bg-indigo-50/60 dark:bg-indigo-950/20 border border-indigo-100/50 dark:border-indigo-950/30">
                 <div>
-                  <span className="text-[10px] font-black uppercase tracking-wider text-cyan-700 dark:text-cyan-300">Selected Total</span>
+                  <span className="text-[10px] font-black uppercase tracking-wider text-indigo-700 dark:text-indigo-300">Selected Total</span>
                   <p className="text-xs font-semibold text-gray-400 dark:text-gray-500 mt-0.5">{selectedInvoices.length} item(s) to collect</p>
                 </div>
-                <div className="text-2xl font-black text-cyan-600 dark:text-cyan-400">
+                <div className="text-2xl font-black text-indigo-600 dark:text-indigo-400">
                   {formatCurrency(selectedTotal)}
                 </div>
               </div>
@@ -359,7 +359,7 @@ const FeeCollection = () => {
                   size="large"
                   onClick={moveToPayment} 
                   className="rounded-full font-bold px-8 border-0"
-                  style={{ background: 'linear-gradient(90deg, #4cc0d4 0%, #0891b2 100%)' }}
+                  style={{ background: 'linear-gradient(90deg, #4361ee 0%, #1d4ed8 100%)' }}
                 >
                   <span className="mr-1">Next</span>
                   <ArrowRightOutlined />
@@ -371,9 +371,9 @@ const FeeCollection = () => {
           {step === 2 && (
             <div className="space-y-6">
               {/* Total amount summary banner */}
-              <div className="flex items-center justify-between p-5 rounded-2xl bg-cyan-50/60 dark:bg-cyan-950/20 border border-cyan-100/50 dark:border-cyan-950/30">
-                <span className="text-xs font-black uppercase tracking-wider text-cyan-700 dark:text-cyan-300">Total Selected Dues</span>
-                <div className="text-2xl font-black text-cyan-600 dark:text-cyan-400">{formatCurrency(selectedTotal)}</div>
+              <div className="flex items-center justify-between p-5 rounded-2xl bg-indigo-50/60 dark:bg-indigo-950/20 border border-indigo-100/50 dark:border-indigo-950/30">
+                <span className="text-xs font-black uppercase tracking-wider text-indigo-700 dark:text-indigo-300">Total Selected Dues</span>
+                <div className="text-2xl font-black text-indigo-600 dark:text-indigo-400">{formatCurrency(selectedTotal)}</div>
               </div>
 
               {/* Payment Mode Selector Choice Cards */}
@@ -391,11 +391,11 @@ const FeeCollection = () => {
                         onClick={() => setPaymentData({ ...paymentData, payment_mode: mode.value })}
                         className={`rounded-2xl border p-4 text-center transition-all flex flex-col items-center justify-center gap-2 font-bold text-xs cursor-pointer ${
                           active
-                            ? 'border-cyan-500 bg-cyan-50/40 dark:bg-cyan-950/20 text-cyan-600 dark:text-cyan-400 shadow-sm'
-                            : 'border-gray-100 dark:border-gray-800/80 bg-white dark:bg-gray-900 text-gray-500 dark:text-gray-400 hover:border-cyan-300'
+                            ? 'border-indigo-500 bg-indigo-50/40 dark:bg-indigo-950/20 text-indigo-600 dark:text-indigo-400 shadow-sm'
+                            : 'border-gray-100 dark:border-gray-800/80 bg-white dark:bg-gray-900 text-gray-500 dark:text-gray-400 hover:border-indigo-300'
                         }`}
                       >
-                        <Icon className={`text-lg ${active ? 'text-cyan-500' : 'text-gray-400'}`} />
+                        <Icon className={`text-lg ${active ? 'text-indigo-500' : 'text-gray-400'}`} />
                         <span>{mode.label}</span>
                       </button>
                     )
@@ -429,7 +429,7 @@ const FeeCollection = () => {
                       setPaymentData({ ...paymentData, payment_date: val });
                       setErrors({ ...errors, payment_date: '' });
                     }} 
-                    className={`w-full h-[40px] px-3.5 border rounded-xl font-bold text-sm bg-transparent outline-none focus:border-cyan-400 ${
+                    className={`w-full h-[40px] px-3.5 border rounded-xl font-bold text-sm bg-transparent outline-none focus:border-indigo-400 ${
                       errors.payment_date ? 'border-rose-500' : 'border-gray-200 dark:border-gray-700'
                     }`}
                     style={{ color: 'inherit' }}
@@ -506,7 +506,7 @@ const FeeCollection = () => {
                           const val = date ? date.format('YYYY-MM-DD') : '';
                           setPaymentData({ ...paymentData, cheque_date: val });
                         }} 
-                        className="w-full h-[40px] px-3.5 border border-gray-200 dark:border-gray-700 rounded-xl font-bold text-sm bg-transparent outline-none focus:border-cyan-400"
+                        className="w-full h-[40px] px-3.5 border border-gray-200 dark:border-gray-700 rounded-xl font-bold text-sm bg-transparent outline-none focus:border-indigo-400"
                         style={{ color: 'inherit' }}
                         format="DD-MM-YYYY"
                         allowClear={false}
@@ -542,7 +542,7 @@ const FeeCollection = () => {
                   size="large"
                   onClick={() => validateStep2() && setStep(3)} 
                   className="rounded-full font-bold px-8 border-0"
-                  style={{ background: 'linear-gradient(90deg, #4cc0d4 0%, #0891b2 100%)' }}
+                  style={{ background: 'linear-gradient(90deg, #4361ee 0%, #1d4ed8 100%)' }}
                 >
                   <span className="mr-1">Review</span>
                   <ArrowRightOutlined />
@@ -555,8 +555,8 @@ const FeeCollection = () => {
             <div className="space-y-6">
               {/* Review confirmation panel */}
               <div className="rounded-2xl border border-gray-100 dark:border-gray-800/85 p-6 bg-white dark:bg-gray-900/60">
-                <div className="flex items-center gap-2 text-sm font-extrabold uppercase tracking-wide text-cyan-600 dark:text-cyan-400 mb-4">
-                  <InfoCircleOutlined className="text-cyan-500" />
+                <div className="flex items-center gap-2 text-sm font-extrabold uppercase tracking-wide text-indigo-600 dark:text-indigo-400 mb-4">
+                  <InfoCircleOutlined className="text-indigo-500" />
                   Review Details
                 </div>
                 
@@ -580,8 +580,8 @@ const FeeCollection = () => {
                     </div>
                   </div>
                   
-                  <div className="flex flex-col items-center justify-center rounded-2xl bg-gradient-to-br from-cyan-400 to-cyan-600 text-white p-6 shadow-md border-0">
-                    <span className="text-xs font-black uppercase tracking-widest text-cyan-100">Total Collection</span>
+                  <div className="flex flex-col items-center justify-center rounded-2xl bg-gradient-to-br from-indigo-400 to-indigo-600 text-white p-6 shadow-md border-0">
+                    <span className="text-xs font-black uppercase tracking-widest text-indigo-100">Total Collection</span>
                     <span className="mt-2 text-3xl font-black">{formatCurrency(paymentData.amount || 0)}</span>
                   </div>
                 </div>
@@ -613,7 +613,7 @@ const FeeCollection = () => {
                   loading={isSaving}
                   onClick={confirmCollection} 
                   className="rounded-full font-black px-10 border-0"
-                  style={{ background: 'linear-gradient(90deg, #4cc0d4 0%, #0891b2 100%)' }}
+                  style={{ background: 'linear-gradient(90deg, #4361ee 0%, #1d4ed8 100%)' }}
                 >
                   {isSaving ? 'Processing...' : 'Confirm & Collect'}
                 </Button>
@@ -650,7 +650,7 @@ const FeeCollection = () => {
                   icon={<RedoOutlined />}
                   onClick={() => { setStep(0); setStudent(null); setReceipt(null); setInvoicePayload(null); setSelectedInvoices([]) }}
                   className="rounded-full font-bold px-8 border-0"
-                  style={{ background: 'linear-gradient(90deg, #4cc0d4 0%, #0891b2 100%)' }}
+                  style={{ background: 'linear-gradient(90deg, #4361ee 0%, #1d4ed8 100%)' }}
                 >
                   Collect Another
                 </Button>

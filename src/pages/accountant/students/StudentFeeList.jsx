@@ -55,7 +55,7 @@ const StudentFeeList = () => {
             <h1 className="text-2xl font-bold" style={{ color: 'var(--color-text-primary)' }}>Student Fee Positions</h1>
             <p className="mt-1 text-sm" style={{ color: 'var(--color-text-secondary)' }}>Review and manage fee accounts for all active students.</p>
           </div>
-          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-cyan-50 text-cyan-600 dark:bg-cyan-950/30 dark:text-cyan-400">
+          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-indigo-50 text-indigo-600 dark:bg-indigo-950/30 dark:text-indigo-400">
             <UserRound size={24} />
           </div>
         </div>
@@ -112,11 +112,11 @@ const StudentFeeList = () => {
             </thead>
             <tbody>
               {students.map((student) => (
-                <tr key={student.id} className="group transition-colors hover:bg-cyan-50/15 dark:hover:bg-cyan-950/10" style={{ borderBottom: '1px solid var(--color-border)' }}>
+                <tr key={student.id} className="group transition-colors hover:bg-indigo-50/15 dark:hover:bg-indigo-950/10" style={{ borderBottom: '1px solid var(--color-border)' }}>
                   <td className="px-5 py-4 text-xs font-bold" style={{ color: 'var(--color-text-muted)' }}>{student.admission_no}</td>
                   <td className="px-5 py-4">
                     <div className="flex items-center gap-3">
-                      <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-cyan-100 text-[11px] font-bold text-cyan-700 dark:bg-cyan-950/50 dark:text-cyan-300">
+                      <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-indigo-100 text-[11px] font-bold text-indigo-700 dark:bg-indigo-950/50 dark:text-indigo-300">
                         {(student.student_name || '?').charAt(0)}
                       </div>
                       <div className="text-sm font-semibold" style={{ color: 'var(--color-text-primary)' }}>{student.student_name}</div>
@@ -164,7 +164,7 @@ const StudentFeeList = () => {
                       type="button" 
                       disabled={page === 1} 
                       onClick={() => setPage(p => p - 1)}
-                      className="w-8 h-8 rounded-lg flex items-center justify-center text-xs font-bold border disabled:opacity-30 transition-colors hover:bg-cyan-50/40 dark:hover:bg-cyan-950/40"
+                      className="w-8 h-8 rounded-lg flex items-center justify-center text-xs font-bold border disabled:opacity-30 transition-colors hover:bg-indigo-50/40 dark:hover:bg-indigo-950/40"
                       style={{ borderColor: 'var(--color-border)', color: 'var(--color-text-primary)' }}
                     >‹</button>
                     
@@ -196,7 +196,7 @@ const StudentFeeList = () => {
                       type="button" 
                       disabled={page === pagination.pages} 
                       onClick={() => setPage(p => p + 1)}
-                      className="w-8 h-8 rounded-lg flex items-center justify-center text-xs font-bold border disabled:opacity-30 transition-colors hover:bg-cyan-50/40 dark:hover:bg-cyan-950/40"
+                      className="w-8 h-8 rounded-lg flex items-center justify-center text-xs font-bold border disabled:opacity-30 transition-colors hover:bg-indigo-50/40 dark:hover:bg-indigo-950/40"
                       style={{ borderColor: 'var(--color-border)', color: 'var(--color-text-primary)' }}
                     >›</button>
                   </div>

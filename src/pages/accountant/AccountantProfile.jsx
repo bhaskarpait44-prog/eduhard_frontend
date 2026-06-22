@@ -66,9 +66,9 @@ const AccountantProfile = () => {
       theme={{
         algorithm: isDark ? antdTheme.darkAlgorithm : antdTheme.defaultAlgorithm,
         token: {
-          colorPrimary: '#4CC0D4',
-          borderRadius: 24,
-          fontFamily: 'inherit',
+          colorPrimary: '#4361ee',
+          borderRadius: 10,
+          fontFamily: 'Roboto, system-ui, sans-serif',
         },
       }}
     >
@@ -78,25 +78,25 @@ const AccountantProfile = () => {
           className="rounded-[32px] border p-6 shadow-sm relative overflow-hidden backdrop-blur-md"
           style={{
             background: isDark
-              ? 'linear-gradient(135deg, rgba(76, 192, 212, 0.15) 0%, #1e1b4b 100%)'
-              : 'linear-gradient(135deg, #e0f7fa 0%, #fffdf9 100%)',
-            borderColor: isDark ? 'rgba(76, 192, 212, 0.3)' : '#b2ebf2'
+              ? 'linear-gradient(135deg, rgba(67, 97, 238, 0.15) 0%, #1e1b4b 100%)'
+              : 'linear-gradient(135deg, #eef2ff 0%, #fffdf9 100%)',
+            borderColor: isDark ? 'rgba(67, 97, 238, 0.3)' : '#c7d2fe'
           }}
         >
-          <div className="absolute -right-20 -top-20 w-64 h-64 rounded-full bg-cyan-500/10 blur-3xl pointer-events-none" />
+          <div className="absolute -right-20 -top-20 w-64 h-64 rounded-full bg-indigo-500/10 blur-3xl pointer-events-none" />
 
           <div className="z-10 relative flex flex-col md:flex-row md:items-center gap-5">
             <Avatar
               size={80}
               icon={<UserOutlined />}
-              className="bg-cyan-500 text-white shadow-md border-2 border-white/50"
+              className="bg-indigo-500 text-white shadow-md border-2 border-white/50"
             />
             <div>
               <div className="flex items-center flex-wrap gap-2">
                 <h1 className="text-2xl font-black text-gray-900 dark:text-white tracking-tight">
                   {profile?.name || 'Loading profile...'}
                 </h1>
-                <Tag color="cyan" className="font-extrabold uppercase text-[9px] border-0 px-2 rounded-full">
+                <Tag color="blue" className="font-extrabold uppercase text-[9px] border-0 px-2 rounded-full">
                   Accountant
                 </Tag>
               </div>
@@ -178,7 +178,7 @@ const AccountantProfile = () => {
           className="rounded-[28px] border-gray-100 dark:border-gray-800 shadow-sm"
           title={
             <div className="flex items-center gap-2">
-              <KeyOutlined className="text-cyan-500" />
+              <KeyOutlined className="text-indigo-500" />
               <span className="text-sm font-black text-gray-900 dark:text-white">Update Account Password</span>
             </div>
           }
@@ -215,7 +215,7 @@ const AccountantProfile = () => {
                 htmlType="submit"
                 loading={updating}
                 className="rounded-xl font-bold h-[38px] border-0 px-6"
-                style={{ background: 'linear-gradient(90deg, #4cc0d4 0%, #0891b2 100%)' }}
+                style={{ background: 'linear-gradient(90deg, #4361ee 0%, #1d4ed8 100%)' }}
               >
                 Update Password
               </Button>

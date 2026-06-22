@@ -89,7 +89,7 @@ const StudentSearchBox = ({ onSelect, autoFocus = false }) => {
   return (
     <div className="relative">
       <div
-        className="flex items-center gap-3 rounded-full border border-gray-200 dark:border-gray-700 px-5 py-3.5 focus-within:border-[#4CC0D4] focus-within:shadow-md transition-all bg-white dark:bg-gray-800"
+        className="flex items-center gap-3 rounded-full border border-gray-200 dark:border-gray-700 px-5 py-3.5 focus-within:border-[#4361ee] focus-within:shadow-md transition-all bg-white dark:bg-gray-800"
       >
         <SearchOutlined className="text-gray-400 dark:text-gray-500 text-base" />
         <input
@@ -127,12 +127,12 @@ const StudentSearchBox = ({ onSelect, autoFocus = false }) => {
                 }}
                 className={`flex w-full items-center gap-3.5 px-5 py-4 text-left transition-colors ${
                   isActive 
-                    ? 'bg-cyan-50/50 dark:bg-cyan-950/20' 
+                    ? 'bg-indigo-50/50 dark:bg-indigo-950/20' 
                     : 'hover:bg-gray-50 dark:hover:bg-gray-800/40'
                 }`}
               >
                 <Avatar 
-                  className="bg-cyan-100 text-cyan-700 font-extrabold dark:bg-cyan-950/40 dark:text-cyan-300 shadow-sm border border-cyan-200/20"
+                  className="bg-indigo-100 text-indigo-700 font-extrabold dark:bg-indigo-950/40 dark:text-indigo-300 shadow-sm border border-indigo-200/20"
                 >
                   {getInitials(`${student.first_name} ${student.last_name}`)}
                 </Avatar>
@@ -147,7 +147,7 @@ const StudentSearchBox = ({ onSelect, autoFocus = false }) => {
                     {student.parent_name && (
                       <>
                         <span className="text-gray-300 dark:text-gray-700">•</span>
-                        <span className="text-cyan-600 dark:text-cyan-400 font-bold">Guardian: {student.parent_name}</span>
+                        <span className="text-indigo-600 dark:text-indigo-400 font-bold">Guardian: {student.parent_name}</span>
                       </>
                     )}
                   </div>

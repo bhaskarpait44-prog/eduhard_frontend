@@ -363,6 +363,644 @@ body {
   transform: scale(0.97);
 }
 
+/* Accountant portal: premium Ant Design surface system */
+html[data-portal="accountant"] {
+  font-family: Inter, Geist, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --accountant-primary: #0f766e;
+  --accountant-primary-soft: color-mix(in srgb, var(--accountant-primary) 10%, var(--color-surface));
+  --accountant-accent: #0284c7;
+  --accountant-gold: #b7791f;
+  --accountant-shadow: 0 18px 44px rgba(15, 23, 42, 0.08);
+  --accountant-shadow-soft: 0 8px 22px rgba(15, 23, 42, 0.06);
+  --accountant-page-pad: clamp(1rem, 1.8vw, 1.75rem);
+  --accountant-panel-radius: 12px;
+}
+
+html.dark[data-portal="accountant"] {
+  --accountant-primary: #2dd4bf;
+  --accountant-primary-soft: color-mix(in srgb, var(--accountant-primary) 13%, var(--color-surface));
+  --accountant-accent: #38bdf8;
+  --accountant-gold: #f6c453;
+  --accountant-shadow: 0 18px 44px rgba(0, 0, 0, 0.36);
+  --accountant-shadow-soft: 0 8px 22px rgba(0, 0, 0, 0.26);
+}
+
+html[data-portal="accountant"] body {
+  background:
+    radial-gradient(circle at 16% 0%, color-mix(in srgb, var(--accountant-primary) 8%, transparent) 0 24rem, transparent 32rem),
+    linear-gradient(180deg, color-mix(in srgb, var(--color-bg) 92%, #ffffff) 0%, var(--color-bg) 42%);
+}
+
+html.dark[data-portal="accountant"] body {
+  background:
+    radial-gradient(circle at 18% 0%, color-mix(in srgb, var(--accountant-primary) 12%, transparent) 0 22rem, transparent 34rem),
+    linear-gradient(180deg, #0b1120 0%, var(--color-bg) 46%);
+}
+
+html[data-portal="accountant"] main > div > div {
+  max-width: 1480px;
+  margin-inline: auto;
+  width: 100%;
+  padding: var(--accountant-page-pad) !important;
+}
+
+html[data-portal="accountant"] main .p-4,
+html[data-portal="accountant"] main .sm\:p-6 {
+  padding: 0 !important;
+}
+
+html[data-portal="accountant"] .space-y-6 > :not([hidden]) ~ :not([hidden]) {
+  margin-top: 1.25rem !important;
+}
+
+html[data-portal="accountant"] .font-black {
+  font-weight: 800 !important;
+}
+
+html[data-portal="accountant"] .font-extrabold {
+  font-weight: 750 !important;
+}
+
+html[data-portal="accountant"] .tracking-tight,
+html[data-portal="accountant"] .tracking-\[-0\.02em\],
+html[data-portal="accountant"] .tracking-\[-0\.01em\] {
+  letter-spacing: 0 !important;
+}
+
+html[data-portal="accountant"] .text-3xl {
+  font-size: clamp(1.55rem, 1.5vw, 1.875rem) !important;
+  line-height: 1.15 !important;
+}
+
+html[data-portal="accountant"] .text-2xl {
+  font-size: clamp(1.25rem, 1.25vw, 1.5rem) !important;
+  line-height: 1.2 !important;
+}
+
+html[data-portal="accountant"] .text-\[10px\] {
+  letter-spacing: 0.08em;
+}
+
+html[data-portal="accountant"] .rounded-full {
+  border-radius: 999px;
+}
+
+html[data-portal="accountant"] .rounded-2xl,
+html[data-portal="accountant"] .rounded-3xl {
+  border-radius: 12px !important;
+}
+
+html[data-portal="accountant"] .rounded-xl {
+  border-radius: 8px !important;
+}
+
+html[data-portal="accountant"] .rounded-lg {
+  border-radius: 6px !important;
+}
+
+html[data-portal="accountant"] .rounded-\[28px\],
+html[data-portal="accountant"] .rounded-\[32px\],
+html[data-portal="accountant"] .rounded-\[24px\] {
+  border-radius: var(--accountant-panel-radius) !important;
+}
+
+html[data-portal="accountant"] .rounded-\[28px\]:has(h1),
+html[data-portal="accountant"] .rounded-\[32px\]:has(h1),
+html[data-portal="accountant"] .rounded-\[24px\]:has(h1) {
+  background:
+    linear-gradient(135deg, color-mix(in srgb, var(--color-surface) 96%, var(--color-brand) 4%) 0%, var(--color-surface) 100%) !important;
+  border: 1px solid var(--color-border) !important;
+  box-shadow: var(--accountant-shadow-soft) !important;
+}
+
+html[data-portal="accountant"] .rounded-\[28px\]:has(h1)::before,
+html[data-portal="accountant"] .rounded-\[32px\]:has(h1)::before,
+html[data-portal="accountant"] .rounded-\[24px\]:has(h1)::before {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 4px;
+  background: linear-gradient(180deg, var(--color-brand), var(--accountant-accent));
+  border-radius: var(--accountant-panel-radius) 0 0 var(--accountant-panel-radius);
+}
+
+html[data-portal="accountant"] .rounded-\[28px\]:has(h1) > .absolute,
+html[data-portal="accountant"] .rounded-\[32px\]:has(h1) > .absolute,
+html[data-portal="accountant"] .rounded-\[24px\]:has(h1) > .absolute {
+  display: none !important;
+}
+
+html[data-portal="accountant"] .ant-card,
+html[data-portal="accountant"] .rounded-\[28px\],
+html[data-portal="accountant"] .rounded-\[32px\],
+html[data-portal="accountant"] .rounded-\[24px\] {
+  border-radius: 12px !important;
+}
+
+html[data-portal="accountant"] .ant-card {
+  border-color: var(--color-border) !important;
+  background: color-mix(in srgb, var(--color-surface) 96%, transparent) !important;
+  box-shadow: var(--accountant-shadow-soft) !important;
+  overflow: hidden;
+}
+
+html[data-portal="accountant"] .ant-card:hover {
+  border-color: color-mix(in srgb, var(--color-brand) 28%, var(--color-border)) !important;
+}
+
+html[data-portal="accountant"] .ant-card-head {
+  min-height: 54px;
+  border-bottom-color: var(--color-border) !important;
+  color: var(--color-text-primary);
+  background: color-mix(in srgb, var(--color-surface) 88%, var(--color-surface-raised)) !important;
+}
+
+html[data-portal="accountant"] .ant-card-head-title {
+  color: var(--color-text-primary) !important;
+  font-weight: 800;
+}
+
+html[data-portal="accountant"] .ant-card-body {
+  color: var(--color-text-primary);
+}
+
+html[data-portal="accountant"] .ant-table-wrapper,
+html[data-portal="accountant"] .premium-table {
+  color: var(--color-text-primary);
+}
+
+html[data-portal="accountant"] .ant-table {
+  background: var(--color-surface) !important;
+  color: var(--color-text-primary) !important;
+  font-size: 13px;
+}
+
+html[data-portal="accountant"] .ant-table-thead > tr > th {
+  background: color-mix(in srgb, var(--color-surface-raised) 76%, var(--color-surface)) !important;
+  border-bottom: 1px solid var(--color-border) !important;
+  color: var(--color-text-secondary) !important;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+
+html[data-portal="accountant"] .ant-table-tbody > tr > td {
+  border-bottom-color: color-mix(in srgb, var(--color-border) 82%, transparent) !important;
+  color: var(--color-text-primary) !important;
+  padding-top: 13px !important;
+  padding-bottom: 13px !important;
+}
+
+html[data-portal="accountant"] .ant-table-tbody > tr.ant-table-row:hover > td,
+html[data-portal="accountant"] .ant-table-tbody > tr:hover > td {
+  background: var(--accountant-primary-soft) !important;
+}
+
+html[data-portal="accountant"] .ant-btn {
+  border-radius: 8px !important;
+  box-shadow: none;
+  font-weight: 700;
+  letter-spacing: 0;
+}
+
+html[data-portal="accountant"] .ant-btn-primary {
+  background: linear-gradient(135deg, var(--color-brand) 0%, var(--color-brand-dark) 100%) !important;
+  border-color: transparent !important;
+  color: #ffffff !important;
+}
+
+html[data-portal="accountant"] .ant-btn-default,
+html[data-portal="accountant"] .ant-btn-dashed {
+  background: var(--color-surface) !important;
+  border-color: var(--color-border) !important;
+  color: var(--color-text-primary) !important;
+}
+
+html[data-portal="accountant"] .ant-btn-default:hover,
+html[data-portal="accountant"] .ant-btn-dashed:hover {
+  border-color: var(--color-brand) !important;
+  color: var(--color-brand) !important;
+  background: var(--accountant-primary-soft) !important;
+}
+
+html[data-portal="accountant"] .ant-input,
+html[data-portal="accountant"] .ant-input-number,
+html[data-portal="accountant"] .ant-picker,
+html[data-portal="accountant"] .ant-select-selector,
+html[data-portal="accountant"] textarea.ant-input {
+  border-radius: 8px !important;
+  border-color: var(--color-border) !important;
+  background: color-mix(in srgb, var(--color-surface) 88%, var(--color-bg)) !important;
+  color: var(--color-text-primary) !important;
+}
+
+html[data-portal="accountant"] .ant-input:focus,
+html[data-portal="accountant"] .ant-input-focused,
+html[data-portal="accountant"] .ant-picker-focused,
+html[data-portal="accountant"] .ant-select-focused .ant-select-selector,
+html[data-portal="accountant"] .ant-input-number-focused {
+  border-color: var(--color-brand) !important;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-brand) 16%, transparent) !important;
+}
+
+html[data-portal="accountant"] .ant-tag {
+  border-radius: 6px;
+  font-weight: 750;
+  border-color: transparent;
+}
+
+html[data-portal="accountant"] .ant-statistic-title {
+  color: var(--color-text-muted) !important;
+}
+
+html[data-portal="accountant"] .ant-statistic-content,
+html[data-portal="accountant"] .ant-progress-text {
+  color: var(--color-text-primary) !important;
+}
+
+html[data-portal="accountant"] .ant-modal-content,
+html[data-portal="accountant"] .ant-drawer-content,
+html[data-portal="accountant"] .ant-popover-inner,
+html[data-portal="accountant"] .ant-dropdown-menu {
+  border: 1px solid var(--color-border);
+  border-radius: 12px !important;
+  background: var(--color-surface) !important;
+  box-shadow: var(--accountant-shadow) !important;
+}
+
+html[data-portal="accountant"] .ant-modal-header,
+html[data-portal="accountant"] .ant-modal-footer {
+  background: transparent !important;
+  border-color: var(--color-border) !important;
+}
+
+html[data-portal="accountant"] aside {
+  box-shadow: 8px 0 30px color-mix(in srgb, #000 4%, transparent);
+}
+
+html[data-portal="accountant"] aside nav {
+  padding-top: 0.75rem !important;
+}
+
+html[data-portal="accountant"] aside p {
+  letter-spacing: 0.08em !important;
+}
+
+html[data-portal="accountant"] aside a {
+  border-radius: 8px !important;
+  font-weight: 650 !important;
+}
+
+html[data-portal="accountant"] aside a:hover {
+  background-color: var(--color-sidebar-hover) !important;
+}
+
+html.dark[data-portal="accountant"] aside {
+  box-shadow: 8px 0 34px rgba(0, 0, 0, 0.32);
+}
+
+html[data-portal="accountant"] .bg-gradient-to-tr,
+html[data-portal="accountant"] .bg-gradient-to-r {
+  background-image: linear-gradient(135deg, var(--color-brand) 0%, var(--color-brand-dark) 100%) !important;
+}
+
+html[data-portal="accountant"] .text-cyan-500,
+html[data-portal="accountant"] .text-cyan-600,
+html[data-portal="accountant"] .dark\:text-cyan-400:is(.dark *) {
+  color: var(--color-brand) !important;
+}
+
+html[data-portal="accountant"] .bg-cyan-50,
+html[data-portal="accountant"] .bg-cyan-100,
+html[data-portal="accountant"] .dark\:bg-cyan-950\/40:is(.dark *) {
+  background-color: var(--accountant-primary-soft) !important;
+}
+
+html[data-portal="accountant"] .border-cyan-200,
+html[data-portal="accountant"] .border-cyan-400 {
+  border-color: color-mix(in srgb, var(--color-brand) 34%, var(--color-border)) !important;
+}
+
+html[data-portal="accountant"] .shadow-md,
+html[data-portal="accountant"] .shadow-sm,
+html[data-portal="accountant"] .shadow-xl,
+html[data-portal="accountant"] .shadow-2xl {
+  box-shadow: var(--accountant-shadow-soft) !important;
+}
+
+html[data-portal="accountant"] .backdrop-blur-md {
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+}
+
+html[data-portal="accountant"] .border-gray-100,
+html[data-portal="accountant"] .border-gray-200,
+html[data-portal="accountant"] .dark\:border-gray-800:is(.dark *) {
+  border-color: var(--color-border) !important;
+}
+
+html[data-portal="accountant"] .text-gray-900,
+html[data-portal="accountant"] .text-gray-800,
+html[data-portal="accountant"] .dark\:text-white:is(.dark *),
+html[data-portal="accountant"] .dark\:text-gray-100:is(.dark *) {
+  color: var(--color-text-primary) !important;
+}
+
+html[data-portal="accountant"] .text-gray-700,
+html[data-portal="accountant"] .text-gray-600,
+html[data-portal="accountant"] .dark\:text-gray-200:is(.dark *),
+html[data-portal="accountant"] .dark\:text-gray-300:is(.dark *) {
+  color: var(--color-text-secondary) !important;
+}
+
+html[data-portal="accountant"] .text-gray-500,
+html[data-portal="accountant"] .text-gray-400,
+html[data-portal="accountant"] .dark\:text-gray-400:is(.dark *),
+html[data-portal="accountant"] .dark\:text-gray-500:is(.dark *) {
+  color: var(--color-text-muted) !important;
+}
+
+html[data-portal="accountant"] .bg-white,
+html[data-portal="accountant"] .dark\:bg-gray-900:is(.dark *),
+html[data-portal="accountant"] .dark\:bg-gray-800:is(.dark *) {
+  background-color: var(--color-surface) !important;
+}
+
+html[data-portal="accountant"] .bg-gray-50,
+html[data-portal="accountant"] .bg-gray-100,
+html[data-portal="accountant"] .dark\:bg-gray-800\/30:is(.dark *),
+html[data-portal="accountant"] .dark\:bg-gray-900\/50:is(.dark *) {
+  background-color: color-mix(in srgb, var(--color-surface-raised) 72%, var(--color-surface)) !important;
+}
+
+html[data-portal="accountant"] label,
+html[data-portal="accountant"] .ant-form-item-label > label {
+  color: var(--color-text-secondary) !important;
+  font-size: 11px !important;
+  font-weight: 800 !important;
+  letter-spacing: 0.06em !important;
+  text-transform: uppercase;
+}
+
+html[data-portal="accountant"] .ant-empty-description {
+  color: var(--color-text-muted) !important;
+}
+
+html[data-portal="accountant"] .ant-pagination-item {
+  border-radius: 8px !important;
+  border-color: var(--color-border) !important;
+  background: var(--color-surface) !important;
+}
+
+html[data-portal="accountant"] .ant-pagination-item-active {
+  border-color: var(--color-brand) !important;
+}
+
+html[data-portal="accountant"] h1,
+html[data-portal="accountant"] h2,
+html[data-portal="accountant"] h3 {
+  letter-spacing: 0;
+  color: var(--color-text-primary);
+}
+
+/* Accountant portal: responsive refinement pass */
+html[data-portal="accountant"] {
+  --accountant-page-pad: clamp(0.875rem, 1.45vw, 1.5rem);
+  --accountant-panel-radius: 10px;
+  --accountant-shadow: 0 10px 28px rgba(15, 23, 42, 0.07);
+  --accountant-shadow-soft: 0 4px 14px rgba(15, 23, 42, 0.05);
+}
+
+html.dark[data-portal="accountant"] {
+  --accountant-shadow: 0 10px 30px rgba(0, 0, 0, 0.32);
+  --accountant-shadow-soft: 0 4px 16px rgba(0, 0, 0, 0.24);
+}
+
+html[data-portal="accountant"] body {
+  background: var(--color-bg) !important;
+}
+
+html[data-portal="accountant"] main > div > div {
+  max-width: 1440px;
+}
+
+html[data-portal="accountant"] .rounded-\[28px\]:has(h1),
+html[data-portal="accountant"] .rounded-\[32px\]:has(h1),
+html[data-portal="accountant"] .rounded-\[24px\]:has(h1) {
+  min-height: auto;
+  padding: clamp(1rem, 1.65vw, 1.5rem) !important;
+  background: var(--color-surface) !important;
+  border: 1px solid var(--color-border) !important;
+  box-shadow: var(--accountant-shadow-soft) !important;
+}
+
+html[data-portal="accountant"] .rounded-\[28px\]:has(h1)::before,
+html[data-portal="accountant"] .rounded-\[32px\]:has(h1)::before,
+html[data-portal="accountant"] .rounded-\[24px\]:has(h1)::before {
+  display: none !important;
+}
+
+html[data-portal="accountant"] .rounded-\[28px\]:has(h1) h1,
+html[data-portal="accountant"] .rounded-\[32px\]:has(h1) h1,
+html[data-portal="accountant"] .rounded-\[24px\]:has(h1) h1 {
+  font-size: clamp(1.25rem, 1.45vw, 1.625rem) !important;
+}
+
+html[data-portal="accountant"] .rounded-\[28px\]:has(h1) p,
+html[data-portal="accountant"] .rounded-\[32px\]:has(h1) p,
+html[data-portal="accountant"] .rounded-\[24px\]:has(h1) p {
+  max-width: 760px;
+}
+
+html[data-portal="accountant"] .ant-card {
+  box-shadow: var(--accountant-shadow-soft) !important;
+}
+
+html[data-portal="accountant"] .ant-card:hover {
+  border-color: var(--color-border) !important;
+}
+
+html[data-portal="accountant"] .ant-card-head {
+  min-height: 48px;
+  padding-inline: 18px !important;
+  background: var(--color-surface) !important;
+}
+
+html[data-portal="accountant"] .ant-card-body {
+  padding: clamp(1rem, 1.35vw, 1.25rem) !important;
+}
+
+html[data-portal="accountant"] .ant-table-wrapper {
+  overflow-x: auto;
+  border-radius: 10px;
+}
+
+html[data-portal="accountant"] .ant-table {
+  min-width: 720px;
+}
+
+html[data-portal="accountant"] .ant-table-thead > tr > th {
+  white-space: nowrap;
+  padding: 12px 14px !important;
+}
+
+html[data-portal="accountant"] .ant-table-tbody > tr > td {
+  padding: 12px 14px !important;
+  vertical-align: middle;
+}
+
+html[data-portal="accountant"] .ant-table-cell .ant-avatar {
+  flex: 0 0 auto;
+}
+
+html[data-portal="accountant"] .ant-space {
+  flex-wrap: wrap;
+}
+
+html[data-portal="accountant"] .ant-btn {
+  min-width: 0;
+}
+
+html[data-portal="accountant"] .ant-btn-lg {
+  height: 42px !important;
+  padding-inline: 18px !important;
+}
+
+html[data-portal="accountant"] .ant-input,
+html[data-portal="accountant"] .ant-input-number,
+html[data-portal="accountant"] .ant-picker,
+html[data-portal="accountant"] .ant-select-selector,
+html[data-portal="accountant"] textarea.ant-input {
+  background: var(--color-surface) !important;
+}
+
+html[data-portal="accountant"] .ant-row {
+  margin-left: -8px !important;
+  margin-right: -8px !important;
+}
+
+html[data-portal="accountant"] .ant-col {
+  padding-left: 8px !important;
+  padding-right: 8px !important;
+}
+
+html[data-portal="accountant"] .bg-gradient-to-tr,
+html[data-portal="accountant"] .bg-gradient-to-r {
+  background-image: linear-gradient(135deg, var(--color-brand) 0%, var(--color-brand-dark) 100%) !important;
+}
+
+html[data-portal="accountant"] aside {
+  box-shadow: none !important;
+}
+
+html[data-portal="accountant"] aside a {
+  min-height: 38px;
+}
+
+html[data-portal="accountant"] aside nav {
+  padding-inline: 0.625rem !important;
+}
+
+html[data-portal="accountant"] .fixed.top-0.right-0 {
+  border-bottom: 1px solid color-mix(in srgb, var(--color-border) 78%, transparent);
+  background: color-mix(in srgb, var(--color-bg) 86%, transparent);
+}
+
+@media (max-width: 1024px) {
+  html[data-portal="accountant"] .ant-table {
+    min-width: 680px;
+  }
+
+  html[data-portal="accountant"] .rounded-\[28px\]:has(h1),
+  html[data-portal="accountant"] .rounded-\[32px\]:has(h1),
+  html[data-portal="accountant"] .rounded-\[24px\]:has(h1) {
+    align-items: flex-start !important;
+  }
+}
+
+@media (max-width: 768px) {
+  html[data-portal="accountant"] main > div > div {
+    padding: 0.75rem !important;
+  }
+
+  html[data-portal="accountant"] .space-y-6 > :not([hidden]) ~ :not([hidden]) {
+    margin-top: 0.875rem !important;
+  }
+
+  html[data-portal="accountant"] .rounded-\[28px\]:has(h1),
+  html[data-portal="accountant"] .rounded-\[32px\]:has(h1),
+  html[data-portal="accountant"] .rounded-\[24px\]:has(h1) {
+    gap: 0.875rem !important;
+  }
+
+  html[data-portal="accountant"] .rounded-\[28px\]:has(h1) .z-10,
+  html[data-portal="accountant"] .rounded-\[32px\]:has(h1) .z-10,
+  html[data-portal="accountant"] .rounded-\[24px\]:has(h1) .z-10 {
+    width: 100%;
+  }
+
+  html[data-portal="accountant"] .rounded-\[28px\]:has(h1) .ant-space,
+  html[data-portal="accountant"] .rounded-\[32px\]:has(h1) .ant-space,
+  html[data-portal="accountant"] .rounded-\[24px\]:has(h1) .ant-space {
+    width: 100%;
+  }
+
+  html[data-portal="accountant"] .rounded-\[28px\]:has(h1) .ant-space .ant-btn,
+  html[data-portal="accountant"] .rounded-\[32px\]:has(h1) .ant-space .ant-btn,
+  html[data-portal="accountant"] .rounded-\[24px\]:has(h1) .ant-space .ant-btn {
+    flex: 1 1 150px;
+  }
+
+  html[data-portal="accountant"] .ant-card-head {
+    padding-inline: 14px !important;
+  }
+
+  html[data-portal="accountant"] .ant-card-body {
+    padding: 14px !important;
+  }
+
+  html[data-portal="accountant"] .ant-statistic-content {
+    font-size: 1.25rem !important;
+  }
+
+  html[data-portal="accountant"] .ant-table {
+    min-width: 640px;
+  }
+}
+
+@media (max-width: 520px) {
+  html[data-portal="accountant"] .text-3xl {
+    font-size: 1.45rem !important;
+  }
+
+  html[data-portal="accountant"] .text-2xl {
+    font-size: 1.2rem !important;
+  }
+
+  html[data-portal="accountant"] .ant-btn-lg,
+  html[data-portal="accountant"] .ant-btn {
+    width: 100%;
+  }
+
+  html[data-portal="accountant"] .ant-picker,
+  html[data-portal="accountant"] .ant-select,
+  html[data-portal="accountant"] .ant-input,
+  html[data-portal="accountant"] .ant-input-number {
+    width: 100% !important;
+  }
+}
+
+@media (max-width: 640px) {
+  html[data-portal="accountant"] main > div > div {
+    padding: 0.875rem !important;
+  }
+
+  html[data-portal="accountant"] .ant-card-body {
+    padding: 16px !important;
+  }
+}
+
 /* ── Scrollbar styling ──────────────────────────────────────────────────── */
 ::-webkit-scrollbar         { width: 6px; height: 6px; }
 ::-webkit-scrollbar-track   { background: transparent; }

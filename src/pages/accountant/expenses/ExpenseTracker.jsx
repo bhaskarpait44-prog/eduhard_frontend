@@ -37,7 +37,7 @@ const CATEGORY_MAP = {
   salary:      { label: 'Salary',        icon: BankOutlined,        tagColor: 'green',  bgGradient: 'from-green-500/10 to-green-600/5' },
   maintenance: { label: 'Maintenance',   icon: ToolOutlined,        tagColor: 'orange', bgGradient: 'from-orange-500/10 to-orange-600/5' },
   utilities:   { label: 'Utilities',     icon: ThunderboltOutlined, tagColor: 'blue',   bgGradient: 'from-blue-500/10 to-blue-600/5' },
-  supplies:    { label: 'Supplies',      icon: ContainerOutlined,   tagColor: 'cyan',   bgGradient: 'from-cyan-500/10 to-cyan-600/5' },
+  supplies:    { label: 'Supplies',      icon: ContainerOutlined,   tagColor: 'blue',   bgGradient: 'from-indigo-500/10 to-indigo-600/5' },
   events:      { label: 'Events',        icon: CalendarOutlined,    tagColor: 'purple', bgGradient: 'from-purple-500/10 to-purple-600/5' },
   misc:        { label: 'Miscellaneous', icon: EllipsisOutlined,    tagColor: 'default',bgGradient: 'from-gray-500/10 to-gray-600/5' }
 }
@@ -237,9 +237,9 @@ export default function ExpenseTracker() {
       theme={{
         algorithm: isDark ? antdTheme.darkAlgorithm : antdTheme.defaultAlgorithm,
         token: {
-          colorPrimary: '#4CC0D4',
-          borderRadius: 24,
-          fontFamily: 'inherit',
+          colorPrimary: '#4361ee',
+          borderRadius: 10,
+          fontFamily: 'Roboto, system-ui, sans-serif',
         },
       }}
     >
@@ -249,17 +249,17 @@ export default function ExpenseTracker() {
           className="flex flex-wrap items-center justify-between gap-6 rounded-[32px] border p-6 shadow-sm relative overflow-hidden backdrop-blur-md"
           style={{
             background: isDark
-              ? 'linear-gradient(135deg, rgba(76, 192, 212, 0.15) 0%, #1e1b4b 100%)'
-              : 'linear-gradient(135deg, #e0f7fa 0%, #fffdf9 100%)',
-            borderColor: isDark ? 'rgba(76, 192, 212, 0.3)' : '#b2ebf2'
+              ? 'linear-gradient(135deg, rgba(67, 97, 238, 0.15) 0%, #1e1b4b 100%)'
+              : 'linear-gradient(135deg, #eef2ff 0%, #fffdf9 100%)',
+            borderColor: isDark ? 'rgba(67, 97, 238, 0.3)' : '#c7d2fe'
           }}
         >
-          <div className="absolute -right-20 -top-20 w-64 h-64 rounded-full bg-cyan-500/10 blur-3xl pointer-events-none" />
+          <div className="absolute -right-20 -top-20 w-64 h-64 rounded-full bg-indigo-500/10 blur-3xl pointer-events-none" />
 
           <div className="z-10">
             <div className="flex items-center gap-2">
               <h1 className="text-2xl font-black text-gray-900 dark:text-white tracking-tight">Expense Tracker</h1>
-              <Tag color="cyan" className="font-extrabold uppercase text-[9px] border-0 px-2 rounded-full">Outflow</Tag>
+              <Tag color="blue" className="font-extrabold uppercase text-[9px] border-0 px-2 rounded-full">Outflow</Tag>
             </div>
             <p className="mt-1 text-xs text-gray-500 dark:text-gray-400 font-semibold leading-relaxed">
               Track school expenditures, organize categories, and manage vendor/payroll approvals.
@@ -288,7 +288,7 @@ export default function ExpenseTracker() {
               icon={<PlusOutlined />}
               onClick={() => setModalOpen(true)}
               className="rounded-xl font-bold flex items-center justify-center border-0"
-              style={{ height: '40px', padding: '0 20px', background: 'linear-gradient(90deg, #4cc0d4 0%, #0891b2 100%)' }}
+              style={{ height: '40px', padding: '0 20px', background: 'linear-gradient(90deg, #4361ee 0%, #1d4ed8 100%)' }}
             >
               Record Expense
             </Button>
@@ -300,7 +300,7 @@ export default function ExpenseTracker() {
           <Col xs={24} sm={12} lg={6}>
             <Card
               className="rounded-[24px] text-white border-0 overflow-hidden shadow-sm flex flex-col justify-center h-full"
-              style={{ background: 'linear-gradient(135deg, #4cc0d4 0%, #0891b2 100%)' }}
+              style={{ background: 'linear-gradient(135deg, #4361ee 0%, #1d4ed8 100%)' }}
             >
               <p className="text-[10px] font-black uppercase tracking-[0.18em] opacity-80">Total Expenses</p>
               <p className="text-2xl font-black mt-2 tracking-tight">{formatCurrency(totalExpense)}</p>
@@ -316,7 +316,7 @@ export default function ExpenseTracker() {
             return (
               <Col xs={24} sm={12} lg={6} key={key}>
                 <Card
-                  className={`rounded-[24px] border border-cyan-200/10 shadow-sm h-full bg-gradient-to-b ${config.bgGradient}`}
+                  className={`rounded-[24px] border border-indigo-200/10 shadow-sm h-full bg-gradient-to-b ${config.bgGradient}`}
                   styles={{ body: { padding: '20px' } }}
                 >
                   <div className="flex items-center gap-3 mb-3">
@@ -451,7 +451,7 @@ export default function ExpenseTracker() {
               <Button type="button" onClick={() => setModalOpen(false)} className="rounded-xl font-bold h-[38px]">
                 Cancel
               </Button>
-              <Button type="primary" htmlType="submit" loading={isLoading} className="rounded-xl font-bold h-[38px] border-0" style={{ background: 'linear-gradient(90deg, #4cc0d4 0%, #0891b2 100%)' }}>
+              <Button type="primary" htmlType="submit" loading={isLoading} className="rounded-xl font-bold h-[38px] border-0" style={{ background: 'linear-gradient(90deg, #4361ee 0%, #1d4ed8 100%)' }}>
                 Save Expense
               </Button>
             </div>

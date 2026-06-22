@@ -51,9 +51,9 @@ const ReportScaffold = ({ title, data, rowsKey = 'transactions', columns = [], i
       theme={{
         algorithm: isDark ? antdTheme.darkAlgorithm : antdTheme.defaultAlgorithm,
         token: {
-          colorPrimary: '#4CC0D4',
-          borderRadius: 24,
-          fontFamily: 'inherit',
+          colorPrimary: '#4361ee',
+          borderRadius: 10,
+          fontFamily: 'Roboto, system-ui, sans-serif',
         },
       }}
     >
@@ -63,21 +63,21 @@ const ReportScaffold = ({ title, data, rowsKey = 'transactions', columns = [], i
           className="flex flex-wrap items-center justify-between gap-6 rounded-[32px] border p-6 shadow-sm relative overflow-hidden backdrop-blur-md"
           style={{
             background: isDark
-              ? 'linear-gradient(135deg, rgba(76, 192, 212, 0.15) 0%, #1e1b4b 100%)'
-              : 'linear-gradient(135deg, #e0f7fa 0%, #fffdf9 100%)',
-            borderColor: isDark ? 'rgba(76, 192, 212, 0.3)' : '#b2ebf2'
+              ? 'linear-gradient(135deg, rgba(67, 97, 238, 0.15) 0%, #1e1b4b 100%)'
+              : 'linear-gradient(135deg, #eef2ff 0%, #fffdf9 100%)',
+            borderColor: isDark ? 'rgba(67, 97, 238, 0.3)' : '#c7d2fe'
           }}
         >
-          <div className="absolute -right-20 -top-20 w-64 h-64 rounded-full bg-cyan-500/10 blur-3xl pointer-events-none" />
+          <div className="absolute -right-20 -top-20 w-64 h-64 rounded-full bg-indigo-500/10 blur-3xl pointer-events-none" />
 
           <div className="z-10 flex items-center gap-4">
-            <div className="p-3 bg-cyan-500/10 rounded-2xl text-cyan-600 dark:text-cyan-400">
+            <div className="p-3 bg-indigo-500/10 rounded-2xl text-indigo-600 dark:text-indigo-400">
               <FileTextOutlined className="text-xl" />
             </div>
             <div>
               <div className="flex items-center gap-2">
                 <h1 className="text-2xl font-black text-gray-900 dark:text-white tracking-tight">{title}</h1>
-                <Tag color="cyan" className="font-extrabold uppercase text-[9px] border-0 px-2 rounded-full">Report</Tag>
+                <Tag color="blue" className="font-extrabold uppercase text-[9px] border-0 px-2 rounded-full">Report</Tag>
               </div>
               <p className="mt-1 text-xs text-gray-500 dark:text-gray-400 font-semibold leading-relaxed">
                 Generated collection and transaction analysis logs.
@@ -101,7 +101,7 @@ const ReportScaffold = ({ title, data, rowsKey = 'transactions', columns = [], i
           <Row gutter={[16, 16]}>
             {summaryEntries.slice(0, 6).map(([key, value]) => (
               <Col xs={24} sm={12} md={8} key={key}>
-                <Card className="rounded-[24px] border border-cyan-200/10 shadow-sm" styles={{ body: { padding: '20px' } }}>
+                <Card className="rounded-[24px] border border-indigo-200/10 shadow-sm" styles={{ body: { padding: '20px' } }}>
                   <Statistic
                     title={<span className="text-[10px] font-black uppercase tracking-[0.18em] text-gray-400 block mb-1">{key.replace(/_/g, ' ')}</span>}
                     value={value}

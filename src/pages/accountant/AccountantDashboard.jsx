@@ -72,10 +72,10 @@ const AccountantDashboard = () => {
       key: 'student_name',
       render: (text) => (
         <div className="flex items-center gap-2.5">
-          <Avatar size="small" className="bg-cyan-100 text-cyan-700 font-bold dark:bg-cyan-950/40 dark:text-cyan-300">
+          <Avatar size="small" className="bg-indigo-100 text-indigo-700 font-bold dark:bg-indigo-950/40 dark:text-indigo-300">
             {getInitials(text)}
           </Avatar>
-          <span className="font-extrabold text-gray-800 dark:text-gray-200 hover:text-cyan-500 transition-colors">{text}</span>
+          <span className="font-extrabold text-gray-800 dark:text-gray-200 hover:text-indigo-500 transition-colors">{text}</span>
         </div>
       )
     },
@@ -98,7 +98,7 @@ const AccountantDashboard = () => {
       render: (text) => {
         let color = 'default'
         const mode = text?.toLowerCase() || ''
-        if (mode === 'cash') color = 'cyan'
+        if (mode === 'cash') color = 'blue'
         else if (mode === 'online' || mode === 'upi') color = 'blue'
         else if (mode === 'bank' || mode === 'cheque' || mode === 'card') color = 'green'
         return <Tag color={color} className="uppercase font-extrabold text-[10px] rounded-full px-2">{text}</Tag>
@@ -109,7 +109,7 @@ const AccountantDashboard = () => {
       dataIndex: 'receipt_no',
       key: 'receipt_no',
       render: (text) => (
-        <span className="inline-flex items-center gap-1 text-xs font-bold text-cyan-600 dark:text-cyan-400 underline decoration-cyan-500/20 underline-offset-4 hover:text-cyan-700 transition-colors">
+        <span className="inline-flex items-center gap-1 text-xs font-bold text-indigo-600 dark:text-indigo-400 underline decoration-indigo-500/20 underline-offset-4 hover:text-indigo-700 transition-colors">
           <FileTextOutlined className="text-[10px]" />
           {text}
         </span>
@@ -122,9 +122,9 @@ const AccountantDashboard = () => {
       theme={{
         algorithm: isDark ? antdTheme.darkAlgorithm : antdTheme.defaultAlgorithm,
         token: {
-          colorPrimary: '#4CC0D4',
-          borderRadius: 24,
-          fontFamily: 'inherit',
+          colorPrimary: '#4361ee',
+          borderRadius: 10,
+          fontFamily: 'Roboto, system-ui, sans-serif',
         },
       }}
     >
@@ -134,27 +134,27 @@ const AccountantDashboard = () => {
           className="flex flex-wrap items-center justify-between gap-6 rounded-[32px] border p-6 shadow-sm relative overflow-hidden backdrop-blur-md" 
           style={{ 
             background: isDark 
-              ? 'linear-gradient(135deg, rgba(76, 192, 212, 0.15) 0%, #1e1b4b 100%)'
-              : 'linear-gradient(135deg, #e0f7fa 0%, #fffdf9 100%)', 
-            borderColor: isDark ? '#4cc0d430' : '#b2ebf2'
+              ? 'linear-gradient(135deg, rgba(67, 97, 238, 0.15) 0%, #1e1b4b 100%)'
+              : 'linear-gradient(135deg, #eef2ff 0%, #fffdf9 100%)', 
+            borderColor: isDark ? '#4361ee30' : '#c7d2fe'
           }}
         >
-          <div className="absolute -right-20 -top-20 w-64 h-64 rounded-full bg-cyan-500/10 blur-3xl pointer-events-none" />
+          <div className="absolute -right-20 -top-20 w-64 h-64 rounded-full bg-indigo-500/10 blur-3xl pointer-events-none" />
           
           <div className="flex items-center gap-4 z-10">
             <Avatar 
               size={64} 
-              className="shadow-md border-2 border-cyan-400 bg-gradient-to-tr from-cyan-400 to-cyan-600 text-white font-extrabold text-xl flex items-center justify-center"
+              className="shadow-md border-2 border-indigo-400 bg-gradient-to-tr from-indigo-400 to-indigo-600 text-white font-extrabold text-xl flex items-center justify-center"
             >
               {getInitials(user?.name || 'Accountant')}
             </Avatar>
             <div>
-              <span className="text-[10px] font-black uppercase tracking-[0.2em] text-cyan-600 dark:text-cyan-400">{greeting}</span>
+              <span className="text-[10px] font-black uppercase tracking-[0.2em] text-indigo-600 dark:text-indigo-400">{greeting}</span>
               <h1 className="mt-0.5 text-2xl md:text-3xl font-black text-gray-900 dark:text-white tracking-tight">{user?.name || 'Accountant'}</h1>
               <p className="mt-1 text-xs text-gray-500 dark:text-gray-400 font-semibold flex items-center gap-1.5">
                 Today: <span className="text-gray-700 dark:text-gray-200">{formatDate(new Date(), 'long')}</span> 
                 <span className="opacity-30">•</span> 
-                Session: <span className="px-2 py-0.5 rounded-full bg-cyan-100 text-cyan-800 dark:bg-cyan-950/40 dark:text-cyan-300 font-bold text-[10px]">{dashboard?.session_id || todayStats?.session?.name || 'Current'}</span>
+                Session: <span className="px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-800 dark:bg-indigo-950/40 dark:text-indigo-300 font-bold text-[10px]">{dashboard?.session_id || todayStats?.session?.name || 'Current'}</span>
               </p>
             </div>
           </div>
@@ -165,7 +165,7 @@ const AccountantDashboard = () => {
               icon={<PlusOutlined className="font-bold" />}
               onClick={() => navigate(ROUTES.ACCOUNTANT_COLLECTION)}
               className="rounded-full font-bold shadow-md hover:shadow-lg transition-all flex items-center justify-center border-0"
-              style={{ height: '48px', padding: '0 28px', background: 'linear-gradient(90deg, #4cc0d4 0%, #0891b2 100%)' }}
+              style={{ height: '48px', padding: '0 28px', background: 'linear-gradient(90deg, #4361ee 0%, #1d4ed8 100%)' }}
             >
               Collect Fee
             </Button>
@@ -173,7 +173,7 @@ const AccountantDashboard = () => {
               size="large"
               icon={<RedoOutlined className={isLoading ? 'animate-spin' : ''} />}
               onClick={() => refresh().catch(() => {})}
-              className="rounded-full font-bold border-gray-200 dark:border-gray-800 bg-white/80 dark:bg-gray-900/80 text-gray-700 dark:text-gray-200 hover:text-cyan-500 hover:border-cyan-400"
+              className="rounded-full font-bold border-gray-200 dark:border-gray-800 bg-white/80 dark:bg-gray-900/80 text-gray-700 dark:text-gray-200 hover:text-indigo-500 hover:border-indigo-400"
               style={{ height: '48px', padding: '0 24px' }}
             >
               Refresh
@@ -199,7 +199,7 @@ const AccountantDashboard = () => {
                       </div>
                       <Avatar 
                         size="large" 
-                        className="bg-cyan-50 dark:bg-cyan-950/40 text-cyan-600 dark:text-cyan-400 flex items-center justify-center border-0"
+                        className="bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400 flex items-center justify-center border-0"
                         icon={<WalletOutlined />}
                       />
                     </div>
@@ -277,12 +277,12 @@ const AccountantDashboard = () => {
                     </div>
                     <div className="mt-2 text-xs font-semibold text-gray-500 flex justify-between">
                       <span>Target: {formatCurrency(todayStats?.month?.target_amount || 0)}</span>
-                      <span className="text-cyan-600 dark:text-cyan-400 font-bold">{monthPercent}%</span>
+                      <span className="text-indigo-600 dark:text-indigo-400 font-bold">{monthPercent}%</span>
                     </div>
                     <div className="mt-3">
                       <Progress
                         percent={monthPercent}
-                        strokeColor={{ '0%': '#4cc0d4', '100%': '#0891b2' }}
+                        strokeColor={{ '0%': '#4361ee', '100%': '#1d4ed8' }}
                         showInfo={false}
                         strokeWidth={8}
                         className="m-0"
@@ -313,7 +313,7 @@ const AccountantDashboard = () => {
                       <Progress
                         type="circle"
                         percent={Math.round(circularPct)}
-                        strokeColor={{ '0%': '#4cc0d4', '100%': '#10b981' }}
+                        strokeColor={{ '0%': '#4361ee', '100%': '#10b981' }}
                         width={64}
                         strokeWidth={9}
                         format={(p) => <span className="text-xs font-black text-gray-800 dark:text-gray-100">{p}%</span>}
@@ -351,10 +351,10 @@ const AccountantDashboard = () => {
                 title={
                   <div className="flex items-center justify-between py-1">
                     <span className="text-base font-black flex items-center gap-2 text-gray-900 dark:text-white tracking-tight">
-                      <WalletOutlined className="text-cyan-500" />
+                      <WalletOutlined className="text-indigo-500" />
                       Recent Transactions
                     </span>
-                    {isLoading && <span className="text-[10px] font-black text-cyan-500 animate-pulse tracking-widest">UPDATING...</span>}
+                    {isLoading && <span className="text-[10px] font-black text-indigo-500 animate-pulse tracking-widest">UPDATING...</span>}
                   </div>
                 }
               >
@@ -374,7 +374,7 @@ const AccountantDashboard = () => {
                     onRow={(record) => ({
                       onClick: () => navigate(ROUTES.ACCOUNTANT_RECEIPT_DETAIL.replace(':id', record.id)),
                     })}
-                    rowClassName="cursor-pointer hover:bg-cyan-50/20 dark:hover:bg-cyan-950/10 transition-colors"
+                    rowClassName="cursor-pointer hover:bg-indigo-50/20 dark:hover:bg-indigo-950/10 transition-colors"
                     className="premium-table"
                   />
                 )}
@@ -430,7 +430,7 @@ const AccountantDashboard = () => {
                             <div key={item.collection_date} className="group relative flex-1 text-center h-full flex flex-col justify-end">
                               {/* Tooltip */}
                               <div className="absolute bottom-full left-1/2 mb-2 w-28 -translate-x-1/2 rounded-xl bg-gray-900/95 dark:bg-gray-950/95 px-2.5 py-2 text-[10px] text-white opacity-0 shadow-xl transition-all duration-200 group-hover:opacity-100 pointer-events-none z-30 translate-y-1 group-hover:translate-y-0 border border-gray-800">
-                                <div className="font-extrabold text-cyan-400">{formatCurrency(item.amount)}</div>
+                                <div className="font-extrabold text-indigo-400">{formatCurrency(item.amount)}</div>
                                 <div className="opacity-60 text-[9px] mt-0.5">{formatDate(item.collection_date)}</div>
                               </div>
                               
@@ -439,7 +439,7 @@ const AccountantDashboard = () => {
                                   className="w-full rounded-t-xl transition-all duration-300 group-hover:brightness-110 shadow-sm"
                                   style={{
                                     height: `${barHeight}%`,
-                                    background: 'linear-gradient(180deg, #4cc0d4 0%, #0891b2 100%)',
+                                    background: 'linear-gradient(180deg, #4361ee 0%, #1d4ed8 100%)',
                                   }}
                                 />
                               </div>
@@ -473,10 +473,10 @@ const AccountantDashboard = () => {
                       {(pendingTasks || []).map((task) => (
                         <div 
                           key={task.key} 
-                          className="flex items-center justify-between gap-4 rounded-2xl border border-gray-100 dark:border-gray-800/80 p-4 transition-all hover:border-cyan-200 hover:bg-cyan-50/10 dark:hover:bg-cyan-950/10 hover:translate-x-1 duration-200" 
+                          className="flex items-center justify-between gap-4 rounded-2xl border border-gray-100 dark:border-gray-800/80 p-4 transition-all hover:border-indigo-200 hover:bg-indigo-50/10 dark:hover:bg-indigo-950/10 hover:translate-x-1 duration-200" 
                         >
                           <div className="flex items-center gap-3">
-                            <span className="w-1.5 h-1.5 rounded-full bg-cyan-500" />
+                            <span className="w-1.5 h-1.5 rounded-full bg-indigo-500" />
                             <div>
                               <div className="text-xs font-bold text-gray-900 dark:text-white">
                                 {task.count || 0} {task.label}
@@ -493,7 +493,7 @@ const AccountantDashboard = () => {
                             size="small"
                             onClick={() => navigate(task.route)}
                             className="rounded-full font-bold text-[11px] px-3 border-0"
-                            style={{ backgroundColor: '#4cc0d4', borderColor: '#4cc0d4' }}
+                            style={{ backgroundColor: '#4361ee', borderColor: '#4361ee' }}
                           >
                             Resolve
                           </Button>

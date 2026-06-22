@@ -226,7 +226,7 @@ export default function PayrollDashboard() {
               icon={<ArrowRightOutlined />}
               onClick={() => { setPayingRecord(record); setPayModalOpen(true) }}
               className="rounded-full font-bold text-xs border-0"
-              style={{ backgroundColor: '#4CC0D4' }}
+              style={{ backgroundColor: '#4361ee' }}
             >
               Mark Paid
             </Button>
@@ -335,9 +335,9 @@ export default function PayrollDashboard() {
       theme={{
         algorithm: isDark ? antdTheme.darkAlgorithm : antdTheme.defaultAlgorithm,
         token: {
-          colorPrimary: '#4CC0D4',
-          borderRadius: 24,
-          fontFamily: 'inherit',
+          colorPrimary: '#4361ee',
+          borderRadius: 10,
+          fontFamily: 'Roboto, system-ui, sans-serif',
         },
       }}
     >
@@ -378,19 +378,19 @@ export default function PayrollDashboard() {
             {/* Stats Dashboard Grid */}
             <Row gutter={[16, 16]}>
               <Col xs={12} md={6}>
-                <Card className="rounded-[24px] border border-cyan-200/10 shadow-sm" styles={{ body: { padding: '20px' } }}>
+                <Card className="rounded-[24px] border border-indigo-200/10 shadow-sm" styles={{ body: { padding: '20px' } }}>
                   <Statistic
                     title={<span className="text-[10px] font-black uppercase tracking-[0.18em] text-gray-400 block mb-1">Monthly Budget</span>}
                     value={summary.total}
                     precision={2}
                     formatter={(v) => formatCurrency(v)}
-                    valueStyle={{ fontSize: '1.25rem', fontWeight: 900, color: '#4CC0D4' }}
+                    valueStyle={{ fontSize: '1.25rem', fontWeight: 900, color: '#4361ee' }}
                   />
                   <span className="text-[10px] font-semibold text-gray-400 block mt-2">{summary.count} records generated</span>
                 </Card>
               </Col>
               <Col xs={12} md={6}>
-                <Card className="rounded-[24px] border border-cyan-200/10 shadow-sm" styles={{ body: { padding: '20px' } }}>
+                <Card className="rounded-[24px] border border-indigo-200/10 shadow-sm" styles={{ body: { padding: '20px' } }}>
                   <Statistic
                     title={<span className="text-[10px] font-black uppercase tracking-[0.18em] text-gray-400 block mb-1">Disbursed</span>}
                     value={summary.paid}
@@ -402,7 +402,7 @@ export default function PayrollDashboard() {
                 </Card>
               </Col>
               <Col xs={12} md={6}>
-                <Card className="rounded-[24px] border border-cyan-200/10 shadow-sm" styles={{ body: { padding: '20px' } }}>
+                <Card className="rounded-[24px] border border-indigo-200/10 shadow-sm" styles={{ body: { padding: '20px' } }}>
                   <Statistic
                     title={<span className="text-[10px] font-black uppercase tracking-[0.18em] text-gray-400 block mb-1">Pending</span>}
                     value={summary.pending}
@@ -414,7 +414,7 @@ export default function PayrollDashboard() {
                 </Card>
               </Col>
               <Col xs={12} md={6}>
-                <Card className="rounded-[24px] border border-cyan-200/10 shadow-sm" styles={{ body: { padding: '20px' } }}>
+                <Card className="rounded-[24px] border border-indigo-200/10 shadow-sm" styles={{ body: { padding: '20px' } }}>
                   <Statistic
                     title={<span className="text-[10px] font-black uppercase tracking-[0.18em] text-gray-400 block mb-1">Avg Salary</span>}
                     value={summary.total / (summary.count || 1)}
@@ -434,7 +434,7 @@ export default function PayrollDashboard() {
               title={
                 <div className="flex flex-wrap items-center justify-between gap-4 py-1">
                   <div className="flex items-center gap-3">
-                    <div className="p-2.5 rounded-xl bg-cyan-500/10 text-cyan-600 dark:text-cyan-400">
+                    <div className="p-2.5 rounded-xl bg-indigo-500/10 text-indigo-600 dark:text-indigo-400">
                       <CalendarOutlined className="text-lg" />
                     </div>
                     <div>
@@ -467,7 +467,7 @@ export default function PayrollDashboard() {
                       onClick={handleGenerate}
                       loading={isLoading}
                       className="rounded-xl font-bold flex items-center justify-center border-0"
-                      style={{ height: '36px', background: 'linear-gradient(90deg, #4cc0d4 0%, #0891b2 100%)' }}
+                      style={{ height: '36px', background: 'linear-gradient(90deg, #4361ee 0%, #1d4ed8 100%)' }}
                     >
                       Generate
                     </Button>
@@ -483,14 +483,14 @@ export default function PayrollDashboard() {
                 loading={isLoading && !viewPayslip}
                 size="middle"
                 className="premium-table"
-                rowClassName="hover:bg-cyan-50/10 dark:hover:bg-cyan-950/10 transition-colors"
+                rowClassName="hover:bg-indigo-50/10 dark:hover:bg-indigo-950/10 transition-colors"
                 summary={() => (
                   <Table.Summary fixed>
-                    <Table.Summary.Row className="bg-cyan-500/5 font-bold">
+                    <Table.Summary.Row className="bg-indigo-500/5 font-bold">
                       <Table.Summary.Cell index={0} className="px-6 py-4">Total Monthly Budget</Table.Summary.Cell>
                       <Table.Summary.Cell index={1} colSpan={3} />
                       <Table.Summary.Cell index={4} align="right">
-                        <span className="text-sm font-black text-cyan-600 dark:text-cyan-400">{formatCurrency(summary.total)}</span>
+                        <span className="text-sm font-black text-indigo-600 dark:text-indigo-400">{formatCurrency(summary.total)}</span>
                       </Table.Summary.Cell>
                       <Table.Summary.Cell index={5} colSpan={2} />
                     </Table.Summary.Row>
@@ -621,7 +621,7 @@ export default function PayrollDashboard() {
                 <Button type="button" onClick={() => setStructModalOpen(false)} className="rounded-xl font-bold h-[38px]">
                   Cancel
                 </Button>
-                <Button type="primary" htmlType="submit" loading={isLoading} className="rounded-xl font-bold h-[38px] border-0" style={{ background: 'linear-gradient(90deg, #4cc0d4 0%, #0891b2 100%)' }}>
+                <Button type="primary" htmlType="submit" loading={isLoading} className="rounded-xl font-bold h-[38px] border-0" style={{ background: 'linear-gradient(90deg, #4361ee 0%, #1d4ed8 100%)' }}>
                   Save Changes
                 </Button>
               </div>
@@ -642,9 +642,9 @@ export default function PayrollDashboard() {
             <form onSubmit={handlePaySubmit} className="space-y-4 py-3">
               <div className="p-6 rounded-2xl mb-4 text-center border border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-800/30">
                 <p className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400">Net Amount to Pay</p>
-                <p className="text-3xl font-black mt-2 text-cyan-600 dark:text-cyan-400">{formatCurrency(payingRecord.net_salary)}</p>
+                <p className="text-3xl font-black mt-2 text-indigo-600 dark:text-indigo-400">{formatCurrency(payingRecord.net_salary)}</p>
                 <div className="mt-4 pt-4 border-t border-gray-150/40 flex items-center justify-center gap-2">
-                  <Avatar size="small" className="bg-cyan-100 text-cyan-700 font-bold">
+                  <Avatar size="small" className="bg-indigo-100 text-indigo-700 font-bold">
                     {payingRecord.name?.charAt(0).toUpperCase()}
                   </Avatar>
                   <p className="text-sm font-bold text-gray-800 dark:text-gray-200">{payingRecord.name}</p>
@@ -693,7 +693,7 @@ export default function PayrollDashboard() {
                 <Button type="button" onClick={() => setPayModalOpen(false)} className="rounded-xl font-bold h-[38px]">
                   Cancel
                 </Button>
-                <Button type="primary" htmlType="submit" loading={isLoading} icon={<CheckCircleOutlined />} className="rounded-xl font-bold h-[38px] border-0" style={{ background: 'linear-gradient(90deg, #4cc0d4 0%, #0891b2 100%)' }}>
+                <Button type="primary" htmlType="submit" loading={isLoading} icon={<CheckCircleOutlined />} className="rounded-xl font-bold h-[38px] border-0" style={{ background: 'linear-gradient(90deg, #4361ee 0%, #1d4ed8 100%)' }}>
                   Confirm Payment
                 </Button>
               </div>
