@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import {
   Card,
   Steps,
@@ -71,6 +71,35 @@ const FeeCollection = () => {
   })
   const [receipt, setReceipt] = useState(null)
   const [errors, setErrors] = useState({})
+
+  useEffect(() => {
+    const handler = (event) => {
+      if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'f') {
+        event.preventDefault()
+        if (step !== 0) {
+          setStep(0)
+          setStudent(null)
+          setInvoicePayload(null)
+          setSelectedInvoices([])
+          setPaymentData({
+            amount: '',
+            payment_mode: 'cash',
+            payment_date: today,
+            reference: '',
+            remarks: '',
+            bank_name: '',
+            cheque_number: '',
+            cheque_date: today,
+            upi_id: '',
+          })
+          setReceipt(null)
+          setErrors({})
+        }
+      }
+    }
+    window.addEventListener('keydown', handler)
+    return () => window.removeEventListener('keydown', handler)
+  }, [step])
 
   const isDark = storeTheme === 'dark' || (storeTheme === 'system' && window.matchMedia?.('(prefers-color-scheme: dark)').matches)
 

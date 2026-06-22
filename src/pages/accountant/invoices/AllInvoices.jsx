@@ -213,7 +213,7 @@ export const InvoiceTable = ({ title, rows = [], loading = false }) => {
                 const bal = Number(row.balance || 0)
                 return (
                   <tr key={row.id}
-                    className="group cursor-pointer transition-colors hover:bg-orange-50/30"
+                    className="group cursor-pointer transition-colors hover:bg-cyan-50/15 dark:hover:bg-cyan-950/10"
                     onClick={() => navigate(ROUTES.ACCOUNTANT_STUDENT_FEES.replace(':id', row.student_id))}
                     style={{ borderBottom: i < paginated.length - 1 ? '1px solid var(--color-border)' : 'none' }}>
 
@@ -293,7 +293,7 @@ export const InvoiceTable = ({ title, rows = [], loading = false }) => {
                         <button
                           type="button"
                           onClick={() => navigate(ROUTES.ACCOUNTANT_STUDENT_FEES.replace(':id', row.student_id))}
-                          className="flex h-8 w-8 items-center justify-center rounded-full text-muted transition-colors hover:bg-orange-100 hover:text-orange-700"
+                          className="flex h-8 w-8 items-center justify-center rounded-full text-muted transition-colors hover:bg-cyan-50 hover:text-cyan-700 dark:hover:bg-cyan-950/40 dark:hover:text-cyan-400"
                           title="View Detail"
                         >
                           <Eye size={16} />
@@ -302,7 +302,7 @@ export const InvoiceTable = ({ title, rows = [], loading = false }) => {
                           <button
                             type="button"
                             onClick={() => navigate(ROUTES.ACCOUNTANT_COLLECTION)}
-                            className="flex h-8 w-8 items-center justify-center rounded-full text-brand transition-colors hover:bg-orange-100"
+                            className="flex h-8 w-8 items-center justify-center rounded-full text-brand transition-colors hover:bg-cyan-50 dark:hover:bg-cyan-950/40"
                             title="Collect Fee"
                           >
                             <Wallet size={16} />
@@ -335,7 +335,7 @@ export const InvoiceTable = ({ title, rows = [], loading = false }) => {
                 <td colSpan={2} className="px-4 py-3">
                   <div className="flex items-center gap-1 justify-end">
                     <button type="button" disabled={page === 1} onClick={() => setPage((p) => p - 1)}
-                      className="w-7 h-7 rounded-lg flex items-center justify-center text-xs font-bold border disabled:opacity-30 transition-colors hover:bg-orange-50"
+                      className="w-7 h-7 rounded-lg flex items-center justify-center text-xs font-bold border disabled:opacity-30 transition-colors hover:bg-cyan-50/40 dark:hover:bg-cyan-950/40"
                       style={{ borderColor: 'var(--color-border)', color: 'var(--color-text-primary)' }}>‹</button>
                     {Array.from({ length: totalPages }, (_, i) => i + 1)
                       .filter((p) => p === 1 || p === totalPages || Math.abs(p - page) <= 1)
@@ -349,7 +349,7 @@ export const InvoiceTable = ({ title, rows = [], loading = false }) => {
                           </button>
                       )}
                     <button type="button" disabled={page === totalPages} onClick={() => setPage((p) => p + 1)}
-                      className="w-7 h-7 rounded-lg flex items-center justify-center text-xs font-bold border disabled:opacity-30 transition-colors hover:bg-orange-50"
+                      className="w-7 h-7 rounded-lg flex items-center justify-center text-xs font-bold border disabled:opacity-30 transition-colors hover:bg-cyan-50/40 dark:hover:bg-cyan-950/40"
                       style={{ borderColor: 'var(--color-border)', color: 'var(--color-text-primary)' }}>›</button>
                   </div>
                 </td>

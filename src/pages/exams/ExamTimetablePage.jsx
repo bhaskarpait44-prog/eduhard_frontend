@@ -7,6 +7,7 @@ import {
 } from 'lucide-react'
 import useToast from '@/hooks/useToast'
 import { getExamSubjects, updateExamTimetable, downloadExamTimetablePdf } from '@/api/examsApi'
+import { getHolidays } from '@/api/sessionsApi'
 import { getUsers } from '@/api/userManagementApi'
 import { formatDate } from '@/utils/helpers'
 import { downloadBlob } from '@/utils/downloadBlob'
@@ -138,6 +139,7 @@ const ExamTimetablePage = () => {
   const [copiedId, setCopiedId] = useState(null)
   const [showBackConfirm, setShowBackConfirm] = useState(false)
   const [errorMsg, setErrorMsg] = useState(null)
+  const [holidays, setHolidays] = useState([])
 
   // Quick fill state
   const [bulkStartInput, setBulkStartInput] = useState('')
@@ -189,7 +191,12 @@ const ExamTimetablePage = () => {
     const d = new Date(startDate)
     if (isNaN(d.getTime())) return []
     while (dates.length < count) {
-      if (d.getDay() !== 0) dates.push(d.toISOString().slice(0, 10))
+      const dateStr = d.toISOString().slice(0, 10)
+      const isSunday = d.getDay() === 0
+      const isHoliday = holidays.includes(dateStr)
+      if (!isSunday && !isHoliday) {
+        dates.push(dateStr)
+      }
       d.setDate(d.getDate() + 1)
     }
     return dates
@@ -225,6 +232,18 @@ const ExamTimetablePage = () => {
         setRows(mapped)
         initialRowsRef.current = JSON.parse(JSON.stringify(mapped))
         setTeachers(teacherResponse.data?.users || [])
+
+        if (examData?.session_id) {
+          getHolidays(examData.session_id)
+            .then((holidayRes) => {
+              const holidayList = holidayRes.data || []
+              const holidayStrings = holidayList.map(h => {
+                return h.holiday_date ? String(h.holiday_date).slice(0, 10) : ''
+              }).filter(Boolean)
+              setHolidays(holidayStrings)
+            })
+            .catch(() => {})
+        }
       })
       .catch((error) => {
         setRows([])
@@ -351,6 +370,13 @@ const ExamTimetablePage = () => {
         const nd = exam.end_date.split('T')[0]
         if (ed < sd || ed > nd) {
           return toastError(`${row.name}: date must be between ${formatDate(exam.start_date)} and ${formatDate(exam.end_date)}`)
+        }
+        const dateObj = new Date(ed)
+        if (dateObj.getDay() === 0) {
+          return toastError(`${row.name}: exam cannot be scheduled on a Sunday (${formatDate(ed)})`)
+        }
+        if (holidays.includes(ed)) {
+          return toastError(`${row.name}: exam cannot be scheduled on a holiday (${formatDate(ed)})`)
         }
       }
       if (row.start_time_input && !row.start_time) {
@@ -662,6 +688,9 @@ const ExamTimetablePage = () => {
                                 const maxDay = dayjs(exam.end_date).endOf('day');
                                 if (current.isAfter(maxDay)) return true;
                               }
+                              const dateStr = current.format('YYYY-MM-DD');
+                              const isSunday = current.day() === 0;
+                              if (isSunday || holidays.includes(dateStr)) return true;
                               return false;
                             }}
                             format="DD-MM-YYYY"

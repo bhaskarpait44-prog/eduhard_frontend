@@ -11,6 +11,18 @@ import Select from '@/components/ui/Select'
 import Button from '@/components/ui/Button'
 import * as classApi from '@/api/classApi'
 
+const STATUS_STYLES = {
+  fully_paid: { bg: '#dcfce7', text: '#15803d' },
+  partial:    { bg: '#fef9c3', text: '#a16207' },
+  pending:    { bg: '#fef9c3', text: '#a16207' },
+  overdue:    { bg: '#fef2f2', text: '#b91c1c' },
+  waived:     { bg: '#f1f5f9', text: '#64748b' },
+}
+
+const getFeeStatusStyle = (status) => {
+  return STATUS_STYLES[status] || { bg: '#fef9c3', text: '#a16207' }
+}
+
 const StudentFeeList = () => {
   usePageTitle('Student Fees')
   const navigate = useNavigate()
@@ -43,7 +55,7 @@ const StudentFeeList = () => {
             <h1 className="text-2xl font-bold" style={{ color: 'var(--color-text-primary)' }}>Student Fee Positions</h1>
             <p className="mt-1 text-sm" style={{ color: 'var(--color-text-secondary)' }}>Review and manage fee accounts for all active students.</p>
           </div>
-          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-orange-50 text-orange-600">
+          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-cyan-50 text-cyan-600 dark:bg-cyan-950/30 dark:text-cyan-400">
             <UserRound size={24} />
           </div>
         </div>
@@ -100,11 +112,11 @@ const StudentFeeList = () => {
             </thead>
             <tbody>
               {students.map((student) => (
-                <tr key={student.id} className="group transition-colors hover:bg-orange-50/30" style={{ borderBottom: '1px solid var(--color-border)' }}>
+                <tr key={student.id} className="group transition-colors hover:bg-cyan-50/15 dark:hover:bg-cyan-950/10" style={{ borderBottom: '1px solid var(--color-border)' }}>
                   <td className="px-5 py-4 text-xs font-bold" style={{ color: 'var(--color-text-muted)' }}>{student.admission_no}</td>
                   <td className="px-5 py-4">
                     <div className="flex items-center gap-3">
-                      <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-orange-100 text-[11px] font-bold text-orange-700">
+                      <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-cyan-100 text-[11px] font-bold text-cyan-700 dark:bg-cyan-950/50 dark:text-cyan-300">
                         {(student.student_name || '?').charAt(0)}
                       </div>
                       <div className="text-sm font-semibold" style={{ color: 'var(--color-text-primary)' }}>{student.student_name}</div>
@@ -119,8 +131,8 @@ const StudentFeeList = () => {
                   <td className="px-5 py-4 text-xs" style={{ color: 'var(--color-text-muted)' }}>{student.last_payment_date ? formatDate(student.last_payment_date) : '--'}</td>
                   <td className="px-5 py-4">
                     <span className="rounded-full px-3 py-1 text-[10px] font-bold uppercase tracking-wider shadow-sm" style={{ 
-                      backgroundColor: student.fee_status === 'fully_paid' ? '#dcfce7' : '#fef2f2', 
-                      color: student.fee_status === 'fully_paid' ? '#15803d' : '#b91c1c' 
+                      backgroundColor: getFeeStatusStyle(student.fee_status).bg, 
+                      color: getFeeStatusStyle(student.fee_status).text 
                     }}>
                       {String(student.fee_status || '').replace('_', ' ')}
                     </span>
@@ -152,7 +164,7 @@ const StudentFeeList = () => {
                       type="button" 
                       disabled={page === 1} 
                       onClick={() => setPage(p => p - 1)}
-                      className="w-8 h-8 rounded-lg flex items-center justify-center text-xs font-bold border disabled:opacity-30 transition-colors hover:bg-orange-50"
+                      className="w-8 h-8 rounded-lg flex items-center justify-center text-xs font-bold border disabled:opacity-30 transition-colors hover:bg-cyan-50/40 dark:hover:bg-cyan-950/40"
                       style={{ borderColor: 'var(--color-border)', color: 'var(--color-text-primary)' }}
                     >‹</button>
                     
@@ -184,7 +196,7 @@ const StudentFeeList = () => {
                       type="button" 
                       disabled={page === pagination.pages} 
                       onClick={() => setPage(p => p + 1)}
-                      className="w-8 h-8 rounded-lg flex items-center justify-center text-xs font-bold border disabled:opacity-30 transition-colors hover:bg-orange-50"
+                      className="w-8 h-8 rounded-lg flex items-center justify-center text-xs font-bold border disabled:opacity-30 transition-colors hover:bg-cyan-50/40 dark:hover:bg-cyan-950/40"
                       style={{ borderColor: 'var(--color-border)', color: 'var(--color-text-primary)' }}
                     >›</button>
                   </div>

@@ -29,6 +29,27 @@ const Header = ({ onMenuClick }) => {
   const [notifOpen,     setNotifOpen]     = useState(false)
   const [notifications, setNotifications] = useState([])
   const [notifLoading,  setNotifLoading]  = useState(false)
+  const [dismissedUpiCount, setDismissedUpiCount] = useState(() => {
+    const val = sessionStorage.getItem('dismissed_upi_count')
+    return val !== null ? Number(val) : null
+  })
+  const [dismissedUpiRequestIds, setDismissedUpiRequestIds] = useState(() => {
+    try {
+      const val = localStorage.getItem('dismissed_upi_request_ids')
+      return val ? JSON.parse(val) : []
+    } catch {
+      return []
+    }
+  })
+
+  const dismissUpiRequest = (id) => {
+    setDismissedUpiRequestIds(prev => {
+      if (prev.includes(id)) return prev
+      const next = [...prev, id]
+      localStorage.setItem('dismissed_upi_request_ids', JSON.stringify(next))
+      return next
+    })
+  }
 
   const userMenuRef = useRef(null)
   const notifRef    = useRef(null)
@@ -80,6 +101,15 @@ const Header = ({ onMenuClick }) => {
           const res    = await adminTeacherControlApi.getTeacherControlOverview()
           if (!active) return
           const counts = res?.data?.counts || {}
+
+          let totalUpiPending = 0
+          try {
+            const upiRes = await accountantApi.getUpiRequests({ status: 'pending', limit: 1 })
+            totalUpiPending = upiRes?.data?.pagination?.total || 0
+          } catch (e) {
+            console.error('Failed to load pending UPI requests for admin header', e)
+          }
+
           const nextItems = [
             {
               id          : 'pending_leaves',
@@ -95,7 +125,14 @@ const Header = ({ onMenuClick }) => {
               count       : Number(counts.pending_corrections || 0),
               route       : ROUTES.ADMIN_TEACHER_CONTROL,
             },
-          ].filter(item => item.count > 0)
+            totalUpiPending > 0 && {
+              id          : 'pending_upi_requests',
+              title       : 'Pending UPI Payments',
+              description : `${totalUpiPending} UPI payment requests are waiting for verification.`,
+              count       : Number(totalUpiPending),
+              route       : ROUTES.FEE_UPI_CONFIRMATIONS,
+            },
+          ].filter(Boolean).filter(item => item.count > 0)
           setNotifications(nextItems)
           return
         }
@@ -165,6 +202,24 @@ const Header = ({ onMenuClick }) => {
               source      : item.source || 'unified',
             }))
 
+          let totalUpiPending = 0
+          try {
+            const upiRes = await accountantApi.getUpiRequests({ status: 'pending', limit: 1 })
+            totalUpiPending = upiRes?.data?.pagination?.total || 0
+          } catch (e) {
+            console.error('Failed to load pending UPI requests for accountant header', e)
+          }
+
+          const upiItem = totalUpiPending > 0 ? [
+            {
+              id          : 'pending_upi_requests',
+              title       : 'Pending UPI Payments',
+              description : `${totalUpiPending} UPI payment requests are waiting for verification.`,
+              count       : Number(totalUpiPending),
+              route       : ROUTES.ACCOUNTANT_UPI_CONFIRMATIONS,
+            }
+          ] : []
+
           const staticItems = [
             {
               id: 'accountant-collections',
@@ -174,7 +229,7 @@ const Header = ({ onMenuClick }) => {
               route: ROUTES.ACCOUNTANT_DASHBOARD,
             },
           ]
-          setNotifications([...noticeItems, ...staticItems].slice(0, 8))
+          setNotifications([...noticeItems, ...upiItem, ...staticItems].slice(0, 8))
           return
         }
 
@@ -216,6 +271,7 @@ const Header = ({ onMenuClick }) => {
         // Student User
         let homework = [];
         let notices = [];
+        let upiRequests = [];
 
         try {
           const res = await studentApi.getStudentHomework();
@@ -226,6 +282,11 @@ const Header = ({ onMenuClick }) => {
           const res = await studentApi.getStudentNotices();
           notices = Array.isArray(res?.data?.notices) ? res.data.notices : [];
         } catch (e) { console.error('Failed to load student notices for header', e); }
+
+        try {
+          const res = await studentApi.getStudentUpiPaymentRequests();
+          upiRequests = Array.isArray(res?.data?.requests) ? res.data.requests : [];
+        } catch (e) { console.error('Failed to load student UPI requests for header', e); }
 
         if (!active) return
         
@@ -241,6 +302,19 @@ const Header = ({ onMenuClick }) => {
             route       : ROUTES.STUDENT_NOTICES,
             source      : item.source || 'unified',
           }))
+
+        const upiItems = upiRequests
+          .filter(req => (req.status === 'confirmed' || req.status === 'rejected') && !dismissedUpiRequestIds.includes(req.id))
+          .map(req => ({
+            id          : `student-upi-request-${req.id}-${req.status}`,
+            title       : req.status === 'confirmed' ? 'Payment Confirmed' : 'Payment Rejected',
+            description : req.status === 'confirmed'
+              ? `Your payment of Rs.${req.amount} for ${req.fee_name} has been confirmed.`
+              : `Your payment of Rs.${req.amount} for ${req.fee_name} was rejected. Reason: ${req.rejected_reason || 'Unknown'}`,
+            count       : 1,
+            route       : ROUTES.STUDENT_FEES,
+          }))
+
         const homeworkItems = homework
           .filter(item => item?.submission_status !== 'submitted')
           .sort((a, b) => new Date(b.created_at || b.due_date || 0) - new Date(a.created_at || a.due_date || 0))
@@ -252,7 +326,7 @@ const Header = ({ onMenuClick }) => {
             count       : 1,
             route       : ROUTES.STUDENT_HOMEWORK,
           }))
-        setNotifications([...noticeItems, ...homeworkItems].slice(0, 8))
+        setNotifications([...noticeItems, ...upiItems, ...homeworkItems].slice(0, 8))
       } catch (err) {
         console.error('Error in header notification loading', err)
         if (active) setNotifications([])
@@ -264,11 +338,22 @@ const Header = ({ onMenuClick }) => {
     loadNotifications()
     const timer = window.setInterval(loadNotifications, 30_000)
     return () => { active = false; window.clearInterval(timer) }
-  }, [isAdminUser, isStudentUser, isTeacherUser, isAccountantUser, isReceptionistUser])
+  }, [isAdminUser, isStudentUser, isTeacherUser, isAccountantUser, isReceptionistUser, dismissedUpiCount, dismissedUpiRequestIds])
 
   const handleNotificationClick = async (item) => {
     setNotifOpen(false)
     
+    if (item.id.includes('pending_upi_requests')) {
+      const pendingCount = Number(item.id.split('-').pop())
+      sessionStorage.setItem('dismissed_upi_count', String(pendingCount))
+      setDismissedUpiCount(pendingCount)
+    }
+
+    if (item.id.includes('student-upi-request')) {
+      const requestId = Number(item.id.split('-')[3])
+      dismissUpiRequest(requestId)
+    }
+
     if (item.id.includes('notice')) {
       const id = item.id.split('-').pop()
       try {
@@ -290,6 +375,20 @@ const Header = ({ onMenuClick }) => {
   const handleClearNotifications = async () => {
     if (!notifications.length) return
     const noticeItems = notifications.filter(n => n.id.includes('notice'))
+    const upiItem = notifications.find(n => n.id.includes('pending_upi_requests'))
+
+    if (upiItem) {
+      const pendingCount = Number(upiItem.id.split('-').pop())
+      sessionStorage.setItem('dismissed_upi_count', String(pendingCount))
+      setDismissedUpiCount(pendingCount)
+    }
+
+    if (studentUpiItems.length > 0) {
+      studentUpiItems.forEach(item => {
+        const requestId = Number(item.id.split('-')[3])
+        dismissUpiRequest(requestId)
+      })
+    }
 
     try {
       setNotifLoading(true)

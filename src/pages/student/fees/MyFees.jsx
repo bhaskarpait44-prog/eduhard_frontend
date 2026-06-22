@@ -5,9 +5,11 @@ import Button from '@/components/ui/Button'
 import Badge from '@/components/ui/Badge'
 import EmptyState from '@/components/ui/EmptyState'
 import Modal from '@/components/ui/Modal'
+import Select from '@/components/ui/Select'
 import usePageTitle from '@/hooks/usePageTitle'
 import useStudentMyFees from '@/hooks/useStudentMyFees'
 import useToast from '@/hooks/useToast'
+import * as studentApi from '@/api/studentApi'
 import { ROUTES } from '@/constants/app'
 import { formatCurrency, formatDate } from '@/utils/helpers'
 import FeeProgressBar from '@/components/student/FeeProgressBar'
@@ -39,6 +41,96 @@ const MyFees = () => {
 
   const [filter, setFilter] = useState('all')
 
+  const [selectedInvoiceId, setSelectedInvoiceId] = useState('')
+  const [upiAmount, setUpiAmount] = useState('')
+  const [upiTxId, setUpiTxId] = useState('')
+  const [upiNote, setUpiNote] = useState('')
+  const [upiConfirm, setUpiConfirm] = useState(false)
+  const [submittingUpi, setSubmittingUpi] = useState(false)
+
+  const unpaidInvoices = useMemo(() => {
+    return [...carriedForwardInvoices, ...invoices].filter(
+      (inv) => inv.balance_remaining > 0
+    )
+  }, [carriedForwardInvoices, invoices])
+
+  const selectedInvoiceForUpi = useMemo(() => {
+    return unpaidInvoices.find((inv) => String(inv.id) === String(selectedInvoiceId))
+  }, [unpaidInvoices, selectedInvoiceId])
+
+  useEffect(() => {
+    if (unpaidInvoices.length > 0) {
+      const isValid = unpaidInvoices.some((inv) => String(inv.id) === String(selectedInvoiceId))
+      if (!isValid) {
+        setSelectedInvoiceId(String(unpaidInvoices[0].id))
+      }
+    } else {
+      setSelectedInvoiceId('')
+    }
+  }, [unpaidInvoices, selectedInvoiceId])
+
+  useEffect(() => {
+    if (selectedInvoiceForUpi) {
+      setUpiAmount(String(selectedInvoiceForUpi.balance_remaining || ''))
+      setUpiTxId('')
+      setUpiNote('')
+      setUpiConfirm(false)
+    } else {
+      setUpiAmount('')
+      setUpiTxId('')
+      setUpiNote('')
+      setUpiConfirm(false)
+    }
+  }, [selectedInvoiceForUpi])
+
+  const handleUpiSubmit = async (e) => {
+    e.preventDefault()
+    
+    if (!selectedInvoiceForUpi) {
+      return toastError('Please select a pending invoice.')
+    }
+    
+    const trimmedAmount = upiAmount.trim()
+    const trimmedTxId = upiTxId.trim()
+    const trimmedNote = upiNote.trim()
+
+    const amt = parseFloat(trimmedAmount)
+    if (isNaN(amt) || amt <= 0) {
+      return toastError('Please enter a valid amount greater than 0.')
+    }
+    if (amt > selectedInvoiceForUpi.balance_remaining) {
+      return toastError(`Amount cannot exceed the remaining balance of ${formatCurrency(selectedInvoiceForUpi.balance_remaining)}.`)
+    }
+
+    const txIdRegex = /^[a-zA-Z0-9]{8,18}$/
+    if (!txIdRegex.test(trimmedTxId)) {
+      return toastError('Invalid transaction ID. Must be 8-18 alphanumeric characters without spaces.')
+    }
+
+    if (!upiConfirm) {
+      return toastError('Please confirm the payment certification checkbox.')
+    }
+
+    setSubmittingUpi(true)
+    try {
+      await studentApi.createStudentUpiPaymentRequest({
+        invoice_id: selectedInvoiceForUpi.id,
+        amount: amt,
+        upi_transaction_id: trimmedTxId,
+        student_note: trimmedNote || null,
+      })
+      toastSuccess('Payment reference submitted successfully for verification!')
+      setUpiTxId('')
+      setUpiNote('')
+      setUpiConfirm(false)
+      await refresh()
+    } catch (err) {
+      toastError(err?.message || 'Failed to submit payment reference.')
+    } finally {
+      setSubmittingUpi(false)
+    }
+  }
+
   useEffect(() => {
     if (error) toastError(error)
   }, [error, toastError])
@@ -63,9 +155,13 @@ const MyFees = () => {
 
   const upiQrUrl = useMemo(() => {
     if (!schoolUpi) return null
-    const upiLink = `upi://pay?pa=${schoolUpi}&pn=${encodeURIComponent(schoolName || 'School')}&cu=INR`
+    let upiLink = `upi://pay?pa=${schoolUpi}&pn=${encodeURIComponent(schoolName || 'School')}&cu=INR`
+    const amt = parseFloat(upiAmount)
+    if (!isNaN(amt) && amt > 0) {
+      upiLink += `&am=${amt}`
+    }
     return `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(upiLink)}`
-  }, [schoolUpi, schoolName])
+  }, [schoolUpi, schoolName, upiAmount])
 
   return (
     <div className="space-y-5">
@@ -204,6 +300,11 @@ const MyFees = () => {
                       className="w-48 h-48 rounded-xl mx-auto"
                     />
                   </div>
+
+                  <div className="mb-4 text-center">
+                    <p className="text-xs text-[var(--color-text-muted)]">Payee Name: <span className="font-semibold text-[var(--color-text-primary)]">{schoolName}</span></p>
+                    <p className="text-xs text-[var(--color-text-muted)] mt-1">UPI ID: <span className="font-bold text-brand select-all">{schoolUpi}</span></p>
+                  </div>
                   
                   <p className="text-sm font-bold text-[var(--color-text-primary)] mb-1">
                     Scan to pay any amount
@@ -212,14 +313,97 @@ const MyFees = () => {
                     Use any UPI app (GPay, PhonePe, Paytm etc.)
                   </p>
 
-                  <div className="bg-brand/5 border border-brand/10 rounded-2xl p-4 text-left">
-                    <div className="flex gap-3">
-                      <Info size={16} className="text-brand shrink-0 mt-0.5" />
-                      <div className="text-[11px] leading-relaxed text-brand-dark">
-                        <p className="font-bold">After payment:</p>
-                        <p className="mt-1">Open the <span className="font-bold uppercase tracking-wider">EduHard</span> mobile app to submit your Transaction ID for confirmation.</p>
-                      </div>
-                    </div>
+                  <div className="mt-6 border-t pt-6 text-left">
+                    <h4 className="font-bold text-sm text-[var(--color-text-primary)] mb-4">Submit UPI Reference</h4>
+                    
+                    {unpaidInvoices.length === 0 ? (
+                      <p className="text-xs text-[var(--color-text-muted)] italic">No pending invoices to submit payments for.</p>
+                    ) : (
+                      <form onSubmit={handleUpiSubmit} className="space-y-4">
+                        <Select
+                          label="Select Invoice"
+                          value={selectedInvoiceId}
+                          onChange={(e) => setSelectedInvoiceId(e.target.value)}
+                          options={unpaidInvoices.map((inv) => ({
+                            value: String(inv.id),
+                            label: `${inv.fee_type_name} (${inv.period}) - Bal: ${formatCurrency(inv.balance_remaining)}`
+                          }))}
+                          required
+                          className="text-xs px-3 border h-9 rounded-xl"
+                        />
+
+                        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                          <div>
+                            <label className="block text-xs font-semibold text-[var(--color-text-muted)] mb-1">
+                              Amount Paid (INR) *
+                            </label>
+                            <input
+                              type="number"
+                              step="0.01"
+                              value={upiAmount}
+                              onChange={(e) => setUpiAmount(e.target.value)}
+                              placeholder={selectedInvoiceForUpi ? `Max ${selectedInvoiceForUpi.balance_remaining}` : ''}
+                              className="w-full text-xs px-3 border outline-none h-9 rounded-xl bg-[var(--color-surface)] text-[var(--color-text-primary)]"
+                              style={{ borderColor: 'var(--color-border)' }}
+                              required
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-xs font-semibold text-[var(--color-text-muted)] mb-1">
+                              UPI Txn ID / UTR * (8-18 chars)
+                            </label>
+                            <input
+                              type="text"
+                              value={upiTxId}
+                              onChange={(e) => setUpiTxId(e.target.value)}
+                              placeholder="e.g. 612345678901"
+                              className="w-full text-xs px-3 border outline-none h-9 rounded-xl bg-[var(--color-surface)] text-[var(--color-text-primary)]"
+                              style={{ borderColor: 'var(--color-border)' }}
+                              required
+                            />
+                          </div>
+                        </div>
+
+                        <div>
+                          <label className="block text-xs font-semibold text-[var(--color-text-muted)] mb-1">
+                            Student Note (Optional)
+                          </label>
+                          <input
+                            type="text"
+                            value={upiNote}
+                            onChange={(e) => setUpiNote(e.target.value)}
+                            placeholder="Any additional details"
+                            className="w-full text-xs px-3 border outline-none h-9 rounded-xl bg-[var(--color-surface)] text-[var(--color-text-primary)]"
+                            style={{ borderColor: 'var(--color-border)' }}
+                          />
+                        </div>
+
+                        <div className="flex items-start gap-2 pt-1">
+                          <input
+                            type="checkbox"
+                            id="confirmCheckbox"
+                            checked={upiConfirm}
+                            onChange={(e) => setUpiConfirm(e.target.checked)}
+                            className="mt-0.5 shrink-0"
+                            required
+                          />
+                          <label htmlFor="confirmCheckbox" className="text-[10px] text-[var(--color-text-secondary)] font-medium leading-tight select-none cursor-pointer">
+                            I certify that the transaction ID is correct and corresponds to a successful transfer of INR {upiAmount || '0'} to the school's account.
+                          </label>
+                        </div>
+
+                        <Button
+                          type="submit"
+                          variant="primary"
+                          size="sm"
+                          className="w-full rounded-xl font-bold mt-2"
+                          loading={submittingUpi}
+                          disabled={submittingUpi || !upiConfirm || !upiAmount || !upiTxId || !selectedInvoiceId}
+                        >
+                          Submit for Verification
+                        </Button>
+                      </form>
+                    )}
                   </div>
                 </section>
               )}
@@ -280,6 +464,8 @@ const MyFees = () => {
               <InfoCard label="Amount Paid" value={formatCurrency(selectedInvoice.amount_paid || 0)} />
               <InfoCard label="Balance Remaining" value={formatCurrency(selectedInvoice.balance_remaining || 0)} />
             </div>
+
+
 
             <section
               className="rounded-[24px] border p-4"

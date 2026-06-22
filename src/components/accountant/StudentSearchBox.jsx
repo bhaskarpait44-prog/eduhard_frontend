@@ -89,7 +89,7 @@ const StudentSearchBox = ({ onSelect, autoFocus = false }) => {
   return (
     <div className="relative">
       <div
-        className="flex items-center gap-3 rounded-full border border-gray-200 dark:border-gray-700 px-5 py-3.5 focus-within:border-orange-400 focus-within:shadow-md transition-all bg-white dark:bg-gray-800"
+        className="flex items-center gap-3 rounded-full border border-gray-200 dark:border-gray-700 px-5 py-3.5 focus-within:border-[#4CC0D4] focus-within:shadow-md transition-all bg-white dark:bg-gray-800"
       >
         <SearchOutlined className="text-gray-400 dark:text-gray-500 text-base" />
         <input
@@ -97,9 +97,12 @@ const StudentSearchBox = ({ onSelect, autoFocus = false }) => {
           value={query}
           onChange={(event) => setQuery(event.target.value)}
           onKeyDown={handleKeyDown}
-          placeholder="Search by student name or admission number (Ctrl + F)"
+          placeholder="Search by student name or admission number..."
           className="flex-1 bg-transparent text-sm outline-none text-gray-800 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 font-semibold"
         />
+        <span className="hidden sm:inline-block rounded-lg px-2 py-0.5 text-[10px] font-black bg-gray-100 dark:bg-gray-800 text-gray-400 dark:text-gray-500 border border-gray-200 dark:border-gray-700 select-none">
+          Ctrl + F
+        </span>
         {query && (
           <button type="button" onClick={() => { setQuery(''); setResults([]) }} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">
             <CloseCircleOutlined className="text-base" />
@@ -124,12 +127,12 @@ const StudentSearchBox = ({ onSelect, autoFocus = false }) => {
                 }}
                 className={`flex w-full items-center gap-3.5 px-5 py-4 text-left transition-colors ${
                   isActive 
-                    ? 'bg-orange-50/70 dark:bg-orange-950/20' 
+                    ? 'bg-cyan-50/50 dark:bg-cyan-950/20' 
                     : 'hover:bg-gray-50 dark:hover:bg-gray-800/40'
                 }`}
               >
                 <Avatar 
-                  className="bg-orange-100 text-orange-700 font-extrabold dark:bg-orange-950/40 dark:text-orange-300 shadow-sm border border-orange-200/20"
+                  className="bg-cyan-100 text-cyan-700 font-extrabold dark:bg-cyan-950/40 dark:text-cyan-300 shadow-sm border border-cyan-200/20"
                 >
                   {getInitials(`${student.first_name} ${student.last_name}`)}
                 </Avatar>
@@ -137,14 +140,22 @@ const StudentSearchBox = ({ onSelect, autoFocus = false }) => {
                   <div className="text-sm font-extrabold text-gray-800 dark:text-gray-100">
                     {student.first_name} {student.last_name}
                   </div>
-                  <div className="text-xs font-semibold text-gray-400 dark:text-gray-500 mt-0.5">
-                    {student.admission_no} • {student.class_name || '-'} {student.section_name ? `Section ${student.section_name}` : ''}
+                  <div className="text-xs font-semibold text-gray-400 dark:text-gray-500 mt-0.5 flex flex-wrap gap-x-2 items-center">
+                    <span>{student.admission_no}</span>
+                    <span className="text-gray-300 dark:text-gray-700">•</span>
+                    <span>{student.class_name || '-'} {student.section_name ? `Sec ${student.section_name}` : ''}</span>
+                    {student.parent_name && (
+                      <>
+                        <span className="text-gray-300 dark:text-gray-700">•</span>
+                        <span className="text-cyan-600 dark:text-cyan-400 font-bold">Guardian: {student.parent_name}</span>
+                      </>
+                    )}
                   </div>
                 </div>
                 <div
                   className={`rounded-full px-3.5 py-1 text-[11px] font-black tracking-wide ${
                     Number(student.pending_amount || 0) > 0 
-                      ? 'bg-rose-50 text-rose-600 dark:bg-rose-950/30 dark:text-rose-400' 
+                      ? 'bg-yellow-50 text-yellow-600 dark:bg-yellow-950/30 dark:text-yellow-400' 
                       : 'bg-emerald-50 text-emerald-600 dark:bg-emerald-950/30 dark:text-emerald-400'
                   }`}
                 >
