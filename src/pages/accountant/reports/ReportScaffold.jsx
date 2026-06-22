@@ -6,15 +6,20 @@ import {
   ConfigProvider,
   Statistic,
   Tag,
+  Alert,
+  Spin,
   theme as antdTheme
 } from 'antd'
 import { FileTextOutlined } from '@ant-design/icons'
 import { formatCurrency, formatDate } from '@/utils/helpers'
 import useUiStore from '@/store/uiStore'
 
-const ReportScaffold = ({ title, data, rowsKey = 'transactions', columns = [] }) => {
+const ReportScaffold = ({ title, data, rowsKey = 'transactions', columns = [], isLoading = false, error = null, actions = null }) => {
   const { theme: storeTheme } = useUiStore()
   const rows = data?.[rowsKey] || data?.days || data?.students || data?.defaulters || []
+  const summaryEntries = Object.entries(data?.summary || {}).filter(([, value]) => (
+    value == null || ['string', 'number', 'boolean'].includes(typeof value)
+  ))
 
   const isDark = storeTheme === 'dark' || (storeTheme === 'system' && window.matchMedia?.('(prefers-color-scheme: dark)').matches)
 
@@ -79,12 +84,22 @@ const ReportScaffold = ({ title, data, rowsKey = 'transactions', columns = [] })
               </p>
             </div>
           </div>
+          {actions && <div className="z-10">{actions}</div>}
         </div>
 
+        {error && (
+          <Alert
+            type="error"
+            showIcon
+            message="Report could not be loaded"
+            description={error}
+          />
+        )}
+
         {/* Summary statistics */}
-        {data?.summary && (
+        {summaryEntries.length > 0 && (
           <Row gutter={[16, 16]}>
-            {Object.entries(data.summary).slice(0, 6).map(([key, value]) => (
+            {summaryEntries.slice(0, 6).map(([key, value]) => (
               <Col xs={24} sm={12} md={8} key={key}>
                 <Card className="rounded-[24px] border border-cyan-200/10 shadow-sm" styles={{ body: { padding: '20px' } }}>
                   <Statistic
@@ -105,15 +120,17 @@ const ReportScaffold = ({ title, data, rowsKey = 'transactions', columns = [] })
           className="rounded-[28px] shadow-sm border-gray-100 dark:border-gray-800 overflow-hidden"
           styles={{ body: { padding: '0px' } }}
         >
-          <Table
-            dataSource={rows}
-            columns={tableColumns}
-            rowKey={(r, index) => r.id || r.student_id || r.date || index}
-            pagination={{ pageSize: 20 }}
-            size="middle"
-            className="premium-table"
-            rowClassName="hover:bg-orange-50/10 dark:hover:bg-orange-950/10 transition-colors"
-          />
+          <Spin spinning={isLoading}>
+            <Table
+              dataSource={rows}
+              columns={tableColumns}
+              rowKey={(r, index) => r.id || r.student_id || r.date || index}
+              pagination={{ pageSize: 20 }}
+              size="middle"
+              className="premium-table"
+              rowClassName="hover:bg-orange-50/10 dark:hover:bg-orange-950/10 transition-colors"
+            />
+          </Spin>
         </Card>
       </div>
     </ConfigProvider>
