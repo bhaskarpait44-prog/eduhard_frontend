@@ -32,7 +32,7 @@ const ReceptionistNotices = () => {
     setSelectedNotice(notice)
     if (!notice.is_read) {
       try {
-        await markReceptionistNoticeRead(notice.id)
+        await markReceptionistNoticeRead(notice.id, notice.source || 'unified')
         setNotices(prev => prev.map(n => n.id === notice.id ? { ...n, is_read: true } : n))
       } catch (err) {
         console.error('Error marking notice as read:', err)

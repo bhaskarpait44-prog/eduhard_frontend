@@ -137,20 +137,10 @@ const HomeworkList = () => {
   return (
     <div className="max-w-[1400px] mx-auto space-y-6 pb-12">
       {/* Page Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div className="flex-1">
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-            Homework
-          </h1>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
-            Assign homework quickly, track every student, grade submissions, and send reminders from one teacher-first workflow.
-          </p>
-        </div>
-        <div className="flex items-center gap-2">
-          <Button variant="primary" icon={NotebookPen} onClick={() => { setEditingHomework(null); setFormOpen(true) }}>
-            Assign Homework
-          </Button>
-        </div>
+      <div className="flex justify-end">
+        <Button variant="primary" icon={NotebookPen} onClick={() => { setEditingHomework(null); setFormOpen(true) }}>
+          Assign Homework
+        </Button>
       </div>
 
       {/* Stats cards row */}

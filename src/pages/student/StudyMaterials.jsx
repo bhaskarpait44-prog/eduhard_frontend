@@ -10,13 +10,13 @@ import { formatDate, getFileUrl } from '@/utils/helpers'
 import { isStudentPortalSetupError } from '@/utils/studentPortal'
 
 const FILE_TYPE_TONES = {
-  pdf: { bg: 'rgba(220,38,38,0.10)', color: '#dc2626' },
-  doc: { bg: 'rgba(37,99,235,0.10)', color: '#2563eb' },
-  docx: { bg: 'rgba(37,99,235,0.10)', color: '#2563eb' },
-  ppt: { bg: 'rgba(217,119,6,0.10)', color: '#d97706' },
-  pptx: { bg: 'rgba(217,119,6,0.10)', color: '#d97706' },
-  xlsx: { bg: 'rgba(22,163,74,0.10)', color: '#16a34a' },
-  xls: { bg: 'rgba(22,163,74,0.10)', color: '#16a34a' },
+  pdf:  { bg: 'rgba(220,38,38,0.10)',  color: '#dc2626' },
+  doc:  { bg: 'rgba(37,99,235,0.10)',  color: '#2563eb' },
+  docx: { bg: 'rgba(37,99,235,0.10)',  color: '#2563eb' },
+  ppt:  { bg: 'rgba(217,119,6,0.10)',  color: '#d97706' },
+  pptx: { bg: 'rgba(217,119,6,0.10)',  color: '#d97706' },
+  xlsx: { bg: 'rgba(22,163,74,0.10)',  color: '#16a34a' },
+  xls:  { bg: 'rgba(22,163,74,0.10)',  color: '#16a34a' },
   image: { bg: 'rgba(124,58,237,0.10)', color: '#7c3aed' },
   video: { bg: 'rgba(236,72,153,0.10)', color: '#ec4899' },
 }
@@ -98,58 +98,38 @@ const StudyMaterials = () => {
   }
 
   return (
-    <div className="space-y-5">
-      {/* ── Hero ── */}
-      <section
-        className="relative overflow-hidden rounded-3xl border p-5 sm:p-6"
-        style={{
-          borderColor: 'var(--color-border)',
-          background: 'linear-gradient(135deg, rgba(109,40,217,0.18), rgba(34,197,94,0.07) 52%, var(--color-surface) 100%)',
-          boxShadow: '0 4px 24px rgba(109,40,217,0.08)',
-        }}
-      >
-        <div className="absolute inset-x-0 top-0 h-[3px] rounded-t-3xl" style={{ background: 'linear-gradient(90deg, #7c3aed, #16a34a)' }} />
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-          <div className="flex items-start gap-4 min-w-0">
-            <div
-              className="hidden sm:flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl shadow-sm"
-              style={{ backgroundColor: 'rgba(124,58,237,0.12)', color: 'var(--student-accent)' }}
-            >
-              <BookOpenText size={22} />
-            </div>
-            <div className="min-w-0">
-              <p className="text-xs font-bold uppercase tracking-[0.18em]" style={{ color: 'var(--student-accent)' }}>
-                Materials
-              </p>
-              <h1 className="mt-1.5 text-2xl font-bold sm:text-3xl">Study Materials</h1>
-              <p className="mt-1.5 max-w-2xl text-[13px] text-[var(--color-text-secondary)] sm:text-[15px]">
-                Open notes, worksheets, and subject resources shared by your teachers for your class.
-              </p>
-            </div>
-          </div>
-          <Button variant="secondary" onClick={handleRefresh} loading={refreshing} icon={RefreshCw}>
-            Refresh
-          </Button>
-        </div>
-      </section>
+    <div className="sm-page">
 
-      {/* ── Filter bar ── */}
-      <section
-        className="rounded-3xl border p-4"
-        style={{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface)' }}
-      >
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
-          <div className="flex-1">
-            <label className="block">
-              <span className="mb-2 flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-[0.16em] text-[var(--color-text-muted)]">
-                <Search size={12} />
-                Filter by Subject
-              </span>
+      {/* ── Compact Action Bar ── */}
+      <div className="sm-action-bar">
+        <div className="sm-action-bar__left">
+          <div className="sm-page-icon">
+            <BookOpenText size={18} />
+          </div>
+          <div>
+            <p className="sm-page-label">Materials</p>
+            <h1 className="sm-page-title">Study Materials</h1>
+          </div>
+        </div>
+        <Button variant="secondary" onClick={handleRefresh} loading={refreshing} icon={RefreshCw} size="sm">
+          Refresh
+        </Button>
+      </div>
+
+      {/* ── Filter Toolbar Card ── */}
+      <div className="sm-filter-card">
+        <div className="sm-filter-row">
+          <div className="sm-filter-field">
+            <label htmlFor="sm-subject-select" className="sm-filter-label">
+              <Search size={12} />
+              Filter by Subject
+            </label>
+            <div className="sm-select-wrap">
               <select
+                id="sm-subject-select"
                 value={selectedSubject}
-                onChange={(event) => setSelectedSubject(event.target.value)}
-                className="min-h-11 w-full rounded-2xl border px-4 py-2.5 text-sm font-medium transition focus:outline-none"
-                style={{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface-raised)', color: 'var(--color-text-primary)' }}
+                onChange={(e) => setSelectedSubject(e.target.value)}
+                className="sm-select"
               >
                 {subjectOptions.map((subject) => (
                   <option key={subject} value={subject}>
@@ -157,107 +137,86 @@ const StudyMaterials = () => {
                   </option>
                 ))}
               </select>
-            </label>
+              <span className="sm-select-arrow" aria-hidden="true">
+                <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                  <path d="M2 4l4 4 4-4" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              </span>
+            </div>
           </div>
 
-          <div
-            className="rounded-2xl border px-4 py-2.5 text-sm shrink-0"
-            style={{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface-raised)' }}
-          >
-            <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-[var(--color-text-muted)]">Available</p>
-            <p className="mt-0.5 text-lg font-black text-[var(--color-text-primary)]">{filteredMaterials.length}</p>
+          <div className="sm-count-chip">
+            <p className="sm-count-chip__label">Available</p>
+            <p className="sm-count-chip__value">{filteredMaterials.length}</p>
           </div>
         </div>
-      </section>
+      </div>
 
-      {/* ── Materials grid ── */}
+      {/* ── Materials Grid ── */}
       {loading ? (
-        <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 animate-pulse">
-          {Array.from({ length: 4 }).map((_, index) => (
-            <div key={index} className="h-52 rounded-3xl bg-[var(--color-surface)]" />
+        <div className="sm-skeleton">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} className="sm-skeleton__card" />
           ))}
         </div>
       ) : filteredMaterials.length > 0 ? (
-        <section className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+        <div className="sm-grid">
           {filteredMaterials.map((item) => {
             const typeTone = getFileTypeTone(item.file_type)
             return (
-              <article
-                key={item.id}
-                className="group relative overflow-hidden rounded-3xl border p-5 transition-all duration-300 hover:-translate-y-1"
-                style={{
-                  borderColor: 'var(--color-border)',
-                  backgroundColor: 'var(--color-surface)',
-                  boxShadow: '0 2px 12px rgba(76,29,149,0.05)',
-                }}
-              >
-                {/* Left accent */}
-                <div
-                  className="absolute inset-y-0 left-0 w-1 rounded-full"
-                  style={{ backgroundColor: typeTone.color }}
-                />
+              <article key={item.id} className="sm-card">
+                {/* Left accent bar */}
+                <div className="sm-card__accent" style={{ backgroundColor: typeTone.color }} />
 
-                <div className="flex items-start justify-between gap-3 pl-2">
-                  <div className="min-w-0 flex-1">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <span
-                        className="rounded-full px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-[0.14em]"
-                        style={{ backgroundColor: 'var(--student-accent-soft)', color: 'var(--student-accent)' }}
-                      >
-                        {item.subject_name}
-                      </span>
-                      <span
-                        className="rounded-full px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-[0.14em]"
-                        style={{ backgroundColor: typeTone.bg, color: typeTone.color }}
-                      >
+                <div className="sm-card__body">
+                  {/* Header row */}
+                  <div className="sm-card__header">
+                    <div className="sm-card__meta-tags">
+                      <span className="sm-tag sm-tag--subject">{item.subject_name}</span>
+                      <span className="sm-tag" style={{ backgroundColor: typeTone.bg, color: typeTone.color }}>
                         {prettyFileType(item.file_type)}
                       </span>
                     </div>
-
-                    <h2 className="mt-2.5 text-[15px] font-bold text-[var(--color-text-primary)] line-clamp-1">
-                      {item.title}
-                    </h2>
-                    <p className="mt-1.5 line-clamp-2 text-[13px] text-[var(--color-text-secondary)]">
-                      {item.description || 'Study material shared by your teacher.'}
-                    </p>
+                    <div className="sm-card__file-icon" style={{ backgroundColor: typeTone.bg, color: typeTone.color }}>
+                      <FileText size={18} />
+                    </div>
                   </div>
 
-                  <div
-                    className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl transition-transform duration-200 group-hover:scale-110"
-                    style={{ backgroundColor: typeTone.bg, color: typeTone.color }}
-                  >
-                    <FileText size={20} />
+                  {/* Title + description */}
+                  <h2 className="sm-card__title">{item.title}</h2>
+                  <p className="sm-card__desc">
+                    {item.description || 'Study material shared by your teacher.'}
+                  </p>
+
+                  {/* Meta chips */}
+                  <div className="sm-meta-row">
+                    <MetaChip label="Teacher" value={item.teacher_name} isOnline={item.is_online} />
+                    <MetaChip label="Added"   value={formatDate(item.created_at, 'short')} />
+                    <MetaChip label="Size"    value={formatFileSize(item.file_size)} />
+                    <MetaChip label="Viewed"  value={item.last_viewed_at ? formatDate(item.last_viewed_at, 'short') : 'Not yet'} />
                   </div>
-                </div>
 
-                {/* Meta info */}
-                <div className="mt-4 grid grid-cols-2 gap-2 pl-2 sm:grid-cols-4">
-                  <MetaChip label="Teacher" value={item.teacher_name} isOnline={item.is_online} />
-                  <MetaChip label="Added" value={formatDate(item.created_at, 'short')} />
-                  <MetaChip label="Size" value={formatFileSize(item.file_size)} />
-                  <MetaChip label="Viewed" value={item.last_viewed_at ? formatDate(item.last_viewed_at, 'short') : 'Not yet'} />
-                </div>
-
-                {/* Actions */}
-                <div className="mt-4 flex flex-wrap gap-2 pl-2">
-                  <Button size="sm" onClick={() => handleOpenMaterial(item.id)} icon={Eye}>
-                    Open Detail
-                  </Button>
-                  {item.file_path ? (
-                    <Button
-                      size="sm"
-                      variant="secondary"
-                      onClick={() => window.open(getFileUrl(item.file_path), '_blank', 'noopener,noreferrer')}
-                      icon={Download}
-                    >
-                      Open File
+                  {/* Actions */}
+                  <div className="sm-card__actions">
+                    <Button size="sm" onClick={() => handleOpenMaterial(item.id)} icon={Eye}>
+                      Open Detail
                     </Button>
-                  ) : null}
+                    {item.file_path ? (
+                      <Button
+                        size="sm"
+                        variant="secondary"
+                        onClick={() => window.open(getFileUrl(item.file_path), '_blank', 'noopener,noreferrer')}
+                        icon={Download}
+                      >
+                        Open File
+                      </Button>
+                    ) : null}
+                  </div>
                 </div>
               </article>
             )
           })}
-        </section>
+        </div>
       ) : (
         <EmptyState
           icon={BookOpenText}
@@ -266,7 +225,7 @@ const StudyMaterials = () => {
         />
       )}
 
-      {/* Detail modal */}
+      {/* ── Detail Modal ── */}
       <Modal
         open={Boolean(selectedMaterial) || detailLoading}
         onClose={() => setSelectedMaterial(null)}
@@ -274,24 +233,27 @@ const StudyMaterials = () => {
         size="lg"
       >
         {detailLoading && !selectedMaterial ? (
-          <div className="space-y-3 animate-pulse">
-            <div className="h-20 rounded-2xl bg-[var(--color-surface-raised)]" />
-            <div className="h-48 rounded-2xl bg-[var(--color-surface-raised)]" />
+          <div className="sm-modal-skeleton">
+            <div className="sm-modal-skeleton__block sm-modal-skeleton__block--short" />
+            <div className="sm-modal-skeleton__block sm-modal-skeleton__block--tall" />
           </div>
         ) : selectedMaterial ? (
-          <div className="space-y-3">
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-              <InfoCard label="Subject" value={selectedMaterial.subject_name} />
-              <InfoCard label="Teacher" value={selectedMaterial.teacher_name} />
-              <InfoCard label="Created" value={formatDate(selectedMaterial.created_at, 'long')} />
-              <InfoCard label="File Type" value={prettyFileType(selectedMaterial.file_type)} />
-              <InfoCard label="File Size" value={formatFileSize(selectedMaterial.file_size)} />
+          <div className="sm-modal-body">
+            <div className="sm-info-grid">
+              <InfoCard label="Subject"     value={selectedMaterial.subject_name} />
+              <InfoCard label="Teacher"     value={selectedMaterial.teacher_name} />
+              <InfoCard label="Created"     value={formatDate(selectedMaterial.created_at, 'long')} />
+              <InfoCard label="File Type"   value={prettyFileType(selectedMaterial.file_type)} />
+              <InfoCard label="File Size"   value={formatFileSize(selectedMaterial.file_size)} />
               <InfoCard label="Description" value={selectedMaterial.description || 'No description provided.'} />
             </div>
 
             {selectedMaterial.file_path ? (
-              <div className="flex justify-end pt-2">
-                <Button onClick={() => window.open(getFileUrl(selectedMaterial.file_path), '_blank', 'noopener,noreferrer')} icon={Download}>
+              <div className="sm-modal-footer">
+                <Button
+                  onClick={() => window.open(getFileUrl(selectedMaterial.file_path), '_blank', 'noopener,noreferrer')}
+                  icon={Download}
+                >
                   Open Material File
                 </Button>
               </div>
@@ -299,6 +261,421 @@ const StudyMaterials = () => {
           </div>
         ) : null}
       </Modal>
+
+      <style>{`
+        /* ── Page ── */
+        .sm-page {
+          display: flex;
+          flex-direction: column;
+          gap: 16px;
+        }
+
+        /* ── Action Bar ── */
+        .sm-action-bar {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 12px;
+          flex-wrap: wrap;
+        }
+
+        .sm-action-bar__left {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+        }
+
+        .sm-page-icon {
+          display: flex;
+          height: 38px;
+          width: 38px;
+          align-items: center;
+          justify-content: center;
+          border-radius: 12px;
+          background-color: rgba(124, 58, 237, 0.10);
+          color: var(--student-accent);
+          flex-shrink: 0;
+        }
+
+        .sm-page-label {
+          font-size: 10px;
+          font-weight: 700;
+          letter-spacing: 0.16em;
+          text-transform: uppercase;
+          color: var(--color-text-muted);
+          margin: 0;
+          line-height: 1;
+        }
+
+        .sm-page-title {
+          font-size: 20px;
+          font-weight: 700;
+          color: var(--color-text-primary);
+          margin: 2px 0 0 0;
+          line-height: 1.2;
+        }
+
+        /* ── Filter Toolbar Card ── */
+        .sm-filter-card {
+          background-color: var(--color-surface);
+          border: 1px solid var(--color-border);
+          border-radius: 18px;
+          padding: 16px;
+        }
+
+        .sm-filter-row {
+          display: flex;
+          flex-direction: column;
+          gap: 12px;
+        }
+
+        @media (min-width: 540px) {
+          .sm-filter-row {
+            flex-direction: row;
+            align-items: flex-end;
+          }
+        }
+
+        .sm-filter-field {
+          flex: 1;
+          min-width: 0;
+        }
+
+        .sm-filter-label {
+          display: flex;
+          align-items: center;
+          gap: 5px;
+          font-size: 10px;
+          font-weight: 700;
+          letter-spacing: 0.16em;
+          text-transform: uppercase;
+          color: var(--color-text-muted);
+          margin-bottom: 8px;
+        }
+
+        /* Custom select */
+        .sm-select-wrap {
+          position: relative;
+        }
+
+        .sm-select {
+          display: block;
+          width: 100%;
+          appearance: none;
+          -webkit-appearance: none;
+          background-color: var(--color-surface-raised);
+          border: 1px solid var(--color-border);
+          border-radius: 12px;
+          padding: 10px 36px 10px 14px;
+          font-size: 13px;
+          font-weight: 500;
+          color: var(--color-text-primary);
+          cursor: pointer;
+          transition: border-color 0.15s ease, box-shadow 0.15s ease;
+          outline: none;
+        }
+
+        .sm-select:focus {
+          border-color: var(--student-accent);
+          box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.15);
+        }
+
+        .sm-select-arrow {
+          pointer-events: none;
+          position: absolute;
+          right: 12px;
+          top: 50%;
+          transform: translateY(-50%);
+          color: var(--color-text-muted);
+          display: flex;
+          align-items: center;
+        }
+
+        /* Count chip */
+        .sm-count-chip {
+          background-color: var(--color-surface-raised);
+          border: 1px solid var(--color-border);
+          border-radius: 12px;
+          padding: 10px 16px;
+          flex-shrink: 0;
+        }
+
+        .sm-count-chip__label {
+          font-size: 9px;
+          font-weight: 700;
+          letter-spacing: 0.16em;
+          text-transform: uppercase;
+          color: var(--color-text-muted);
+          margin: 0;
+          line-height: 1;
+        }
+
+        .sm-count-chip__value {
+          font-size: 20px;
+          font-weight: 800;
+          color: var(--color-text-primary);
+          margin: 3px 0 0 0;
+          line-height: 1;
+        }
+
+        /* ── Skeleton ── */
+        .sm-skeleton {
+          display: grid;
+          grid-template-columns: 1fr;
+          gap: 14px;
+          animation: smPulse 1.6s ease-in-out infinite;
+        }
+
+        @media (min-width: 1024px) {
+          .sm-skeleton { grid-template-columns: 1fr 1fr; }
+        }
+
+        .sm-skeleton__card {
+          height: 200px;
+          border-radius: 18px;
+          background-color: var(--color-surface);
+          border: 1px solid var(--color-border);
+        }
+
+        @keyframes smPulse {
+          0%, 100% { opacity: 1; }
+          50%       { opacity: 0.45; }
+        }
+
+        /* ── Materials Grid ── */
+        .sm-grid {
+          display: grid;
+          grid-template-columns: 1fr;
+          gap: 14px;
+        }
+
+        @media (min-width: 1024px) {
+          .sm-grid { grid-template-columns: 1fr 1fr; }
+        }
+
+        /* ── Material Card ── */
+        .sm-card {
+          position: relative;
+          overflow: hidden;
+          border-radius: 18px;
+          border: 1px solid var(--color-border);
+          background-color: var(--color-surface);
+          display: flex;
+          transition: border-color 0.18s ease, transform 0.18s ease;
+        }
+
+        .sm-card:hover {
+          border-color: color-mix(in srgb, var(--color-border) 60%, var(--student-accent) 40%);
+          transform: translateY(-2px);
+        }
+
+        /* Left accent bar */
+        .sm-card__accent {
+          width: 4px;
+          flex-shrink: 0;
+          border-radius: 18px 0 0 18px;
+        }
+
+        /* Card body */
+        .sm-card__body {
+          flex: 1;
+          min-width: 0;
+          padding: 16px 16px 16px 14px;
+          display: flex;
+          flex-direction: column;
+          gap: 0;
+        }
+
+        /* Header */
+        .sm-card__header {
+          display: flex;
+          align-items: flex-start;
+          justify-content: space-between;
+          gap: 10px;
+        }
+
+        .sm-card__meta-tags {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 6px;
+          flex: 1;
+          min-width: 0;
+        }
+
+        .sm-tag {
+          display: inline-block;
+          padding: 3px 9px;
+          border-radius: 99px;
+          font-size: 10px;
+          font-weight: 700;
+          letter-spacing: 0.12em;
+          text-transform: uppercase;
+        }
+
+        .sm-tag--subject {
+          background-color: var(--student-accent-soft);
+          color: var(--student-accent);
+        }
+
+        .sm-card__file-icon {
+          display: flex;
+          height: 40px;
+          width: 40px;
+          align-items: center;
+          justify-content: center;
+          border-radius: 12px;
+          flex-shrink: 0;
+          transition: transform 0.2s ease;
+        }
+
+        .sm-card:hover .sm-card__file-icon {
+          transform: scale(1.08);
+        }
+
+        /* Title & desc */
+        .sm-card__title {
+          font-size: 14px;
+          font-weight: 700;
+          color: var(--color-text-primary);
+          margin: 10px 0 4px;
+          line-height: 1.35;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+        }
+
+        .sm-card__desc {
+          font-size: 12px;
+          color: var(--color-text-secondary);
+          margin: 0 0 12px;
+          line-height: 1.5;
+          display: -webkit-box;
+          -webkit-line-clamp: 2;
+          -webkit-box-orient: vertical;
+          overflow: hidden;
+        }
+
+        /* Meta row */
+        .sm-meta-row {
+          display: grid;
+          grid-template-columns: repeat(2, 1fr);
+          gap: 8px;
+          margin-bottom: 12px;
+        }
+
+        @media (min-width: 500px) {
+          .sm-meta-row { grid-template-columns: repeat(4, 1fr); }
+        }
+
+        /* Meta chip */
+        .sm-meta-chip {
+          background-color: var(--color-surface-raised);
+          border: 1px solid var(--color-border);
+          border-radius: 10px;
+          padding: 7px 10px;
+        }
+
+        .sm-meta-chip__label {
+          font-size: 9px;
+          font-weight: 700;
+          letter-spacing: 0.14em;
+          text-transform: uppercase;
+          color: var(--color-text-muted);
+          margin: 0;
+          line-height: 1;
+        }
+
+        .sm-meta-chip__value {
+          display: flex;
+          align-items: center;
+          gap: 4px;
+          font-size: 11px;
+          font-weight: 600;
+          color: var(--color-text-primary);
+          margin: 3px 0 0;
+          line-height: 1.2;
+        }
+
+        .sm-meta-chip__online {
+          display: inline-block;
+          width: 6px;
+          height: 6px;
+          border-radius: 50%;
+          background-color: #6366f1;
+          animation: smPulse 1.6s ease-in-out infinite;
+          flex-shrink: 0;
+        }
+
+        /* Card actions */
+        .sm-card__actions {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 8px;
+        }
+
+        /* ── Modal body ── */
+        .sm-modal-body {
+          display: flex;
+          flex-direction: column;
+          gap: 12px;
+        }
+
+        .sm-modal-skeleton {
+          display: flex;
+          flex-direction: column;
+          gap: 12px;
+          animation: smPulse 1.6s ease-in-out infinite;
+        }
+
+        .sm-modal-skeleton__block {
+          border-radius: 14px;
+          background-color: var(--color-surface-raised);
+        }
+
+        .sm-modal-skeleton__block--short { height: 80px; }
+        .sm-modal-skeleton__block--tall  { height: 192px; }
+
+        .sm-info-grid {
+          display: grid;
+          grid-template-columns: 1fr;
+          gap: 10px;
+        }
+
+        @media (min-width: 540px) {
+          .sm-info-grid { grid-template-columns: 1fr 1fr; }
+        }
+
+        .sm-info-card {
+          background-color: var(--color-surface-raised);
+          border: 1px solid var(--color-border);
+          border-radius: 14px;
+          padding: 12px 14px;
+        }
+
+        .sm-info-card__label {
+          font-size: 9px;
+          font-weight: 700;
+          letter-spacing: 0.14em;
+          text-transform: uppercase;
+          color: var(--color-text-muted);
+          margin: 0;
+          line-height: 1;
+        }
+
+        .sm-info-card__value {
+          font-size: 13px;
+          font-weight: 600;
+          color: var(--color-text-primary);
+          margin: 5px 0 0;
+          line-height: 1.4;
+        }
+
+        .sm-modal-footer {
+          display: flex;
+          justify-content: flex-end;
+          padding-top: 4px;
+        }
+      `}</style>
     </div>
   )
 }
@@ -306,22 +683,19 @@ const StudyMaterials = () => {
 /* ─── Sub-components ─────────────────────────────────────────────────────── */
 
 const MetaChip = ({ label, value, isOnline }) => (
-  <div
-    className="rounded-xl border px-3 py-2"
-    style={{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface-raised)' }}
-  >
-    <p className="text-[9px] font-bold uppercase tracking-[0.14em] text-[var(--color-text-muted)]">{label}</p>
-    <div className="mt-1 flex items-center gap-1 text-[12px] font-semibold text-[var(--color-text-primary)]">
+  <div className="sm-meta-chip">
+    <p className="sm-meta-chip__label">{label}</p>
+    <div className="sm-meta-chip__value">
       {value || '—'}
-      {isOnline && <span className="w-1.5 h-1.5 rounded-full bg-indigo-500 animate-pulse" title="Online now" />}
+      {isOnline && <span className="sm-meta-chip__online" title="Online now" />}
     </div>
   </div>
 )
 
 const InfoCard = ({ label, value }) => (
-  <div className="rounded-2xl border px-4 py-3.5" style={{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface-raised)' }}>
-    <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-[var(--color-text-muted)]">{label}</p>
-    <p className="mt-1.5 text-[13px] font-semibold text-[var(--color-text-primary)]">{value || '—'}</p>
+  <div className="sm-info-card">
+    <p className="sm-info-card__label">{label}</p>
+    <p className="sm-info-card__value">{value || '—'}</p>
   </div>
 )
 

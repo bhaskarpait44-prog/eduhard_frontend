@@ -7,6 +7,10 @@ import {
   FileBarChart2,
   RefreshCw,
   Trophy,
+  TrendingUp,
+  BookOpen,
+  Star,
+  AlertTriangle,
 } from 'lucide-react'
 import Button from '@/components/ui/Button'
 import EmptyState from '@/components/ui/EmptyState'
@@ -55,105 +59,110 @@ const MyResults = () => {
   }
 
   return (
-    <div className="space-y-5">
-      {isWithheld && (
-        <section
-          className="rounded-[28px] border p-5 flex items-start gap-4 animate-in fade-in slide-in-from-top-4 duration-500"
-          style={{ 
-            borderColor: totalPending > 0 ? '#ef444455' : '#f59e0b55', 
-            backgroundColor: totalPending > 0 ? '#fef2f2' : '#fffbeb' 
-          }}
-        >
-          <div 
-            className={`h-12 w-12 rounded-2xl flex items-center justify-center shrink-0 ${
-              totalPending > 0 ? 'bg-red-100 text-red-600' : 'bg-amber-100 text-amber-600'
-            }`}
-          >
-            <CircleAlert size={24} />
+    <div className="results-page">
+      {/* ── Top Action Bar ── */}
+      <div className="results-action-bar">
+        <div className="results-action-bar__left">
+          <div className="results-page-icon">
+            <ClipboardList size={18} />
           </div>
           <div>
-            <h2 className={`text-lg font-bold ${totalPending > 0 ? 'text-red-900' : 'text-amber-900'}`}>
-              {totalPending > 0 ? 'Result Withheld' : 'Result Awaiting Release'}
-            </h2>
-            <p className={`mt-1 text-sm leading-relaxed ${totalPending > 0 ? 'text-red-700' : 'text-amber-700'}`}>
+            <p className="results-page-label">Academic</p>
+            <h1 className="results-page-title">My Results</h1>
+          </div>
+        </div>
+        <div className="results-action-bar__right">
+          <Button
+            variant="secondary"
+            onClick={handleRefresh}
+            loading={refreshing}
+            icon={RefreshCw}
+            size="sm"
+          >
+            Refresh
+          </Button>
+          <Button
+            onClick={() =>
+              navigate(
+                selectedExamId
+                  ? `${ROUTES.STUDENT_REPORT_CARD}?examId=${selectedExamId}`
+                  : ROUTES.STUDENT_REPORT_CARD
+              )
+            }
+            icon={FileBarChart2}
+            size="sm"
+            disabled={!selectedExamId || isWithheld}
+          >
+            Report Card
+          </Button>
+        </div>
+      </div>
+
+      {/* ── Withheld Banner ── */}
+      {isWithheld && (
+        <div
+          className="results-withheld-banner animate-in fade-in slide-in-from-top-2 duration-400"
+          style={{
+            borderColor: totalPending > 0 ? '#fca5a5' : '#fcd34d',
+            backgroundColor: totalPending > 0 ? '#fff1f2' : '#fffbeb',
+          }}
+        >
+          <div
+            className="results-withheld-banner__icon"
+            style={{
+              backgroundColor: totalPending > 0 ? '#fee2e2' : '#fef3c7',
+              color: totalPending > 0 ? '#dc2626' : '#d97706',
+            }}
+          >
+            <AlertTriangle size={16} />
+          </div>
+          <div className="results-withheld-banner__body">
+            <p
+              className="results-withheld-banner__title"
+              style={{ color: totalPending > 0 ? '#991b1b' : '#92400e' }}
+            >
+              {totalPending > 0 ? 'Result Withheld — Pending Dues' : 'Result Awaiting Release'}
+            </p>
+            <p
+              className="results-withheld-banner__desc"
+              style={{ color: totalPending > 0 ? '#b91c1c' : '#a16207' }}
+            >
               {totalPending > 0 ? (
                 <>
-                  Your results for the current session are withheld due to a pending balance of <span className="font-bold">₹{totalPending}</span>. 
-                  Please clear your dues in the Fees section to view your marks and download the report card.
+                  Your result is withheld due to a pending balance of{' '}
+                  <strong>₹{totalPending}</strong>. Clear your dues in the Fees section to unlock
+                  your marks.
                 </>
               ) : (
-                <>
-                  Your final results have not been officially released yet by the school administration. Please check back later.
-                </>
+                'Your final results have not been officially released yet. Please check back later.'
               )}
             </p>
             {totalPending > 0 && (
-              <Button 
-                variant="ghost" 
-                size="sm" 
-                className="mt-3 text-red-700 hover:bg-red-100"
+              <button
+                type="button"
+                className="results-withheld-banner__link"
                 onClick={() => navigate(ROUTES.STUDENT_FEES)}
               >
-                Go to Fees <ArrowRight size={14} className="ml-1" />
-              </Button>
+                Go to Fees <ArrowRight size={13} />
+              </button>
             )}
           </div>
-        </section>
+        </div>
       )}
 
-      <section
-        className="rounded-[28px] border p-5 sm:p-6"
-        style={{
-          borderColor: 'var(--color-border)',
-          background: 'linear-gradient(135deg, rgba(109,40,217,0.16), rgba(79,70,229,0.08) 52%, var(--color-surface) 100%)',
-        }}
-      >
-        <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
-          <div className="min-w-0">
-            <p className="text-sm font-semibold uppercase tracking-[0.18em]" style={{ color: 'var(--student-accent)' }}>
-              Exam Results
-            </p>
-            <h1 className="mt-2 text-2xl font-bold sm:text-3xl">My Results</h1>
-            <p className="mt-2 max-w-2xl text-sm text-[var(--color-text-secondary)] sm:text-base">
-              See published exams, open full subject-wise marks, and review your strengths and areas that need attention.
-            </p>
-          </div>
-
-          <div className="flex flex-wrap gap-2">
-            <Button variant="secondary" onClick={handleRefresh} loading={refreshing} icon={RefreshCw}>
-              Refresh
-            </Button>
-            <Button
-              onClick={() => navigate(selectedExamId ? `${ROUTES.STUDENT_REPORT_CARD}?examId=${selectedExamId}` : ROUTES.STUDENT_REPORT_CARD)}
-              icon={FileBarChart2}
-              disabled={!selectedExamId || isWithheld}
-            >
-              Report Card
-            </Button>
-          </div>
-        </div>
-      </section>
-
-      <section
-        className="rounded-[28px] border p-4 sm:p-5"
-        style={{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface)' }}
-      >
-        <div className="mb-4 flex items-center justify-between gap-3">
-          <div>
-            <h2 className="text-lg font-semibold text-[var(--color-text-primary)]">Exam Tabs</h2>
-            <p className="mt-1 text-sm text-[var(--color-text-secondary)]">
-              Published results open instantly. Awaiting and upcoming exams stay visible too.
-            </p>
-          </div>
-          <span className="rounded-full bg-[var(--color-surface-raised)] px-3 py-1 text-xs font-semibold text-[var(--color-text-secondary)]">
-            {exams.length} total
-          </span>
+      {/* ── Exam Selector ── */}
+      <div className="results-exam-selector">
+        <div className="results-exam-selector__header">
+          <p className="results-exam-selector__label">Select Exam</p>
+          {!loading && exams.length > 0 && (
+            <span className="results-exam-selector__count">{exams.length} exams</span>
+          )}
         </div>
 
         {loading ? (
           <ExamTabsSkeleton />
         ) : exams.length > 0 ? (
-          <div className="flex gap-3 overflow-x-auto pb-1">
+          <div className="results-exam-tabs">
             {exams.map((exam) => {
               const active = Number(selectedExamId) === Number(exam.id)
               return (
@@ -161,20 +170,18 @@ const MyResults = () => {
                   key={exam.id}
                   type="button"
                   onClick={() => selectExam(exam.id)}
-                  className="min-w-[170px] rounded-[24px] border px-4 py-4 text-left transition hover:-translate-y-0.5"
-                  style={{
-                    borderColor: active ? 'var(--student-accent)' : 'var(--color-border)',
-                    backgroundColor: active ? 'rgba(124,58,237,0.10)' : 'var(--color-surface)',
-                    boxShadow: active ? '0 16px 34px rgba(109,40,217,0.10)' : 'none',
-                  }}
+                  className={`results-exam-tab ${active ? 'results-exam-tab--active' : ''}`}
                 >
-                  <div className="flex items-start justify-between gap-2">
-                    <p className="text-sm font-semibold text-[var(--color-text-primary)]">{exam.name}</p>
-                    <span className="rounded-full px-2 py-1 text-[10px] font-bold uppercase tracking-[0.16em]" style={examStatusStyle(exam.student_status)}>
+                  <div className="results-exam-tab__top">
+                    <span className="results-exam-tab__name">{exam.name}</span>
+                    <span
+                      className="results-exam-tab__badge"
+                      style={examStatusStyle(exam.student_status)}
+                    >
                       {exam.student_status}
                     </span>
                   </div>
-                  <p className="mt-2 text-xs text-[var(--color-text-secondary)]">{formatDate(exam.start_date, 'short')}</p>
+                  <p className="results-exam-tab__date">{formatDate(exam.start_date, 'short')}</p>
                 </button>
               )
             })}
@@ -186,15 +193,16 @@ const MyResults = () => {
             description="Your school has not published or scheduled any exams for the current session."
           />
         )}
-      </section>
+      </div>
 
+      {/* ── Result Content ── */}
       {loading ? (
         <ResultsPageSkeleton />
       ) : !selectedExam ? (
         <EmptyState
           icon={ClipboardList}
           title="No exam selected"
-          description="Choose an exam tab to open the result view."
+          description="Choose an exam above to open the result view."
         />
       ) : selectedExam.student_status !== 'published' ? (
         <AwaitingExamPanel exam={selectedExam} />
@@ -202,78 +210,99 @@ const MyResults = () => {
         <ResultsPageSkeleton compact />
       ) : (
         <>
-          <section
-            className="rounded-[28px] border p-5 sm:p-6"
-            style={{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface)' }}
-          >
-            <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
-              <div className="min-w-0">
-                <div className="flex flex-wrap items-center gap-2">
-                  <h2 className="text-2xl font-bold text-[var(--color-text-primary)]">{result?.exam?.name || selectedExam.name}</h2>
-                  <span className="rounded-full px-3 py-1 text-xs font-bold uppercase tracking-[0.16em]" style={resultBadgeStyle(summary?.result_status)}>
-                    {summary?.result_status || 'awaiting'}
-                  </span>
-                </div>
-                <p className="mt-2 text-sm text-[var(--color-text-secondary)]">
-                  Exam date: {formatDate(result?.exam?.start_date || selectedExam.start_date, 'long')}
+          {/* ── Summary Stats ── */}
+          <div className="results-summary-grid">
+            <div className="results-summary-header">
+              <div>
+                <h2 className="results-summary-exam-name">
+                  {result?.exam?.name || selectedExam.name}
+                </h2>
+                <p className="results-summary-exam-date">
+                  {formatDate(result?.exam?.start_date || selectedExam.start_date, 'long')}
                 </p>
                 {result?.summary?.class_rank && (
-                  <p className="mt-2 text-sm font-medium text-[var(--student-accent)]">
-                    Rank {result.summary.class_rank} out of {result.summary.class_strength}
+                  <p className="results-summary-rank">
+                    🏅 Rank {result.summary.class_rank} of {result.summary.class_strength}
                   </p>
                 )}
               </div>
-
-              <div className="grid grid-cols-2 gap-3 sm:min-w-[310px]">
-                <HeaderMetric label="Overall" value={formatPercent(summary?.percentage || 0, 0)} tone="var(--student-accent)" />
-                <HeaderMetric label="Grade" value={summary?.grade || '--'} tone={gradeTone(summary?.grade)} />
-                <HeaderMetric label="Status" value={String(summary?.result_status || '--').toUpperCase()} tone={resultTone(summary?.result_status)} />
-                <HeaderMetric label="Subjects" value={subjects.length} tone="#2563eb" />
-              </div>
+              <span
+                className="results-summary-status-badge"
+                style={resultBadgeStyle(summary?.result_status)}
+              >
+                {summary?.result_status || 'awaiting'}
+              </span>
             </div>
-          </section>
 
-          <section className="space-y-4">
-            <div className="flex items-center justify-between gap-3">
+            <div className="results-metrics-row">
+              <MetricCard
+                label="Overall"
+                value={formatPercent(summary?.percentage || 0, 0)}
+                color="var(--student-accent)"
+                icon={<TrendingUp size={16} />}
+              />
+              <MetricCard
+                label="Grade"
+                value={summary?.grade || '--'}
+                color={gradeTone(summary?.grade)}
+                icon={<Star size={16} />}
+              />
+              <MetricCard
+                label="Status"
+                value={String(summary?.result_status || '--').toUpperCase()}
+                color={resultTone(summary?.result_status)}
+                icon={<Trophy size={16} />}
+              />
+              <MetricCard
+                label="Subjects"
+                value={subjects.length}
+                color="#2563eb"
+                icon={<BookOpen size={16} />}
+              />
+            </div>
+          </div>
+
+          {/* ── Subject Marks Table ── */}
+          <div className="results-section-card">
+            <div className="results-section-card__header">
               <div>
-                <h2 className="text-lg font-semibold text-[var(--color-text-primary)]">Subject Wise Marks</h2>
-                <p className="mt-1 text-sm text-[var(--color-text-secondary)]">
-                  Theory, practical, and combined subjects are all shown in one result view.
-                  </p>
-                  </div>
-                  {!isWithheld && (
-                  <button
+                <h2 className="results-section-card__title">Subject Wise Marks</h2>
+                <p className="results-section-card__desc">
+                  Theory, practical, and combined subjects in one view.
+                </p>
+              </div>
+              {!isWithheld && (
+                <button
                   type="button"
-                  onClick={() => navigate(`${ROUTES.STUDENT_REPORT_CARD}?examId=${selectedExamId}`)}
-                  className="inline-flex items-center gap-1 rounded-full px-3 py-2 text-xs font-semibold uppercase tracking-[0.16em]"
-                  style={{ backgroundColor: 'rgba(124,58,237,0.10)', color: 'var(--student-accent)' }}
-                  >
-                  Open Report Card
-                  <ArrowRight size={14} />
-                  </button>
-                  )}
-                  </div>
+                  className="results-open-report-btn"
+                  onClick={() =>
+                    navigate(`${ROUTES.STUDENT_REPORT_CARD}?examId=${selectedExamId}`)
+                  }
+                >
+                  Open Report Card <ArrowRight size={13} />
+                </button>
+              )}
+            </div>
             <ResultTable subjects={subjects} />
-          </section>
+          </div>
 
-          <div className="grid grid-cols-1 gap-5 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
-            <section
-              className="rounded-[28px] border p-5"
-              style={{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface)' }}
-            >
-              <div className="flex items-center gap-3">
-                <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-green-500/10 text-green-600">
-                  <Trophy size={18} />
+          {/* ── Analysis + Outlook ── */}
+          <div className="results-bottom-grid">
+            {/* Result Analysis */}
+            <div className="results-section-card">
+              <div className="results-section-card__header results-section-card__header--icon">
+                <div className="results-section-icon results-section-icon--green">
+                  <Trophy size={16} />
                 </div>
                 <div>
-                  <h2 className="text-lg font-semibold text-[var(--color-text-primary)]">Result Analysis</h2>
-                  <p className="mt-1 text-sm text-[var(--color-text-secondary)]">
-                    Quick reading of what went well and where you need support.
+                  <h2 className="results-section-card__title">Result Analysis</h2>
+                  <p className="results-section-card__desc">
+                    Strengths and areas that need attention.
                   </p>
                 </div>
               </div>
 
-              <div className="mt-5 grid grid-cols-1 gap-4">
+              <div className="results-analysis-blocks">
                 <AnalysisBlock
                   title="Strengths"
                   items={analysis?.strengths || []}
@@ -287,157 +316,768 @@ const MyResults = () => {
                   tone="#ef4444"
                 />
                 {result?.analysis?.class_comparison && (
-                  <div className="rounded-[24px] border px-4 py-4" style={{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface-raised)' }}>
-                    <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--color-text-muted)]">
-                      Performance Compared To Class
-                    </p>
-                    <p className="mt-2 text-sm font-semibold text-[var(--color-text-primary)]">
+                  <div className="results-comparison-block">
+                    <p className="results-comparison-block__label">Performance vs Class</p>
+                    <p className="results-comparison-block__value">
                       {result.analysis.class_comparison}
                     </p>
                   </div>
                 )}
               </div>
-            </section>
+            </div>
 
-            <div className="space-y-5">
+            {/* Right column */}
+            <div className="results-right-col">
               {compartment ? (
-                <section
-                  className="rounded-[28px] border p-5"
-                  style={{ borderColor: '#f59e0b', backgroundColor: 'rgba(245,158,11,0.10)' }}
-                >
-                  <div className="flex items-start gap-3">
-                    <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-amber-500/15 text-amber-700">
-                      <CircleAlert size={18} />
-                    </div>
-                    <div className="min-w-0">
-                      <h2 className="text-lg font-semibold text-amber-900 dark:text-amber-100">Compartment Notice</h2>
-                      <p className="mt-2 text-sm text-amber-900/80 dark:text-amber-100/80">
-                        You have compartment in the following subject(s). You must pass these papers to move ahead smoothly.
-                      </p>
-                      <div className="mt-4 flex flex-wrap gap-2">
-                        {(compartment.subjects || []).map((subject) => (
-                          <span key={subject} className="rounded-full bg-white/70 px-3 py-1.5 text-xs font-semibold text-amber-800">
-                            {subject}
-                          </span>
-                        ))}
-                      </div>
+                <div className="results-compartment-card">
+                  <div className="results-compartment-card__icon">
+                    <CircleAlert size={16} />
+                  </div>
+                  <div>
+                    <h2 className="results-compartment-card__title">Compartment Notice</h2>
+                    <p className="results-compartment-card__desc">
+                      You must pass these subjects to progress.
+                    </p>
+                    <div className="results-compartment-card__tags">
+                      {(compartment.subjects || []).map((subject) => (
+                        <span key={subject} className="results-compartment-card__tag">
+                          {subject}
+                        </span>
+                      ))}
                     </div>
                   </div>
-                </section>
+                </div>
               ) : (
-                <section
-                  className="rounded-[28px] border p-5"
-                  style={{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface)' }}
-                >
-                  <h2 className="text-lg font-semibold text-[var(--color-text-primary)]">Promotion Outlook</h2>
-                  <p className="mt-2 text-sm text-[var(--color-text-secondary)]">
+                <div className="results-section-card">
+                  <h2 className="results-section-card__title">Promotion Outlook</h2>
+                  <p className="results-section-card__desc" style={{ marginTop: '8px' }}>
                     {summary?.result_status === 'pass'
-                      ? 'This exam is in a passing state. Keep that rhythm through the rest of the session.'
-                      : 'This result needs recovery work. Review the red subjects first and speak with your class teacher.'}
+                      ? 'Passing state — keep this momentum through the session.'
+                      : 'Recovery needed — review red subjects and speak with your teacher.'}
                   </p>
-                  <div className="mt-5 rounded-[24px] border px-4 py-4" style={{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface-raised)' }}>
-                    <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--color-text-muted)]">Current Exam Result</p>
-                    <p className="mt-2 text-xl font-bold" style={{ color: resultTone(summary?.result_status) }}>
-                      {String(summary?.result_status || 'awaiting').toUpperCase()}
+                  <div className="results-outlook-badge">
+                    <p className="results-outlook-badge__label">Current Result</p>
+                    <p
+                      className="results-outlook-badge__value"
+                      style={{ color: resultTone(summary?.result_status) }}
+                    >
+                      {String(summary?.result_status || 'AWAITING').toUpperCase()}
                     </p>
                   </div>
-                </section>
+                </div>
               )}
 
               {subjects.length > 0 && (
-                <WhatIfAnalysis 
-                  subjects={subjects} 
-                  initialPercentage={summary?.percentage || 0} 
-                  initialGrade={summary?.grade || 'F'} 
+                <WhatIfAnalysis
+                  subjects={subjects}
+                  initialPercentage={summary?.percentage || 0}
+                  initialGrade={summary?.grade || 'F'}
                 />
               )}
             </div>
           </div>
         </>
       )}
+
+      <style>{`
+        /* ── Page Container ── */
+        .results-page {
+          display: flex;
+          flex-direction: column;
+          gap: 16px;
+        }
+
+        /* ── Action Bar ── */
+        .results-action-bar {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 12px;
+          flex-wrap: wrap;
+        }
+
+        .results-action-bar__left {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+        }
+
+        .results-page-icon {
+          display: flex;
+          height: 38px;
+          width: 38px;
+          align-items: center;
+          justify-content: center;
+          border-radius: 12px;
+          background-color: rgba(124, 58, 237, 0.10);
+          color: var(--student-accent);
+          flex-shrink: 0;
+        }
+
+        .results-page-label {
+          font-size: 10px;
+          font-weight: 700;
+          letter-spacing: 0.16em;
+          text-transform: uppercase;
+          color: var(--color-text-muted);
+          margin: 0;
+          line-height: 1;
+        }
+
+        .results-page-title {
+          font-size: 20px;
+          font-weight: 700;
+          color: var(--color-text-primary);
+          margin: 2px 0 0 0;
+          line-height: 1.2;
+        }
+
+        .results-action-bar__right {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          flex-wrap: wrap;
+        }
+
+        /* ── Withheld Banner ── */
+        .results-withheld-banner {
+          display: flex;
+          align-items: flex-start;
+          gap: 12px;
+          padding: 14px 16px;
+          border-radius: 16px;
+          border: 1px solid;
+        }
+
+        .results-withheld-banner__icon {
+          display: flex;
+          height: 32px;
+          width: 32px;
+          align-items: center;
+          justify-content: center;
+          border-radius: 8px;
+          flex-shrink: 0;
+        }
+
+        .results-withheld-banner__body {
+          flex: 1;
+          min-width: 0;
+        }
+
+        .results-withheld-banner__title {
+          font-size: 13px;
+          font-weight: 700;
+          margin: 0 0 4px;
+        }
+
+        .results-withheld-banner__desc {
+          font-size: 13px;
+          line-height: 1.5;
+          margin: 0;
+        }
+
+        .results-withheld-banner__link {
+          display: inline-flex;
+          align-items: center;
+          gap: 4px;
+          margin-top: 8px;
+          font-size: 12px;
+          font-weight: 700;
+          border: none;
+          background: none;
+          cursor: pointer;
+          padding: 0;
+          color: #dc2626;
+          text-decoration: underline;
+          text-underline-offset: 2px;
+        }
+
+        /* ── Exam Selector ── */
+        .results-exam-selector {
+          background-color: var(--color-surface);
+          border: 1px solid var(--color-border);
+          border-radius: 20px;
+          padding: 18px 20px;
+        }
+
+        .results-exam-selector__header {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          margin-bottom: 14px;
+        }
+
+        .results-exam-selector__label {
+          font-size: 11px;
+          font-weight: 700;
+          letter-spacing: 0.16em;
+          text-transform: uppercase;
+          color: var(--color-text-muted);
+          margin: 0;
+        }
+
+        .results-exam-selector__count {
+          font-size: 11px;
+          font-weight: 600;
+          color: var(--color-text-secondary);
+          background-color: var(--color-surface-raised);
+          padding: 2px 10px;
+          border-radius: 99px;
+        }
+
+        .results-exam-tabs {
+          display: flex;
+          gap: 10px;
+          overflow-x: auto;
+          padding-bottom: 2px;
+          scrollbar-width: thin;
+        }
+
+        .results-exam-tab {
+          flex-shrink: 0;
+          min-width: 160px;
+          border-radius: 14px;
+          border: 1.5px solid var(--color-border);
+          padding: 12px 14px;
+          text-align: left;
+          background-color: var(--color-surface);
+          cursor: pointer;
+          transition: all 0.18s ease;
+          outline: none;
+        }
+
+        .results-exam-tab:hover {
+          border-color: rgba(124, 58, 237, 0.35);
+          background-color: rgba(124, 58, 237, 0.04);
+          transform: translateY(-1px);
+        }
+
+        .results-exam-tab--active {
+          border-color: var(--student-accent) !important;
+          background-color: rgba(124, 58, 237, 0.08) !important;
+          box-shadow: 0 4px 16px rgba(109, 40, 217, 0.10);
+        }
+
+        .results-exam-tab__top {
+          display: flex;
+          align-items: flex-start;
+          justify-content: space-between;
+          gap: 6px;
+        }
+
+        .results-exam-tab__name {
+          font-size: 13px;
+          font-weight: 600;
+          color: var(--color-text-primary);
+          line-height: 1.3;
+        }
+
+        .results-exam-tab__badge {
+          font-size: 9px;
+          font-weight: 700;
+          letter-spacing: 0.12em;
+          text-transform: uppercase;
+          padding: 2px 7px;
+          border-radius: 99px;
+          white-space: nowrap;
+          flex-shrink: 0;
+        }
+
+        .results-exam-tab__date {
+          font-size: 11px;
+          color: var(--color-text-secondary);
+          margin: 6px 0 0 0;
+        }
+
+        /* ── Summary Section ── */
+        .results-summary-grid {
+          background-color: var(--color-surface);
+          border: 1px solid var(--color-border);
+          border-radius: 20px;
+          padding: 20px;
+        }
+
+        .results-summary-header {
+          display: flex;
+          align-items: flex-start;
+          justify-content: space-between;
+          gap: 12px;
+          margin-bottom: 18px;
+          flex-wrap: wrap;
+        }
+
+        .results-summary-exam-name {
+          font-size: 18px;
+          font-weight: 700;
+          color: var(--color-text-primary);
+          margin: 0;
+        }
+
+        .results-summary-exam-date {
+          font-size: 12px;
+          color: var(--color-text-secondary);
+          margin: 4px 0 0 0;
+        }
+
+        .results-summary-rank {
+          font-size: 12px;
+          font-weight: 600;
+          color: var(--student-accent);
+          margin: 4px 0 0 0;
+        }
+
+        .results-summary-status-badge {
+          font-size: 10px;
+          font-weight: 700;
+          letter-spacing: 0.14em;
+          text-transform: uppercase;
+          padding: 4px 12px;
+          border-radius: 99px;
+          white-space: nowrap;
+          align-self: flex-start;
+        }
+
+        .results-metrics-row {
+          display: grid;
+          grid-template-columns: repeat(2, 1fr);
+          gap: 10px;
+        }
+
+        @media (min-width: 640px) {
+          .results-metrics-row {
+            grid-template-columns: repeat(4, 1fr);
+          }
+        }
+
+        /* ── Metric Card ── */
+        .results-metric-card {
+          background-color: var(--color-surface-raised);
+          border: 1px solid var(--color-border);
+          border-radius: 14px;
+          padding: 14px 16px;
+        }
+
+        .results-metric-card__header {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          margin-bottom: 8px;
+        }
+
+        .results-metric-card__label {
+          font-size: 10px;
+          font-weight: 700;
+          letter-spacing: 0.14em;
+          text-transform: uppercase;
+          color: var(--color-text-muted);
+        }
+
+        .results-metric-card__icon {
+          display: flex;
+          height: 26px;
+          width: 26px;
+          align-items: center;
+          justify-content: center;
+          border-radius: 8px;
+          opacity: 0.85;
+        }
+
+        .results-metric-card__value {
+          font-size: 22px;
+          font-weight: 800;
+          line-height: 1.1;
+          margin: 0;
+        }
+
+        /* ── Section Card ── */
+        .results-section-card {
+          background-color: var(--color-surface);
+          border: 1px solid var(--color-border);
+          border-radius: 20px;
+          padding: 20px;
+        }
+
+        .results-section-card__header {
+          display: flex;
+          align-items: flex-start;
+          justify-content: space-between;
+          gap: 12px;
+          margin-bottom: 16px;
+          flex-wrap: wrap;
+        }
+
+        .results-section-card__header--icon {
+          gap: 12px;
+          align-items: flex-start;
+        }
+
+        .results-section-icon {
+          display: flex;
+          height: 34px;
+          width: 34px;
+          align-items: center;
+          justify-content: center;
+          border-radius: 10px;
+          flex-shrink: 0;
+          margin-top: 2px;
+        }
+
+        .results-section-icon--green {
+          background-color: rgba(22, 163, 74, 0.10);
+          color: #16a34a;
+        }
+
+        .results-section-card__title {
+          font-size: 15px;
+          font-weight: 700;
+          color: var(--color-text-primary);
+          margin: 0;
+        }
+
+        .results-section-card__desc {
+          font-size: 12px;
+          color: var(--color-text-secondary);
+          margin: 4px 0 0 0;
+          line-height: 1.5;
+        }
+
+        /* ── Open Report Card Button ── */
+        .results-open-report-btn {
+          display: inline-flex;
+          align-items: center;
+          gap: 5px;
+          padding: 6px 14px;
+          border-radius: 99px;
+          border: none;
+          background-color: rgba(124, 58, 237, 0.10);
+          color: var(--student-accent);
+          font-size: 11px;
+          font-weight: 700;
+          letter-spacing: 0.12em;
+          text-transform: uppercase;
+          cursor: pointer;
+          transition: background-color 0.15s ease;
+          white-space: nowrap;
+          flex-shrink: 0;
+        }
+
+        .results-open-report-btn:hover {
+          background-color: rgba(124, 58, 237, 0.18);
+        }
+
+        /* ── Bottom Grid ── */
+        .results-bottom-grid {
+          display: grid;
+          grid-template-columns: 1fr;
+          gap: 16px;
+        }
+
+        @media (min-width: 1280px) {
+          .results-bottom-grid {
+            grid-template-columns: 1fr 1fr;
+          }
+        }
+
+        .results-right-col {
+          display: flex;
+          flex-direction: column;
+          gap: 16px;
+        }
+
+        /* ── Analysis Blocks ── */
+        .results-analysis-blocks {
+          display: flex;
+          flex-direction: column;
+          gap: 10px;
+        }
+
+        .results-analysis-block {
+          background-color: var(--color-surface-raised);
+          border: 1px solid var(--color-border);
+          border-radius: 14px;
+          padding: 14px 16px;
+        }
+
+        .results-analysis-block__label {
+          font-size: 10px;
+          font-weight: 700;
+          letter-spacing: 0.14em;
+          text-transform: uppercase;
+          color: var(--color-text-muted);
+          margin: 0 0 8px;
+        }
+
+        .results-analysis-block__tags {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 6px;
+        }
+
+        .results-analysis-block__tag {
+          font-size: 12px;
+          font-weight: 600;
+          padding: 4px 12px;
+          border-radius: 99px;
+        }
+
+        .results-analysis-block__empty {
+          font-size: 12px;
+          color: var(--color-text-secondary);
+          margin: 0;
+        }
+
+        .results-comparison-block {
+          background-color: var(--color-surface-raised);
+          border: 1px solid var(--color-border);
+          border-radius: 14px;
+          padding: 14px 16px;
+        }
+
+        .results-comparison-block__label {
+          font-size: 10px;
+          font-weight: 700;
+          letter-spacing: 0.14em;
+          text-transform: uppercase;
+          color: var(--color-text-muted);
+          margin: 0 0 6px;
+        }
+
+        .results-comparison-block__value {
+          font-size: 13px;
+          font-weight: 600;
+          color: var(--color-text-primary);
+          margin: 0;
+        }
+
+        /* ── Compartment Card ── */
+        .results-compartment-card {
+          display: flex;
+          align-items: flex-start;
+          gap: 12px;
+          background-color: rgba(245, 158, 11, 0.08);
+          border: 1px solid #fcd34d;
+          border-radius: 20px;
+          padding: 18px 20px;
+        }
+
+        .results-compartment-card__icon {
+          display: flex;
+          height: 34px;
+          width: 34px;
+          align-items: center;
+          justify-content: center;
+          border-radius: 10px;
+          background-color: rgba(245, 158, 11, 0.15);
+          color: #b45309;
+          flex-shrink: 0;
+        }
+
+        .results-compartment-card__title {
+          font-size: 15px;
+          font-weight: 700;
+          color: #92400e;
+          margin: 0 0 4px;
+        }
+
+        .results-compartment-card__desc {
+          font-size: 12px;
+          color: #a16207;
+          margin: 0 0 10px;
+        }
+
+        .results-compartment-card__tags {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 6px;
+        }
+
+        .results-compartment-card__tag {
+          font-size: 12px;
+          font-weight: 600;
+          padding: 4px 12px;
+          border-radius: 99px;
+          background-color: rgba(255, 255, 255, 0.65);
+          color: #92400e;
+        }
+
+        /* ── Outlook Badge ── */
+        .results-outlook-badge {
+          margin-top: 14px;
+          background-color: var(--color-surface-raised);
+          border: 1px solid var(--color-border);
+          border-radius: 12px;
+          padding: 12px 16px;
+        }
+
+        .results-outlook-badge__label {
+          font-size: 10px;
+          font-weight: 700;
+          letter-spacing: 0.14em;
+          text-transform: uppercase;
+          color: var(--color-text-muted);
+          margin: 0 0 4px;
+        }
+
+        .results-outlook-badge__value {
+          font-size: 18px;
+          font-weight: 800;
+          margin: 0;
+        }
+
+        /* ── Awaiting Panel ── */
+        .results-awaiting-panel {
+          display: flex;
+          align-items: flex-start;
+          gap: 12px;
+          background-color: var(--color-surface);
+          border: 1px solid var(--color-border);
+          border-radius: 20px;
+          padding: 20px;
+        }
+
+        .results-awaiting-panel__icon {
+          display: flex;
+          height: 38px;
+          width: 38px;
+          align-items: center;
+          justify-content: center;
+          border-radius: 12px;
+          background-color: rgba(100, 116, 139, 0.10);
+          color: #64748b;
+          flex-shrink: 0;
+        }
+
+        .results-awaiting-panel__title {
+          font-size: 16px;
+          font-weight: 700;
+          color: var(--color-text-primary);
+          margin: 0 0 6px;
+        }
+
+        .results-awaiting-panel__desc {
+          font-size: 13px;
+          color: var(--color-text-secondary);
+          margin: 0 0 10px;
+          line-height: 1.5;
+        }
+
+        /* ── Skeletons ── */
+        .results-skeleton-pulse {
+          animation: pulse 1.6s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+          0%, 100% { opacity: 1; }
+          50% { opacity: 0.45; }
+        }
+      `}</style>
     </div>
   )
 }
 
-const HeaderMetric = ({ label, value, tone }) => (
-  <div className="rounded-[24px] border px-4 py-4" style={{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface-raised)' }}>
-    <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--color-text-muted)]">{label}</p>
-    <p className="mt-2 text-2xl font-bold" style={{ color: tone }}>{value}</p>
+/* ── Sub-components ── */
+
+const MetricCard = ({ label, value, color, icon }) => (
+  <div className="results-metric-card">
+    <div className="results-metric-card__header">
+      <p className="results-metric-card__label">{label}</p>
+      <div className="results-metric-card__icon" style={{ backgroundColor: `${color}18`, color }}>
+        {icon}
+      </div>
+    </div>
+    <p className="results-metric-card__value" style={{ color }}>
+      {value}
+    </p>
   </div>
 )
 
 const AnalysisBlock = ({ title, items, emptyText, tone }) => (
-  <div className="rounded-[24px] border px-4 py-4" style={{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface-raised)' }}>
-    <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--color-text-muted)]">{title}</p>
+  <div className="results-analysis-block">
+    <p className="results-analysis-block__label">{title}</p>
     {items.length ? (
-      <div className="mt-3 flex flex-wrap gap-2">
+      <div className="results-analysis-block__tags">
         {items.map((item) => (
           <span
             key={item}
-            className="rounded-full px-3 py-1.5 text-xs font-semibold"
-            style={{ backgroundColor: `${tone}18`, color: tone }}
+            className="results-analysis-block__tag"
+            style={{ backgroundColor: `${tone}16`, color: tone }}
           >
             {item}
           </span>
         ))}
       </div>
     ) : (
-      <p className="mt-2 text-sm text-[var(--color-text-secondary)]">{emptyText}</p>
+      <p className="results-analysis-block__empty">{emptyText}</p>
     )}
   </div>
 )
 
 const AwaitingExamPanel = ({ exam }) => (
-  <section
-    className="rounded-[28px] border p-5 sm:p-6"
-    style={{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface)' }}
-  >
-    <div className="flex items-start gap-3">
-      <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-slate-500/10 text-slate-600">
-        <ClipboardList size={18} />
-      </div>
-      <div className="min-w-0">
-        <h2 className="text-xl font-semibold text-[var(--color-text-primary)]">{exam.name}</h2>
-        <p className="mt-2 text-sm text-[var(--color-text-secondary)]">
-          {exam.student_status === 'upcoming'
-            ? `This exam is scheduled for ${formatDate(exam.start_date, 'long')}. Your marks will appear here after the school publishes them.`
-            : 'This exam exists in your session, but your marks have not been published yet.'}
-        </p>
-        <div className="mt-4 inline-flex rounded-full px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.16em]" style={examStatusStyle(exam.student_status)}>
-          {exam.student_status}
-        </div>
-      </div>
+  <div className="results-awaiting-panel">
+    <div className="results-awaiting-panel__icon">
+      <ClipboardList size={18} />
     </div>
-  </section>
+    <div>
+      <p className="results-awaiting-panel__title">{exam.name}</p>
+      <p className="results-awaiting-panel__desc">
+        {exam.student_status === 'upcoming'
+          ? `Scheduled for ${formatDate(exam.start_date, 'long')}. Marks will appear after publication.`
+          : 'This exam is in your session, but marks have not been published yet.'}
+      </p>
+      <span className="results-exam-tab__badge" style={examStatusStyle(exam.student_status)}>
+        {exam.student_status}
+      </span>
+    </div>
+  </div>
 )
 
 const ExamTabsSkeleton = () => (
-  <div className="flex gap-3 overflow-hidden animate-pulse">
-    {Array.from({ length: 4 }).map((_, index) => (
-      <div key={index} className="min-w-[160px] rounded-[24px] border p-4" style={{ borderColor: 'var(--color-border)' }}>
-        <div className="h-4 w-20 rounded-full bg-[var(--color-surface-raised)]" />
-        <div className="mt-3 h-3 w-16 rounded-full bg-[var(--color-surface-raised)]" />
-      </div>
+  <div className="results-exam-tabs results-skeleton-pulse">
+    {Array.from({ length: 4 }).map((_, i) => (
+      <div
+        key={i}
+        style={{
+          minWidth: '160px',
+          height: '72px',
+          borderRadius: '14px',
+          backgroundColor: 'var(--color-surface-raised)',
+          flexShrink: 0,
+        }}
+      />
     ))}
   </div>
 )
 
 const ResultsPageSkeleton = ({ compact = false }) => (
-  <div className="space-y-5 animate-pulse">
-    <div className="rounded-[28px] border p-6" style={{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface)' }}>
-      <div className="h-6 w-36 rounded-full bg-[var(--color-surface-raised)]" />
-      <div className="mt-3 h-4 w-48 rounded-full bg-[var(--color-surface-raised)]" />
-      <div className="mt-5 grid grid-cols-2 gap-3">
-        {Array.from({ length: 4 }).map((_, index) => (
-          <div key={index} className="rounded-[24px] bg-[var(--color-surface-raised)] p-6" />
+  <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }} className="results-skeleton-pulse">
+    <div
+      style={{
+        borderRadius: '20px',
+        backgroundColor: 'var(--color-surface)',
+        border: '1px solid var(--color-border)',
+        padding: '20px',
+      }}
+    >
+      <div style={{ height: '20px', width: '160px', borderRadius: '8px', backgroundColor: 'var(--color-surface-raised)' }} />
+      <div style={{ height: '14px', width: '120px', borderRadius: '6px', backgroundColor: 'var(--color-surface-raised)', marginTop: '10px' }} />
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '10px', marginTop: '16px' }}>
+        {Array.from({ length: 4 }).map((_, i) => (
+          <div key={i} style={{ height: '72px', borderRadius: '14px', backgroundColor: 'var(--color-surface-raised)' }} />
         ))}
       </div>
     </div>
-    <div className="rounded-[28px] border p-6" style={{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface)' }}>
-      <div className="h-5 w-40 rounded-full bg-[var(--color-surface-raised)]" />
-      <div className="mt-4 space-y-3">
-        {Array.from({ length: compact ? 2 : 4 }).map((_, index) => (
-          <div key={index} className="rounded-[24px] bg-[var(--color-surface-raised)] p-8" />
+    <div
+      style={{
+        borderRadius: '20px',
+        backgroundColor: 'var(--color-surface)',
+        border: '1px solid var(--color-border)',
+        padding: '20px',
+      }}
+    >
+      <div style={{ height: '18px', width: '140px', borderRadius: '8px', backgroundColor: 'var(--color-surface-raised)' }} />
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '16px' }}>
+        {Array.from({ length: compact ? 2 : 4 }).map((_, i) => (
+          <div key={i} style={{ height: '48px', borderRadius: '12px', backgroundColor: 'var(--color-surface-raised)' }} />
         ))}
       </div>
     </div>

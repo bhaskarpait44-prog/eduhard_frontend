@@ -77,25 +77,15 @@ const TeacherTimetable = () => {
     <div className="max-w-[1400px] mx-auto space-y-6 pb-12">
 
       {/* Page Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div className="flex-1">
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-            My Timetable
-          </h1>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
-            {getDayName()}, {getDateStr()}
-          </p>
-        </div>
-        <div className="flex items-center gap-2">
-          <Button 
-            variant="secondary" 
-            icon={Printer} 
-            onClick={() => window.print()}
-            size="sm"
-          >
-            Print Timetable
-          </Button>
-        </div>
+      <div className="flex justify-end">
+        <Button 
+          variant="secondary" 
+          icon={Printer} 
+          onClick={() => window.print()}
+          size="sm"
+        >
+          Print Timetable
+        </Button>
       </div>
 
       {/* ── Stat cards ── */}

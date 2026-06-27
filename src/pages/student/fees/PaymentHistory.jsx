@@ -89,25 +89,252 @@ const PaymentHistory = () => {
   }
 
   return (
-    <div className="space-y-5">
-      <section
-        className="rounded-[28px] border p-5 sm:p-6"
-        style={{
-          borderColor: 'var(--color-border)',
-          background: 'linear-gradient(135deg, rgba(109,40,217,0.16), rgba(34,197,94,0.05) 52%, var(--color-surface) 100%)',
-        }}
-      >
-        <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
-          <div className="min-w-0">
-            <p className="text-sm font-semibold uppercase tracking-[0.18em]" style={{ color: 'var(--student-accent)' }}>
-              Fees
-            </p>
-            <h1 className="mt-2 text-2xl font-bold sm:text-3xl">Payment History</h1>
-            <p className="mt-2 max-w-2xl text-sm text-[var(--color-text-secondary)] sm:text-base">
-              Every payment recorded against your account, with receipt details available one row at a time.
-            </p>
-          </div>
+    <>
+      <style>{`
+        /* ── Action Bar ─────────────────────────────────── */
+        .ph-action-bar {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 12px;
+          padding: 14px 18px;
+          border-radius: 16px;
+          border: 1px solid var(--color-border);
+          background: var(--color-surface);
+        }
+        .ph-action-bar-left {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+        }
+        .ph-icon-box {
+          width: 38px;
+          height: 38px;
+          border-radius: 10px;
+          background: rgba(22, 163, 74, 0.10);
+          color: #16a34a;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          flex-shrink: 0;
+        }
+        .ph-label {
+          font-size: 10px;
+          font-weight: 700;
+          letter-spacing: 0.14em;
+          text-transform: uppercase;
+          color: var(--color-text-muted);
+          line-height: 1;
+          margin-bottom: 3px;
+        }
+        .ph-title {
+          font-size: 20px;
+          font-weight: 700;
+          color: var(--color-text-primary);
+          line-height: 1.2;
+          margin: 0;
+        }
 
+        /* ── Filter Toolbar ─────────────────────────────── */
+        .ph-filter-bar {
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          padding: 14px 16px;
+          border-radius: 18px;
+          border: 1px solid var(--color-border);
+          background: var(--color-surface);
+          overflow-x: auto;
+        }
+        .ph-filter-label {
+          font-size: 11px;
+          font-weight: 600;
+          text-transform: uppercase;
+          letter-spacing: 0.12em;
+          color: var(--color-text-muted);
+          white-space: nowrap;
+          margin-right: 4px;
+          flex-shrink: 0;
+        }
+        .ph-tab {
+          padding: 6px 14px;
+          border-radius: 20px;
+          border: 1px solid transparent;
+          font-size: 11px;
+          font-weight: 600;
+          text-transform: uppercase;
+          letter-spacing: 0.12em;
+          cursor: pointer;
+          white-space: nowrap;
+          transition: background 0.15s, color 0.15s, border-color 0.15s;
+          background: transparent;
+          color: var(--color-text-secondary);
+        }
+        .ph-tab:hover:not(.ph-tab--active) {
+          background: var(--color-surface-raised);
+        }
+        .ph-tab--active {
+          background: #16a34a;
+          color: #fff;
+          border-color: #16a34a;
+        }
+
+        /* ── Payment List Card ──────────────────────────── */
+        .ph-list-card {
+          border-radius: 18px;
+          border: 1px solid var(--color-border);
+          background: var(--color-surface);
+          overflow: hidden;
+        }
+        .ph-list-header {
+          display: grid;
+          grid-template-columns: 1fr auto auto auto;
+          gap: 12px;
+          align-items: center;
+          padding: 10px 18px;
+          background: var(--color-surface-raised);
+          border-bottom: 1px solid var(--color-border);
+        }
+        .ph-list-header-cell {
+          font-size: 10px;
+          font-weight: 700;
+          text-transform: uppercase;
+          letter-spacing: 0.13em;
+          color: var(--color-text-muted);
+        }
+        .ph-list-header-cell.right {
+          text-align: right;
+        }
+
+        /* ── Payment Row ────────────────────────────────── */
+        .ph-row {
+          display: grid;
+          grid-template-columns: 1fr auto auto auto;
+          gap: 12px;
+          align-items: center;
+          padding: 0 18px 0 0;
+          border-bottom: 1px solid var(--color-border);
+          transition: background 0.12s;
+          position: relative;
+          overflow: hidden;
+          min-height: 62px;
+        }
+        .ph-row:last-child {
+          border-bottom: none;
+        }
+        .ph-row:hover {
+          background: var(--color-surface-raised);
+        }
+        .ph-row-accent {
+          position: absolute;
+          left: 0;
+          top: 0;
+          bottom: 0;
+          width: 4px;
+          background: #16a34a;
+          border-radius: 0;
+        }
+        .ph-row-info {
+          padding: 14px 12px 14px 22px;
+          min-width: 0;
+        }
+        .ph-row-fee-type {
+          font-size: 13px;
+          font-weight: 600;
+          color: var(--color-text-primary);
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+        }
+        .ph-row-meta {
+          font-size: 11px;
+          color: var(--color-text-secondary);
+          margin-top: 3px;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+        }
+        .ph-row-date-mode {
+          font-size: 12px;
+          color: var(--color-text-secondary);
+          text-align: right;
+          white-space: nowrap;
+        }
+        .ph-row-amount {
+          font-size: 14px;
+          font-weight: 700;
+          color: #16a34a;
+          text-align: right;
+          white-space: nowrap;
+          min-width: 80px;
+        }
+        .ph-row-action {
+          display: flex;
+          justify-content: flex-end;
+          min-width: 90px;
+        }
+
+        /* ── Skeleton ───────────────────────────────────── */
+        .ph-skeleton {
+          border-radius: 18px;
+          overflow: hidden;
+          border: 1px solid var(--color-border);
+          background: var(--color-surface);
+          animation: ph-pulse 1.4s ease-in-out infinite;
+        }
+        .ph-skeleton-row {
+          height: 62px;
+          border-bottom: 1px solid var(--color-border);
+          background: var(--color-surface-raised);
+          opacity: 0.5;
+        }
+        .ph-skeleton-row:last-child { border-bottom: none; }
+        @keyframes ph-pulse {
+          0%, 100% { opacity: 1; }
+          50% { opacity: 0.6; }
+        }
+
+        /* ── Modal Receipt Row ──────────────────────────── */
+        .ph-receipt-row {
+          display: flex;
+          align-items: baseline;
+          justify-content: space-between;
+          gap: 12px;
+          padding: 10px 0;
+          border-bottom: 1px solid var(--color-border);
+        }
+        .ph-receipt-row:last-child {
+          border-bottom: none;
+        }
+        .ph-receipt-row-label {
+          font-size: 11px;
+          font-weight: 700;
+          text-transform: uppercase;
+          letter-spacing: 0.12em;
+          color: var(--color-text-muted);
+          flex-shrink: 0;
+        }
+        .ph-receipt-row-value {
+          font-size: 13px;
+          font-weight: 600;
+          color: var(--color-text-primary);
+          text-align: right;
+        }
+      `}</style>
+
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+
+        {/* ── Action Bar ── */}
+        <div className="ph-action-bar">
+          <div className="ph-action-bar-left">
+            <div className="ph-icon-box">
+              <Receipt size={18} />
+            </div>
+            <div>
+              <div className="ph-label">Fees</div>
+              <h1 className="ph-title">Payment History</h1>
+            </div>
+          </div>
           <Button
             variant="secondary"
             onClick={async () => {
@@ -120,73 +347,77 @@ const PaymentHistory = () => {
             Refresh
           </Button>
         </div>
-      </section>
 
-      <section
-        className="rounded-[28px] border p-5"
-        style={{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface)' }}
-      >
-        <div className="flex gap-2 overflow-x-auto pb-1">
+        {/* ── Filter Toolbar ── */}
+        <div className="ph-filter-bar">
+          <span className="ph-filter-label">Mode:</span>
           {['all', 'cash', 'online', 'cheque', 'dd'].map((mode) => (
             <button
               key={mode}
               type="button"
+              className={`ph-tab${modeFilter === mode ? ' ph-tab--active' : ''}`}
               onClick={() => setModeFilter(mode)}
-              className="rounded-full px-3 py-2 text-xs font-semibold uppercase tracking-[0.14em] whitespace-nowrap"
-              style={{
-                backgroundColor: modeFilter === mode ? 'var(--student-accent)' : 'var(--color-surface-raised)',
-                color: modeFilter === mode ? '#fff' : 'var(--color-text-secondary)',
-              }}
             >
               {mode}
             </button>
           ))}
         </div>
 
-        <div className="mt-5 space-y-3">
-          {loading ? (
-            <div className="space-y-3 animate-pulse">
-              {Array.from({ length: 4 }).map((_, index) => <div key={index} className="h-24 rounded-[24px] bg-[var(--color-surface-raised)]" />)}
+        {/* ── Payment List ── */}
+        {loading ? (
+          <div className="ph-skeleton">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <div key={i} className="ph-skeleton-row" />
+            ))}
+          </div>
+        ) : filteredPayments.length > 0 ? (
+          <div className="ph-list-card">
+            {/* Table header */}
+            <div className="ph-list-header">
+              <div className="ph-list-header-cell">Fee Type</div>
+              <div className="ph-list-header-cell right">Date &amp; Mode</div>
+              <div className="ph-list-header-cell right">Amount</div>
+              <div className="ph-list-header-cell right">Action</div>
             </div>
-          ) : filteredPayments.length > 0 ? (
-            filteredPayments.map((payment) => (
-              <div
-                key={payment.id}
-                className="rounded-[24px] border p-4"
-                style={{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface)' }}
-              >
-                <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                  <div className="min-w-0">
-                    <p className="text-sm font-semibold text-[var(--color-text-primary)]">{payment.fee_type_name}</p>
-                    <p className="mt-1 text-xs text-[var(--color-text-secondary)]">
-                      {formatDate(payment.payment_date, 'long')} • {String(payment.payment_mode || '').toUpperCase()} • Receipt {payment.receipt_no || '--'}
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <p className="text-lg font-bold text-green-600">{formatCurrency(payment.amount)}</p>
-                    <Button
-                      size="sm"
-                      variant="secondary"
-                      icon={Download}
-                      loading={receiptLoadingId === payment.id}
-                      onClick={() => openReceipt(payment.id)}
-                    >
-                      Receipt
-                    </Button>
+            {/* Rows */}
+            {filteredPayments.map((payment) => (
+              <div key={payment.id} className="ph-row">
+                <div className="ph-row-accent" />
+                <div className="ph-row-info">
+                  <div className="ph-row-fee-type">{payment.fee_type_name}</div>
+                  <div className="ph-row-meta">Receipt {payment.receipt_no || '--'}</div>
+                </div>
+                <div className="ph-row-date-mode">
+                  <div>{formatDate(payment.payment_date, 'long')}</div>
+                  <div style={{ fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--color-text-muted)', marginTop: '2px' }}>
+                    {String(payment.payment_mode || '').toUpperCase()}
                   </div>
                 </div>
+                <div className="ph-row-amount">{formatCurrency(payment.amount)}</div>
+                <div className="ph-row-action">
+                  <Button
+                    size="sm"
+                    variant="secondary"
+                    icon={Receipt}
+                    loading={receiptLoadingId === payment.id}
+                    onClick={() => openReceipt(payment.id)}
+                  >
+                    Receipt
+                  </Button>
+                </div>
               </div>
-            ))
-          ) : (
-            <EmptyState
-              icon={Receipt}
-              title="No payments found"
-              description="Payments matching this filter will appear here."
-            />
-          )}
-        </div>
-      </section>
+            ))}
+          </div>
+        ) : (
+          <EmptyState
+            icon={Receipt}
+            title="No payments found"
+            description="Payments matching this filter will appear here."
+          />
+        )}
+      </div>
 
+      {/* ── Receipt Modal ── */}
       <Modal
         open={Boolean(receipt)}
         onClose={() => setReceipt(null)}
@@ -199,24 +430,24 @@ const PaymentHistory = () => {
         }
       >
         {receipt && (
-          <div className="space-y-3">
-            <ReceiptRow label="Receipt No" value={receipt.receipt_no} />
-            <ReceiptRow label="Fee Type" value={receipt.fee_type_name} />
-            <ReceiptRow label="Payment Date" value={formatDate(receipt.payment_date, 'long')} />
-            <ReceiptRow label="Payment Mode" value={String(receipt.payment_mode || '').toUpperCase()} />
-            <ReceiptRow label="Amount" value={formatCurrency(receipt.amount)} />
+          <div>
+            <ReceiptRow label="Receipt No"    value={receipt.receipt_no} />
+            <ReceiptRow label="Fee Type"      value={receipt.fee_type_name} />
+            <ReceiptRow label="Payment Date"  value={formatDate(receipt.payment_date, 'long')} />
+            <ReceiptRow label="Payment Mode"  value={String(receipt.payment_mode || '').toUpperCase()} />
+            <ReceiptRow label="Amount"        value={formatCurrency(receipt.amount)} />
             <ReceiptRow label="Balance After" value={formatCurrency(receipt.balance_after || 0)} />
           </div>
         )}
       </Modal>
-    </div>
+    </>
   )
 }
 
 const ReceiptRow = ({ label, value }) => (
-  <div className="rounded-[20px] border px-4 py-4" style={{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface-raised)' }}>
-    <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--color-text-muted)]">{label}</p>
-    <p className="mt-2 text-sm font-semibold text-[var(--color-text-primary)]">{value || '--'}</p>
+  <div className="ph-receipt-row">
+    <span className="ph-receipt-row-label">{label}</span>
+    <span className="ph-receipt-row-value">{value || '--'}</span>
   </div>
 )
 

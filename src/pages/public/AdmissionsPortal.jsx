@@ -315,43 +315,55 @@ const AdmissionsPortal = () => {
     }
   }
 
-  if (loading) return <div className="admissions-portal flex items-center justify-center p-20 font-bold">Loading Admission Portal...</div>
+  if (loading) return (
+    <div className="admissions-portal" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh' }}>
+      <div style={{ textAlign: 'center' }}>
+        <div style={{
+          width: 48, height: 48, borderRadius: '50%',
+          border: '3px solid #e8ecf2', borderTopColor: '#1a56db',
+          animation: 'spin 0.8s linear infinite', margin: '0 auto 16px'
+        }} />
+        <p style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: '0.875rem', fontWeight: 600, color: '#9ca3af' }}>
+          Loading Admission Portal…
+        </p>
+      </div>
+    </div>
+  )
 
   if (isClosed && !submittedData) return (
-    <div className="admissions-portal flex items-center justify-center p-6">
-      <div className="max-w-md w-full text-center p-12 bg-white rounded-3xl shadow-xl border border-slate-100">
-        <div className="w-20 h-20 bg-amber-50 rounded-full flex items-center justify-center mx-auto mb-6">
+    <div className="admissions-portal" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px' }}>
+      <div className="closed-card">
+        <div className="closed-icon-ring">
           <AlertCircle size={40} className="text-amber-500" />
         </div>
-        <h1 className="text-2xl font-bold text-slate-900 mb-4 font-serif">Admissions Closed</h1>
-        <p className="text-slate-500 mb-8 leading-relaxed">The online admission portal is currently closed for the academic session {sessions[0]?.name}. Please contact the school office for inquiries.</p>
-        <div className="flex flex-col gap-4">
-          <a href="/status" className="btn-primary-clean w-full">Track Application Status</a>
-          <button className="text-sm font-bold text-slate-400 hover:text-slate-600 transition-colors" onClick={() => window.location.href = '/'}>Return to Home</button>
+        <h1 className="closed-title">Admissions Closed</h1>
+        <p className="closed-body">The online admission portal is currently closed for the academic session {sessions[0]?.name}. Please contact the school office for inquiries.</p>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+          <a href="/status" className="btn-primary-clean" style={{ justifyContent: 'center' }}>Track Application Status</a>
+          <button className="btn-secondary-clean" style={{ justifyContent: 'center', border: 'none' }} onClick={() => window.location.href = '/'}>Return to Home</button>
         </div>
       </div>
     </div>
   )
 
   if (submittedData) return (
-    <div className="admissions-portal flex items-center justify-center p-6">
-      <div className="success-minimal max-w-xl bg-white p-12 rounded-3xl shadow-2xl border border-emerald-100">
-        <div className="w-24 h-24 bg-emerald-50 rounded-full flex items-center justify-center mx-auto mb-8">
-          <CheckCircle2 className="text-emerald-500" size={56} />
+    <div className="admissions-portal" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px' }}>
+      <div className="success-minimal">
+        <div className="success-icon-ring">
+          <CheckCircle2 className="text-emerald-500" size={48} />
         </div>
-        <h1 className="text-4xl font-bold text-slate-900 font-serif">Application Received</h1>
-        <p className="mt-6 text-slate-500 leading-relaxed text-lg">Thank you for choosing {APP_NAME}. Your application has been submitted successfully for review.</p>
-        
-        <div className="mt-10 p-8 bg-slate-50 rounded-2xl border border-slate-100 relative overflow-hidden">
-          <div className="absolute top-0 left-0 w-1.5 h-full bg-emerald-500" />
-          <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-2">Tracking Reference Number</p>
-          <div className="ref-code m-0 font-mono text-3xl font-black text-emerald-600 tracking-wider uppercase">{submittedData.reference}</div>
-          <p className="mt-4 text-xs text-slate-400">Please save this reference number. It is required to track your application status.</p>
+        <h1 className="success-title">Application Received</h1>
+        <p className="success-body">Thank you for choosing {APP_NAME}. Your application has been submitted successfully for review.</p>
+
+        <div className="reference-block">
+          <p className="reference-label">Tracking Reference Number</p>
+          <div className="reference-code">{submittedData.reference}</div>
+          <p className="reference-hint">Please save this reference number. It is required to track your application status.</p>
         </div>
 
-        <div className="mt-12 flex flex-col sm:flex-row gap-4 justify-center">
-          <button className="btn-primary-clean px-10 py-4 text-base" onClick={() => window.location.href = '/'}>Return to Home</button>
-          <a href="/status" className="btn-secondary-clean border border-slate-200 px-10 py-4 text-base flex items-center gap-2 justify-center">
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+          <button className="btn-primary-clean" style={{ justifyContent: 'center' }} onClick={() => window.location.href = '/'}>Return to Home</button>
+          <a href="/status" className="btn-secondary-clean" style={{ justifyContent: 'center' }}>
             <Search size={18} /> Track Application
           </a>
         </div>
@@ -373,12 +385,12 @@ const AdmissionsPortal = () => {
 
       <header className="admissions-header">
         <div className="logo-group">
-          <div className="w-10 h-10 bg-blue-50 rounded-xl flex items-center justify-center">
-            <GraduationCap size={24} className="text-blue-600" />
+          <div className="logo-icon-badge">
+            <GraduationCap size={22} color="white" />
           </div>
-          <h1 className="school-name font-serif text-xl">{APP_NAME} <span className="text-xs font-sans text-slate-400 font-bold ml-2">Admissions {sessions[0]?.name}</span></h1>
+          <h1 className="school-name">{APP_NAME}<span className="session-tag">Admissions {sessions[0]?.name}</span></h1>
         </div>
-        <a href="/admissions/status" className="track-link flex items-center gap-2 font-bold text-xs tracking-widest uppercase py-2 px-4 bg-slate-50 rounded-full border border-slate-100 hover:bg-white hover:border-blue-200 hover:text-blue-600 transition-all shadow-sm">
+        <a href="/admissions/status" className="track-link">
           <Search size={14} /> Track Status
         </a>
       </header>
@@ -787,9 +799,9 @@ const AdmissionsPortal = () => {
                   <FileField label="Student Aadhar Card" name="aadhar_student" files={files} onChange={handleFileChange} />
                   <FileField label="Father's Aadhar Card" name="aadhar_father" files={files} onChange={handleFileChange} />
                 </div>
-                <div className="mt-8 p-6 bg-blue-50/50 rounded-2xl border border-blue-100 flex gap-4 items-start">
-                   <Info size={20} className="text-blue-500 shrink-0 mt-0.5" />
-                   <p className="text-xs text-blue-700 leading-relaxed font-medium">Original documents must be produced at the time of final admission. Please ensure the uploaded scans are clear and legible.</p>
+                <div className="info-banner">
+                   <Info size={20} className="text-blue-500" style={{ flexShrink: 0, marginTop: '2px' }} />
+                   <p className="info-banner-text">Original documents must be produced at the time of final admission. Please ensure the uploaded scans are clear and legible.</p>
                 </div>
               </div>
             </div>
@@ -848,16 +860,16 @@ const AdmissionsPortal = () => {
                   </div>
                 </div>
                 
-                <div className="mt-12 p-8 bg-slate-900 rounded-3xl text-white shadow-xl shadow-slate-200">
-                  <h3 className="text-xl font-serif mb-4 flex items-center gap-3">
+                <div className="declaration-panel">
+                  <h3 className="declaration-title">
                     <ShieldCheck className="text-emerald-400" /> Declaration
                   </h3>
-                  <p className="text-slate-400 text-sm leading-relaxed mb-8">
+                  <p className="declaration-body">
                     I hereby declare that the information furnished in this application is true, complete and correct to the best of my knowledge and belief. I understand that any false or misleading information will result in the rejection of my application.
                   </p>
-                  <label className="flex items-center gap-4 cursor-pointer group p-4 bg-white/5 rounded-2xl hover:bg-white/10 transition-all">
+                  <label className="declaration-checkbox-row">
                     <input type="checkbox" {...register('terms_accepted')} className="h-6 w-6 rounded border-slate-600 bg-slate-800 text-blue-500 focus:ring-blue-500 cursor-pointer" />
-                    <span className="text-sm font-bold text-slate-200 group-hover:text-white transition-colors">I acknowledge and accept this declaration <span className="text-red-400">*</span></span>
+                    <span className="text-sm font-bold text-slate-200">I acknowledge and accept this declaration <span className="text-red-400">*</span></span>
                   </label>
                   {errors.terms_accepted && <p className="text-red-400 text-xs mt-3 font-bold flex items-center gap-1.5"><AlertCircle size={12} /> {errors.terms_accepted.message}</p>}
                 </div>
@@ -868,19 +880,19 @@ const AdmissionsPortal = () => {
         </form>
       </main>
 
-      <footer className="admissions-footer py-8 border-t border-slate-100 bg-slate-50/30">
+      <footer className="admissions-footer">
         {currentStep > 1 ? (
-          <button type="button" className="btn-secondary-clean flex items-center gap-3 px-8 py-3 rounded-xl hover:bg-white hover:text-blue-600 transition-all" onClick={() => setCurrentStep(s => s - 1)}>
+          <button type="button" className="btn-secondary-clean" onClick={() => setCurrentStep(s => s - 1)}>
             <ChevronLeft size={20} /> BACK
           </button>
         ) : <div />}
-        
+
         {currentStep < 4 ? (
-          <button type="button" className="btn-primary-clean flex items-center gap-3 px-10 py-4 text-sm tracking-[0.1em]" onClick={nextStep}>
+          <button type="button" className="btn-primary-clean" onClick={nextStep}>
             CONTINUE TO {STEPS[currentStep].title.toUpperCase()} <ChevronRight size={20} />
           </button>
         ) : (
-          <button type="button" className="btn-primary-clean flex items-center gap-3 px-10 py-4 text-sm bg-emerald-600 hover:bg-emerald-700 shadow-emerald-200" disabled={isSubmitting} onClick={handleSubmit(onSubmit)}>
+          <button type="button" className="btn-primary-clean" style={{ background: '#059669' }} disabled={isSubmitting} onClick={handleSubmit(onSubmit)}>
             {isSubmitting ? <><Loader2 size={20} className="animate-spin" /> SUBMITTING...</> : <><ShieldCheck size={20} /> FINALIZE & SUBMIT</>}
           </button>
         )}
@@ -888,12 +900,12 @@ const AdmissionsPortal = () => {
 
       {/* Photo Crop Modal */}
       {cropModal && (
-        <div className="fixed inset-0 z-[1000] bg-slate-900/90 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl w-full max-w-2xl overflow-hidden shadow-2xl animate-in zoom-in-95 duration-300">
-            <div className="p-6 border-b border-slate-100 flex items-center justify-between">
+        <div className="crop-modal-backdrop">
+          <div className="crop-modal-card">
+            <div className="crop-modal-header">
               <div>
-                <h3 className="text-xl font-bold text-slate-900 font-serif">Adjust Passport Photo</h3>
-                <p className="text-xs text-slate-500 font-medium mt-1">Drag to position, scroll to zoom. Will be auto-compressed to 50KB.</p>
+                <h3 className="crop-modal-title">Adjust Passport Photo</h3>
+                <p className="crop-modal-subtitle">Drag to position, scroll to zoom. Will be auto-compressed to 50KB.</p>
               </div>
               <button onClick={() => { setCropModal(false); setTempPhotoUrl(null) }} className="p-2 hover:bg-slate-100 rounded-full transition-colors">
                 <X size={20} />
@@ -955,29 +967,27 @@ const AdmissionsPortal = () => {
 }
 
 const FileField = ({ label, name, files, onChange, required }) => (
-  <div className="file-input-wrapper space-y-2">
-    <label className="text-[10px] font-black text-slate-400 block uppercase tracking-widest ml-1">
+  <div className="file-input-wrapper">
+    <label className="file-input-label-text">
       {label} {required && <span className="text-red-500">*</span>}
     </label>
-    <div className={`file-drop-zone ${files[name] ? 'has-file' : ''}`}>
+    <div>
       <input type="file" name={name} onChange={onChange} accept="image/*,application/pdf" id={`file-${name}`} className="hidden" />
-      <label htmlFor={`file-${name}`} className={`cursor-pointer flex items-center justify-between w-full h-14 px-4 border-2 border-dashed rounded-2xl transition-all group ${files[name] ? 'border-emerald-200 bg-emerald-50/30' : 'border-slate-200 hover:border-blue-400 hover:bg-blue-50/30'}`}>
-        <div className="flex items-center gap-3 min-w-0">
-          <div className="w-8 h-8 rounded-lg bg-white shadow-sm flex items-center justify-center group-hover:shadow transition-all">
-            {files[name] ? <FileText size={16} className="text-emerald-500" /> : <Upload size={16} className="text-slate-400 group-hover:text-blue-500" />}
-          </div>
-          <span className={`truncate text-xs font-bold ${files[name] ? 'text-emerald-700' : 'text-slate-600 group-hover:text-blue-600'}`}>{files[name]?.name || 'Choose file…'}</span>
+      <label htmlFor={`file-${name}`} className={`file-drop-zone-label${files[name] ? ' has-file' : ''}`}>
+        <div className="file-icon-box">
+          {files[name] ? <FileText size={16} className="text-emerald-500" /> : <Upload size={16} className="text-slate-400" />}
         </div>
-        {files[name] && <CheckCircle2 size={16} className="text-emerald-500 shrink-0 animate-in zoom-in duration-300" />}
+        <span className="file-name-text" style={{ color: files[name] ? '#065f46' : '#4b5563' }}>{files[name]?.name || 'Choose file…'}</span>
+        {files[name] && <CheckCircle2 size={16} className="text-emerald-500" style={{ flexShrink: 0 }} />}
       </label>
     </div>
   </div>
 )
 
 const SummaryItem = ({ label, value }) => (
-  <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100/50">
-    <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1.5">{label}</p>
-    <p className="text-sm font-bold text-slate-800 line-clamp-2 leading-relaxed">{value || '--'}</p>
+  <div className="summary-item-card">
+    <p className="summary-item-label">{label}</p>
+    <p className="summary-item-value">{value || '--'}</p>
   </div>
 )
 

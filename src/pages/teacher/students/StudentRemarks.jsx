@@ -76,17 +76,6 @@ const StudentRemarks = () => {
 
   return (
     <div className="max-w-[1400px] mx-auto space-y-6 pb-12">
-      {/* Page Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div className="flex-1">
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-            Student Remarks
-          </h1>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
-            Record behavioral observations, academic notes, and communication logs for students.
-          </p>
-        </div>
-      </div>
       <RemarkForm
         students={students}
         value={form}

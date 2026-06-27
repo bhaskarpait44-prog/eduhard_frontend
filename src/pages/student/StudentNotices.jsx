@@ -9,29 +9,21 @@ import usePageTitle from '@/hooks/usePageTitle'
 import useStudentNotices from '@/hooks/useStudentNotices'
 import useToast from '@/hooks/useToast'
 import { formatDate, getFileUrl } from '@/utils/helpers'
-import Badge from '@/components/ui/Badge'
 
 const containerVariants = {
   hidden: { opacity: 0 },
-  show: {
-    opacity: 1,
-    transition: {
-      staggerChildren: 0.05
-    }
-  }
+  show:   { opacity: 1, transition: { staggerChildren: 0.05 } },
 }
 
 const itemVariants = {
-  hidden: { opacity: 0, y: 15 },
-  show: { 
-    opacity: 1, 
-    y: 0, 
-    transition: { 
-      type: 'spring', 
-      stiffness: 100, 
-      damping: 15 
-    } 
-  }
+  hidden: { opacity: 0, y: 12 },
+  show:   { opacity: 1, y: 0, transition: { type: 'spring', stiffness: 120, damping: 16 } },
+}
+
+const PRIORITY_META = {
+  urgent: { label: 'Urgent', bg: '#fee2e2', color: '#dc2626', dot: '#ef4444' },
+  info:   { label: 'Info',   bg: '#dbeafe', color: '#1d4ed8', dot: '#3b82f6' },
+  normal: { label: 'Normal', bg: '#dcfce7', color: '#15803d', dot: '#22c55e' },
 }
 
 const StudentNotices = () => {
@@ -89,66 +81,36 @@ const StudentNotices = () => {
     }
   }
 
-  return (
-    <div className="space-y-5">
-      {/* ── Hero ── */}
-      <section
-        className="relative overflow-hidden rounded-3xl border p-5 sm:p-6"
-        style={{
-          borderColor: 'var(--color-border)',
-          background: 'linear-gradient(135deg, rgba(37,99,235,0.16), rgba(59,130,246,0.06) 52%, var(--color-surface) 100%)',
-          boxShadow: '0 4px 24px rgba(37,99,235,0.08)',
-        }}
-      >
-        <div className="absolute inset-x-0 top-0 h-[3px] rounded-t-3xl" style={{ background: 'linear-gradient(90deg, #2563eb, #7c3aed)' }} />
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-          <div className="flex items-start gap-4 min-w-0">
-            <div
-              className="hidden sm:flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl shadow-sm"
-              style={{ backgroundColor: 'rgba(37,99,235,0.12)', color: '#2563eb' }}
-            >
-              <Bell size={22} />
-            </div>
-            <div className="min-w-0">
-              <p className="text-xs font-bold uppercase tracking-[0.18em]" style={{ color: '#2563eb' }}>
-                Notice Board
-              </p>
-              <h1 className="mt-1.5 text-2xl font-bold sm:text-3xl">School Notices</h1>
-              <p className="mt-1.5 max-w-2xl text-[13px] text-[var(--color-text-secondary)] sm:text-[15px]">
-                Stay updated with the latest announcements, urgent alerts, and event info from school.
-              </p>
-            </div>
-          </div>
+  const pm = selectedNotice ? (PRIORITY_META[selectedNotice.priority] || PRIORITY_META.normal) : null
 
-          <div className="flex flex-wrap items-center gap-2 shrink-0">
-            {/* Unread pill */}
-            {unreadCount > 0 && (
-              <div
-                className="flex items-center gap-2 rounded-2xl border px-4 py-2"
-                style={{ borderColor: 'rgba(37,99,235,0.25)', backgroundColor: 'rgba(37,99,235,0.08)' }}
-              >
-                <span className="h-2 w-2 rounded-full bg-blue-500 animate-pulse" />
-                <div>
-                  <p className="text-[10px] font-bold uppercase tracking-wider" style={{ color: '#94a3b8' }}>Unread</p>
-                  <p className="text-[15px] font-black" style={{ color: '#2563eb' }}>{unreadCount}</p>
-                </div>
-              </div>
-            )}
-            <Button variant="secondary" onClick={() => refresh()} loading={refreshing} icon={RefreshCw}>
-              Refresh
-            </Button>
-          </div>
+  return (
+    <div className="space-y-5 pb-8">
+
+      {/* ── Toolbar ── */}
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h1 className="text-xl font-bold" style={{ color: 'var(--color-text-primary)' }}>
+            Notice Board
+          </h1>
+          <p className="mt-0.5 text-sm" style={{ color: 'var(--color-text-muted)' }}>
+            {unreadCount > 0
+              ? <><span className="inline-flex items-center gap-1.5"><span className="h-1.5 w-1.5 rounded-full bg-blue-500 animate-pulse inline-block" />{unreadCount} unread notice{unreadCount !== 1 ? 's' : ''}</span></>
+              : 'All caught up · No unread notices'}
+          </p>
         </div>
-      </section>
+        <Button variant="secondary" size="sm" onClick={() => refresh()} loading={refreshing} icon={RefreshCw}>
+          Refresh
+        </Button>
+      </div>
 
       {/* ── Notices list ── */}
       <section className="space-y-3">
         {loading ? (
-          Array.from({ length: 3 }).map((_, index) => (
+          Array.from({ length: 4 }).map((_, i) => (
             <div
-              key={index}
-              className="h-36 animate-pulse rounded-3xl"
-              style={{ backgroundColor: 'var(--color-surface)' }}
+              key={i}
+              className="animate-pulse rounded-2xl"
+              style={{ height: '110px', backgroundColor: 'var(--color-surface)' }}
             />
           ))
         ) : sortedNotices.length ? (
@@ -156,7 +118,7 @@ const StudentNotices = () => {
             variants={containerVariants}
             initial="hidden"
             animate="show"
-            className="space-y-3"
+            className="space-y-2.5"
           >
             <AnimatePresence mode="popLayout">
               {sortedNotices.map((notice) => (
@@ -164,7 +126,7 @@ const StudentNotices = () => {
                   key={`${notice.source || 'unified'}-${notice.id}`}
                   variants={itemVariants}
                   layout
-                  exit={{ opacity: 0, scale: 0.95 }}
+                  exit={{ opacity: 0, scale: 0.97 }}
                 >
                   <NoticeCard
                     notice={notice}
@@ -185,87 +147,121 @@ const StudentNotices = () => {
         )}
       </section>
 
-      {/* ── Notice detail modal ── */}
+      {/* ── Notice Detail Modal ── */}
       <Modal
         open={Boolean(selectedNotice)}
         onClose={() => setSelectedNotice(null)}
-        title="Notice Detail"
+        title=""
         size="lg"
       >
-        {selectedNotice && (
-          <div className="space-y-5">
-            {/* Priority & role badges */}
-            <div className="flex flex-wrap items-center gap-2">
-              <Badge variant={selectedNotice.priority === 'urgent' ? 'red' : selectedNotice.priority === 'info' ? 'blue' : 'green'}>
-                {selectedNotice.priority}
-              </Badge>
-              <Badge variant="teal" className="capitalize">{selectedNotice.posted_by_role}</Badge>
-              {selectedNotice.is_pinned && (
-                <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2 py-0.5 text-[10px] font-bold text-amber-700 border border-amber-200">
-                  <Pin size={10} /> Pinned
-                </span>
-              )}
+        {selectedNotice && pm && (
+          <div className="space-y-0">
+
+            {/* ── Modal header band ── */}
+            <div
+              className="relative -mx-6 -mt-6 mb-5 overflow-hidden rounded-t-2xl px-6 py-5"
+              style={{ backgroundColor: pm.bg }}
+            >
+              {/* Priority dot bar */}
+              <span
+                className="absolute inset-y-0 left-0 w-1"
+                style={{ backgroundColor: pm.dot }}
+              />
+              <div className="flex flex-wrap items-start justify-between gap-3 pl-3">
+                <div className="flex flex-wrap items-center gap-2">
+                  {/* Priority pill */}
+                  <span
+                    className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-widest"
+                    style={{ backgroundColor: pm.dot + '22', color: pm.color }}
+                  >
+                    <span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: pm.dot }} />
+                    {pm.label}
+                  </span>
+                  {/* Role pill */}
+                  <span
+                    className="inline-flex items-center rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-widest capitalize"
+                    style={{
+                      backgroundColor: 'rgba(124,58,237,0.12)',
+                      color: 'var(--student-accent)',
+                    }}
+                  >
+                    {selectedNotice.posted_by_role}
+                  </span>
+                  {/* Pinned */}
+                  {selectedNotice.is_pinned && (
+                    <span
+                      className="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-widest"
+                      style={{ backgroundColor: '#fef3c7', color: '#b45309' }}
+                    >
+                      <Pin size={9} />
+                      Pinned
+                    </span>
+                  )}
+                </div>
+                {/* Unread dot */}
+                {!selectedNotice.is_read && (
+                  <span
+                    className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[10px] font-bold"
+                    style={{ backgroundColor: '#dbeafe', color: '#1d4ed8' }}
+                  >
+                    <span className="h-1.5 w-1.5 rounded-full bg-blue-500 animate-pulse" />
+                    Unread
+                  </span>
+                )}
+              </div>
+              {/* Title in band */}
+              <h2 className="mt-3 pl-3 text-lg font-bold leading-snug" style={{ color: pm.color }}>
+                {selectedNotice.title}
+              </h2>
             </div>
 
-            {/* Title */}
-            <h2 className="text-xl font-bold leading-tight">{selectedNotice.title}</h2>
-
-            {/* Meta grid */}
-            <div
-              className="grid gap-3 rounded-2xl border p-4 sm:grid-cols-2"
-              style={{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface-raised)' }}
-            >
-              <div className="flex items-center gap-3">
-                <div
-                  className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl"
-                  style={{ backgroundColor: 'rgba(124,58,237,0.10)', color: 'var(--student-accent)' }}
-                >
-                  <User2 size={17} />
-                </div>
-                <div>
-                  <p className="text-[10px] font-bold uppercase tracking-wider text-[var(--color-text-muted)]">Posted By</p>
-                  <p className="text-sm font-semibold">{selectedNotice.posted_by_name || 'School'}</p>
-                </div>
-              </div>
-              <div className="flex items-center gap-3">
-                <div
-                  className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl"
-                  style={{ backgroundColor: 'rgba(37,99,235,0.10)', color: '#2563eb' }}
-                >
-                  <CalendarDays size={17} />
-                </div>
-                <div>
-                  <p className="text-[10px] font-bold uppercase tracking-wider text-[var(--color-text-muted)]">Published</p>
-                  <p className="text-sm font-semibold">{formatDate(selectedNotice.created_at, 'long')}</p>
-                </div>
-              </div>
+            {/* ── Meta row ── */}
+            <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2 mb-4">
+              <MetaCell icon={User2} label="Posted by" value={selectedNotice.posted_by_name || 'School'} iconColor="var(--student-accent)" />
+              <MetaCell icon={CalendarDays} label="Published" value={formatDate(selectedNotice.created_at, 'long')} iconColor="#2563eb" />
             </div>
 
-            {/* Body */}
+            {/* ── Body ── */}
             <div
-              className="rounded-2xl border p-5"
+              className="rounded-xl border p-4 mb-4"
               style={{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface-raised)' }}
             >
-              <p className="whitespace-pre-wrap text-[14px] leading-relaxed text-[var(--color-text-primary)]">
+              <p className="text-[10px] font-semibold uppercase tracking-widest mb-2.5" style={{ color: 'var(--color-text-muted)' }}>
+                Message
+              </p>
+              <p className="whitespace-pre-wrap text-sm leading-relaxed" style={{ color: 'var(--color-text-primary)' }}>
                 {selectedNotice.body}
               </p>
             </div>
 
-            {/* Attachment */}
+            {/* ── Expiry ── */}
+            {selectedNotice.expires_at && (
+              <div
+                className="flex items-center gap-2.5 rounded-xl border px-4 py-2.5 mb-4"
+                style={{ borderColor: '#fed7aa', backgroundColor: '#fff7ed' }}
+              >
+                <Clock size={14} style={{ color: '#c2410c', flexShrink: 0 }} />
+                <span className="text-xs font-semibold" style={{ color: '#9a3412' }}>
+                  Expires on {formatDate(selectedNotice.expires_at, 'long')}
+                </span>
+              </div>
+            )}
+
+            {/* ── Attachment ── */}
             {selectedNotice.attachment_path && (
               <div
-                className="flex items-center gap-3 rounded-2xl border p-4"
-                style={{ borderColor: 'rgba(124,58,237,0.20)', backgroundColor: 'rgba(124,58,237,0.06)' }}
+                className="flex items-center gap-3 rounded-xl border px-4 py-3 mb-4"
+                style={{ borderColor: 'rgba(124,58,237,0.20)', backgroundColor: 'rgba(124,58,237,0.05)' }}
               >
                 <div
-                  className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl"
+                  className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl"
                   style={{ backgroundColor: 'var(--student-accent)', color: '#fff' }}
                 >
-                  <FileText size={20} />
+                  <FileText size={18} />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <div className="text-[13px] font-bold truncate">Attachment Document</div>
-                  <div className="text-[10px] font-bold uppercase tracking-wider" style={{ color: 'var(--student-accent)' }}>PDF File</div>
+                  <p className="text-sm font-semibold" style={{ color: 'var(--color-text-primary)' }}>Attachment</p>
+                  <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: 'var(--student-accent)' }}>PDF Document</p>
                 </div>
                 <Button
                   variant="primary"
@@ -277,16 +273,11 @@ const StudentNotices = () => {
               </div>
             )}
 
-            {/* Expiry */}
-            {selectedNotice.expires_at && (
-              <div className="flex items-center gap-2 rounded-xl border border-orange-100 bg-orange-50 px-4 py-2.5 text-xs font-bold text-orange-600 dark:border-orange-900/30 dark:bg-orange-950/20">
-                <Clock size={14} />
-                <span>Expires on: {formatDate(selectedNotice.expires_at, 'long')}</span>
-              </div>
-            )}
-
+            {/* ── Footer ── */}
             <div className="flex justify-end pt-1">
-              <Button variant="secondary" onClick={() => setSelectedNotice(null)}>Close</Button>
+              <Button variant="secondary" onClick={() => setSelectedNotice(null)}>
+                Close
+              </Button>
             </div>
           </div>
         )}
@@ -294,5 +285,28 @@ const StudentNotices = () => {
     </div>
   )
 }
+
+/* ── Modal meta cell ─────────────────────────────────────────────────────── */
+const MetaCell = ({ icon: Icon, label, value, iconColor }) => (
+  <div
+    className="flex items-center gap-3 rounded-xl border px-3.5 py-3"
+    style={{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface-raised)' }}
+  >
+    <div
+      className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg"
+      style={{ backgroundColor: iconColor + '18', color: iconColor }}
+    >
+      <Icon size={15} />
+    </div>
+    <div>
+      <p className="text-[10px] font-semibold uppercase tracking-widest" style={{ color: 'var(--color-text-muted)' }}>
+        {label}
+      </p>
+      <p className="mt-0.5 text-sm font-semibold" style={{ color: 'var(--color-text-primary)' }}>
+        {value}
+      </p>
+    </div>
+  </div>
+)
 
 export default StudentNotices

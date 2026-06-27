@@ -247,22 +247,14 @@ const EnterMarks = () => {
   return (
     <div className="max-w-[1400px] mx-auto space-y-6 pb-12">
       {/* Page Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div className="flex-1">
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-            Enter Marks
-          </h1>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
-            Record and manage student examination marks for your assigned classes and subjects.
-          </p>
-        </div>
-        {entryPayload?.locked && (
+      {entryPayload?.locked && (
+        <div className="flex justify-end">
           <div className="flex items-center gap-2 rounded-xl bg-amber-50 px-4 py-2 text-amber-700 ring-1 ring-amber-200">
             <Lock size={16} />
             <span className="text-xs font-bold uppercase tracking-wider">Locked</span>
           </div>
-        )}
-      </div>
+        </div>
+      )}
 
       {/* ── Filters ── */}
       <div 

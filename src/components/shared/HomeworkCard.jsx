@@ -1,4 +1,4 @@
-import { BookOpenText, CalendarClock, CheckCheck, Clock3, MessageSquareMore, Pencil, Send, XCircle, ChevronRight } from 'lucide-react'
+import { BookOpenText, CalendarClock, CheckCheck, Clock3, MessageSquareMore, Pencil, Send, XCircle, ChevronRight, User2, AlertCircle, CheckCircle2, Clock, Star, Layers } from 'lucide-react'
 import Badge from '@/components/ui/Badge'
 import Button from '@/components/ui/Button'
 import { formatDate } from '@/utils/helpers'
@@ -10,16 +10,16 @@ const TEACHER_STATUS_META = {
   cancelled: { label: 'Cancelled', variant: 'dark' },
 }
 
-const HomeworkCard = ({ 
-  item, 
+const HomeworkCard = ({
+  item,
   // Student props
   onOpen,
   // Teacher props
-  onEdit, 
-  onViewSubmissions, 
-  onRemind, 
+  onEdit,
+  onViewSubmissions,
+  onRemind,
   onDelete,
-  isTeacher = false
+  isTeacher = false,
 }) => {
   if (isTeacher) {
     const status = TEACHER_STATUS_META[item.workflow_status] || TEACHER_STATUS_META.active
@@ -94,7 +94,7 @@ const HomeworkCard = ({
     )
   }
 
-  // Student view
+  // ── Student list-row view ──
   const tone = urgencyTone(item.student_status)
   const canSubmit = ['online', 'both'].includes(item.submission_type)
 
@@ -102,35 +102,185 @@ const HomeworkCard = ({
     <button
       type="button"
       onClick={() => onOpen?.(item)}
-      className="w-full rounded-[26px] border p-4 text-left transition hover:-translate-y-0.5"
-      style={{
-        borderColor: tone.border,
-        backgroundColor: 'var(--color-surface)',
-        boxShadow: '0 14px 34px rgba(76,29,149,0.05)',
-      }}
+      className="hwc-row"
+      style={{ '--urgency-accent': tone.color, '--urgency-bar': tone.bar }}
     >
-      <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0">
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.16em]" style={{ backgroundColor: tone.soft, color: tone.color }}>
-              {item.student_status.replace(/_/g, ' ')}
-            </span>
-            <span className="rounded-full bg-[rgba(124,58,237,0.10)] px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.16em] text-[var(--student-accent)]">
-              {item.subject_name}
-            </span>
-          </div>
-          <p className="mt-3 text-base font-semibold text-[var(--color-text-primary)]">{item.title}</p>
-          <p className="mt-2 text-sm text-[var(--color-text-secondary)] line-clamp-2">{item.description}</p>
-        </div>
-        <ChevronRight size={16} style={{ color: 'var(--color-text-muted)' }} />
+      {/* Left urgency bar */}
+      <span className="hwc-row__bar" style={{ backgroundColor: tone.bar }} />
+
+      {/* Subject pill + Status */}
+      <div className="hwc-row__meta">
+        <span className="hwc-row__subject" style={{ backgroundColor: tone.soft, color: tone.color }}>
+          {item.subject_name}
+        </span>
+        <span className="hwc-row__status" style={{ backgroundColor: tone.softBg, color: tone.color }}>
+          {statusIcon(item.student_status)}{item.student_status.replace(/_/g, '\u00a0')}
+        </span>
       </div>
 
-      <div className="mt-4 grid grid-cols-2 gap-3">
-        <MiniCell label="Due" value={formatDate(item.due_date, 'long')} />
-        <MiniCell label="Type" value={item.submission_type} />
-        <MiniCell label="Teacher" value={item.teacher_name} />
-        <MiniCell label="Action" value={canSubmit ? 'Submit online' : 'Submit physically'} tone={canSubmit ? '#16a34a' : '#d97706'} />
+      {/* Title + Description */}
+      <div className="hwc-row__body">
+        <p className="hwc-row__title">{item.title}</p>
+        {item.description && (
+          <p className="hwc-row__desc">{item.description}</p>
+        )}
       </div>
+
+      {/* Right side info */}
+      <div className="hwc-row__info">
+        <div className="hwc-row__info-item">
+          <User2 size={11} />
+          <span>{item.teacher_name || '—'}</span>
+        </div>
+        <div className="hwc-row__info-item" style={{ color: tone.color, fontWeight: 600 }}>
+          <CalendarClock size={11} />
+          <span>{formatDate(item.due_date, 'short')}</span>
+        </div>
+        <div className="hwc-row__info-item" style={{ color: canSubmit ? '#16a34a' : '#d97706' }}>
+          {canSubmit ? <CheckCircle2 size={11} /> : <Layers size={11} />}
+          <span>{canSubmit ? 'Online' : 'Physical'}</span>
+        </div>
+      </div>
+
+      {/* Chevron */}
+      <ChevronRight size={15} className="hwc-row__chevron" />
+
+      <style>{`
+        .hwc-row {
+          width: 100%;
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          background-color: var(--color-surface);
+          border: 1px solid var(--color-border);
+          border-radius: 14px;
+          padding: 13px 14px 13px 0;
+          text-align: left;
+          cursor: pointer;
+          transition: background-color 0.14s ease, box-shadow 0.14s ease, transform 0.14s ease;
+          position: relative;
+          overflow: hidden;
+          outline: none;
+        }
+
+        .hwc-row:hover {
+          background-color: var(--color-surface-raised);
+          box-shadow: 0 4px 16px rgba(0,0,0,0.06);
+          transform: translateY(-1px);
+        }
+
+        .hwc-row:active {
+          transform: translateY(0);
+        }
+
+        /* Urgency accent bar on the left */
+        .hwc-row__bar {
+          display: block;
+          width: 4px;
+          min-width: 4px;
+          align-self: stretch;
+          border-radius: 0 3px 3px 0;
+          flex-shrink: 0;
+        }
+
+        /* Subject + status column */
+        .hwc-row__meta {
+          display: flex;
+          flex-direction: column;
+          gap: 5px;
+          flex-shrink: 0;
+          min-width: 90px;
+          max-width: 110px;
+        }
+
+        .hwc-row__subject {
+          display: inline-block;
+          font-size: 10px;
+          font-weight: 700;
+          letter-spacing: 0.10em;
+          text-transform: uppercase;
+          padding: 3px 8px;
+          border-radius: 6px;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+        }
+
+        .hwc-row__status {
+          display: inline-flex;
+          align-items: center;
+          gap: 3px;
+          font-size: 9px;
+          font-weight: 700;
+          letter-spacing: 0.08em;
+          text-transform: uppercase;
+          padding: 2px 7px;
+          border-radius: 99px;
+          background-color: var(--color-surface-raised);
+          color: var(--color-text-muted);
+          white-space: nowrap;
+          width: fit-content;
+        }
+
+        /* Title + description */
+        .hwc-row__body {
+          flex: 1;
+          min-width: 0;
+        }
+
+        .hwc-row__title {
+          font-size: 13px;
+          font-weight: 600;
+          color: var(--color-text-primary);
+          margin: 0;
+          line-height: 1.35;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+        }
+
+        .hwc-row__desc {
+          font-size: 11px;
+          color: var(--color-text-secondary);
+          margin: 3px 0 0;
+          line-height: 1.4;
+          display: -webkit-box;
+          -webkit-line-clamp: 1;
+          -webkit-box-orient: vertical;
+          overflow: hidden;
+        }
+
+        /* Right info block */
+        .hwc-row__info {
+          display: flex;
+          flex-direction: column;
+          gap: 4px;
+          flex-shrink: 0;
+          align-items: flex-end;
+        }
+
+        .hwc-row__info-item {
+          display: inline-flex;
+          align-items: center;
+          gap: 4px;
+          font-size: 11px;
+          font-weight: 500;
+          color: var(--color-text-secondary);
+          white-space: nowrap;
+        }
+
+        .hwc-row__chevron {
+          flex-shrink: 0;
+          color: var(--color-text-muted);
+          margin-right: 2px;
+        }
+
+        /* Hide right info on very small screens, show on sm+ */
+        @media (max-width: 479px) {
+          .hwc-row__info { display: none; }
+          .hwc-row__meta { max-width: 90px; }
+        }
+      `}</style>
     </button>
   )
 }
@@ -149,18 +299,22 @@ const MiniStat = ({ icon: Icon, label, value, tone }) => (
   </div>
 )
 
-const MiniCell = ({ label, value, tone = 'var(--color-text-primary)' }) => (
-  <div className="rounded-[18px] border px-3 py-3" style={{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface-raised)' }}>
-    <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--color-text-muted)]">{label}</p>
-    <p className="mt-2 text-sm font-semibold" style={{ color: tone }}>{value || '--'}</p>
-  </div>
-)
+function statusIcon(status) {
+  if (status === 'overdue')   return '⚠ '
+  if (status === 'due_today') return '⏰ '
+  if (status === 'graded')    return '⭐ '
+  if (status === 'submitted') return '✓ '
+  return ''
+}
 
 function urgencyTone(status) {
-  if (status === 'overdue') return { border: '#fca5a5', soft: 'rgba(239,68,68,0.10)', color: '#dc2626' }
-  if (status === 'due_today') return { border: '#fcd34d', soft: 'rgba(245,158,11,0.10)', color: '#b45309' }
-  if (status === 'submitted' || status === 'graded') return { border: '#86efac', soft: 'rgba(22,163,74,0.10)', color: '#15803d' }
-  return { border: 'var(--color-border)', soft: 'rgba(124,58,237,0.10)', color: '#6d28d9' }
+  if (status === 'overdue')
+    return { bar: '#ef4444', soft: 'rgba(239,68,68,0.10)', softBg: 'rgba(239,68,68,0.08)', color: '#dc2626' }
+  if (status === 'due_today')
+    return { bar: '#f59e0b', soft: 'rgba(245,158,11,0.10)', softBg: 'rgba(245,158,11,0.08)', color: '#b45309' }
+  if (status === 'submitted' || status === 'graded')
+    return { bar: '#22c55e', soft: 'rgba(22,163,74,0.10)', softBg: 'rgba(22,163,74,0.08)', color: '#15803d' }
+  return { bar: '#a78bfa', soft: 'rgba(124,58,237,0.08)', softBg: 'rgba(124,58,237,0.06)', color: '#6d28d9' }
 }
 
 export default HomeworkCard

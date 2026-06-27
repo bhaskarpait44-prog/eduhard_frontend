@@ -180,27 +180,17 @@ const AttendanceRegister = () => {
   return (
     <div className="max-w-[1400px] mx-auto space-y-6 pb-12">
       {/* Page Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div className="flex-1">
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-            Attendance Register
-          </h1>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
-            Monthly attendance grid for your assigned sections. View trends, perform quick overrides, and prepare for parent meetings.
-          </p>
-        </div>
-        <div className="flex items-center gap-2">
-          <Button 
-            variant="primary" 
-            size="sm" 
-            icon={Download} 
-            onClick={handleDownloadPdf}
-            loading={downloading}
-            disabled={!registerData || loadingRegister}
-          >
-            Export PDF
-          </Button>
-        </div>
+      <div className="flex justify-end">
+        <Button 
+          variant="primary" 
+          size="sm" 
+          icon={Download} 
+          onClick={handleDownloadPdf}
+          loading={downloading}
+          disabled={!registerData || loadingRegister}
+        >
+          Export PDF
+        </Button>
       </div>
 
       {/* ── Filters ── */}

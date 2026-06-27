@@ -54,9 +54,9 @@ export default function ParentNotices() {
     fetchNotices()
   }, [])
 
-  const handleMarkRead = async (id) => {
+  const handleMarkRead = async (id, source) => {
     try {
-      await markParentNoticeRead(id)
+      await markParentNoticeRead(id, source)
       setNotices(prev => prev.map(n => n.id === id ? { ...n, is_read: true } : n))
     } catch (e) {
       console.error('Failed to mark notice as read', e)
@@ -109,7 +109,7 @@ export default function ParentNotices() {
                 variants={itemVariants}
                 layout
                 exit={{ opacity: 0, scale: 0.95 }}
-                onClick={() => !notice.is_read && handleMarkRead(notice.id)}
+                onClick={() => !notice.is_read && handleMarkRead(notice.id, notice.source || 'unified')}
                 className={`bg-white rounded-[32px] border transition-all overflow-hidden cursor-pointer ${
                   !notice.is_read ? 'border-amber-200 shadow-xl shadow-amber-50 ring-2 ring-amber-50' : 'border-gray-100 shadow-sm opacity-90'
                 }`}

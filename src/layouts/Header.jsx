@@ -42,6 +42,7 @@ const Header = ({ onMenuClick }) => {
     }
   })
 
+
   const dismissUpiRequest = (id) => {
     setDismissedUpiRequestIds(prev => {
       if (prev.includes(id)) return prev
@@ -56,12 +57,13 @@ const Header = ({ onMenuClick }) => {
 
   const isDark         = theme === 'dark'
   const initials       = getInitials(user?.name)
-  const isAdminUser    = user?.role === ROLES.ADMIN
-  const isTeacherUser  = user?.role === ROLES.TEACHER
+  const isAdminUser      = user?.role === ROLES.ADMIN
+  const isTeacherUser    = user?.role === ROLES.TEACHER
   const isAccountantUser = user?.role === ROLES.ACCOUNTANT
   const isReceptionistUser = user?.role === ROLES.RECEPTIONIST
-  const isStudentUser  = user?.role === ROLES.STUDENT
-  const unreadCount    = notifications.reduce((sum, item) => sum + Number(item.count || 0), 0)
+  const isStudentUser    = user?.role === ROLES.STUDENT
+  const isLibrarianUser  = user?.role === ROLES.LIBRARIAN
+  const unreadCount      = notifications.reduce((sum, item) => sum + Number(item.count || 0), 0)
 
   const profileRoute    = user?.role === 'teacher'
     ? ROUTES.TEACHER_PROFILE
@@ -85,7 +87,7 @@ const Header = ({ onMenuClick }) => {
 
   /* ── Notification polling ── */
   useEffect(() => {
-    if (!isAdminUser && !isStudentUser && !isTeacherUser && !isAccountantUser && !isReceptionistUser) {
+    if (!isAdminUser && !isStudentUser && !isTeacherUser && !isAccountantUser && !isReceptionistUser && !isLibrarianUser) {
       setNotifications([])
       setNotifLoading(false)
       return undefined
@@ -110,6 +112,8 @@ const Header = ({ onMenuClick }) => {
             console.error('Failed to load pending UPI requests for admin header', e)
           }
 
+
+
           const nextItems = [
             {
               id          : 'pending_leaves',
@@ -125,7 +129,7 @@ const Header = ({ onMenuClick }) => {
               count       : Number(counts.pending_corrections || 0),
               route       : ROUTES.ADMIN_TEACHER_CONTROL,
             },
-            totalUpiPending > 0 && {
+            totalUpiPending > 0 && dismissedUpiCount !== totalUpiPending && {
               id          : 'pending_upi_requests',
               title       : 'Pending UPI Payments',
               description : `${totalUpiPending} UPI payment requests are waiting for verification.`,
@@ -215,7 +219,7 @@ const Header = ({ onMenuClick }) => {
               title       : item.title || 'New notice',
               description : [item.priority, item.posted_by_name].filter(Boolean).join(' | ') || 'A notice is waiting in your notice board.',
               count       : 1,
-              route       : ROUTES.ACCOUNTANT_ROOT + '/notices',
+              route       : ROUTES.ACCOUNTANT_NOTICES,
               source      : item.source || 'unified',
             }))
 
@@ -227,7 +231,7 @@ const Header = ({ onMenuClick }) => {
             console.error('Failed to load pending UPI requests for accountant header', e)
           }
 
-          const upiItem = totalUpiPending > 0 ? [
+          const upiItem = totalUpiPending > 0 && dismissedUpiCount !== totalUpiPending ? [
             {
               id          : 'pending_upi_requests',
               title       : 'Pending UPI Payments',
@@ -237,16 +241,7 @@ const Header = ({ onMenuClick }) => {
             }
           ] : []
 
-          const staticItems = [
-            {
-              id: 'accountant-collections',
-              title: 'Fee collection queue',
-              description: 'Open today pending collections and defaulters from the accountant dashboard.',
-              count: 1,
-              route: ROUTES.ACCOUNTANT_DASHBOARD,
-            },
-          ]
-          setNotifications([...noticeItems, ...upiItem, ...staticItems].slice(0, 8))
+          setNotifications([...noticeItems, ...upiItem].slice(0, 8))
           return
         }
 
@@ -272,16 +267,32 @@ const Header = ({ onMenuClick }) => {
               source      : item.source || 'unified',
             }))
 
-          const staticItems = [
-            {
-              id: 'receptionist-visitors',
-              title: 'Visitor management',
-              description: 'Monitor current visitors and manage front-desk entries.',
-              count: 1,
-              route: ROUTES.RECEPTIONIST_VISITORS,
-            },
-          ]
-          setNotifications([...noticeItems, ...staticItems].slice(0, 8))
+          setNotifications([...noticeItems].slice(0, 8))
+          return
+        }
+
+        if (isLibrarianUser) {
+          let notices = []
+          try {
+            const res = await noticesApi.getLibrarianNotices()
+            notices = Array.isArray(res?.data?.notices) ? res.data.notices : []
+          } catch (e) { console.error('Failed to load librarian notices for header', e) }
+
+          if (!active) return
+
+          const noticeItems = notices
+            .filter(item => !item?.is_read)
+            .sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0))
+            .slice(0, 5)
+            .map(item => ({
+              id          : `librarian-notice-${item.id}`,
+              title       : item.title || 'New notice',
+              description : [item.priority, item.posted_by_name].filter(Boolean).join(' | ') || 'A notice is waiting in your notice board.',
+              count       : 1,
+              route       : ROUTES.LIBRARY_NOTICES,
+              source      : item.source || 'unified',
+            }))
+          setNotifications(noticeItems.slice(0, 8))
           return
         }
 
@@ -355,11 +366,13 @@ const Header = ({ onMenuClick }) => {
     loadNotifications()
     const timer = window.setInterval(loadNotifications, 30_000)
     return () => { active = false; window.clearInterval(timer) }
-  }, [isAdminUser, isStudentUser, isTeacherUser, isAccountantUser, isReceptionistUser, dismissedUpiCount, dismissedUpiRequestIds])
+  }, [isAdminUser, isStudentUser, isTeacherUser, isAccountantUser, isReceptionistUser, isLibrarianUser, dismissedUpiCount, dismissedUpiRequestIds])
 
   const handleNotificationClick = async (item) => {
     setNotifOpen(false)
     
+
+
     if (item.id.includes('pending_upi_requests')) {
       const pendingCount = Number(item.id.split('-').pop())
       sessionStorage.setItem('dismissed_upi_count', String(pendingCount))
@@ -374,10 +387,11 @@ const Header = ({ onMenuClick }) => {
     if (item.id.includes('notice')) {
       const id = item.id.split('-').pop()
       try {
-        if (isTeacherUser)          await teacherApi.markTeacherNoticeRead(id, item.source)
-        else if (isStudentUser)     await studentApi.markStudentNoticeRead(id, item.source)
+        if (isTeacherUser)           await teacherApi.markTeacherNoticeRead(id, item.source)
+        else if (isStudentUser)      await studentApi.markStudentNoticeRead(id, item.source)
         else if (isAccountantUser)   await noticesApi.markAccountantNoticeRead(id, item.source)
         else if (isReceptionistUser) await noticesApi.markReceptionistNoticeRead(id, item.source)
+        else if (isLibrarianUser)    await noticesApi.markLibrarianNoticeRead(id, item.source)
       } catch (err) {
         console.error('Failed to mark notice as read on click', err)
       }
@@ -393,6 +407,7 @@ const Header = ({ onMenuClick }) => {
     if (!notifications.length) return
     const noticeItems = notifications.filter(n => n.id.includes('notice'))
     const upiItem = notifications.find(n => n.id.includes('pending_upi_requests'))
+    const studentUpiItems = notifications.filter(n => n.id.includes('student-upi-request'))
 
     if (upiItem) {
       const pendingCount = Number(upiItem.id.split('-').pop())
@@ -412,10 +427,11 @@ const Header = ({ onMenuClick }) => {
       if (noticeItems.length > 0) {
         await Promise.all(noticeItems.map(item => {
           const id = item.id.split('-').pop()
-          if (isTeacherUser)     return teacherApi.markTeacherNoticeRead(id, item.source)
-          if (isStudentUser)     return studentApi.markStudentNoticeRead(id, item.source)
-          if (isAccountantUser)   return noticesApi.markAccountantNoticeRead(id, item.source)
-          if (isReceptionistUser) return noticesApi.markReceptionistNoticeRead(id, item.source)
+          if (isTeacherUser)       return teacherApi.markTeacherNoticeRead(id, item.source)
+          if (isStudentUser)       return studentApi.markStudentNoticeRead(id, item.source)
+          if (isAccountantUser)    return noticesApi.markAccountantNoticeRead(id, item.source)
+          if (isReceptionistUser)  return noticesApi.markReceptionistNoticeRead(id, item.source)
+          if (isLibrarianUser)     return noticesApi.markLibrarianNoticeRead(id, item.source)
           return Promise.resolve()
         }))
       }

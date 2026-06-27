@@ -88,15 +88,7 @@ const TeacherMyClasses = () => {
     <div className="max-w-[1400px] mx-auto space-y-8 pb-12">
 
       {/* ── Page header ─────────────────────────────────────────────────── */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold" style={{ color: 'var(--color-text-primary)' }}>
-            My Classes
-          </h1>
-          <p className="mt-1 text-sm" style={{ color: 'var(--color-text-secondary)' }}>
-            Classes and sections currently assigned to you in this session.
-          </p>
-        </div>
+      <div className="flex justify-end">
         <Button
           variant="secondary"
           icon={RefreshCw}

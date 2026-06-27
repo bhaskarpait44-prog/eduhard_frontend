@@ -110,17 +110,6 @@ const MarkAttendance = () => {
 
   return (
     <div className="max-w-[1400px] mx-auto space-y-6 pb-12">
-      {/* Page Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div className="flex-1">
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-            Mark Attendance
-          </h1>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
-            Record daily student attendance for your assigned sections. Ensure accuracy for session reports and parent notifications. Today is {new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}.
-          </p>
-        </div>
-      </div>
 
       {/* Empty state */}
       {!loadingAssignments && assignments.length === 0 && (

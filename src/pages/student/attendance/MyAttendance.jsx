@@ -20,12 +20,12 @@ import useStudentAttendance from '@/hooks/useStudentAttendance'
 import { formatDate, formatPercent } from '@/utils/helpers'
 
 const filterOptions = [
-  { key: 'all', label: 'All' },
-  { key: 'present', label: 'P' },
-  { key: 'absent', label: 'A' },
-  { key: 'late', label: 'L' },
-  { key: 'half_day', label: 'H' },
-  { key: 'holiday', label: 'Off' },
+  { key: 'all',      label: 'All' },
+  { key: 'present',  label: 'Present' },
+  { key: 'absent',   label: 'Absent' },
+  { key: 'late',     label: 'Late' },
+  { key: 'half_day', label: 'Half Day' },
+  { key: 'holiday',  label: 'Holiday' },
 ]
 
 const MyAttendance = () => {
@@ -47,13 +47,13 @@ const MyAttendance = () => {
     availableMonths,
   } = useStudentAttendance()
 
-  const [viewMode, setViewMode] = useState('calendar')
-  const [statusFilter, setStatusFilter] = useState('all')
-  const [searchRange, setSearchRange] = useState({ from: '', to: '' })
+  const [viewMode,       setViewMode]       = useState('calendar')
+  const [statusFilter,   setStatusFilter]   = useState('all')
+  const [searchRange,    setSearchRange]    = useState({ from: '', to: '' })
   const [selectedRecord, setSelectedRecord] = useState(null)
 
-  const records = attendance?.records || []
-  const monthSummary = attendance?.monthly_summary || {}
+  const records       = attendance?.records         || []
+  const monthSummary  = attendance?.monthly_summary || {}
   const overallSummary = summary || attendance?.summary || {}
 
   useEffect(() => {
@@ -64,105 +64,95 @@ const MyAttendance = () => {
     return records.filter((record) => {
       if (statusFilter !== 'all' && record.status !== statusFilter) return false
       if (searchRange.from && record.date < searchRange.from) return false
-      if (searchRange.to && record.date > searchRange.to) return false
+      if (searchRange.to   && record.date > searchRange.to)   return false
       return true
     })
   }, [records, statusFilter, searchRange.from, searchRange.to])
 
   const miniStats = [
-    { key: 'present', label: 'Present', value: overallSummary.present_days || 0, tone: '#16a34a' },
-    { key: 'absent', label: 'Absent', value: overallSummary.absent_days || 0, tone: '#ef4444' },
-    { key: 'late', label: 'Late', value: overallSummary.late_days || 0, tone: '#d97706' },
-    { key: 'half', label: 'Half Day', value: overallSummary.half_days || 0, tone: '#2563eb' },
+    { key: 'present', label: 'Present',  value: overallSummary.present_days || 0, tone: '#16a34a' },
+    { key: 'absent',  label: 'Absent',   value: overallSummary.absent_days  || 0, tone: '#ef4444' },
+    { key: 'late',    label: 'Late',     value: overallSummary.late_days    || 0, tone: '#d97706' },
+    { key: 'half',    label: 'Half Day', value: overallSummary.half_days    || 0, tone: '#2563eb' },
   ]
 
   const handleRefresh = async () => {
     toastInfo('Refreshing attendance')
-    try {
-      await refresh()
-    } catch {}
+    try { await refresh() } catch {}
   }
 
   const handleExport = async () => {
     try {
       const response = await exportAttendance()
       if (!response) return
-      
       const blob = response instanceof Blob
         ? response
         : response?.data instanceof Blob
           ? response.data
           : new Blob([response], { type: 'application/pdf' })
-          
-      const url = window.URL.createObjectURL(blob)
+      const url  = window.URL.createObjectURL(blob)
       const link = document.createElement('a')
-      link.href = url
+      link.href  = url
       link.setAttribute('download', `Attendance_Report_${selectedMonth.label.replace(' ', '_')}.pdf`)
       document.body.appendChild(link)
       link.click()
       link.remove()
       window.setTimeout(() => window.URL.revokeObjectURL(url), 1000)
       toastSuccess('Attendance report downloaded.')
-    } catch (err) {
+    } catch {
       toastError('Failed to export attendance report')
     }
   }
 
   return (
-    <div className="space-y-5">
-      <section
-        className="rounded-[28px] border p-5 sm:p-6"
-        style={{
-          borderColor: 'var(--color-border)',
-          background: 'linear-gradient(135deg, rgba(37,99,235,0.10), rgba(124,58,237,0.08) 55%, var(--color-surface) 100%)',
-        }}
-      >
-        <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
-          <div className="min-w-0">
-            <p className="text-sm font-semibold uppercase tracking-[0.18em]" style={{ color: 'var(--student-accent)' }}>
-              Attendance Overview
-            </p>
-            <h1 className="mt-2 text-2xl font-bold sm:text-3xl">My Attendance</h1>
-            <p className="mt-2 max-w-2xl text-sm text-[var(--color-text-secondary)] sm:text-base">
-              Track your monthly attendance, check marked dates, and keep an eye on your trend over the last six months.
-            </p>
-          </div>
+    <div className="space-y-5 pb-8">
 
-          <div className="flex flex-wrap gap-2">
-            <Button variant="secondary" onClick={handleExport} loading={exporting} icon={Download}>
-              Download Report
-            </Button>
-            <Button variant="secondary" onClick={handleRefresh} loading={refreshing} icon={RefreshCw}>
-              Refresh
-            </Button>
+      {/* ── Toolbar ── */}
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h1 className="text-xl font-bold" style={{ color: 'var(--color-text-primary)' }}>
+            My Attendance
+          </h1>
+          <p className="mt-0.5 text-sm" style={{ color: 'var(--color-text-muted)' }}>
+            {selectedMonth.label} · Track daily records and overall trends
+          </p>
+        </div>
+        <div className="flex gap-2">
+          <Button variant="secondary" size="sm" onClick={handleRefresh} loading={refreshing} icon={RefreshCw}>
+            Refresh
+          </Button>
+          <Button variant="secondary" size="sm" onClick={handleExport} loading={exporting} icon={Download}>
+            Export PDF
+          </Button>
+        </div>
+      </div>
+
+      {/* ── Low Attendance Warning ── */}
+      {Number(overallSummary.percentage || 0) < 75 && (
+        <div
+          className="flex items-start gap-3 rounded-2xl border px-4 py-3.5"
+          style={{ borderColor: '#fca5a5', backgroundColor: 'rgba(239,68,68,0.07)' }}
+        >
+          <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-red-100 text-red-600">
+            <CircleAlert size={16} />
+          </div>
+          <div>
+            <p className="text-sm font-semibold text-red-700 dark:text-red-300">
+              Attendance below minimum — {formatPercent(overallSummary.percentage || 0, 0)}
+            </p>
+            <p className="mt-0.5 text-xs" style={{ color: 'var(--color-text-secondary)' }}>
+              You need {overallSummary.days_needed_for_minimum || 0} more consecutive day(s) to reach 75%. Speak with your class teacher.
+            </p>
           </div>
         </div>
-      </section>
-
-      {Number(overallSummary.percentage || 0) < 75 && (
-        <section
-          className="rounded-[24px] border px-4 py-4 sm:px-5"
-          style={{ borderColor: '#fca5a5', backgroundColor: 'rgba(239,68,68,0.08)' }}
-        >
-          <div className="flex items-start gap-3">
-            <div className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-red-500/10 text-red-600">
-              <CircleAlert size={18} />
-            </div>
-            <div className="min-w-0">
-              <p className="text-sm font-semibold text-red-700 dark:text-red-300">
-                Your attendance is {formatPercent(overallSummary.percentage || 0, 0)}.
-              </p>
-              <p className="mt-1 text-sm text-[var(--color-text-secondary)]">
-                Minimum required is 75%. You need to attend {overallSummary.days_needed_for_minimum || 0} more consecutive day(s) to reach 75%. Please inform your parents and speak to your class teacher.
-              </p>
-            </div>
-          </div>
-        </section>
       )}
 
-      <div className="grid grid-cols-1 gap-5 xl:grid-cols-[minmax(320px,0.86fr)_minmax(0,1.14fr)]">
+      {/* ── Main Grid: Summary + Month/Controls ── */}
+      <div className="grid grid-cols-1 gap-5 xl:grid-cols-[minmax(300px,0.82fr)_minmax(0,1.18fr)]">
+
+        {/* Left — Ring + Mini Stats */}
         <section
-          className="rounded-[28px] border p-5"
+          className="rounded-2xl border p-5"
           style={{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface)' }}
         >
           {loading && !summary ? (
@@ -176,18 +166,24 @@ const MyAttendance = () => {
                 presentDays={overallSummary.present_days || 0}
                 absentDays={overallSummary.absent_days || 0}
               />
-
-              <div className="mt-5 grid grid-cols-2 gap-3">
+              <div className="mt-4 grid grid-cols-2 gap-2.5">
                 {miniStats.map((item) => (
                   <div
                     key={item.key}
-                    className="rounded-[22px] border px-4 py-4"
-                    style={{ borderColor: `${item.tone}22`, backgroundColor: `${item.tone}10` }}
+                    className="relative overflow-hidden rounded-xl border px-4 py-3.5"
+                    style={{ borderColor: `${item.tone}22`, backgroundColor: `${item.tone}0d` }}
                   >
-                    <p className="text-xs font-semibold uppercase tracking-[0.16em]" style={{ color: item.tone }}>
+                    {/* Left accent bar */}
+                    <span
+                      className="absolute inset-y-0 left-0 w-1 rounded-l-xl"
+                      style={{ backgroundColor: item.tone }}
+                    />
+                    <p className="text-xs font-semibold uppercase tracking-widest" style={{ color: item.tone }}>
                       {item.label}
                     </p>
-                    <p className="mt-2 text-2xl font-bold text-[var(--color-text-primary)]">{item.value}</p>
+                    <p className="mt-1.5 text-2xl font-bold" style={{ color: 'var(--color-text-primary)' }}>
+                      {item.value}
+                    </p>
                   </div>
                 ))}
               </div>
@@ -195,19 +191,15 @@ const MyAttendance = () => {
           )}
         </section>
 
+        {/* Right — Month Picker + View Toggle + List Filters */}
         <section
-          className="rounded-[28px] border p-5"
+          className="rounded-2xl border p-5"
           style={{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface)' }}
         >
-          <div className="mb-4 flex items-center justify-between gap-3">
-            <div>
-              <h2 className="text-lg font-semibold text-[var(--color-text-primary)]">Select Month</h2>
-              <p className="mt-1 text-sm text-[var(--color-text-secondary)]">
-                Tap a month to see its detailed attendance record
-              </p>
-            </div>
-          </div>
-
+          {/* Month pills */}
+          <p className="mb-2.5 text-xs font-semibold uppercase tracking-widest" style={{ color: 'var(--color-text-muted)' }}>
+            Select Month
+          </p>
           <div className="flex gap-2 overflow-x-auto pb-1">
             {availableMonths.map((item) => {
               const active = item.month === selectedMonth.month && item.year === selectedMonth.year
@@ -216,11 +208,11 @@ const MyAttendance = () => {
                   key={`${item.year}-${item.month}`}
                   type="button"
                   onClick={() => changeMonth(item.month, item.year)}
-                  className="rounded-full px-4 py-2 text-sm font-semibold whitespace-nowrap transition"
+                  className="rounded-full px-3.5 py-1.5 text-xs font-semibold whitespace-nowrap transition-all duration-150"
                   style={{
                     backgroundColor: active ? 'var(--student-accent)' : 'var(--color-surface-raised)',
-                    color: active ? '#fff' : 'var(--color-text-secondary)',
-                    border: `1px solid ${active ? 'var(--student-accent)' : 'var(--color-border)'}`,
+                    color:           active ? '#fff' : 'var(--color-text-secondary)',
+                    border:          `1px solid ${active ? 'var(--student-accent)' : 'var(--color-border)'}`,
                   }}
                 >
                   {item.label}
@@ -229,73 +221,80 @@ const MyAttendance = () => {
             })}
           </div>
 
-          <div className="mt-5 flex flex-wrap gap-2">
-            <button
-              type="button"
-              onClick={() => setViewMode('calendar')}
-              className="inline-flex items-center gap-2 rounded-2xl px-4 py-2.5 text-sm font-semibold"
-              style={toggleStyle(viewMode === 'calendar')}
+          {/* View mode toggle */}
+          <div className="mt-5">
+            <p className="mb-2.5 text-xs font-semibold uppercase tracking-widest" style={{ color: 'var(--color-text-muted)' }}>
+              View Mode
+            </p>
+            <div
+              className="inline-flex rounded-xl border p-1 gap-1"
+              style={{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface-raised)' }}
             >
-              <CalendarDays size={16} />
-              Calendar
-            </button>
-            <button
-              type="button"
-              onClick={() => setViewMode('list')}
-              className="inline-flex items-center gap-2 rounded-2xl px-4 py-2.5 text-sm font-semibold"
-              style={toggleStyle(viewMode === 'list')}
-            >
-              <List size={16} />
-              List
-            </button>
+              <button
+                type="button"
+                onClick={() => setViewMode('calendar')}
+                className="inline-flex items-center gap-1.5 rounded-lg px-4 py-2 text-sm font-semibold transition-all duration-150"
+                style={viewMode === 'calendar' ? activeTabStyle : inactiveTabStyle}
+              >
+                <CalendarDays size={15} />
+                Calendar
+              </button>
+              <button
+                type="button"
+                onClick={() => setViewMode('list')}
+                className="inline-flex items-center gap-1.5 rounded-lg px-4 py-2 text-sm font-semibold transition-all duration-150"
+                style={viewMode === 'list' ? activeTabStyle : inactiveTabStyle}
+              >
+                <List size={15} />
+                List
+              </button>
+            </div>
           </div>
 
+          {/* List view filters */}
           {viewMode === 'list' && (
-            <div className="mt-4 grid grid-cols-1 gap-3 lg:grid-cols-[1fr_auto]">
-              <div className="flex flex-wrap gap-2">
+            <div className="mt-4 space-y-3">
+              <div className="flex flex-wrap gap-1.5">
                 {filterOptions.map((option) => (
                   <button
                     key={option.key}
                     type="button"
                     onClick={() => setStatusFilter(option.key)}
-                    className="rounded-full px-3 py-2 text-xs font-semibold uppercase tracking-[0.14em]"
+                    className="rounded-full px-3 py-1.5 text-xs font-semibold transition-all duration-150"
                     style={{
-                      backgroundColor: statusFilter === option.key ? 'var(--student-accent)' : 'var(--color-surface-raised)',
-                      color: statusFilter === option.key ? '#fff' : 'var(--color-text-secondary)',
+                      backgroundColor: statusFilter === option.key ? 'var(--student-accent)' : 'var(--color-surface)',
+                      color:           statusFilter === option.key ? '#fff' : 'var(--color-text-secondary)',
+                      border:          `1px solid ${statusFilter === option.key ? 'var(--student-accent)' : 'var(--color-border)'}`,
                     }}
                   >
                     {option.label}
                   </button>
                 ))}
               </div>
-
               <div className="grid grid-cols-2 gap-2">
-                <label className="relative">
-                  <span className="sr-only">From date</span>
+                <div>
+                  <label className="mb-1 block text-xs font-medium" style={{ color: 'var(--color-text-muted)' }}>From</label>
                   <Input
                     type="date"
                     value={searchRange.from}
-                    onChange={(event) => setSearchRange((prev) => ({ ...prev, from: event.target.value }))}
-                    className="w-full rounded-2xl border px-3 py-2.5 text-sm"
-                    style={{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface)', height: '40px' }}
+                    onChange={(e) => setSearchRange((prev) => ({ ...prev, from: e.target.value }))}
                   />
-                </label>
-                <label className="relative">
-                  <span className="sr-only">To date</span>
+                </div>
+                <div>
+                  <label className="mb-1 block text-xs font-medium" style={{ color: 'var(--color-text-muted)' }}>To</label>
                   <Input
                     type="date"
                     value={searchRange.to}
-                    onChange={(event) => setSearchRange((prev) => ({ ...prev, to: event.target.value }))}
-                    className="w-full rounded-2xl border px-3 py-2.5 text-sm"
-                    style={{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface)', height: '40px' }}
+                    onChange={(e) => setSearchRange((prev) => ({ ...prev, to: e.target.value }))}
                   />
-                </label>
+                </div>
               </div>
             </div>
           )}
         </section>
       </div>
 
+      {/* ── Body: Calendar / List / Empty ── */}
       <section className="space-y-5">
         {loading && !attendance ? (
           <AttendanceBodySkeleton />
@@ -313,19 +312,20 @@ const MyAttendance = () => {
               <ListView records={filteredRecords} />
             )}
 
+            {/* Monthly Summary */}
             <section
-              className="rounded-[28px] border p-5"
+              className="rounded-2xl border p-5"
               style={{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface)' }}
             >
-              <h2 className="text-lg font-semibold text-[var(--color-text-primary)]">
-                Monthly Summary
-              </h2>
-              <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-5">
+              <p className="mb-4 text-xs font-semibold uppercase tracking-widest" style={{ color: 'var(--color-text-muted)' }}>
+                Monthly Summary — {selectedMonth.label}
+              </p>
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
                 <SummaryTile label="Working Days" value={monthSummary.working_days || 0} />
-                <SummaryTile label="Present" value={monthSummary.present_days || 0} tone="#16a34a" />
-                <SummaryTile label="Absent" value={monthSummary.absent_days || 0} tone="#ef4444" />
-                <SummaryTile label="Late" value={monthSummary.late_days || 0} tone="#d97706" />
-                <SummaryTile label="This Month" value={formatPercent(monthSummary.percentage || 0, 0)} tone="#6d28d9" />
+                <SummaryTile label="Present"      value={monthSummary.present_days  || 0} tone="#16a34a" />
+                <SummaryTile label="Absent"       value={monthSummary.absent_days   || 0} tone="#ef4444" />
+                <SummaryTile label="Late"         value={monthSummary.late_days     || 0} tone="#d97706" />
+                <SummaryTile label="This Month"   value={formatPercent(monthSummary.percentage || 0, 0)} tone="#6d28d9" />
               </div>
             </section>
 
@@ -345,18 +345,19 @@ const MyAttendance = () => {
         )}
       </section>
 
+      {/* ── Detail Modal ── */}
       <Modal
         open={Boolean(selectedRecord)}
         onClose={() => setSelectedRecord(null)}
         title="Attendance Detail"
       >
         {selectedRecord && (
-          <div className="space-y-4">
-            <DetailRow label="Date" value={formatDate(selectedRecord.date, 'long')} />
-            <DetailRow label="Status" value={labelFromStatus(selectedRecord.status)} />
-            <DetailRow label="Marked by" value={selectedRecord.marked_by_name || selectedRecord.method || '-'} />
-            <DetailRow label="Time" value={selectedRecord.marked_at ? formatTime(selectedRecord.marked_at) : '-'} />
-            <DetailRow label="Note" value={selectedRecord.override_reason || 'No note provided.'} />
+          <div className="space-y-3">
+            <DetailRow label="Date"      value={formatDate(selectedRecord.date, 'long')} />
+            <DetailRow label="Status"    value={labelFromStatus(selectedRecord.status)} />
+            <DetailRow label="Marked by" value={selectedRecord.marked_by_name || selectedRecord.method || '—'} />
+            <DetailRow label="Time"      value={selectedRecord.marked_at ? formatTime(selectedRecord.marked_at) : '—'} />
+            <DetailRow label="Note"      value={selectedRecord.override_reason || 'No note provided.'} />
           </div>
         )}
       </Modal>
@@ -364,87 +365,144 @@ const MyAttendance = () => {
   )
 }
 
+/* ── Sub-components ────────────────────────────────────────────────────────── */
+
 const ListView = ({ records }) => (
   <section
-    className="overflow-hidden rounded-[28px] border"
+    className="overflow-hidden rounded-2xl border"
     style={{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface)' }}
   >
-    <div className="overflow-x-auto">
-      <table className="min-w-full text-sm">
-        <thead style={{ backgroundColor: 'var(--color-surface-raised)' }}>
-          <tr>
-            {['Date', 'Day', 'Status', 'Marked By', 'Time'].map((head) => (
-              <th key={head} className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-[0.16em] text-[var(--color-text-muted)]">
-                {head}
-              </th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {records.map((record) => (
-            <tr key={record.id || record.date} className="border-t" style={{ borderColor: 'var(--color-border)' }}>
-              <td className="px-4 py-3 font-medium text-[var(--color-text-primary)]">{formatDate(record.date, 'short')}</td>
-              <td className="px-4 py-3 text-[var(--color-text-secondary)]">{new Date(record.date).toLocaleDateString('en-IN', { weekday: 'long' })}</td>
-              <td className="px-4 py-3">
-                <span className="rounded-full px-2.5 py-1 text-xs font-semibold" style={statusBadgeStyle(record.status)}>
-                  {labelFromStatus(record.status)}
-                </span>
-              </td>
-              <td className="px-4 py-3 text-[var(--color-text-secondary)]">{record.marked_by_name || record.method || '-'}</td>
-              <td className="px-4 py-3 text-[var(--color-text-secondary)]">{record.marked_at ? formatTime(record.marked_at) : '-'}</td>
+    {records.length === 0 ? (
+      <div className="py-12 text-center text-sm" style={{ color: 'var(--color-text-muted)' }}>
+        No records match this filter.
+      </div>
+    ) : (
+      <div className="overflow-x-auto">
+        <table className="min-w-full text-sm">
+          <thead style={{ backgroundColor: 'var(--color-surface-raised)' }}>
+            <tr>
+              {['Date', 'Day', 'Status', 'Marked By', 'Time'].map((head) => (
+                <th
+                  key={head}
+                  className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-widest"
+                  style={{ color: 'var(--color-text-muted)' }}
+                >
+                  {head}
+                </th>
+              ))}
             </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
+          </thead>
+          <tbody>
+            {records.map((record) => (
+              <tr
+                key={record.id || record.date}
+                className="border-t transition-colors duration-100"
+                style={{ borderColor: 'var(--color-border)' }}
+                onMouseEnter={e => e.currentTarget.style.backgroundColor = 'var(--color-surface-raised)'}
+                onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}
+              >
+                <td className="px-4 py-3 font-semibold" style={{ color: 'var(--color-text-primary)' }}>
+                  {formatDate(record.date, 'short')}
+                </td>
+                <td className="px-4 py-3" style={{ color: 'var(--color-text-secondary)' }}>
+                  {new Date(record.date).toLocaleDateString('en-IN', { weekday: 'long' })}
+                </td>
+                <td className="px-4 py-3">
+                  <span
+                    className="inline-block rounded-full px-2.5 py-0.5 text-xs font-semibold"
+                    style={statusBadgeStyle(record.status)}
+                  >
+                    {labelFromStatus(record.status)}
+                  </span>
+                </td>
+                <td className="px-4 py-3" style={{ color: 'var(--color-text-secondary)' }}>
+                  {record.marked_by_name || record.method || '—'}
+                </td>
+                <td className="px-4 py-3" style={{ color: 'var(--color-text-secondary)' }}>
+                  {record.marked_at ? formatTime(record.marked_at) : '—'}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    )}
   </section>
 )
 
-const SummaryTile = ({ label, value, tone = 'var(--color-text-primary)' }) => (
+const SummaryTile = ({ label, value, tone }) => (
   <div
-    className="rounded-[22px] border px-4 py-4"
-    style={{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface-raised)' }}
+    className="relative overflow-hidden rounded-xl border px-4 py-3.5"
+    style={{
+      borderColor:     tone ? `${tone}22` : 'var(--color-border)',
+      backgroundColor: tone ? `${tone}0d` : 'var(--color-surface-raised)',
+    }}
   >
-    <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--color-text-muted)]">{label}</p>
-    <p className="mt-2 text-2xl font-bold" style={{ color: tone }}>{value}</p>
+    {tone && (
+      <span
+        className="absolute inset-y-0 left-0 w-1 rounded-l-xl"
+        style={{ backgroundColor: tone }}
+      />
+    )}
+    <p
+      className="text-xs font-semibold uppercase tracking-widest"
+      style={{ color: tone || 'var(--color-text-muted)' }}
+    >
+      {label}
+    </p>
+    <p
+      className="mt-1.5 text-2xl font-bold"
+      style={{ color: tone || 'var(--color-text-primary)' }}
+    >
+      {value}
+    </p>
   </div>
 )
 
 const DetailRow = ({ label, value }) => (
   <div
-    className="rounded-2xl border px-4 py-3"
+    className="rounded-xl border px-4 py-3"
     style={{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface-raised)' }}
   >
-    <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--color-text-muted)]">{label}</p>
-    <p className="mt-1 text-sm text-[var(--color-text-primary)]">{value}</p>
+    <p className="text-[10px] font-semibold uppercase tracking-widest" style={{ color: 'var(--color-text-muted)' }}>
+      {label}
+    </p>
+    <p className="mt-1 text-sm font-medium" style={{ color: 'var(--color-text-primary)' }}>
+      {value}
+    </p>
   </div>
 )
 
 const AttendanceSummarySkeleton = () => (
   <div className="animate-pulse">
     <div className="mx-auto h-36 w-36 rounded-full bg-[var(--color-surface-raised)]" />
-    <div className="mt-6 grid grid-cols-2 gap-3">
-      {Array.from({ length: 4 }).map((_, index) => (
-        <div key={index} className="rounded-[22px] bg-[var(--color-surface-raised)] p-6" />
+    <div className="mt-5 grid grid-cols-2 gap-2.5">
+      {Array.from({ length: 4 }).map((_, i) => (
+        <div key={i} className="h-20 rounded-xl bg-[var(--color-surface-raised)]" />
       ))}
     </div>
   </div>
 )
 
 const AttendanceBodySkeleton = () => (
-  <div className="space-y-5 animate-pulse">
-    <div className="rounded-[28px] bg-[var(--color-surface-raised)] p-10" />
-    <div className="rounded-[28px] bg-[var(--color-surface-raised)] p-10" />
-    <div className="rounded-[28px] bg-[var(--color-surface-raised)] p-10" />
+  <div className="space-y-4 animate-pulse">
+    <div className="h-72 rounded-2xl bg-[var(--color-surface-raised)]" />
+    <div className="h-32 rounded-2xl bg-[var(--color-surface-raised)]" />
+    <div className="h-48 rounded-2xl bg-[var(--color-surface-raised)]" />
   </div>
 )
 
-function toggleStyle(active) {
-  return {
-    backgroundColor: active ? 'var(--student-accent)' : 'var(--color-surface-raised)',
-    color: active ? '#fff' : 'var(--color-text-secondary)',
-    border: `1px solid ${active ? 'var(--student-accent)' : 'var(--color-border)'}`,
-  }
+/* ── Helpers ────────────────────────────────────────────────────────────────── */
+
+const activeTabStyle = {
+  backgroundColor: 'var(--student-accent)',
+  color: '#fff',
+  boxShadow: '0 1px 4px rgba(0,0,0,0.12)',
+}
+
+const inactiveTabStyle = {
+  backgroundColor: 'transparent',
+  color: 'var(--color-text-secondary)',
 }
 
 function labelFromStatus(status) {
@@ -454,11 +512,11 @@ function labelFromStatus(status) {
 }
 
 function statusBadgeStyle(status) {
-  if (status === 'present') return { backgroundColor: '#dcfce7', color: '#15803d' }
-  if (status === 'absent') return { backgroundColor: '#fee2e2', color: '#dc2626' }
-  if (status === 'late') return { backgroundColor: '#fef3c7', color: '#b45309' }
+  if (status === 'present')  return { backgroundColor: '#dcfce7', color: '#15803d' }
+  if (status === 'absent')   return { backgroundColor: '#fee2e2', color: '#dc2626' }
+  if (status === 'late')     return { backgroundColor: '#fef3c7', color: '#b45309' }
   if (status === 'half_day') return { backgroundColor: '#dbeafe', color: '#1d4ed8' }
-  return { backgroundColor: '#e5e7eb', color: '#6b7280' }
+  return { backgroundColor: '#f3f4f6', color: '#6b7280' }
 }
 
 function formatTime(value) {

@@ -53,12 +53,17 @@ const useStudentNotices = () => {
 
   const togglePin = useCallback(async (notice) => {
     setActionId(notice.id)
+    const source = notice.source || 'unified'
     try {
-      if (notice.is_pinned) await noticesApi.unpinNotice(notice.id)
-      else await noticesApi.pinNotice(notice.id)
+      if (notice.is_pinned) await noticesApi.unpinNotice(notice.id, source)
+      else await noticesApi.pinNotice(notice.id, source)
 
       setNotices((prev) => prev
-        .map((row) => Number(row.id) === Number(notice.id) ? { ...row, is_pinned: !row.is_pinned } : row))
+        .map((row) => Number(row.id) === Number(notice.id) && (row.source || 'unified') === source
+          ? { ...row, is_pinned: !row.is_pinned } 
+          : row
+        )
+      )
       setActionId(null)
     } catch (err) {
       setActionId(null)

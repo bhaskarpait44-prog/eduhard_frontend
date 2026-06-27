@@ -135,7 +135,10 @@ export default function ParentLayout() {
           </div>
 
           <div className="flex items-center gap-4">
-            <button className="w-10 h-10 rounded-xl bg-gray-50 flex items-center justify-center text-gray-500 hover:bg-gray-100 transition-all relative">
+            <button
+              onClick={() => navigate(ROUTES.PARENT_NOTICES)}
+              className="w-10 h-10 rounded-xl bg-gray-50 flex items-center justify-center text-gray-500 hover:bg-gray-100 transition-all relative"
+            >
               <Bell size={20} />
               {unreadNotices > 0 && (
                 <span className="absolute top-2.5 right-2.5 w-2 h-2 bg-red-500 rounded-full border-2 border-white" />

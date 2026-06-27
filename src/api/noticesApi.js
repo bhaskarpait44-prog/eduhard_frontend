@@ -41,16 +41,16 @@ export const getStudentNotices = (params) =>
   api.get('/notices/student', { params })
 export const markNoticeRead = (id, source = 'unified') => 
   api.post(`/notices/student/${id}/read?source=${source}`)
-export const pinNotice = (id) => 
-  api.post(`/notices/student/${id}/pin`)
-export const unpinNotice = (id) => 
-  api.delete(`/notices/student/${id}/pin`)
+export const pinNotice = (id, source = 'unified') => 
+  api.post(`/notices/student/${id}/pin?source=${source}`)
+export const unpinNotice = (id, source = 'unified') => 
+  api.delete(`/notices/student/${id}/pin?source=${source}`)
 
 // Parent portal
 export const getParentNotices = (params) => 
   api.get('/notices/parent', { params })
-export const markParentNoticeRead = (id) => 
-  api.post(`/notices/parent/${id}/read`)
+export const markParentNoticeRead = (id, source = 'unified') => 
+  api.post(`/notices/parent/${id}/read?source=${source}`)
 
 // Librarian portal
 export const getLibrarianNotices = (params) =>

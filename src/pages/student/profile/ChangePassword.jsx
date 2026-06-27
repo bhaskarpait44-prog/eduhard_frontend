@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { KeyRound } from 'lucide-react'
 import Button from '@/components/ui/Button'
 import useAuthStore from '@/store/authStore'
 import usePageTitle from '@/hooks/usePageTitle'
@@ -53,57 +54,249 @@ const ChangePassword = () => {
   }
 
   return (
-    <div className="space-y-5">
-      <section
-        className="rounded-[28px] border p-5 sm:p-6"
-        style={{
-          borderColor: 'var(--color-border)',
-          background: 'linear-gradient(135deg, rgba(109,40,217,0.16), rgba(239,68,68,0.05) 52%, var(--color-surface) 100%)',
-        }}
-      >
-        <h1 className="text-2xl font-bold sm:text-3xl text-[var(--color-text-primary)]">Change Password</h1>
-        <p className="mt-2 max-w-2xl text-sm text-[var(--color-text-secondary)] sm:text-base">
-          Use your current password, choose a stronger new one, and you will be redirected to login after the change is saved.
-        </p>
-      </section>
+    <div className="cp-page">
+      {/* ── Action Bar ── */}
+      <div className="cp-action-bar">
+        <div className="cp-action-icon">
+          <KeyRound size={18} />
+        </div>
+        <span className="cp-action-label">Profile / Change Password</span>
+      </div>
 
-      <section
-        className="rounded-[28px] border p-5"
-        style={{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface)' }}
-      >
-        <form className="space-y-4" onSubmit={handleSubmit}>
-          <PasswordField label="Current Password" value={currentPassword} onChange={setCurrentPassword} />
-          <PasswordField label="New Password" value={newPassword} onChange={setNewPassword} />
-          <div className="rounded-[20px] border px-4 py-4" style={{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface-raised)' }}>
-            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--color-text-muted)]">Strength Meter</p>
-            <div className="mt-3 h-3 overflow-hidden rounded-full bg-[var(--color-surface)]">
-              <div className="h-full rounded-full transition-all duration-300" style={{ width: `${strength.percent}%`, backgroundColor: strength.color }} />
-            </div>
-            <p className="mt-2 text-sm font-semibold" style={{ color: strength.color }}>{strength.label}</p>
+      {/* ── Form Card ── */}
+      <div className="cp-card">
+        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
+
+          {/* Current Password */}
+          <div className="cp-field">
+            <label className="cp-label" htmlFor="cp-current">
+              Current Password
+            </label>
+            <PasswordField
+              id="cp-current"
+              value={currentPassword}
+              onChange={setCurrentPassword}
+              placeholder="Enter your current password"
+            />
           </div>
-          <PasswordField label="Confirm New Password" value={confirmPassword} onChange={setConfirmPassword} />
 
-          <Button type="submit" loading={saving}>
-            Save Password
-          </Button>
+          {/* New Password */}
+          <div className="cp-field" style={{ borderTop: '1px solid var(--color-border)' }}>
+            <label className="cp-label" htmlFor="cp-new">
+              New Password
+            </label>
+            <PasswordField
+              id="cp-new"
+              value={newPassword}
+              onChange={setNewPassword}
+              placeholder="Choose a strong new password"
+            />
+          </div>
+
+          {/* Strength Meter */}
+          <div className="cp-strength" style={{ borderTop: '1px solid var(--color-border)' }}>
+            <div className="cp-strength-header">
+              <span className="cp-label" style={{ margin: 0 }}>Password Strength</span>
+              <span className="cp-strength-label" style={{ color: strength.color }}>{strength.label}</span>
+            </div>
+            <div className="cp-strength-track">
+              <div
+                className="cp-strength-fill"
+                style={{ width: `${strength.percent}%`, backgroundColor: strength.color }}
+              />
+            </div>
+          </div>
+
+          {/* Confirm New Password */}
+          <div className="cp-field" style={{ borderTop: '1px solid var(--color-border)' }}>
+            <label className="cp-label" htmlFor="cp-confirm">
+              Confirm New Password
+            </label>
+            <PasswordField
+              id="cp-confirm"
+              value={confirmPassword}
+              onChange={setConfirmPassword}
+              placeholder="Re-enter your new password"
+            />
+          </div>
+
+          {/* Info note */}
+          <div className="cp-note" style={{ borderTop: '1px solid var(--color-border)' }}>
+            <span className="cp-note__icon">🔒</span>
+            <p className="cp-note__text">
+              After saving, you will be logged out and redirected to the login page.
+            </p>
+          </div>
+
+          {/* Footer */}
+          <div className="cp-footer">
+            <Button type="submit" loading={saving}>
+              Save Password
+            </Button>
+          </div>
         </form>
-      </section>
+      </div>
+
+      <style>{`
+        .cp-page {
+          display: flex;
+          flex-direction: column;
+          gap: 0;
+        }
+
+        /* ── Action Bar ── */
+        .cp-action-bar {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          padding: 10px 0 14px 0;
+        }
+
+        .cp-action-icon {
+          width: 38px;
+          height: 38px;
+          border-radius: 10px;
+          background: rgba(239,68,68,0.10);
+          color: #dc2626;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          flex-shrink: 0;
+        }
+
+        .cp-action-label {
+          font-size: 13px;
+          font-weight: 600;
+          color: var(--color-text-secondary);
+          letter-spacing: 0.01em;
+        }
+
+        /* ── Card ── */
+        .cp-card {
+          border: 1px solid var(--color-border);
+          border-radius: 18px;
+          overflow: hidden;
+          background: var(--color-surface);
+        }
+
+        /* ── Field sections ── */
+        .cp-field {
+          padding: 13px 16px;
+          display: flex;
+          flex-direction: column;
+          gap: 7px;
+        }
+
+        .cp-label {
+          font-size: 10px;
+          font-weight: 700;
+          letter-spacing: 0.14em;
+          text-transform: uppercase;
+          color: var(--color-text-muted);
+          display: block;
+          margin-bottom: 2px;
+        }
+
+        /* ── Password Input ── */
+        .cp-input {
+          width: 100%;
+          border: 1.5px solid var(--color-border);
+          border-radius: 10px;
+          padding: 9px 12px;
+          font-size: 13px;
+          font-family: inherit;
+          color: var(--color-text-primary);
+          background-color: var(--color-surface);
+          outline: none;
+          transition: border-color 0.15s ease, box-shadow 0.15s ease;
+          box-sizing: border-box;
+        }
+
+        .cp-input:focus {
+          border-color: #dc2626;
+          box-shadow: 0 0 0 3px rgba(239,68,68,0.13);
+        }
+
+        /* ── Strength Meter ── */
+        .cp-strength {
+          padding: 11px 16px 13px;
+          display: flex;
+          flex-direction: column;
+          gap: 8px;
+          background: var(--color-surface-raised);
+        }
+
+        .cp-strength-header {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 8px;
+        }
+
+        .cp-strength-label {
+          font-size: 11px;
+          font-weight: 700;
+          letter-spacing: 0.05em;
+          transition: color 0.2s;
+        }
+
+        .cp-strength-track {
+          height: 6px;
+          border-radius: 999px;
+          background: var(--color-surface);
+          border: 1px solid var(--color-border);
+          overflow: hidden;
+        }
+
+        .cp-strength-fill {
+          height: 100%;
+          border-radius: 999px;
+          transition: width 0.3s ease, background-color 0.3s ease;
+        }
+
+        /* ── Note ── */
+        .cp-note {
+          display: flex;
+          align-items: flex-start;
+          gap: 8px;
+          padding: 11px 16px;
+          background: var(--color-surface-raised);
+        }
+
+        .cp-note__icon {
+          font-size: 13px;
+          flex-shrink: 0;
+          line-height: 1.5;
+        }
+
+        .cp-note__text {
+          font-size: 12px;
+          color: var(--color-text-secondary);
+          line-height: 1.5;
+          margin: 0;
+        }
+
+        /* ── Footer ── */
+        .cp-footer {
+          padding: 13px 16px;
+          border-top: 1px solid var(--color-border);
+          background: var(--color-surface);
+        }
+      `}</style>
     </div>
   )
 }
 
-const PasswordField = ({ label, value, onChange }) => (
-  <label className="block">
-    <span className="mb-2 block text-xs font-semibold uppercase tracking-[0.14em] text-[var(--color-text-muted)]">{label}</span>
-    <input
-      type="password"
-      value={value}
-      onChange={(event) => onChange(event.target.value)}
-      className="min-h-12 w-full rounded-[20px] border px-4 py-3 text-sm"
-      style={{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface)' }}
-      required
-    />
-  </label>
+const PasswordField = ({ id, value, onChange, placeholder }) => (
+  <input
+    id={id}
+    type="password"
+    value={value}
+    onChange={(event) => onChange(event.target.value)}
+    className="cp-input"
+    placeholder={placeholder}
+    required
+  />
 )
 
 function getStrength(password) {

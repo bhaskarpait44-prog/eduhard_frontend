@@ -102,11 +102,10 @@ const NoticeForm = () => {
     formData.append('title', form.title)
     formData.append('body', form.body)
     formData.append('audience', form.audience)
-    formData.append('target_class_id', effectiveClassId || '')
-    // Clear section_id for class-level notices
-    formData.append('target_section_id', form.audience === 'class' ? '' : (sectionId || ''))
-    formData.append('target_subject_id', form.target_subject_id || '')
-    formData.append('target_student_id', form.target_student_id || '')
+    formData.append('target_class_id', ['class', 'section', 'students', 'subject_wise'].includes(form.audience) ? (effectiveClassId || '') : '')
+    formData.append('target_section_id', ['section', 'students'].includes(form.audience) ? (sectionId || '') : '')
+    formData.append('target_subject_id', form.audience === 'subject_wise' ? (form.target_subject_id || '') : '')
+    formData.append('target_student_id', form.audience === 'students' ? (form.target_student_id || '') : '')
     formData.append('priority', form.priority)
     formData.append('expires_at', form.expires_at || '')
     if (form.attachment) {
