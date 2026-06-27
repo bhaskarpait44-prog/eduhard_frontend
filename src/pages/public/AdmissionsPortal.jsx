@@ -407,7 +407,7 @@ const AdmissionsPortal = () => {
       </div>
 
       <main className="admissions-content">
-        <form onSubmit={handleSubmit(onSubmit)}>
+        <form onSubmit={handleSubmit(onSubmit, (errors) => console.error("Form Validation Failed:", errors))}>
           {currentStep === 1 && (
             <div className="step-container">
               <div className="admissions-card">
@@ -892,7 +892,7 @@ const AdmissionsPortal = () => {
             CONTINUE TO {STEPS[currentStep].title.toUpperCase()} <ChevronRight size={20} />
           </button>
         ) : (
-          <button type="button" className="btn-primary-clean" style={{ background: '#059669' }} disabled={isSubmitting} onClick={handleSubmit(onSubmit)}>
+          <button type="button" className="btn-primary-clean" style={{ background: '#059669' }} disabled={isSubmitting} onClick={handleSubmit(onSubmit, (errors) => console.error("Form Validation Failed:", errors))}>
             {isSubmitting ? <><Loader2 size={20} className="animate-spin" /> SUBMITTING...</> : <><ShieldCheck size={20} /> FINALIZE & SUBMIT</>}
           </button>
         )}

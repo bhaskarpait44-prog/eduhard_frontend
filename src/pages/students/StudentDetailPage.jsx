@@ -44,14 +44,20 @@ import AttendanceCalendar from '@/components/attendance/AttendanceCalendar'
 
 /* ─── Tab config ─────────────────────────────────────────── */
 const TABS = [
-  { key: 'details',    label: 'Student Details',    icon: User },
+  { key: 'summary',    label: 'Summary',            icon: LayoutDashboard },
+  { key: 'profile',    label: 'Profile',            icon: UserRound },
+  { key: 'identity',   label: 'Identity',           icon: IdCard },
   { key: 'timetable',  label: 'Time Table',         icon: Clock },
   { key: 'attendance', label: 'Leave & Attendance', icon: CalendarCheck },
   { key: 'fees',       label: 'Fees',               icon: Wallet },
   { key: 'results',    label: 'Exam & Results',     icon: GraduationCap },
+  { key: 'subjects',   label: 'Subjects',           icon: Book },
+  { key: 'health',     label: 'Health',             icon: Heart },
   { key: 'library',    label: 'Library',            icon: Library },
   { key: 'family',     label: 'Family',             icon: Users },
-  { key: 'audit',      label: 'Audit Log',          icon: ScrollText },
+  { key: 'services',   label: 'Services',           icon: Truck },
+  { key: 'documents',  label: 'Documents',          icon: ScrollText },
+  { key: 'audit',      label: 'Audit Log',          icon: History },
 ]
 
 const InfoItem = ({ label, value }) => (
@@ -78,7 +84,7 @@ const StudentDetailPage = () => {
     isSaving,
   } = useAdminStudentStore()
 
-  const [activeTab, setActiveTab] = useState(searchParams.get('tab') || 'details')
+  const [activeTab, setActiveTab] = useState(searchParams.get('tab') || 'summary')
   const [pageLoading, setPageLoading] = useState(true)
   
   /* Modals */
@@ -126,7 +132,7 @@ const StudentDetailPage = () => {
 
   const handleTabChange = (tab) => {
     setActiveTab(tab)
-    setSearchParams(tab === 'details' ? {} : { tab })
+    setSearchParams(tab === 'summary' ? {} : { tab })
   }
 
   const handleResetPassword = async () => {
@@ -376,14 +382,21 @@ const StudentDetailPage = () => {
 
           {/* Tab Content */}
           <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
-            {activeTab === 'details' && <TabDetails student={student} />}
+            {activeTab === 'summary' && <TabSummary student={student} onTabChange={handleTabChange} />}
+            {activeTab === 'profile' && <TabProfile student={student} studentId={student.id} />}
+            {activeTab === 'identity' && <TabIdentity student={student} studentId={student.id} />}
             {activeTab === 'timetable' && <TabTimeTable studentId={student.id} />}
             {activeTab === 'attendance' && <TabAttendance enrollmentId={enrollment?.id} />}
             {activeTab === 'fees' && <TabFees enrollmentId={enrollment?.id} />}
             {activeTab === 'results' && <TabResults studentId={student.id} />}
+            {activeTab === 'subjects' && <TabEnrolledSubjects studentId={student.id} isAdmin={isAdmin} />}
+            {activeTab === 'health' && <TabHealth studentId={student.id} isAdmin={isAdmin} />}
             {activeTab === 'library' && <TabLibrary student={student} />}
             {activeTab === 'family' && <TabFamily student={student} />}
+            {activeTab === 'services' && <TabServices student={student} />}
+            {activeTab === 'documents' && <TabDocuments studentId={student.id} />}
             {activeTab === 'audit' && <TabAuditLog studentId={student.id} />}
+            {activeTab === 'details' && <TabDetails student={student} />}
           </div>
         </div>
 
