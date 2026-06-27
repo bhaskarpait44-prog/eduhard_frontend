@@ -85,7 +85,7 @@ const StudentView = ({
               onClick={() => setActiveTab(tab.id)}
               className={cn(
                 "flex items-center gap-2 px-4 py-3 text-sm font-semibold transition-all border-b-2 whitespace-nowrap",
-                active ? "border-[#0f766e] text-[#0f766e]" : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-200"
+                active ? "border-[var(--color-brand)] text-[var(--color-brand)]" : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-200"
               )}
             >
               <Icon size={16} />
@@ -139,7 +139,7 @@ const OverviewTab = ({ student, detail, access, attendanceStats }) => (
       <MiniStat 
         title="Last Result" 
         value={student.last_result_percentage != null ? formatPercent(student.last_result_percentage) : '--'} 
-        tone="#0f766e"
+        tone="var(--color-brand)"
         subtitle="Current Session"
       />
     </div>
@@ -196,7 +196,7 @@ const ResultsTab = ({ results, access }) => (
     </h3>
     <div className="space-y-3">
       {(results || []).map((row) => (
-        <div key={row.id || `${row.exam_name}-${row.subject_name}`} className="group rounded-2xl border p-4 transition-all hover:border-[#0f766e]/30 hover:shadow-sm" style={{ backgroundColor: 'var(--color-surface-raised)', borderColor: 'var(--color-border)' }}>
+        <div key={row.id || `${row.exam_name}-${row.subject_name}`} className="group rounded-2xl border p-4 transition-all hover:border-[var(--color-brand)]/30 hover:shadow-sm" style={{ backgroundColor: 'var(--color-surface-raised)', borderColor: 'var(--color-border)' }}>
           <div className="flex items-center justify-between gap-4">
             <div>
               <p className="text-sm font-bold" style={{ color: 'var(--color-text-primary)' }}>{row.exam_name}</p>
@@ -259,7 +259,7 @@ const RemarksTab = ({ remarks, studentId }) => (
       <h3 className="text-sm font-bold uppercase tracking-wider text-gray-400">Teacher Remarks</h3>
       <Link
         to={`${ROUTES.TEACHER_STUDENT_REMARKS}?student=${studentId}`}
-        className="text-xs font-bold text-[#0f766e] hover:underline"
+        className="text-xs font-bold text-[var(--color-brand)] hover:underline"
       >
         Add Remark
       </Link>
@@ -326,7 +326,7 @@ const ParentTab = ({ detail }) => (
               target="_blank"
               rel="noreferrer"
               className="inline-flex min-h-11 items-center gap-2 rounded-xl px-4 text-sm font-bold transition-all hover:scale-[1.02] active:scale-[0.98]"
-              style={{ backgroundColor: '#0f766e', color: '#fff' }}
+              style={{ backgroundColor: 'var(--color-brand)', color: '#fff' }}
             >
               <UserRound size={16} />
               WhatsApp
@@ -342,7 +342,7 @@ const Avatar = ({ name, photo, size = "h-14 w-14" }) => (
   photo ? (
     <img src={getFileUrl(photo)} alt={name} className={cn(size, "rounded-2xl object-cover ring-2 ring-gray-100 dark:ring-gray-800")} />
   ) : (
-    <div className={cn(size, "flex items-center justify-center rounded-2xl text-lg font-bold shadow-inner")} style={{ backgroundColor: '#0f766e', color: '#fff' }}>
+    <div className={cn(size, "flex items-center justify-center rounded-2xl text-lg font-bold shadow-inner")} style={{ backgroundColor: 'var(--color-brand)', color: '#fff' }}>
       {getInitials(name)}
     </div>
   )

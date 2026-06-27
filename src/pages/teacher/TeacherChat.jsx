@@ -25,7 +25,7 @@ const TeacherChat = () => {
     <ChatWorkspace
       title="Student Chat"
       subtitle="Message only students from your assigned sections. Class teachers can chat in full-section scope, and subject teachers stay limited to their assigned subject scope."
-      accent="#0f766e"
+      accent="#00bc7d"
       selfRole="teacher"
       contacts={chat.contacts}
       conversations={chat.conversations}

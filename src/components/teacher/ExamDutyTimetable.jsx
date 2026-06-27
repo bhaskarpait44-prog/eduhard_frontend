@@ -1,8 +1,8 @@
 import { useMemo } from 'react'
-import { Calendar, Clock, MapPin, UserCheck, ShieldCheck } from 'lucide-react'
+import { Calendar, Clock, MapPin } from 'lucide-react'
 import { formatDate, formatTime } from '@/utils/helpers'
 
-const DAYS = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']
+// ─── Subject colour palette ───────────────────────────────────────────────────
 
 const SUBJECT_COLORS = {
   'Physics':           { accent: '#7C6FCD', bg: 'rgba(124,111,205,0.08)', text: '#4A4299' },
@@ -32,7 +32,10 @@ const getColor = (name) => {
   return key ? SUBJECT_COLORS[key] : FALLBACK
 }
 
+// ─── Component ────────────────────────────────────────────────────────────────
+
 const ExamDutyTimetable = ({ duties = [] }) => {
+  // Group duties by week, sorting chronologically
   const weeklyData = useMemo(() => {
     const weeks = {}
     
@@ -41,7 +44,6 @@ const ExamDutyTimetable = ({ duties = [] }) => {
       if (!dateStr) return
 
       const date = new Date(`${dateStr}T00:00:00`)
-      const dayOfWeek = date.toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase()
       
       // Find Monday of that week
       const day = date.getDay()
@@ -51,21 +53,33 @@ const ExamDutyTimetable = ({ duties = [] }) => {
       
       if (!weeks[weekKey]) {
         weeks[weekKey] = {
+          weekKey,
           weekLabel: `Week of ${formatDate(weekKey, 'short')}`,
-          days: {}
+          slots: []
         }
       }
       
-      if (!weeks[weekKey].days[dayOfWeek]) weeks[weekKey].days[dayOfWeek] = []
-      weeks[weekKey].days[dayOfWeek].push(slot)
+      weeks[weekKey].slots.push(slot)
     })
     
-    return Object.values(weeks).sort((a, b) => a.weekLabel.localeCompare(b.weekLabel))
+    // Sort slots within each week chronologically by date and start time
+    Object.values(weeks).forEach(week => {
+      week.slots.sort((a, b) => {
+        const dateA = new Date(a.exam_date || 0)
+        const dateB = new Date(b.exam_date || 0)
+        if (dateA.getTime() !== dateB.getTime()) {
+          return dateA.getTime() - dateB.getTime()
+        }
+        return String(a.start_time).localeCompare(String(b.start_time))
+      })
+    })
+
+    return Object.values(weeks).sort((a, b) => a.weekKey.localeCompare(b.weekKey))
   }, [duties])
 
   if (!duties.length) {
     return (
-      <div className="rounded-[32px] border p-12 text-center"
+      <div className="rounded-[28px] border p-12 text-center"
         style={{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface)' }}
       >
         <p className="text-sm font-medium" style={{ color: 'var(--color-text-secondary)' }}>
@@ -76,103 +90,74 @@ const ExamDutyTimetable = ({ duties = [] }) => {
   }
 
   return (
-    <div className="space-y-10">
-      {weeklyData.map((week, wIndex) => (
-        <div key={week.weekKey || wIndex} className="space-y-5">
-          <div className="flex items-center gap-3 px-2">
-            <div className="h-2 w-2 rounded-full bg-[#0f766e]" />
-            <h3 className="text-sm font-bold uppercase tracking-widest text-[var(--color-text-muted)]">
+    <div className="space-y-8">
+      {weeklyData.map((week) => (
+        <div key={week.weekKey} className="space-y-4">
+          <div className="flex items-center gap-2 px-1">
+            <div className="h-2.5 w-2.5 rounded-full bg-[var(--color-brand)]" />
+            <h3 className="text-xs font-bold uppercase tracking-widest text-[var(--color-text-secondary)]">
               {week.weekLabel}
             </h3>
           </div>
 
-          <div className="overflow-x-auto rounded-[32px] border shadow-sm"
-            style={{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface)' }}
-          >
-            <table className="w-full border-collapse">
-              <thead>
-                <tr>
-                  {DAYS.map((day) => (
-                    <th key={day} className="p-4 text-center border-b" style={{ borderColor: 'var(--color-border)' }}>
-                      <span className="text-[10px] font-extrabold uppercase tracking-[0.2em] text-[var(--color-text-muted)]">
-                        {day}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {week.slots.map((slot, sIndex) => {
+              const theme = getColor(slot.subject_name)
+              const isInvigilator = slot.duty_type === 'invigilator'
+              return (
+                <div
+                  key={`${slot.exam_subject_id || sIndex}-${sIndex}`}
+                  className="group relative rounded-2xl border p-5 transition-all hover:shadow-md hover:-translate-y-0.5"
+                  style={{
+                    borderColor: 'var(--color-border)',
+                    backgroundColor: 'var(--color-surface)',
+                  }}
+                >
+                  {/* Left indicator bar */}
+                  <div
+                    className="absolute left-0 top-0 bottom-0 w-1.5 rounded-l-2xl"
+                    style={{ backgroundColor: theme.accent }}
+                  />
+                  
+                  <div className="flex items-center justify-between gap-2 mb-3">
+                    <span className="text-[10px] font-extrabold uppercase tracking-wider opacity-60" style={{ color: theme.text }}>
+                      {slot.exam_name || 'Exam Session'}
+                    </span>
+                    {isInvigilator ? (
+                      <span className="rounded-full bg-emerald-50 dark:bg-emerald-950/30 px-2.5 py-0.5 text-[9px] font-bold text-emerald-700 dark:text-emerald-400 uppercase tracking-wide">
+                        Invigilator
                       </span>
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  {DAYS.map((day) => {
-                    const slots = week.days[day] || []
-                    return (
-                      <td key={day} className="p-2 align-top w-[16.66%]" style={{ minHeight: '160px' }}>
-                        <div className="space-y-2">
-                          {slots.map((slot, sIndex) => {
-                            const theme = getColor(slot.subject_name)
-                            const isInvigilator = slot.duty_type === 'invigilator'
-                            return (
-                              <div
-                                key={`${slot.exam_subject_id}-${sIndex}`}
-                                className="group relative rounded-[20px] p-3 transition-all hover:scale-[1.02]"
-                                style={{ backgroundColor: theme.bg, border: `1px solid ${theme.accent}20` }}
-                              >
-                                <div className="absolute left-0 top-3 h-4 w-1 rounded-r-full" style={{ backgroundColor: theme.accent }} />
-                                
-                                <div className="flex items-center justify-between gap-1 mb-1">
-                                  <span className="text-[9px] font-extrabold uppercase tracking-wider opacity-60" style={{ color: theme.text }}>
-                                    {slot.exam_name}
-                                  </span>
-                                  {isInvigilator ? (
-                                    <span className="rounded-full bg-emerald-100 px-1.5 py-0.5 text-[8px] font-bold text-emerald-700 uppercase" title="Invigilation Duty">
-                                      Invigilator
-                                    </span>
-                                  ) : (
-                                    <span className="rounded-full bg-blue-100 px-1.5 py-0.5 text-[8px] font-bold text-blue-700 uppercase" title="Subject Teacher / Marking">
-                                      Marker
-                                    </span>
-                                  )}
-                                </div>
-                                
-                                <p className="mt-1 text-xs font-bold leading-tight" style={{ color: theme.text }}>
-                                  {slot.subject_name}
-                                </p>
-                                <p className="mt-0.5 text-[10px] font-medium" style={{ color: 'var(--color-text-secondary)' }}>
-                                  {slot.class_name}
-                                </p>
-                                
-                                <div className="mt-3 space-y-1.5">
-                                  <div className="flex items-center gap-1.5 text-[10px] font-medium" style={{ color: 'var(--color-text-secondary)' }}>
-                                    <Clock size={10} className="text-[#0f766e]" />
-                                    {formatTime(slot.start_time)}
-                                  </div>
-                                </div>
+                    ) : (
+                      <span className="rounded-full bg-blue-50 dark:bg-blue-950/30 px-2.5 py-0.5 text-[9px] font-bold text-blue-700 dark:text-blue-400 uppercase tracking-wide">
+                        Marker
+                      </span>
+                    )}
+                  </div>
 
-                                <div className="mt-3 flex items-center justify-between border-t pt-2" style={{ borderColor: `${theme.accent}15` }}>
-                                  <span className="text-[9px] font-bold" style={{ color: theme.accent }}>
-                                    {formatDate(slot.exam_date, 'short')}
-                                  </span>
-                                  <span className="text-[9px] font-bold text-[var(--color-text-muted)]">
-                                    Room {slot.room_number || '—'}
-                                  </span>
-                                </div>
-                              </div>
-                            )
-                          })}
-                          {slots.length === 0 && (
-                            <div className="flex h-[140px] items-center justify-center rounded-[20px] border-2 border-dashed"
-                              style={{ borderColor: 'rgba(0,0,0,0.03)', backgroundColor: 'rgba(0,0,0,0.01)' }}
-                            >
-                              <span className="text-[9px] font-bold tracking-widest text-[var(--color-text-muted)] opacity-20 uppercase">Free</span>
-                            </div>
-                          )}
-                        </div>
-                      </td>
-                    )
-                  })}
-                </tr>
-              </tbody>
-            </table>
+                  <h4 className="text-base font-bold text-[var(--color-text-primary)] leading-tight mb-1">
+                    {slot.subject_name}
+                  </h4>
+                  <p className="text-xs font-medium text-[var(--color-text-secondary)] mb-4">
+                    Class: {slot.class_name}
+                  </p>
+
+                  <div className="grid grid-cols-2 gap-3 border-t pt-4" style={{ borderColor: 'var(--color-border)' }}>
+                    <div className="flex items-center gap-2 text-xs font-medium text-[var(--color-text-muted)]">
+                      <Calendar size={13} className="text-[var(--color-brand)] shrink-0" />
+                      <span>{formatDate(slot.exam_date, 'short')}</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-xs font-medium text-[var(--color-text-muted)]">
+                      <Clock size={13} className="text-[var(--color-brand)] shrink-0" />
+                      <span>{formatTime(slot.start_time)}</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-xs font-medium text-[var(--color-text-muted)] col-span-2">
+                      <MapPin size={13} className="text-[var(--color-brand)] shrink-0" />
+                      <span>Room {slot.room_number || 'TBD'}</span>
+                    </div>
+                  </div>
+                </div>
+              )
+            })}
           </div>
         </div>
       ))}

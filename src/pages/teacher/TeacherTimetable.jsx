@@ -104,7 +104,7 @@ const TeacherTimetable = () => {
           label="Current Period"
           icon={Clock3}
           accent="#00bc7d"
-          accentBg="rgba(37,99,235,0.1)"
+          accentBg="var(--color-sidebar-hover)"
           primary={currentPeriod ? currentPeriod.subject_name : 'No active period'}
           secondary={
             currentPeriod
@@ -150,9 +150,9 @@ const TeacherTimetable = () => {
             onClick={() => setView(tab.key)}
             className="rounded-xl px-5 py-2 text-sm font-bold transition-all"
             style={{
-              backgroundColor: view === tab.key ? '#00bc7d' : 'rgba(37,99,235,0.08)',
-              color: view === tab.key ? '#fff' : '#00bc7d',
-              boxShadow: view === tab.key ? '0 4px 12px rgba(37,99,235,0.25)' : 'none',
+              backgroundColor: view === tab.key ? 'var(--color-brand)' : 'var(--color-sidebar-hover)',
+              color: view === tab.key ? '#fff' : 'var(--color-brand)',
+              boxShadow: view === tab.key ? '0 4px 12px rgba(0, 188, 125, 0.2)' : 'none',
             }}
           >
             {tab.label}
@@ -356,14 +356,14 @@ const ProgressCard = ({ done, total, slots }) => {
     >
       <div
         className="absolute left-0 top-0 h-full w-1 rounded-l-xl"
-        style={{ backgroundColor: '#0f766e' }}
+        style={{ backgroundColor: 'var(--color-brand)' }}
         aria-hidden="true"
       />
       <div className="ml-3">
         <div className="flex items-center gap-2 mb-2">
           <div
             className="flex h-7 w-7 items-center justify-center rounded-lg"
-            style={{ backgroundColor: 'rgba(37,99,235,0.1)' }}
+            style={{ backgroundColor: 'var(--color-sidebar-hover)' }}
           >
             <BookOpen size={14} style={{ color: '#00bc7d' }} />
           </div>

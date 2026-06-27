@@ -118,6 +118,7 @@ const TimetableGrid = ({ slots = [], currentPeriodId = null }) => {
                       padding: '14px 8px',
                       borderBottom: '1px solid var(--color-border)',
                       textAlign: 'center',
+                      backgroundColor: isToday ? 'var(--color-sidebar-hover)' : 'transparent',
                     }}
                   >
                     <span style={{
@@ -126,8 +127,8 @@ const TimetableGrid = ({ slots = [], currentPeriodId = null }) => {
                       fontWeight: 800,
                       letterSpacing: '.12em',
                       textTransform: 'uppercase',
-                      color: isToday ? '#7C6FCD' : 'var(--color-text-muted)',
-                      borderBottom: isToday ? '2px solid #7C6FCD' : 'none',
+                      color: isToday ? 'var(--color-brand)' : 'var(--color-text-muted)',
+                      borderBottom: isToday ? '2px solid var(--color-brand)' : 'none',
                       paddingBottom: isToday ? 2 : 0,
                     }}>
                       {day}
@@ -157,6 +158,7 @@ const TimetableGrid = ({ slots = [], currentPeriodId = null }) => {
                 {DAYS.map((day) => {
                   const slot = slotMap.get(`${day}:${period}`)
                   const isLive = slot?.id === currentPeriodId && currentPeriodId !== null
+                  const isToday = day === todayName
                   const c = slot ? getColor(slot.subject_name) : null
 
                   return (
@@ -164,6 +166,7 @@ const TimetableGrid = ({ slots = [], currentPeriodId = null }) => {
                       padding: '6px 5px',
                       verticalAlign: 'top',
                       borderTop: '1px solid var(--color-border)',
+                      backgroundColor: isToday ? 'var(--color-sidebar-hover)' : 'transparent',
                     }}>
                       {slot ? (
                         <div
@@ -174,7 +177,7 @@ const TimetableGrid = ({ slots = [], currentPeriodId = null }) => {
                             padding: '10px 11px 10px 11px',
                             position: 'relative',
                             overflow: 'hidden',
-                            boxShadow: isLive ? `0 0 0 2px ${c.accent}` : 'none',
+                            boxShadow: isLive ? '0 0 0 2px var(--color-brand), 0 4px 14px rgba(0,188,125,0.15)' : 'none',
                           }}
                           title={`${slot.subject_name} · ${slot.class_name} ${slot.section_name}`}
                         >
@@ -205,7 +208,7 @@ const TimetableGrid = ({ slots = [], currentPeriodId = null }) => {
                               lineHeight: 1.3,
                               marginBottom: 3,
                             }}>
-                              {slot.subject_name}
+                                {slot.subject_name}
                             </p>
                             <p style={{ fontSize: 11, color: 'var(--color-text-secondary)', lineHeight: 1.4 }}>
                               {slot.class_name} · {slot.section_name}
@@ -224,13 +227,15 @@ const TimetableGrid = ({ slots = [], currentPeriodId = null }) => {
                         /* Free cell — subtle dashed */
                         <div style={{
                           borderRadius: 14,
-                          border: '1.5px dashed var(--color-border)',
+                          border: '1px dashed var(--color-border)',
+                          backgroundColor: 'rgba(0,0,0,0.01)',
                           padding: '10px 11px',
-                          minHeight: 64,
+                          minHeight: 85,
                           display: 'flex',
                           alignItems: 'center',
+                          justifyContent: 'center',
                         }}>
-                          <p style={{ fontSize: 11, color: 'var(--color-text-muted)' }}>—</p>
+                          <p className="text-[10px] font-bold tracking-widest uppercase opacity-25" style={{ color: 'var(--color-text-muted)' }}>Free</p>
                         </div>
                       )}
                     </td>

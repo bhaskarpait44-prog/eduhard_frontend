@@ -207,8 +207,8 @@ const HomeworkSubmissions = ({
             {/* Stat pills grid */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
               <StatPill icon={Clock3}     label="Pending"   value={pendingCount}   tone="#f59e0b" bg="#fffbeb" />
-              <StatPill icon={FileText}   label="Submitted" value={submittedCount} tone="#0ea5e9" bg="#f0f9ff" />
-              <StatPill icon={BookCheck}  label="Graded"    value={gradedCount}    tone="#10b981" bg="#f0fdf4" />
+              <StatPill icon={FileText}   label="Submitted" value={submittedCount} tone="#10b981" bg="#f0fdf4" />
+              <StatPill icon={BookCheck}  label="Graded"    value={gradedCount}    tone="#00bc7d" bg="#f0faf6" />
               <StatPill icon={AlertCircle}label="Late"      value={lateCount}      tone="#ef4444" bg="#fef2f2" />
             </div>
 

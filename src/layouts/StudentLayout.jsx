@@ -16,6 +16,7 @@ import {
   Receipt,
   ScrollText,
   ShieldCheck,
+  Sun,
   UserRound,
   X,
 } from 'lucide-react'
@@ -72,7 +73,6 @@ const mobileTabs = [
   { label: 'Results', icon: ClipboardList, path: ROUTES.STUDENT_RESULTS },
   { label: 'Chat', icon: MessageSquare, path: ROUTES.STUDENT_CHAT },
   { label: 'Fees', icon: CreditCard, path: ROUTES.STUDENT_FEES },
-  { label: 'More', icon: UserRound, path: ROUTES.STUDENT_PROFILE },
 ]
 
 const studentThemeVars = {
@@ -97,19 +97,6 @@ const studentThemeVars = {
   '--student-accent-soft': 'rgba(124, 58, 237, 0.14)',
   '--student-tab-bg': 'rgba(255,255,255,0.86)',
 }
-
-const StudentSurface = ({ children, className = '' }) => (
-  <div
-    className={cn('rounded-2xl border', className)}
-    style={{
-      backgroundColor: 'var(--color-surface)',
-      borderColor: 'var(--color-border)',
-      boxShadow: '0 18px 42px rgba(109,40,217,0.08)',
-    }}
-  >
-    {children}
-  </div>
-)
 
 const StudentLayout = () => {
   const location = useLocation()
@@ -167,73 +154,115 @@ const StudentLayout = () => {
     [location.pathname]
   )
 
+  /* Resolve current page label for the header */
+  const currentPageLabel = useMemo(() => {
+    for (const group of studentMenu) {
+      const match = group.items.find((item) => location.pathname.startsWith(item.path))
+      if (match) return match.label
+    }
+    return 'Student Portal'
+  }, [location.pathname])
+
   return (
     <div
       className="min-h-screen"
       style={studentThemeVars}
     >
       <div className="dark:[--color-bg:#140f24] dark:[--color-surface:#1b1530] dark:[--color-surface-raised:#241d40] dark:[--color-border:#382d63] dark:[--color-text-primary:#f5f3ff] dark:[--color-text-secondary:#c4b5fd] dark:[--color-text-muted:#8f7bc4] dark:[--color-sidebar-bg:#120d22] dark:[--color-sidebar-text:#e9ddff] dark:[--color-sidebar-muted:#aa98d9] dark:[--color-sidebar-hover:#241a40] dark:[--color-sidebar-border:#312652] dark:[--color-sidebar-card:#1a1430] dark:[--student-tab-bg:rgba(26,20,48,0.92)] min-h-screen bg-[var(--color-bg)] text-[var(--color-text-primary)] transition-colors duration-300">
+
+        {/* ── Desktop Sidebar ── */}
         <aside
-          className="fixed inset-y-0 left-0 z-40 hidden w-72 border-r xl:block"
-          style={{ backgroundColor: 'var(--color-sidebar-bg)', borderColor: 'var(--color-sidebar-border)' }}
+          className="fixed inset-y-0 left-0 z-40 hidden w-72 flex-col xl:flex"
+          style={{ backgroundColor: 'var(--color-sidebar-bg)', borderRight: '1px solid var(--color-sidebar-border)' }}
         >
-          <div className="flex h-full flex-col px-4 py-5">
-            <div className="mb-5 flex items-center gap-3">
-              <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[var(--student-accent)] text-sm font-semibold text-white shadow-lg shadow-violet-500/20 shrink-0">
+          {/* Sidebar Brand Header */}
+          <div
+            className="px-4 py-4 shrink-0"
+            style={{ borderBottom: '1px solid var(--color-sidebar-border)' }}
+          >
+            <div className="flex items-center gap-3">
+              <div
+                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl text-sm font-bold text-white shadow-lg"
+                style={{ background: 'linear-gradient(135deg, #7c3aed, #5b21b6)', boxShadow: '0 4px 12px rgba(124,58,237,0.35)' }}
+              >
                 {getInitials(studentName)}
               </div>
               <div className="min-w-0">
-                <p className="truncate text-sm font-semibold">{studentName}</p>
-                <p className="truncate text-xs text-[var(--color-sidebar-muted)]">Student Portal</p>
+                <p className="truncate text-[13px] font-bold" style={{ color: 'var(--color-sidebar-text)' }}>{studentName}</p>
+                <p className="text-[11px] font-medium" style={{ color: 'var(--color-sidebar-muted)' }}>Student Portal</p>
               </div>
             </div>
+          </div>
 
-            <StudentSurface className="mb-4 px-3 py-2.5">
-              <p className="text-xs uppercase tracking-[0.18em] text-[var(--color-text-muted)]">Session View</p>
-              <p className="mt-1.5 text-sm font-semibold text-[var(--color-text-primary)]">Everything here is personal to your account only.</p>
-            </StudentSurface>
-
-            <nav className="flex-1 overflow-y-auto pr-1">
-              {studentMenu.map((group) => (
-                <div key={group.label} className="mb-5">
-                  <p className="mb-2.5 px-2 text-[11px] font-semibold uppercase tracking-[0.2em] text-[var(--color-sidebar-muted)]">
-                    {group.label}
-                  </p>
-                  <div className="space-y-1">
-                    {group.items.map((item) => {
-                      const Icon = item.icon
-                      return (
-                        <NavLink
-                          key={item.path}
-                          to={item.path}
-                          className={({ isActive }) =>
-                            cn(
-                              'flex items-center gap-3 rounded-2xl px-3 py-2.5 text-sm font-medium transition-all duration-200',
-                              isActive && 'shadow-lg shadow-violet-500/10'
-                            )
-                          }
-                          style={({ isActive }) => ({
-                            backgroundColor: isActive ? 'var(--color-sidebar-active)' : 'transparent',
-                            color: isActive ? '#fff' : 'var(--color-sidebar-text)',
-                          })}
-                        >
-                          <Icon size={18} />
-                          <span className="truncate">{item.label}</span>
-                          {item.path === ROUTES.STUDENT_NOTICES && unreadNotices > 0 ? (
-                            <span className="ml-auto rounded-full bg-red-500 px-2 py-0.5 text-[10px] font-bold text-white shrink-0">
-                              {unreadNotices}
+          {/* Nav */}
+          <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-6">
+            {studentMenu.map((group) => (
+              <div key={group.label}>
+                <p
+                  className="mb-2 px-2 text-[10px] font-bold uppercase tracking-[0.22em]"
+                  style={{ color: 'var(--color-sidebar-muted)' }}
+                >
+                  {group.label}
+                </p>
+                <div className="space-y-0.5">
+                  {group.items.map((item) => {
+                    const Icon = item.icon
+                    return (
+                      <NavLink
+                        key={item.path}
+                        to={item.path}
+                        className={({ isActive }) =>
+                          cn(
+                            'group flex items-center gap-3 rounded-xl px-3 py-2.5 text-[13px] font-medium transition-all duration-200',
+                          )
+                        }
+                        style={({ isActive }) => ({
+                          backgroundColor: isActive ? 'var(--color-sidebar-active)' : 'transparent',
+                          color: isActive ? '#fff' : 'var(--color-sidebar-text)',
+                          boxShadow: isActive ? '0 2px 8px rgba(109,40,217,0.25)' : 'none',
+                        })}
+                      >
+                        {({ isActive }) => (
+                          <>
+                            <span
+                              className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg transition-all duration-200"
+                              style={{
+                                backgroundColor: isActive ? 'rgba(255,255,255,0.20)' : 'rgba(124,58,237,0.08)',
+                                color: isActive ? '#fff' : 'var(--color-sidebar-active)',
+                              }}
+                            >
+                              <Icon size={15} />
                             </span>
-                          ) : null}
-                        </NavLink>
-                      )
-                    })}
-                  </div>
+                            <span className="truncate flex-1">{item.label}</span>
+                            {item.path === ROUTES.STUDENT_NOTICES && unreadNotices > 0 ? (
+                              <span className="ml-auto rounded-full bg-red-500 px-1.5 py-0.5 text-[9px] font-bold text-white shrink-0">
+                                {unreadNotices > 9 ? '9+' : unreadNotices}
+                              </span>
+                            ) : null}
+                          </>
+                        )}
+                      </NavLink>
+                    )
+                  })}
                 </div>
-              ))}
-            </nav>
+              </div>
+            ))}
+          </nav>
+
+          {/* Sidebar Footer */}
+          <div className="px-3 py-3 shrink-0" style={{ borderTop: '1px solid var(--color-sidebar-border)' }}>
+            <button
+              type="button"
+              onClick={logout}
+              className="w-full rounded-xl px-3 py-2.5 text-[13px] font-medium text-left transition hover:opacity-80"
+              style={{ backgroundColor: 'rgba(239,68,68,0.08)', color: '#dc2626' }}
+            >
+              Sign Out
+            </button>
           </div>
         </aside>
 
+        {/* ── Mobile Drawer ── */}
         {mobileMenuOpen && (
           <div className="fixed inset-0 z-50 xl:hidden">
             <button
@@ -243,134 +272,183 @@ const StudentLayout = () => {
               aria-label="Close navigation menu"
             />
             <aside
-              className="absolute inset-y-0 left-0 flex w-[85vw] sm:w-80 max-w-xs flex-col border-r px-3 sm:px-4 py-4 sm:py-5"
-              style={{ backgroundColor: 'var(--color-sidebar-bg)', borderColor: 'var(--color-sidebar-border)' }}
+              className="absolute inset-y-0 left-0 flex w-[85vw] sm:w-80 max-w-xs flex-col"
+              style={{ backgroundColor: 'var(--color-sidebar-bg)', borderRight: '1px solid var(--color-sidebar-border)' }}
             >
-              <div className="mb-4 sm:mb-5 flex items-center justify-between">
-                <div className="flex items-center gap-2 sm:gap-3 min-w-0">
-                  <div className="flex h-10 w-10 sm:h-11 sm:w-11 items-center justify-center rounded-2xl bg-[var(--student-accent)] text-sm font-semibold text-white shrink-0">
+              {/* Drawer header */}
+              <div className="flex items-center justify-between px-4 py-4 shrink-0" style={{ borderBottom: '1px solid var(--color-sidebar-border)' }}>
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <div
+                    className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-[12px] font-bold text-white"
+                    style={{ background: 'linear-gradient(135deg, #7c3aed, #5b21b6)' }}
+                  >
                     {getInitials(studentName)}
                   </div>
                   <div className="min-w-0">
-                    <p className="truncate text-sm font-semibold">{studentName}</p>
-                    <p className="text-xs text-[var(--color-sidebar-muted)]">Student Portal</p>
+                    <p className="truncate text-[13px] font-bold" style={{ color: 'var(--color-sidebar-text)' }}>{studentName}</p>
+                    <p className="text-[11px]" style={{ color: 'var(--color-sidebar-muted)' }}>Student Portal</p>
                   </div>
                 </div>
                 <button
                   type="button"
                   onClick={() => setMobileMenuOpen(false)}
-                  className="flex h-9 w-9 sm:h-10 sm:w-10 items-center justify-center rounded-2xl border shrink-0"
+                  className="flex h-8 w-8 items-center justify-center rounded-xl border shrink-0 transition hover:opacity-70"
                   style={{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface)' }}
                   aria-label="Close navigation"
                 >
-                  <X size={18} />
+                  <X size={16} />
                 </button>
               </div>
 
-              <div className="space-y-5 sm:space-y-6 overflow-y-auto pb-10">
+              {/* Nav */}
+              <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-5">
                 {studentMenu.map((group) => (
                   <div key={group.label}>
-                    <p className="mb-2 sm:mb-3 px-1 text-[10px] sm:text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--color-sidebar-muted)]">
+                    <p className="mb-2 px-2 text-[10px] font-bold uppercase tracking-[0.20em]" style={{ color: 'var(--color-sidebar-muted)' }}>
                       {group.label}
                     </p>
-                    <div className="space-y-1">
+                    <div className="space-y-0.5">
                       {group.items.map((item) => {
                         const Icon = item.icon
                         return (
                           <NavLink
                             key={item.path}
                             to={item.path}
-                            className={({ isActive }) => 'flex items-center gap-2.5 sm:gap-3 rounded-2xl px-2.5 sm:px-3 py-2.5 sm:py-3 text-sm font-medium transition-all duration-200'}
+                            className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-[13px] font-medium transition-all duration-200"
                             style={({ isActive }) => ({
                               backgroundColor: isActive ? 'var(--color-sidebar-active)' : 'transparent',
                               color: isActive ? '#fff' : 'var(--color-sidebar-text)',
+                              boxShadow: isActive ? '0 2px 8px rgba(109,40,217,0.25)' : 'none',
                             })}
                           >
-                            <Icon size={18} />
-                            <span className="truncate">{item.label}</span>
-                            {item.path === ROUTES.STUDENT_NOTICES && unreadNotices > 0 ? (
-                              <span className="ml-auto rounded-full bg-red-500 px-1.5 sm:px-2 py-0.5 text-[9px] sm:text-[10px] font-bold text-white shrink-0">
-                                {unreadNotices}
-                              </span>
-                            ) : null}
+                            {({ isActive }) => (
+                              <>
+                                <span
+                                  className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg"
+                                  style={{
+                                    backgroundColor: isActive ? 'rgba(255,255,255,0.20)' : 'rgba(124,58,237,0.08)',
+                                    color: isActive ? '#fff' : 'var(--color-sidebar-active)',
+                                  }}
+                                >
+                                  <Icon size={15} />
+                                </span>
+                                <span className="truncate flex-1">{item.label}</span>
+                                {item.path === ROUTES.STUDENT_NOTICES && unreadNotices > 0 ? (
+                                  <span className="ml-auto rounded-full bg-red-500 px-1.5 py-0.5 text-[9px] font-bold text-white shrink-0">
+                                    {unreadNotices > 9 ? '9+' : unreadNotices}
+                                  </span>
+                                ) : null}
+                              </>
+                            )}
                           </NavLink>
                         )
                       })}
                     </div>
                   </div>
                 ))}
+              </nav>
+
+              <div className="px-3 py-3 shrink-0" style={{ borderTop: '1px solid var(--color-sidebar-border)' }}>
+                <button
+                  type="button"
+                  onClick={logout}
+                  className="w-full rounded-xl px-3 py-2.5 text-[13px] font-medium text-left transition hover:opacity-80"
+                  style={{ backgroundColor: 'rgba(239,68,68,0.08)', color: '#dc2626' }}
+                >
+                  Sign Out
+                </button>
               </div>
             </aside>
           </div>
         )}
 
+        {/* ── Main Content ── */}
         <div className="xl:pl-72">
-          <header className="sticky top-0 z-30 border-b bg-[color:var(--student-tab-bg)] backdrop-blur-xl" style={{ borderColor: 'var(--color-border)' }}>
+          {/* Header */}
+          <header
+            className="sticky top-0 z-30 backdrop-blur-xl"
+            style={{ backgroundColor: 'var(--student-tab-bg)', borderBottom: '1px solid var(--color-border)' }}
+          >
             {isOffline && (
-              <div className="border-b px-3 sm:px-4 py-2 text-center text-xs font-medium text-amber-900 dark:text-amber-100" style={{ backgroundColor: '#fde68a', borderColor: '#fcd34d' }}>
-                You are offline. Showing last saved data.
+              <div className="border-b px-4 py-2 text-center text-xs font-semibold text-amber-900 dark:text-amber-100" style={{ backgroundColor: '#fde68a', borderColor: '#fcd34d' }}>
+                ⚡ You are offline — showing last saved data.
               </div>
             )}
 
-            <div className="flex items-center gap-2 sm:gap-3 px-3 sm:px-5 py-2.5">
+            <div className="flex items-center gap-3 px-4 sm:px-5 py-3">
+              {/* Hamburger (mobile) */}
               <button
                 type="button"
                 onClick={() => setMobileMenuOpen(true)}
-                className="flex h-10 w-10 items-center justify-center rounded-2xl border xl:hidden shrink-0"
+                className="flex h-9 w-9 items-center justify-center rounded-xl border xl:hidden shrink-0 transition hover:opacity-70"
                 style={{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface)' }}
                 aria-label="Open navigation"
               >
-                <Menu size={18} />
+                <Menu size={17} />
               </button>
 
+              {/* Page title */}
               <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-semibold">Student Portal</p>
-                <p className="truncate text-xs text-[var(--color-text-secondary)]">Personal, read-only school companion</p>
+                <p className="truncate text-[13px] font-bold" style={{ color: 'var(--color-text-primary)' }}>{currentPageLabel}</p>
+                <p className="hidden sm:block truncate text-[11px]" style={{ color: 'var(--color-text-muted)' }}>Student Portal — Personal school companion</p>
               </div>
 
-              <button
-                type="button"
-                onClick={() => navigate(ROUTES.STUDENT_NOTICES)}
-                className="relative flex h-10 w-10 items-center justify-center rounded-2xl border shrink-0"
-                style={{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface)' }}
-                aria-label="Open notices"
-              >
-                <Bell size={18} />
-                {unreadNotices > 0 ? (
-                  <span className="absolute -right-1 -top-1 min-w-5 rounded-full bg-red-500 px-1 text-[10px] font-bold leading-5 text-white">
-                    {unreadNotices > 9 ? '9+' : unreadNotices}
-                  </span>
-                ) : null}
-              </button>
+              {/* Actions */}
+              <div className="flex items-center gap-2 shrink-0">
+                {/* Notices bell */}
+                <button
+                  type="button"
+                  onClick={() => navigate(ROUTES.STUDENT_NOTICES)}
+                  className="relative flex h-9 w-9 items-center justify-center rounded-xl border transition hover:opacity-70"
+                  style={{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface)' }}
+                  aria-label="Open notices"
+                >
+                  <Bell size={17} />
+                  {unreadNotices > 0 ? (
+                    <span className="absolute -right-1 -top-1 min-w-[18px] h-[18px] rounded-full bg-red-500 px-1 text-[9px] font-bold leading-[18px] text-white text-center">
+                      {unreadNotices > 9 ? '9+' : unreadNotices}
+                    </span>
+                  ) : null}
+                </button>
 
-              <button
-                type="button"
-                onClick={toggleTheme}
-                className="flex h-10 w-10 items-center justify-center rounded-2xl border shrink-0"
-                style={{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface)' }}
-                aria-label="Toggle dark mode"
-              >
-                <Moon size={18} />
-              </button>
+                {/* Dark mode toggle */}
+                <button
+                  type="button"
+                  onClick={toggleTheme}
+                  className="flex h-9 w-9 items-center justify-center rounded-xl border transition hover:opacity-70"
+                  style={{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface)' }}
+                  aria-label="Toggle dark mode"
+                >
+                  {theme === 'dark' ? <Sun size={17} /> : <Moon size={17} />}
+                </button>
 
-              <button
-                type="button"
-                onClick={logout}
-                className="hidden sm:inline-flex rounded-2xl border px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium shrink-0"
-                style={{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface)' }}
-              >
-                Sign Out
-              </button>
+                {/* Avatar (desktop) */}
+                <button
+                  type="button"
+                  onClick={() => navigate(ROUTES.STUDENT_PROFILE)}
+                  className="hidden sm:flex h-9 w-9 items-center justify-center rounded-xl text-[12px] font-bold text-white shrink-0 transition hover:opacity-85"
+                  style={{ background: 'linear-gradient(135deg, #7c3aed, #5b21b6)', boxShadow: '0 2px 8px rgba(124,58,237,0.30)' }}
+                  title="My Profile"
+                  aria-label="My Profile"
+                >
+                  {getInitials(studentName)}
+                </button>
+              </div>
             </div>
           </header>
 
-          <main className="mx-auto w-full max-w-7xl px-4 pb-28 pt-4 sm:px-5 sm:pt-5 lg:px-6 lg:pb-8">
+          {/* Page content */}
+          <main className="mx-auto w-full max-w-7xl px-4 pb-28 pt-5 sm:px-5 sm:pt-6 lg:px-6 lg:pb-8">
             <Outlet />
           </main>
         </div>
 
-        <nav className="fixed inset-x-0 bottom-0 z-40 border-t px-1 pb-[calc(env(safe-area-inset-bottom,0px)+8px)] pt-1 xl:hidden" style={{ backgroundColor: 'var(--student-tab-bg)', borderColor: 'var(--color-border)', backdropFilter: 'blur(16px)' }}>
-          <div className="grid grid-cols-5 gap-0.5">
+        {/* ── Mobile Bottom Tab Bar ── */}
+        <nav
+          className="fixed inset-x-0 bottom-0 z-40 px-2 pb-[calc(env(safe-area-inset-bottom,0px)+6px)] pt-1 xl:hidden"
+          style={{ backgroundColor: 'var(--student-tab-bg)', borderTop: '1px solid var(--color-border)', backdropFilter: 'blur(16px)' }}
+        >
+          <div className="grid grid-cols-5 gap-1">
             {mobileTabs.map((tab) => {
               const Icon = tab.icon
               const isActive = activeTab === tab.path
@@ -378,16 +456,22 @@ const StudentLayout = () => {
                 <NavLink
                   key={tab.path}
                   to={tab.path}
-                  className="flex min-h-[56px] sm:min-h-[62px] flex-col items-center justify-center gap-0.5 sm:gap-1 rounded-xl px-0.5 py-1.5 text-[10px] sm:text-[11px] font-medium active-zone"
+                  className="relative flex flex-col items-center justify-center gap-1 py-2 rounded-xl transition-all duration-200"
                   style={{
-                    backgroundColor: isActive ? 'var(--student-accent-soft)' : 'transparent',
-                    color: isActive ? 'var(--student-accent)' : 'var(--color-text-secondary)',
+                    color: isActive ? 'var(--student-accent)' : 'var(--color-text-muted)',
                   }}
                 >
-                  <Icon size={18} />
-                  <span className="truncate w-full text-center">{tab.label}</span>
+                  <span
+                    className="flex h-8 w-8 items-center justify-center rounded-xl transition-all duration-200"
+                    style={{
+                      backgroundColor: isActive ? 'var(--student-accent-soft)' : 'transparent',
+                    }}
+                  >
+                    <Icon size={17} />
+                  </span>
+                  <span className="text-[10px] font-semibold truncate w-full text-center">{tab.label}</span>
                   {tab.path === ROUTES.STUDENT_NOTICES && unreadNotices > 0 ? (
-                    <span className="absolute right-1.5 top-1.5 min-w-4 h-4 rounded-full bg-red-500 px-0.5 text-[9px] sm:text-[10px] font-bold text-white flex items-center justify-center">
+                    <span className="absolute right-2 top-1.5 min-w-4 h-4 rounded-full bg-red-500 px-0.5 text-[9px] font-bold text-white flex items-center justify-center">
                       {unreadNotices}
                     </span>
                   ) : null}

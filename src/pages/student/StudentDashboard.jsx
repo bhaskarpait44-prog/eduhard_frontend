@@ -148,33 +148,35 @@ const StudentDashboard = () => {
 
   return (
     <div className="space-y-5 pb-2">
+      {/* Offline banner */}
       {offline && (
         <Banner
           icon={WifiOff}
           title="You are offline"
           description="Showing the last saved student dashboard until the connection returns."
           tone="#f59e0b"
-          soft="rgba(245,158,11,0.12)"
+          soft="rgba(245,158,11,0.10)"
           border="#fcd34d"
         />
       )}
 
+      {/* Birthday banner */}
       {birthdayBanner && (
         <section
-          className="relative overflow-hidden rounded-[28px] border px-5 py-5 sm:px-6"
+          className="relative overflow-hidden rounded-3xl border px-5 py-5 sm:px-6"
           style={{
             borderColor: '#c4b5fd',
-            background: 'linear-gradient(135deg, rgba(124,58,237,0.20), rgba(236,72,153,0.12) 55%, rgba(255,255,255,0.9) 100%)',
-            boxShadow: '0 20px 48px rgba(124,58,237,0.14)',
+            background: 'linear-gradient(135deg, rgba(124,58,237,0.22), rgba(236,72,153,0.14) 55%, rgba(255,255,255,0.92) 100%)',
+            boxShadow: '0 20px 48px rgba(124,58,237,0.16)',
           }}
         >
-          <div className="absolute inset-x-0 top-0 h-1 bg-[linear-gradient(90deg,#7c3aed,#ec4899,#f59e0b,#10b981)]" />
+          <div className="absolute inset-x-0 top-0 h-1 rounded-t-3xl bg-[linear-gradient(90deg,#7c3aed,#ec4899,#f59e0b,#10b981)]" />
           <div className="flex items-start gap-4">
-            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-white/70 text-[var(--student-accent)]">
+            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-white/80 text-[var(--student-accent)] shadow-sm">
               <Sparkles size={22} />
             </div>
             <div className="min-w-0">
-              <h2 className="text-xl font-semibold sm:text-2xl">{birthdayBanner.title}</h2>
+              <h2 className="text-xl font-bold sm:text-2xl">{birthdayBanner.title}</h2>
               <p className="mt-1 text-sm text-[var(--color-text-secondary)]">
                 Wishing you a joyful day and a year full of wins, growth, and good surprises.
               </p>
@@ -183,25 +185,26 @@ const StudentDashboard = () => {
         </section>
       )}
 
+      {/* Homework due today */}
       {homeworkDueToday.length > 0 && (
         <section
-          className="rounded-[24px] border px-4 py-4 sm:px-5"
-          style={{ borderColor: '#fca5a5', backgroundColor: 'rgba(239,68,68,0.08)' }}
+          className="rounded-3xl border px-4 py-4 sm:px-5"
+          style={{ borderColor: '#fca5a5', backgroundColor: 'rgba(239,68,68,0.07)' }}
         >
           <div className="flex items-start gap-3">
             <div className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-red-500/10 text-red-600">
               <CircleAlert size={18} />
             </div>
             <div className="min-w-0 flex-1">
-              <p className="text-sm font-semibold text-red-700 dark:text-red-300">
-                {homeworkDueToday.length} homework due today
+              <p className="text-sm font-bold text-red-700 dark:text-red-300">
+                {homeworkDueToday.length} homework assignment{homeworkDueToday.length > 1 ? 's' : ''} due today
               </p>
               <div className="mt-3 space-y-2">
                 {homeworkDueToday.slice(0, 3).map((item) => (
                   <div
                     key={item.id}
                     className="flex items-center justify-between gap-3 rounded-2xl border px-3 py-3"
-                    style={{ borderColor: '#fecaca', backgroundColor: 'rgba(255,255,255,0.7)' }}
+                    style={{ borderColor: '#fecaca', backgroundColor: 'rgba(255,255,255,0.80)' }}
                   >
                     <div className="min-w-0">
                       <p className="truncate text-sm font-semibold text-[var(--color-text-primary)]">{item.title}</p>
@@ -215,7 +218,7 @@ const StudentDashboard = () => {
                     <button
                       type="button"
                       onClick={() => navigate(ROUTES.STUDENT_HOMEWORK)}
-                      className="shrink-0 rounded-xl px-3 py-2 text-xs font-semibold text-white"
+                      className="shrink-0 rounded-xl px-3 py-1.5 text-xs font-bold text-white transition hover:opacity-85"
                       style={{ backgroundColor: 'var(--student-accent)' }}
                     >
                       {item.submission_type === 'online' || item.submission_type === 'both' ? 'Quick Submit' : 'View'}
@@ -228,64 +231,92 @@ const StudentDashboard = () => {
         </section>
       )}
 
+      {/* ── Hero / Welcome Section ── */}
       <section
-        className="overflow-hidden rounded-[28px] border p-5 sm:p-6"
+        className="relative overflow-hidden rounded-3xl border p-5 sm:p-6"
         style={{
           borderColor: 'var(--color-border)',
-          background: 'linear-gradient(135deg, rgba(109,40,217,0.18), rgba(79,70,229,0.10) 52%, var(--color-surface) 100%)',
+          background: 'linear-gradient(135deg, rgba(109,40,217,0.20), rgba(79,70,229,0.12) 52%, var(--color-surface) 100%)',
+          boxShadow: '0 4px 24px rgba(109,40,217,0.08)',
         }}
       >
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-          <div className="min-w-0">
-            <p className="text-sm font-semibold uppercase tracking-[0.18em]" style={{ color: 'var(--student-accent)' }}>
-              Student Dashboard
-            </p>
-            <h1 className="mt-2 text-2xl font-bold leading-tight sm:text-3xl">
-              {greeting}, {student.name || user?.name || 'Student'}
-            </h1>
-            <p className="mt-2 text-sm sm:text-base text-[var(--color-text-secondary)]">
-              {student.class_name ? `${student.class_name}${student.section_name ? ` • ${student.section_name}` : ''}` : 'Your class details will appear here'}
-              {student.roll_number ? ` • Roll No: ${student.roll_number}` : ''}
-            </p>
-            <p className="mt-1 text-sm text-[var(--color-text-secondary)]">
-              Current session: {student.session_name || '—'} • Today: {formatLongDate(dashboard?.today)}
-            </p>
+        {/* decorative top stripe */}
+        <div className="absolute inset-x-0 top-0 h-[3px] rounded-t-3xl" style={{ background: 'linear-gradient(90deg, #7c3aed, #6366f1)' }} />
 
-            <div className="mt-4 flex flex-wrap gap-2">
-              <SoftPill label={`${classesToday.total_periods || schedule.length || 0} classes today`} tone="#6d28d9" />
-              <SoftPill label={`${upcomingEvents.length} upcoming event(s)`} tone="#0f766e" />
-              <SoftPill label={`${achievements.length} achievement badge(s)`} tone="#d97706" />
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+          <div className="flex items-start gap-4 min-w-0">
+            {/* Avatar */}
+            <div
+              className="hidden sm:flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl text-lg font-bold text-white shadow-lg"
+              style={{ background: 'linear-gradient(135deg, #7c3aed, #5b21b6)', boxShadow: '0 4px 16px rgba(124,58,237,0.35)' }}
+            >
+              {getInitials(student.name || user?.name || 'S')}
+            </div>
+
+            <div className="min-w-0">
+              <p className="text-xs font-bold uppercase tracking-[0.18em]" style={{ color: 'var(--student-accent)' }}>
+                Student Dashboard
+              </p>
+              <h1 className="mt-1.5 text-2xl font-bold leading-tight sm:text-3xl">
+                {greeting}, {student.name || user?.name || 'Student'} 👋
+              </h1>
+              <p className="mt-1.5 text-sm text-[var(--color-text-secondary)]">
+                {student.class_name
+                  ? `${student.class_name}${student.section_name ? ` · ${student.section_name}` : ''}`
+                  : 'Your class details will appear here'}
+                {student.roll_number ? ` · Roll No. ${student.roll_number}` : ''}
+              </p>
+              <p className="mt-0.5 text-xs text-[var(--color-text-muted)]">
+                Session: <span className="font-semibold">{student.session_name || '—'}</span> · {formatLongDate(dashboard?.today)}
+              </p>
+
+              <div className="mt-3 flex flex-wrap gap-2">
+                <SoftPill label={`${classesToday.total_periods || schedule.length || 0} classes today`} tone="#6d28d9" />
+                <SoftPill label={`${upcomingEvents.length} upcoming event(s)`} tone="#0f766e" />
+                <SoftPill label={`${achievements.length} achievement badge(s)`} tone="#d97706" />
+              </div>
             </div>
           </div>
 
           <button
             type="button"
             onClick={handleRefresh}
-            className="flex min-h-11 items-center justify-center gap-2 rounded-2xl border px-4 text-sm font-semibold transition hover:-translate-y-0.5"
+            className="flex min-h-10 items-center justify-center gap-2 rounded-2xl border px-4 text-sm font-semibold transition hover:-translate-y-0.5 shrink-0"
             style={{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface)' }}
           >
-            <RefreshCw size={16} className={refreshing || loading ? 'animate-spin' : ''} />
+            <RefreshCw size={15} className={refreshing || loading ? 'animate-spin' : ''} />
             {lastLoadedAt ? `Updated ${formatTime(lastLoadedAt)}` : 'Refresh'}
           </button>
         </div>
       </section>
 
+      {/* ── Stat Cards ── */}
       <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {statCards.map((card) => (
           <button
             key={card.key}
             type="button"
             onClick={() => navigate(card.route)}
-            className="rounded-[26px] border p-5 text-left transition hover:-translate-y-0.5"
-            style={{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface)' }}
+            className="group relative overflow-hidden rounded-3xl border p-5 text-left transition-all duration-300 hover:-translate-y-1"
+            style={{
+              borderColor: 'var(--color-border)',
+              backgroundColor: 'var(--color-surface)',
+              boxShadow: '0 2px 12px rgba(0,0,0,0.04)',
+            }}
           >
+            {/* Left colored accent bar */}
+            <div
+              className="absolute inset-y-0 left-0 w-1 rounded-full"
+              style={{ backgroundColor: card.tone }}
+            />
+
             {loading && !hasContent ? (
               <DashboardCardSkeleton />
             ) : (
               <>
-                <div className="flex items-start justify-between gap-3">
+                <div className="flex items-start justify-between gap-3 pl-2">
                   <div
-                    className="flex h-11 w-11 items-center justify-center rounded-2xl"
+                    className="flex h-11 w-11 items-center justify-center rounded-2xl transition-transform duration-200 group-hover:scale-110"
                     style={{ backgroundColor: `${card.tone}18`, color: card.tone }}
                   >
                     <card.icon size={20} />
@@ -293,34 +324,36 @@ const StudentDashboard = () => {
                   <div className="flex items-center gap-2">
                     {card.badge && (
                       <span
-                        className="rounded-full px-2 py-1 text-[10px] font-bold tracking-[0.16em]"
+                        className="rounded-full px-2 py-1 text-[10px] font-bold tracking-[0.14em]"
                         style={{ backgroundColor: `${card.tone}18`, color: card.tone }}
                       >
                         {card.badge}
                       </span>
                     )}
-                    <ArrowRight size={18} style={{ color: 'var(--color-text-muted)' }} />
+                    <ArrowRight size={16} style={{ color: 'var(--color-text-muted)' }} className="transition-transform duration-200 group-hover:translate-x-1" />
                   </div>
                 </div>
 
-                <p className="mt-4 text-xs font-semibold uppercase tracking-[0.16em] text-[var(--color-text-muted)]">
+                <p className="mt-4 pl-2 text-[11px] font-bold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
                   {card.title}
                 </p>
-                <p className="mt-2 text-[28px] font-bold leading-8 text-[var(--color-text-primary)]">
+                <p className="mt-2 pl-2 text-[28px] font-black leading-8 text-[var(--color-text-primary)]">
                   {card.primary}
                 </p>
-                <p className="mt-2 text-sm text-[var(--color-text-secondary)]">
+                <p className="mt-1.5 pl-2 text-[13px] text-[var(--color-text-secondary)]">
                   {card.secondary}
                 </p>
+
                 {typeof card.progress === 'number' && (
-                  <div className="mt-4 h-2 overflow-hidden rounded-full bg-[var(--color-surface-raised)]">
+                  <div className="mt-4 pl-2 h-1.5 overflow-hidden rounded-full" style={{ backgroundColor: `${card.tone}18` }}>
                     <div
-                      className="h-full rounded-full transition-all duration-500"
-                      style={{ width: `${card.progress}%`, backgroundColor: card.tone }}
+                      className="h-full rounded-full transition-all duration-700"
+                      style={{ width: `${card.progress}%`, background: `linear-gradient(90deg, ${card.tone}cc, ${card.tone})` }}
                     />
                   </div>
                 )}
-                <p className="mt-4 text-xs font-medium" style={{ color: card.tone }}>
+
+                <p className="mt-3 pl-2 text-[12px] font-semibold" style={{ color: card.tone }}>
                   {card.footer}
                 </p>
               </>
@@ -329,10 +362,13 @@ const StudentDashboard = () => {
         ))}
       </section>
 
+      {/* ── Main grid ── */}
       <div className="grid grid-cols-1 gap-5 xl:grid-cols-[minmax(0,1.55fr)_minmax(320px,0.95fr)]">
+        {/* Left column */}
         <div className="space-y-5">
+          {/* Today Schedule */}
           <SectionCard
-            title="Today Schedule"
+            title="Today's Schedule"
             actionLabel="Open Timetable"
             onAction={() => navigate(ROUTES.STUDENT_TIMETABLE)}
           >
@@ -340,61 +376,84 @@ const StudentDashboard = () => {
               <TimelineSkeleton />
             ) : schedule.length > 0 ? (
               <div className="space-y-3">
-                {schedule.map((item) => (
+                {schedule.map((item, idx) => (
                   <div
                     key={item.id || `${item.period_number}-${item.start_time}`}
-                    className="rounded-3xl border px-4 py-4 transition"
-                    style={{
-                      borderColor:
-                        item.status === 'current'
-                          ? 'rgba(22,163,74,0.35)'
-                          : item.status === 'done'
-                            ? 'var(--color-border)'
-                            : 'rgba(124,58,237,0.18)',
-                      backgroundColor:
-                        item.status === 'current'
-                          ? 'rgba(22,163,74,0.08)'
-                          : item.status === 'done'
-                            ? 'var(--color-surface-raised)'
-                            : 'var(--color-surface)',
-                      boxShadow: item.status === 'current' ? '0 0 0 1px rgba(22,163,74,0.10), 0 14px 34px rgba(22,163,74,0.10)' : 'none',
-                      opacity: item.status === 'done' ? 0.72 : 1,
-                    }}
+                    className="relative flex gap-4"
                   >
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="min-w-0">
-                        <div className="flex flex-wrap items-center gap-2">
-                          <p className="text-sm font-semibold">
-                            Period {item.period_number || '—'}
-                          </p>
-                          <span className={statusPillClass(item.status)} style={statusPillStyle(item.status)}>
-                            {item.status === 'current' ? 'ONGOING' : item.status === 'done' ? 'DONE' : 'UPCOMING'}
-                          </span>
-                        </div>
-                        <p className="mt-2 text-lg font-semibold text-[var(--color-text-primary)]">
-                          {item.subject_name}
-                        </p>
-                        <p className="mt-1 text-sm text-[var(--color-text-secondary)] flex items-center gap-1.5">
-                          {item.teacher_name}
-                          {item.is_online && (
-                            <span className="w-1.5 h-1.5 rounded-full bg-indigo-500 animate-pulse" title="Online now" />
-                          )}
-                        </p>
-                        <p className="mt-1 text-xs text-[var(--color-text-muted)]">
-                          {formatTimeRange(item.start_time, item.end_time)}
-                          {item.room_number ? ` • Room ${item.room_number}` : ''}
-                        </p>
-                      </div>
-                      {(item.status === 'current' || item.status === 'upcoming') && typeof item.countdown_minutes === 'number' && (
-                        <div className="shrink-0 rounded-2xl px-3 py-2 text-right" style={{ backgroundColor: 'rgba(124,58,237,0.10)' }}>
-                          <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[var(--student-accent)]">
-                            {item.status === 'current' ? 'Ends In' : 'Starts In'}
-                          </p>
-                          <p className="mt-1 text-sm font-semibold text-[var(--color-text-primary)]">
-                            {formatMinutes(item.countdown_minutes)}
-                          </p>
-                        </div>
+                    {/* Timeline rail */}
+                    <div className="flex flex-col items-center shrink-0 w-6 pt-1">
+                      <div
+                        className="h-4 w-4 rounded-full border-2 shrink-0 transition-all duration-300"
+                        style={{
+                          borderColor: item.status === 'current' ? '#16a34a' : item.status === 'done' ? '#cbd5e1' : '#7c3aed',
+                          backgroundColor: item.status === 'current' ? '#16a34a' : item.status === 'done' ? 'var(--color-surface)' : 'var(--color-surface)',
+                          boxShadow: item.status === 'current' ? '0 0 0 4px rgba(22,163,74,0.18)' : 'none',
+                        }}
+                      />
+                      {idx < schedule.length - 1 && (
+                        <div className="mt-1 w-0.5 flex-1 min-h-[20px]" style={{ backgroundColor: 'var(--color-border)' }} />
                       )}
+                    </div>
+
+                    {/* Period card */}
+                    <div
+                      className="mb-3 flex-1 rounded-2xl border px-4 py-3.5 transition-all duration-200"
+                      style={{
+                        borderColor:
+                          item.status === 'current'
+                            ? 'rgba(22,163,74,0.30)'
+                            : item.status === 'done'
+                              ? 'var(--color-border)'
+                              : 'rgba(124,58,237,0.16)',
+                        backgroundColor:
+                          item.status === 'current'
+                            ? 'rgba(22,163,74,0.07)'
+                            : item.status === 'done'
+                              ? 'var(--color-surface-raised)'
+                              : 'var(--color-surface)',
+                        boxShadow: item.status === 'current' ? '0 4px 18px rgba(22,163,74,0.10)' : 'none',
+                        opacity: item.status === 'done' ? 0.72 : 1,
+                      }}
+                    >
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="min-w-0">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <p className="text-xs font-bold text-[var(--color-text-muted)]">
+                              Period {item.period_number || '—'}
+                            </p>
+                            <span className={statusPillClass(item.status)} style={statusPillStyle(item.status)}>
+                              {item.status === 'current' ? '● LIVE' : item.status === 'done' ? 'DONE' : 'UPCOMING'}
+                            </span>
+                          </div>
+                          <p className="mt-1.5 text-[15px] font-bold text-[var(--color-text-primary)]">
+                            {item.subject_name}
+                          </p>
+                          <p className="mt-1 text-xs text-[var(--color-text-secondary)] flex items-center gap-1.5">
+                            {item.teacher_name}
+                            {item.is_online && (
+                              <span className="w-1.5 h-1.5 rounded-full bg-indigo-500 animate-pulse" title="Online now" />
+                            )}
+                          </p>
+                          <p className="mt-0.5 text-[11px] text-[var(--color-text-muted)]">
+                            {formatTimeRange(item.start_time, item.end_time)}
+                            {item.room_number ? ` · Room ${item.room_number}` : ''}
+                          </p>
+                        </div>
+                        {(item.status === 'current' || item.status === 'upcoming') && typeof item.countdown_minutes === 'number' && (
+                          <div
+                            className="shrink-0 rounded-xl px-3 py-2 text-right"
+                            style={{ backgroundColor: item.status === 'current' ? 'rgba(22,163,74,0.12)' : 'rgba(124,58,237,0.10)' }}
+                          >
+                            <p className="text-[10px] font-bold uppercase tracking-[0.16em]" style={{ color: item.status === 'current' ? '#15803d' : 'var(--student-accent)' }}>
+                              {item.status === 'current' ? 'Ends In' : 'Starts In'}
+                            </p>
+                            <p className="mt-1 text-sm font-bold text-[var(--color-text-primary)]">
+                              {formatMinutes(item.countdown_minutes)}
+                            </p>
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </div>
                 ))}
@@ -408,30 +467,32 @@ const StudentDashboard = () => {
             )}
           </SectionCard>
 
+          {/* Attendance + Events row */}
           <div className="grid grid-cols-1 gap-5 lg:grid-cols-[minmax(0,0.92fr)_minmax(0,1.08fr)]">
+            {/* Recent Attendance */}
             <SectionCard title="Recent Attendance">
               {loading && !hasContent ? (
                 <BubbleStripSkeleton />
               ) : recentAttendance.length > 0 ? (
                 <div className="space-y-4">
-                  <div className="grid grid-cols-7 gap-2">
+                  <div className="grid grid-cols-7 gap-1.5">
                     {recentAttendance.map((day, index) => (
-                      <div key={`${day.date}-${index}`} className="flex flex-col items-center gap-2">
+                      <div key={`${day.date}-${index}`} className="flex flex-col items-center gap-1.5">
                         <button
                           type="button"
-                          title={`${formatDate(day.date, 'long')} • ${labelFromStatus(day.status)}`}
-                          className="flex aspect-square w-full max-w-[52px] items-center justify-center rounded-full border text-xs font-bold"
+                          title={`${formatDate(day.date, 'long')} · ${labelFromStatus(day.status)}`}
+                          className="flex aspect-square w-full max-w-[48px] items-center justify-center rounded-full border text-xs font-bold transition hover:scale-110"
                           style={attendanceBubbleStyle(day, dashboard?.today)}
                         >
                           {bubbleLabel(day.status)}
                         </button>
-                        <span className="text-[11px] text-[var(--color-text-muted)]">
+                        <span className="text-[10px] font-medium text-[var(--color-text-muted)]">
                           {formatDayShort(day.date)}
                         </span>
                       </div>
                     ))}
                   </div>
-                  <div className="flex flex-wrap gap-2 text-[11px] font-medium text-[var(--color-text-secondary)]">
+                  <div className="flex flex-wrap gap-x-3 gap-y-1.5 text-[11px] font-medium text-[var(--color-text-secondary)]">
                     <Legend tone="#16a34a" label="Present" />
                     <Legend tone="#ef4444" label="Absent" />
                     <Legend tone="#f59e0b" label="Late" />
@@ -448,6 +509,7 @@ const StudentDashboard = () => {
               )}
             </SectionCard>
 
+            {/* Upcoming Events */}
             <SectionCard
               title="Upcoming Events"
               actionLabel="Open Notices"
@@ -456,28 +518,31 @@ const StudentDashboard = () => {
               {loading && !hasContent ? (
                 <EventSkeleton />
               ) : upcomingEvents.length > 0 ? (
-                <div className="flex gap-3 overflow-x-auto pb-1">
-                  {upcomingEvents.map((event) => (
+                <div className="grid grid-cols-1 gap-2.5">
+                  {upcomingEvents.slice(0, 3).map((event) => (
                     <div
                       key={`${event.event_type}-${event.id}`}
-                      className="min-w-[210px] rounded-3xl border p-4"
+                      className="flex items-start gap-3 rounded-2xl border p-3.5"
                       style={{
                         borderColor: eventTone(event.event_type).border,
                         backgroundColor: eventTone(event.event_type).soft,
                       }}
                     >
-                      <p className="text-[11px] font-semibold uppercase tracking-[0.18em]" style={{ color: eventTone(event.event_type).strong }}>
-                        {event.event_type}
-                      </p>
-                      <p className="mt-2 line-clamp-2 text-sm font-semibold text-[var(--color-text-primary)]">
-                        {event.title}
-                      </p>
-                      <p className="mt-3 text-xs text-[var(--color-text-secondary)]">
-                        {formatDate(event.event_date, 'short')}
-                      </p>
-                      <p className="mt-2 text-xs font-semibold" style={{ color: eventTone(event.event_type).strong }}>
-                        In {event.days_remaining} day(s)
-                      </p>
+                      <div
+                        className="mt-0.5 h-2.5 w-2.5 shrink-0 rounded-full"
+                        style={{ backgroundColor: eventTone(event.event_type).strong }}
+                      />
+                      <div className="min-w-0 flex-1">
+                        <p className="text-[10px] font-bold uppercase tracking-[0.16em]" style={{ color: eventTone(event.event_type).strong }}>
+                          {event.event_type} · In {event.days_remaining} day(s)
+                        </p>
+                        <p className="mt-1 text-[13px] font-semibold text-[var(--color-text-primary)] line-clamp-1">
+                          {event.title}
+                        </p>
+                        <p className="mt-0.5 text-[11px] text-[var(--color-text-secondary)]">
+                          {formatDate(event.event_date, 'short')}
+                        </p>
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -492,7 +557,9 @@ const StudentDashboard = () => {
           </div>
         </div>
 
+        {/* Right column */}
         <div className="space-y-5">
+          {/* Motivation */}
           <SectionCard title="Motivation">
             {loading && !hasContent ? (
               <MotivationSkeleton />
@@ -514,6 +581,7 @@ const StudentDashboard = () => {
             )}
           </SectionCard>
 
+          {/* Achievement Badges */}
           <SectionCard
             title="Achievement Badges"
             actionLabel="Open Profile"
@@ -522,24 +590,30 @@ const StudentDashboard = () => {
             {loading && !hasContent ? (
               <BadgeSkeleton />
             ) : achievements.length > 0 ? (
-              <div className="grid grid-cols-1 gap-3">
-                {achievements.slice(0, 4).map((badge) => (
+              <div className="space-y-2.5">
+                {achievements.slice(0, 4).map((badge, idx) => (
                   <div
                     key={badge.id}
-                    className="flex items-center gap-3 rounded-3xl border px-4 py-4"
+                    className="flex items-center gap-3 rounded-2xl border px-4 py-3.5"
                     style={{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface-raised)' }}
                   >
-                    <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[rgba(124,58,237,0.14)] text-[var(--student-accent)]">
+                    <div
+                      className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl"
+                      style={{
+                        backgroundColor: idx === 0 ? 'rgba(234,179,8,0.14)' : idx === 1 ? 'rgba(148,163,184,0.18)' : idx === 2 ? 'rgba(180,83,9,0.14)' : 'rgba(124,58,237,0.14)',
+                        color: idx === 0 ? '#b45309' : idx === 1 ? '#64748b' : idx === 2 ? '#92400e' : 'var(--student-accent)',
+                      }}
+                    >
                       <Award size={20} />
                     </div>
                     <div className="min-w-0">
-                      <p className="truncate text-sm font-semibold text-[var(--color-text-primary)]">
+                      <p className="truncate text-[13px] font-bold text-[var(--color-text-primary)]">
                         {prettifyBadge(badge.achievement_type)}
                       </p>
                       <p className="truncate text-xs text-[var(--color-text-secondary)]">
                         {badge.earned_for || 'Student milestone'}
                       </p>
-                      <p className="mt-1 text-[11px] text-[var(--color-text-muted)]">
+                      <p className="mt-0.5 text-[11px] text-[var(--color-text-muted)]">
                         Earned {formatDate(badge.earned_at, 'short')}
                       </p>
                     </div>
@@ -555,12 +629,13 @@ const StudentDashboard = () => {
             )}
           </SectionCard>
 
+          {/* Quick Links */}
           <SectionCard
             title="Quick Links"
             actionLabel="Profile"
             onAction={() => navigate(ROUTES.STUDENT_PROFILE)}
           >
-            <div className="grid grid-cols-1 gap-3">
+            <div className="space-y-2">
               {[
                 { label: 'Open Report Card', icon: ClipboardList, route: ROUTES.STUDENT_RESULTS, tone: '#2563eb', disabled: latestResult?.is_withheld },
                 { label: 'Check Homework', icon: BookOpenText, route: ROUTES.STUDENT_HOMEWORK, tone: '#dc2626' },
@@ -571,18 +646,24 @@ const StudentDashboard = () => {
                   type="button"
                   onClick={() => !item.disabled && navigate(item.route)}
                   className={cn(
-                    "flex items-center justify-between rounded-2xl border px-4 py-3 text-left transition hover:-translate-y-0.5",
-                    item.disabled && "opacity-50 cursor-not-allowed grayscale"
+                    'group flex w-full items-center justify-between rounded-2xl border px-4 py-3 text-left transition-all duration-200 hover:-translate-y-0.5',
+                    item.disabled && 'opacity-50 cursor-not-allowed grayscale'
                   )}
                   style={{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface)' }}
                 >
                   <div className="flex items-center gap-3">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-2xl" style={{ backgroundColor: `${item.tone}18`, color: item.tone }}>
-                      <item.icon size={18} />
+                    <div
+                      className="flex h-9 w-9 items-center justify-center rounded-xl transition-transform duration-200 group-hover:scale-110"
+                      style={{ backgroundColor: `${item.tone}18`, color: item.tone }}
+                    >
+                      <item.icon size={17} />
                     </div>
-                    <span className="text-sm font-semibold text-[var(--color-text-primary)]">{item.label}</span>
+                    <span className="text-[13px] font-semibold text-[var(--color-text-primary)]">{item.label}</span>
                   </div>
-                  {item.disabled ? <span className="text-[10px] font-bold text-red-500">WITHHELD</span> : <ArrowRight size={16} style={{ color: 'var(--color-text-muted)' }} />}
+                  {item.disabled
+                    ? <span className="text-[10px] font-bold text-red-500">WITHHELD</span>
+                    : <ArrowRight size={15} style={{ color: 'var(--color-text-muted)' }} className="transition-transform duration-200 group-hover:translate-x-1" />
+                  }
                 </button>
               ))}
             </div>
@@ -593,21 +674,27 @@ const StudentDashboard = () => {
   )
 }
 
+/* ─── Sub-components ─────────────────────────────────────────────────────── */
+
 const SectionCard = ({ title, actionLabel, onAction, children }) => (
   <section
-    className="rounded-[28px] border p-5 sm:p-5"
-    style={{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface)' }}
+    className="rounded-3xl border p-5"
+    style={{
+      borderColor: 'var(--color-border)',
+      backgroundColor: 'var(--color-surface)',
+      boxShadow: '0 2px 12px rgba(0,0,0,0.04)',
+    }}
   >
-    <div className="mb-4 flex items-center justify-between gap-3">
-      <h2 className="text-base font-semibold text-[var(--color-text-primary)] sm:text-lg">{title}</h2>
+    <div className="mb-4 flex items-center justify-between gap-3" style={{ borderBottom: '1px solid var(--color-border)', paddingBottom: '12px' }}>
+      <h2 className="text-[15px] font-bold text-[var(--color-text-primary)]">{title}</h2>
       {actionLabel && onAction && (
         <button
           type="button"
           onClick={onAction}
-          className="text-xs font-semibold uppercase tracking-[0.16em]"
-          style={{ color: 'var(--student-accent)' }}
+          className="flex items-center gap-1 rounded-xl px-3 py-1.5 text-[11px] font-bold uppercase tracking-[0.14em] transition hover:opacity-75"
+          style={{ color: 'var(--student-accent)', backgroundColor: 'var(--student-accent-soft)' }}
         >
-          {actionLabel}
+          {actionLabel} <ArrowRight size={11} />
         </button>
       )}
     </div>
@@ -616,13 +703,13 @@ const SectionCard = ({ title, actionLabel, onAction, children }) => (
 )
 
 const Banner = ({ icon: Icon, title, description, tone, soft, border }) => (
-  <div className="rounded-[24px] border px-4 py-4" style={{ borderColor: border, backgroundColor: soft }}>
+  <div className="rounded-2xl border px-4 py-4" style={{ borderColor: border, backgroundColor: soft }}>
     <div className="flex items-start gap-3">
       <div className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl" style={{ backgroundColor: `${tone}18`, color: tone }}>
         <Icon size={18} />
       </div>
       <div className="min-w-0">
-        <p className="text-sm font-semibold" style={{ color: tone }}>{title}</p>
+        <p className="text-sm font-bold" style={{ color: tone }}>{title}</p>
         <p className="mt-1 text-sm text-[var(--color-text-secondary)]">{description}</p>
       </div>
     </div>
@@ -631,7 +718,7 @@ const Banner = ({ icon: Icon, title, description, tone, soft, border }) => (
 
 const SoftPill = ({ label, tone }) => (
   <span
-    className="rounded-full px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.16em]"
+    className="rounded-full px-3 py-1 text-[11px] font-bold uppercase tracking-[0.14em]"
     style={{ backgroundColor: `${tone}18`, color: tone }}
   >
     {label}
@@ -639,11 +726,11 @@ const SoftPill = ({ label, tone }) => (
 )
 
 const EmptyMiniState = ({ icon: Icon, title, description }) => (
-  <div className="rounded-3xl border border-dashed px-4 py-6 text-center" style={{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface-raised)' }}>
-    <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-white/60 text-[var(--student-accent)] dark:bg-white/5">
+  <div className="rounded-2xl border border-dashed px-4 py-6 text-center" style={{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface-raised)' }}>
+    <div className="mx-auto flex h-11 w-11 items-center justify-center rounded-2xl bg-white/60 text-[var(--student-accent)] dark:bg-white/5">
       <Icon size={20} />
     </div>
-    <p className="mt-3 text-sm font-semibold text-[var(--color-text-primary)]">{title}</p>
+    <p className="mt-3 text-[13px] font-bold text-[var(--color-text-primary)]">{title}</p>
     <p className="mt-1 text-xs leading-5 text-[var(--color-text-secondary)]">{description}</p>
   </div>
 )
@@ -656,52 +743,58 @@ const Legend = ({ tone, label }) => (
 )
 
 const DashboardCardSkeleton = () => (
-  <div className="animate-pulse">
+  <div className="animate-pulse pl-2">
     <div className="h-11 w-11 rounded-2xl bg-[var(--color-surface-raised)]" />
     <div className="mt-4 h-3 w-24 rounded-full bg-[var(--color-surface-raised)]" />
     <div className="mt-3 h-8 w-28 rounded-2xl bg-[var(--color-surface-raised)]" />
     <div className="mt-3 h-3 w-3/4 rounded-full bg-[var(--color-surface-raised)]" />
-    <div className="mt-5 h-2 w-full rounded-full bg-[var(--color-surface-raised)]" />
+    <div className="mt-5 h-1.5 w-full rounded-full bg-[var(--color-surface-raised)]" />
   </div>
 )
 
 const TimelineSkeleton = () => (
   <div className="space-y-3 animate-pulse">
     {Array.from({ length: 3 }).map((_, index) => (
-      <div key={index} className="rounded-3xl border p-4" style={{ borderColor: 'var(--color-border)' }}>
-        <div className="h-3 w-24 rounded-full bg-[var(--color-surface-raised)]" />
-        <div className="mt-3 h-5 w-36 rounded-full bg-[var(--color-surface-raised)]" />
-        <div className="mt-3 h-3 w-24 rounded-full bg-[var(--color-surface-raised)]" />
+      <div key={index} className="flex gap-4">
+        <div className="flex flex-col items-center w-6 pt-1">
+          <div className="h-4 w-4 rounded-full bg-[var(--color-surface-raised)]" />
+          {index < 2 && <div className="mt-1 w-0.5 h-8 bg-[var(--color-surface-raised)]" />}
+        </div>
+        <div className="flex-1 rounded-2xl border p-4" style={{ borderColor: 'var(--color-border)' }}>
+          <div className="h-3 w-24 rounded-full bg-[var(--color-surface-raised)]" />
+          <div className="mt-3 h-5 w-36 rounded-full bg-[var(--color-surface-raised)]" />
+          <div className="mt-3 h-3 w-24 rounded-full bg-[var(--color-surface-raised)]" />
+        </div>
       </div>
     ))}
   </div>
 )
 
 const BubbleStripSkeleton = () => (
-  <div className="grid grid-cols-7 gap-2 animate-pulse">
+  <div className="grid grid-cols-7 gap-1.5 animate-pulse">
     {Array.from({ length: 7 }).map((_, index) => (
-      <div key={index} className="flex flex-col items-center gap-2">
-        <div className="h-11 w-11 rounded-full bg-[var(--color-surface-raised)]" />
-        <div className="h-2.5 w-6 rounded-full bg-[var(--color-surface-raised)]" />
+      <div key={index} className="flex flex-col items-center gap-1.5">
+        <div className="h-10 w-10 rounded-full bg-[var(--color-surface-raised)]" />
+        <div className="h-2.5 w-5 rounded-full bg-[var(--color-surface-raised)]" />
       </div>
     ))}
   </div>
 )
 
 const EventSkeleton = () => (
-  <div className="flex gap-3 overflow-hidden animate-pulse">
+  <div className="space-y-2.5 animate-pulse">
     {Array.from({ length: 3 }).map((_, index) => (
-      <div key={index} className="min-w-[200px] rounded-3xl border p-4" style={{ borderColor: 'var(--color-border)' }}>
-        <div className="h-3 w-16 rounded-full bg-[var(--color-surface-raised)]" />
-        <div className="mt-3 h-4 w-36 rounded-full bg-[var(--color-surface-raised)]" />
-        <div className="mt-4 h-3 w-20 rounded-full bg-[var(--color-surface-raised)]" />
+      <div key={index} className="rounded-2xl border p-3.5" style={{ borderColor: 'var(--color-border)' }}>
+        <div className="h-3 w-20 rounded-full bg-[var(--color-surface-raised)]" />
+        <div className="mt-2 h-4 w-36 rounded-full bg-[var(--color-surface-raised)]" />
+        <div className="mt-2 h-3 w-20 rounded-full bg-[var(--color-surface-raised)]" />
       </div>
     ))}
   </div>
 )
 
 const MotivationSkeleton = () => (
-  <div className="animate-pulse rounded-[24px] border p-4" style={{ borderColor: 'var(--color-border)' }}>
+  <div className="animate-pulse rounded-2xl border p-4" style={{ borderColor: 'var(--color-border)' }}>
     <div className="h-10 w-10 rounded-2xl bg-[var(--color-surface-raised)]" />
     <div className="mt-3 h-4 w-32 rounded-full bg-[var(--color-surface-raised)]" />
     <div className="mt-3 h-3 w-full rounded-full bg-[var(--color-surface-raised)]" />
@@ -710,10 +803,10 @@ const MotivationSkeleton = () => (
 )
 
 const BadgeSkeleton = () => (
-  <div className="space-y-3 animate-pulse">
+  <div className="space-y-2.5 animate-pulse">
     {Array.from({ length: 3 }).map((_, index) => (
-      <div key={index} className="flex items-center gap-3 rounded-3xl border p-4" style={{ borderColor: 'var(--color-border)' }}>
-        <div className="h-12 w-12 rounded-2xl bg-[var(--color-surface-raised)]" />
+      <div key={index} className="flex items-center gap-3 rounded-2xl border p-3.5" style={{ borderColor: 'var(--color-border)' }}>
+        <div className="h-11 w-11 rounded-2xl bg-[var(--color-surface-raised)]" />
         <div className="flex-1">
           <div className="h-4 w-28 rounded-full bg-[var(--color-surface-raised)]" />
           <div className="mt-2 h-3 w-40 rounded-full bg-[var(--color-surface-raised)]" />
@@ -722,6 +815,17 @@ const BadgeSkeleton = () => (
     ))}
   </div>
 )
+
+/* ─── Utility helpers ─────────────────────────────────────────────────────── */
+
+function getInitials(name) {
+  return String(name || '')
+    .split(' ')
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((n) => n[0].toUpperCase())
+    .join('')
+}
 
 function getAttendanceTone(percentage) {
   const value = Number(percentage || 0)
@@ -805,7 +909,7 @@ function attendanceBubbleStyle(day, today) {
 }
 
 function statusPillClass(status) {
-  return cn('rounded-full px-2 py-1 text-[10px] font-bold tracking-[0.16em]')
+  return cn('rounded-full px-2 py-0.5 text-[10px] font-bold tracking-[0.14em]')
 }
 
 function statusPillStyle(status) {
@@ -815,10 +919,10 @@ function statusPillStyle(status) {
 }
 
 function eventTone(type) {
-  if (type === 'exam') return { soft: 'rgba(37,99,235,0.10)', strong: '#2563eb', border: 'rgba(37,99,235,0.22)' }
-  if (type === 'fee') return { soft: 'rgba(239,68,68,0.10)', strong: '#dc2626', border: 'rgba(239,68,68,0.22)' }
-  if (type === 'holiday') return { soft: 'rgba(22,163,74,0.10)', strong: '#15803d', border: 'rgba(22,163,74,0.22)' }
-  return { soft: 'rgba(124,58,237,0.10)', strong: '#6d28d9', border: 'rgba(124,58,237,0.22)' }
+  if (type === 'exam') return { soft: 'rgba(37,99,235,0.08)', strong: '#2563eb', border: 'rgba(37,99,235,0.18)' }
+  if (type === 'fee') return { soft: 'rgba(239,68,68,0.08)', strong: '#dc2626', border: 'rgba(239,68,68,0.18)' }
+  if (type === 'holiday') return { soft: 'rgba(22,163,74,0.08)', strong: '#15803d', border: 'rgba(22,163,74,0.18)' }
+  return { soft: 'rgba(124,58,237,0.08)', strong: '#6d28d9', border: 'rgba(124,58,237,0.18)' }
 }
 
 function prettifyBadge(value) {
