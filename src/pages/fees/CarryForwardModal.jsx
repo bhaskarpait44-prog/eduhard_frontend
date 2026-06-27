@@ -19,6 +19,7 @@ const CarryForwardModal = ({ open, onClose, student, pendingInvoices, onSuccess 
 
   const fromSessionId = student?.current_enrollment?.session_id
   const fromSessionName = student?.current_enrollment?.session || 'Unknown Session'
+  const isSameSession = !!toSessionId && String(toSessionId) === String(fromSessionId)
   const toSessionName = sessions?.find(s => String(s.id) === String(toSessionId))?.name || 'Select target session...'
 
   useEffect(() => {
@@ -31,7 +32,7 @@ const CarryForwardModal = ({ open, onClose, student, pendingInvoices, onSuccess 
 
   // Sessions that could be the "to" session
   const availableSessions = (sessions || []).filter(s =>
-    (s.status === 'upcoming' || s.status === 'active') && s.id !== fromSessionId
+    s.status === 'upcoming' && String(s.id) !== String(fromSessionId)
   )
 
   const totalCarried = pendingInvoices.reduce((sum, inv) => {
@@ -47,6 +48,11 @@ const CarryForwardModal = ({ open, onClose, student, pendingInvoices, onSuccess 
 
     if (!fromSessionId) {
       toastError('Could not determine current session')
+      return
+    }
+
+    if (isSameSession) {
+      toastError('Carry forward is not allowed within the same session')
       return
     }
 
@@ -80,7 +86,7 @@ const CarryForwardModal = ({ open, onClose, student, pendingInvoices, onSuccess 
             icon={ArrowRightLeft}
             onClick={handleConfirm}
             loading={isSaving}
-            disabled={!toSessionId}
+            disabled={!toSessionId || isSameSession}
           >
             Confirm Carry Forward
           </Button>
@@ -148,7 +154,7 @@ const CarryForwardModal = ({ open, onClose, student, pendingInvoices, onSuccess 
           onChange={e => setToSessionId(e.target.value)}
           options={availableSessions.map(s => ({ 
             value: String(s.id), 
-            label: `${s.name}${s.is_current ? ' (Current)' : ''}` 
+            label: `${s.name} (New)` 
           }))}
           placeholder="Select target session…"
           hint="Student must already be enrolled in the target session"

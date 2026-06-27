@@ -35,7 +35,7 @@ import StudentSearchBox from '@/components/accountant/StudentSearchBox'
 import ReceiptPrint from '@/components/accountant/ReceiptPrint'
 import useFeeCollection from '@/hooks/useFeeCollection'
 import * as accountantApi from '@/api/accountantApi'
-import { formatCurrency, formatDate, getInitials } from '@/utils/helpers'
+import { formatCurrency, formatDate, getInitials, getFeeMonthLabel } from '@/utils/helpers'
 import useUiStore from '@/store/uiStore'
 
 const today = new Date().toISOString().slice(0, 10)
@@ -188,7 +188,7 @@ const FeeCollection = () => {
         amount: response.total_applied,
         payment_mode: paymentData.payment_mode,
         payment_date: paymentData.payment_date,
-        fee_name: selectedRows.map((row) => row.fee_name).join(', '),
+        fee_name: selectedRows.map((row) => `${row.fee_name}${row.due_date ? ` (${getFeeMonthLabel(row.due_date)})` : ''}`).join(', '),
       })
       setStep(4)
     } catch (error) {
@@ -320,7 +320,9 @@ const FeeCollection = () => {
                       />
                       <div className="flex-1">
                         <div className="flex flex-wrap items-center gap-2">
-                          <span className="text-sm font-extrabold text-gray-800 dark:text-gray-100">{invoice.fee_name}</span>
+                          <span className="text-sm font-extrabold text-gray-800 dark:text-gray-100">
+                            {invoice.fee_name} {invoice.due_date ? `(${getFeeMonthLabel(invoice.due_date)})` : ''}
+                          </span>
                           {overdue && <Tag color="error" className="rounded-full font-black text-[9px] px-2 py-0 border-0">OVERDUE</Tag>}
                           {isCarriedForward && <Tag color="warning" className="rounded-full font-black text-[9px] px-2 py-0 border-0">CARRIED FORWARD</Tag>}
                         </div>
@@ -590,7 +592,7 @@ const FeeCollection = () => {
                   <div className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-1">Invoice Item Breakdown</div>
                   {selectedRows.map((invoice) => (
                     <div key={invoice.id} className="flex items-center justify-between text-xs font-bold text-gray-700 dark:text-gray-300">
-                      <span>{invoice.fee_name}</span>
+                      <span>{invoice.fee_name} {invoice.due_date ? `(${getFeeMonthLabel(invoice.due_date)})` : ''}</span>
                       <span className="font-extrabold text-gray-500 dark:text-gray-400">{formatCurrency(invoice.balance)}</span>
                     </div>
                   ))}

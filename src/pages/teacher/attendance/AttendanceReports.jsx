@@ -396,44 +396,40 @@ const AttendanceReports = () => {
   }
 
   return (
-    <div className="space-y-6 pb-20 lg:pb-8">
-      {/* ── Header ── */}
-      <section 
-        className="rounded-[28px] border p-6" 
-        style={{ 
+    <div className="max-w-[1400px] mx-auto space-y-6 pb-12">
+      {/* Page Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="flex-1">
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+            Attendance Reports
+          </h1>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
+            Summary, daily trends, below-threshold tracking, and chronic absentee alerts for your assigned sections.
+          </p>
+        </div>
+        <div className="flex items-center gap-2">
+          <Button 
+            variant="primary" 
+            size="sm" 
+            icon={Download} 
+            onClick={handleDownloadSummary}
+            loading={downloading}
+            disabled={!registerData || loadingReports}
+          >
+            Export PDF
+          </Button>
+        </div>
+      </div>
+
+      {/* ── Filters ── */}
+      <div 
+        className="rounded-2xl border p-6"
+        style={{
           borderColor: 'var(--color-border)',
-          background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.12), rgba(139, 92, 246, 0.05) 55%, var(--color-surface) 100%)'
+          backgroundColor: 'var(--color-surface)',
         }}
       >
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-          <div className="min-w-0">
-            <p className="text-sm font-semibold uppercase tracking-[0.18em]" style={{ color: '#4f46e5' }}>
-              Attendance Intelligence
-            </p>
-            <h1 className="mt-2 text-2xl font-bold leading-tight sm:text-3xl" style={{ color: 'var(--color-text-primary)' }}>
-              Attendance Reports
-            </h1>
-            <p className="mt-2 text-sm sm:text-base opacity-80" style={{ color: 'var(--color-text-secondary)' }}>
-              Summary, daily trends, below-threshold tracking, and chronic absentee alerts for your assigned sections.
-            </p>
-          </div>
-          <div className="flex gap-2">
-            <Button 
-              variant="primary" 
-              size="sm" 
-              icon={Download} 
-              onClick={handleDownloadSummary}
-              loading={downloading}
-              disabled={!registerData || loadingReports}
-              className="rounded-2xl font-semibold shadow-lg shadow-indigo-600/20 h-11 px-6"
-            >
-              Export PDF
-            </Button>
-          </div>
-        </div>
-
-        {/* filters */}
-        <div className="mt-8 grid grid-cols-1 gap-5 xl:grid-cols-6 items-end border-t border-dashed border-border pt-8">
+        <div className="grid grid-cols-1 gap-5 xl:grid-cols-6 items-end">
           <div className="space-y-2 xl:col-span-2">
             <label className="text-sm font-semibold ml-1" style={{ color: 'var(--color-text-primary)' }}>Assigned Section</label>
             <Select
@@ -441,14 +437,14 @@ const AttendanceReports = () => {
               onChange={(e) => setAssignmentKey(e.target.value)}
               options={reportAssignments}
               placeholder={loadingAssignments ? 'Loading…' : 'Select section'}
-              className="h-11 px-4 rounded-2xl bg-surface-raised border border-border/50 text-sm font-semibold focus:border-primary transition-all"
+              className="h-11 px-4 rounded-xl bg-surface-raised border border-border/50 text-sm font-semibold focus:border-primary transition-all"
             />
           </div>
           <div className="space-y-2 xl:col-span-1">
             <label className="text-sm font-semibold ml-1" style={{ color: 'var(--color-text-primary)' }}>From Date</label>
             <Input 
               type="date" 
-              className="w-full h-11 bg-surface-raised border border-border/50 rounded-2xl px-4 text-sm text-text-primary outline-none focus:border-primary font-semibold transition-all" 
+              className="w-full h-11 bg-surface-raised border border-border/50 rounded-xl px-4 text-sm text-text-primary outline-none focus:border-primary font-semibold transition-all" 
               style={{ height: '44px' }}
               value={fromDate} 
               onChange={(e) => setFromDate(e.target.value)} 
@@ -458,7 +454,7 @@ const AttendanceReports = () => {
             <label className="text-sm font-semibold ml-1" style={{ color: 'var(--color-text-primary)' }}>To Date</label>
             <Input 
               type="date" 
-              className="w-full h-11 bg-surface-raised border border-border/50 rounded-2xl px-4 text-sm text-text-primary outline-none focus:border-primary font-semibold transition-all" 
+              className="w-full h-11 bg-surface-raised border border-border/50 rounded-xl px-4 text-sm text-text-primary outline-none focus:border-primary font-semibold transition-all" 
               style={{ height: '44px' }}
               value={toDate} 
               onChange={(e) => setToDate(e.target.value)} 
@@ -474,11 +470,11 @@ const AttendanceReports = () => {
                 { value: '80', label: '80%' },
                 { value: '85', label: '85%' },
               ]}
-              className="h-11 px-4 rounded-2xl bg-surface-raised border border-border/50 text-sm font-semibold focus:border-primary transition-all"
+              className="h-11 px-4 rounded-xl bg-surface-raised border border-border/50 text-sm font-semibold focus:border-primary transition-all"
             />
           </div>
         </div>
-      </section>
+      </div>
 
       {/* ── STAT STRIP ── */}
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">

@@ -33,7 +33,7 @@ const RemarkForm = ({
 
   return (
     <section
-      className="rounded-[28px] border p-5 sm:p-6"
+      className="rounded-2xl border p-5 sm:p-6"
       style={{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface)' }}
     >
       <h2 className="text-lg font-semibold" style={{ color: 'var(--color-text-primary)' }}>

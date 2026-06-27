@@ -210,7 +210,7 @@ const ReceiptDetail = () => {
                 </span>
               </div>
               <div className="p-5">
-                <ReceiptPrint receipt={receipt} />
+                <ReceiptPrint receipt={receipt} schoolProfile={data?.school} />
               </div>
             </div>
           </div>

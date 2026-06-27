@@ -84,29 +84,38 @@ const TeacherProfile = () => {
   }
 
   return (
-    <div className="space-y-5 pb-20">
+    <div className="max-w-[1400px] mx-auto space-y-6 pb-12">
+      {/* Page Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="flex-1">
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+            My Profile
+          </h1>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
+            View and manage your profile details. Employee ID: {profile?.employee_id || '--'} | {profile?.designation || 'Teacher'} | {profile?.department || 'Department not set'}
+          </p>
+        </div>
+      </div>
+
       <section
-        className="rounded-[28px] border p-5 sm:p-6"
+        className="rounded-2xl border p-5 sm:p-6"
         style={{
           borderColor: 'var(--color-border)',
-          background: 'linear-gradient(135deg, rgba(13, 148, 136, 0.18), rgba(16, 185, 129, 0.06) 58%, var(--color-surface) 100%)',
+          backgroundColor: 'var(--color-surface)',
         }}
       >
         <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
           <div className="flex items-start gap-4">
             <div
-              className="flex h-20 w-20 items-center justify-center rounded-[28px] text-2xl font-bold"
-              style={{ backgroundColor: '#0f766e', color: '#fff' }}
+              className="flex h-20 w-20 items-center justify-center rounded-2xl text-2xl font-bold"
+              style={{ backgroundColor: 'var(--color-brand)', color: '#fff' }}
             >
               {profile?.name?.split(' ').map((part) => part[0]).slice(0, 2).join('') || 'T'}
             </div>
             <div>
-              <h1 className="text-2xl font-bold" style={{ color: 'var(--color-text-primary)' }}>
+              <h2 className="text-xl font-bold" style={{ color: 'var(--color-text-primary)' }}>
                 {profile?.name || 'Teacher Profile'}
-              </h1>
-              <p className="mt-2 text-sm" style={{ color: 'var(--color-text-secondary)' }}>
-                Employee ID: {profile?.employee_id || '--'} | {profile?.designation || 'Teacher'} | {profile?.department || 'Department not set'}
-              </p>
+              </h2>
               <div className="mt-3 flex flex-wrap gap-2">
                 <Badge variant="green">{profile?.role || 'teacher'}</Badge>
                 <Badge variant="blue">Joined {formatDate(profile?.joining_date, 'long')}</Badge>
@@ -267,7 +276,7 @@ const TeacherProfile = () => {
 }
 
 const Panel = ({ title, icon: Icon, children }) => (
-  <section className="rounded-[28px] border p-5 sm:p-6" style={{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface)' }}>
+  <section className="rounded-2xl border p-5 sm:p-6" style={{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface)' }}>
     <div className="mb-4 flex items-center gap-2">
       <Icon size={16} style={{ color: 'var(--color-text-secondary)' }} />
       <h2 className="text-lg font-semibold" style={{ color: 'var(--color-text-primary)' }}>{title}</h2>
@@ -279,7 +288,7 @@ const Panel = ({ title, icon: Icon, children }) => (
 const MiniInfo = ({ icon: Icon, label, value }) => (
   <div className="rounded-2xl px-4 py-3" style={{ backgroundColor: 'var(--color-surface-raised)' }}>
     <div className="flex items-center gap-2">
-      <Icon size={14} style={{ color: '#0f766e' }} />
+      <Icon size={14} style={{ color: '#2563eb' }} />
       <p className="text-xs font-semibold uppercase tracking-[0.12em]" style={{ color: 'var(--color-text-muted)' }}>{label}</p>
     </div>
     <p className="mt-2 text-sm font-semibold break-words" style={{ color: 'var(--color-text-primary)' }}>{value}</p>

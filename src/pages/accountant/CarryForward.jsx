@@ -15,6 +15,14 @@ const CarryForward = () => {
   const [processingId, setProcessingId] = useState(null)
   
   const { sessions, currentSession, fetchSessions, fetchCurrentSession } = useSessionStore()
+  const sourceSessions = sessions || []
+  const targetSessions = useMemo(
+    () => (sessions || []).filter((session) =>
+      String(session.id) !== String(fromSessionId) && session.status === 'upcoming'
+    ),
+    [sessions, fromSessionId]
+  )
+  const isSameSession = !!fromSessionId && !!toSessionId && String(fromSessionId) === String(toSessionId)
 
   useEffect(() => {
     fetchSessions().catch(() => {})
@@ -26,12 +34,13 @@ const CarryForward = () => {
   }, [currentSession, fromSessionId])
 
   const nextSession = useMemo(
-    () => (sessions || []).find((session) => String(session.id) !== String(fromSessionId)),
-    [sessions, fromSessionId]
+    () => targetSessions[0],
+    [targetSessions]
   )
 
   useEffect(() => {
     if (nextSession?.id) setToSessionId(String(nextSession.id))
+    else setToSessionId('')
   }, [nextSession])
 
   useEffect(() => {
@@ -45,6 +54,10 @@ const CarryForward = () => {
   const handleCarryForward = async (studentId) => {
     if (!fromSessionId || !toSessionId) {
       return toastError('Please select both sessions')
+    }
+
+    if (isSameSession) {
+      return toastError('Carry forward is not allowed within the same session')
     }
     
     setProcessingId(studentId)
@@ -75,17 +88,17 @@ const CarryForward = () => {
         <div className="mt-4 grid gap-4 md:grid-cols-2">
           <select value={fromSessionId} onChange={(event) => setFromSessionId(event.target.value)} className="rounded-2xl border px-4 py-3 text-sm" style={{ backgroundColor: 'var(--color-bg)', borderColor: 'var(--color-border)', color: 'var(--color-text-primary)' }}>
             <option value="">From Session</option>
-            {(sessions || []).map((session) => (
+            {sourceSessions.map((session) => (
               <option key={session.id} value={session.id}>
                 {session.name}{session.is_current ? ' (Current)' : ''}
               </option>
             ))}
           </select>
           <select value={toSessionId} onChange={(event) => setToSessionId(event.target.value)} className="rounded-2xl border px-4 py-3 text-sm" style={{ backgroundColor: 'var(--color-bg)', borderColor: 'var(--color-border)', color: 'var(--color-text-primary)' }}>
-            <option value="">To Session</option>
-            {(sessions || []).map((session) => (
+            <option value="">To New Session</option>
+            {targetSessions.map((session) => (
               <option key={session.id} value={session.id}>
-                {session.name}{session.is_current ? ' (Current)' : ''}
+                {session.name} (New)
               </option>
             ))}
           </select>
@@ -105,7 +118,7 @@ const CarryForward = () => {
               <button
                 type="button"
                 onClick={() => handleCarryForward(row.student_id)}
-                disabled={processingId === row.student_id}
+                disabled={processingId === row.student_id || !toSessionId || isSameSession}
                 className="rounded-full px-4 py-2 text-xs font-semibold text-white transition-opacity disabled:opacity-50"
                 style={{ backgroundColor: 'var(--color-brand)' }}
               >

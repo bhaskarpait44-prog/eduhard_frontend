@@ -148,3 +148,18 @@ export const formatTime = (timeStr) => {
   hours = hours % 12 || 12
   return `${hours}:${minutes} ${ampm}`
 }
+
+/**
+ * Format a date string to a month label, e.g. "April 2026"
+ * timezone-safe (splits by '-' to avoid timezone shifts)
+ * @param {string} dateStr 
+ */
+export const getFeeMonthLabel = (dateStr) => {
+  if (!dateStr) return ''
+  const parts = String(dateStr).split('-')
+  if (parts.length < 2) return ''
+  const year = parts[0]
+  const monthIndex = parseInt(parts[1], 10) - 1
+  const date = new Date(year, monthIndex, 1)
+  return date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
+}

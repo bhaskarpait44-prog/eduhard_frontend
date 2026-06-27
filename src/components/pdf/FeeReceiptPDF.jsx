@@ -1,286 +1,517 @@
-import { Page, Text, View, Document, StyleSheet, Image } from '@react-pdf/renderer';
+import { Page, Text, View, Document, StyleSheet } from '@react-pdf/renderer';
 
-const accentColor = '#0f766e';
+const formatCurrency = (amount) => {
+  const parsed = parseFloat(amount);
+  if (isNaN(parsed)) return '₹0.00';
+  return '₹' + parsed.toLocaleString('en-IN', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  });
+};
 
 const styles = StyleSheet.create({
   page: {
-    padding: 40,
-    fontSize: 10,
+    paddingTop: 20,
+    paddingBottom: 20,
+    paddingLeft: 30,
+    paddingRight: 30,
+    fontSize: 9,
     fontFamily: 'Helvetica',
-    color: '#334155',
+    backgroundColor: '#ffffff',
+  },
+  copyContainer: {
+    position: 'relative',
+    padding: 15,
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+    borderRadius: 8,
+    height: 365,
+    justifyContent: 'space-between',
+    overflow: 'hidden',
+  },
+  watermark: {
+    position: 'absolute',
+    top: '35%',
+    left: '10%',
+    width: '80%',
+    opacity: 0.02,
+    zIndex: -1,
+    transform: 'rotate(-30deg)',
+  },
+  watermarkText: {
+    fontSize: 48,
+    fontWeight: 'bold',
+    color: '#000000',
+    textAlign: 'center',
+  },
+  copyIndicator: {
+    position: 'absolute',
+    top: 12,
+    right: 15,
+    fontSize: 7.5,
+    fontWeight: 'bold',
+    color: '#94a3b8',
+    letterSpacing: 1.5,
   },
   header: {
     flexDirection: 'row',
-    borderBottomWidth: 1,
-    borderBottomColor: '#e2e8f0',
-    paddingBottom: 20,
-    marginBottom: 20,
-    alignItems: 'center',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginTop: 5,
   },
-  logo: {
-    width: 60,
-    height: 60,
-    marginRight: 15,
+  logoAndSchool: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+  },
+  logoContainer: {
+    width: 44,
+    height: 44,
+    backgroundColor: '#f8fafc',
+    borderWidth: 1,
+    borderColor: '#f1f5f9',
+    borderRadius: 10,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 10,
+  },
+  logoText: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#2563eb',
   },
   schoolInfo: {
     flex: 1,
   },
   schoolName: {
-    fontSize: 18,
+    fontSize: 12,
     fontWeight: 'bold',
-    color: accentColor,
-    marginBottom: 4,
+    color: '#0f172a',
   },
-  schoolMeta: {
-    fontSize: 9,
+  schoolAddress: {
+    fontSize: 7.5,
     color: '#64748b',
-    marginBottom: 2,
+    marginTop: 2,
+    maxHeight: 18,
+    overflow: 'hidden',
   },
-  receiptTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#1e293b',
-    textAlign: 'center',
-    marginBottom: 20,
-    textTransform: 'uppercase',
-    letterSpacing: 2,
-  },
-  section: {
-    marginBottom: 15,
-  },
-  row: {
+  schoolContact: {
     flexDirection: 'row',
+    marginTop: 2,
+  },
+  schoolContactText: {
+    fontSize: 7.5,
+    color: '#94a3b8',
+    fontWeight: 'bold',
+  },
+  receiptHeaderRight: {
+    alignItems: 'flex-end',
+  },
+  badge: {
+    backgroundColor: '#0f172a',
+    borderRadius: 4,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
     marginBottom: 5,
   },
-  column: {
+  badgeText: {
+    color: '#ffffff',
+    fontSize: 7.5,
+    fontWeight: 'bold',
+  },
+  receiptNoLabel: {
+    fontSize: 7,
+    fontWeight: 'bold',
+    color: '#94a3b8',
+    textTransform: 'uppercase',
+  },
+  receiptNoValue: {
+    fontSize: 11,
+    fontWeight: 'bold',
+    color: '#0f172a',
+    marginTop: 1,
+  },
+  divider: {
+    borderBottomWidth: 1,
+    borderBottomColor: '#f1f5f9',
+    marginVertical: 10,
+  },
+  infoGrid: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 10,
+  },
+  infoCol: {
     flex: 1,
   },
-  label: {
-    fontSize: 9,
-    color: '#64748b',
-    textTransform: 'uppercase',
+  sectionTitle: {
+    fontSize: 7.5,
     fontWeight: 'bold',
+    color: '#94a3b8',
+    letterSpacing: 1,
+    marginBottom: 4,
+  },
+  studentName: {
+    fontSize: 10,
+    fontWeight: 'bold',
+    color: '#0f172a',
     marginBottom: 2,
   },
-  value: {
-    fontSize: 11,
-    color: '#1e293b',
+  infoRow: {
+    flexDirection: 'row',
+    marginBottom: 2,
+  },
+  infoLabel: {
+    fontSize: 8,
+    color: '#64748b',
+  },
+  infoValue: {
+    fontSize: 8,
+    fontWeight: 'bold',
+    color: '#334155',
   },
   table: {
-    marginTop: 10,
+    width: '100%',
     borderWidth: 1,
     borderColor: '#e2e8f0',
-    borderRadius: 4,
+    borderRadius: 6,
     overflow: 'hidden',
+    marginBottom: 10,
   },
   tableHeader: {
     flexDirection: 'row',
     backgroundColor: '#f8fafc',
     borderBottomWidth: 1,
     borderBottomColor: '#e2e8f0',
-    padding: 8,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+  },
+  colDescription: {
+    flex: 1,
+    fontSize: 7.5,
+    fontWeight: 'bold',
+    color: '#64748b',
+  },
+  colAmount: {
+    width: 80,
+    textAlign: 'right',
+    fontSize: 7.5,
+    fontWeight: 'bold',
+    color: '#64748b',
   },
   tableRow: {
     flexDirection: 'row',
     borderBottomWidth: 1,
     borderBottomColor: '#f1f5f9',
-    padding: 8,
+    paddingHorizontal: 8,
+    paddingVertical: 5,
+    alignItems: 'center',
   },
-  tableCol: {
+  descriptionContainer: {
     flex: 1,
   },
-  tableColRight: {
-    textAlign: 'right',
-    width: 80,
+  itemName: {
+    fontSize: 8.5,
+    fontWeight: 'bold',
+    color: '#0f172a',
   },
-  summarySection: {
-    marginTop: 20,
+  itemSubtext: {
+    fontSize: 7,
+    color: '#94a3b8',
+    marginTop: 1,
+  },
+  itemAmount: {
+    width: 80,
+    textAlign: 'right',
+    fontSize: 8.5,
+    fontWeight: 'bold',
+    color: '#0f172a',
+  },
+  grandTotalContainer: {
     flexDirection: 'row',
     justifyContent: 'flex-end',
+    alignItems: 'center',
+    marginTop: 5,
   },
-  summaryBox: {
-    width: 200,
-    padding: 10,
-    backgroundColor: '#f8fafc',
-    borderRadius: 4,
+  grandTotalLabel: {
+    fontSize: 7.5,
+    fontWeight: 'bold',
+    color: '#94a3b8',
+    letterSpacing: 1,
+    marginRight: 10,
   },
-  summaryRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 4,
+  grandTotalBox: {
+    backgroundColor: '#0f172a',
+    borderRadius: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    minWidth: 100,
+    alignItems: 'center',
   },
-  totalRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginTop: 8,
-    paddingTop: 8,
-    borderTopWidth: 1,
-    borderTopColor: '#e2e8f0',
-  },
-  totalLabel: {
+  grandTotalValue: {
+    color: '#ffffff',
     fontSize: 12,
     fontWeight: 'bold',
-    color: accentColor,
-  },
-  totalValue: {
-    fontSize: 12,
-    fontWeight: 'bold',
-    color: accentColor,
   },
   footer: {
-    marginTop: 50,
     flexDirection: 'row',
     justifyContent: 'space-between',
+    alignItems: 'flex-end',
+    borderTopWidth: 1,
+    borderTopColor: '#f1f5f9',
+    paddingTop: 10,
+    marginTop: 10,
+  },
+  termsContainer: {
+    flex: 1,
+    marginRight: 20,
+  },
+  termsTitle: {
+    fontSize: 7,
+    fontWeight: 'bold',
+    color: '#0f172a',
+    marginBottom: 2,
+  },
+  termsItem: {
+    fontSize: 6,
+    color: '#94a3b8',
+    marginBottom: 1,
+    lineHeight: 1.2,
+  },
+  signatureContainer: {
+    alignItems: 'center',
+    minWidth: 110,
   },
   signatureLine: {
-    width: 150,
-    borderTopWidth: 1,
-    borderTopColor: '#94a3b8',
-    marginTop: 40,
-    textAlign: 'center',
-    paddingTop: 5,
-    fontSize: 9,
-    color: '#64748b',
+    width: 80,
+    borderBottomWidth: 1,
+    borderBottomColor: '#cbd5e1',
+    marginBottom: 4,
+    height: 15,
   },
-  watermark: {
+  signatureLabel: {
+    fontSize: 7.5,
+    fontWeight: 'bold',
+    color: '#0f172a',
+  },
+  academicYear: {
+    fontSize: 6,
+    color: '#94a3b8',
+    marginTop: 1,
+    letterSpacing: 0.5,
+  },
+  separatorContainer: {
+    height: 25,
+    justifyContent: 'center',
+    alignItems: 'center',
+    position: 'relative',
+    marginVertical: 4,
+  },
+  dashedLine: {
+    width: '100%',
+    borderWidth: 1,
+    borderColor: '#cbd5e1',
+    borderStyle: 'dashed',
+  },
+  separatorTextContainer: {
     position: 'absolute',
-    top: '40%',
-    left: '25%',
-    fontSize: 60,
-    color: '#f1f5f9',
-    transform: 'rotate(-45deg)',
-    zIndex: -1,
+    backgroundColor: '#ffffff',
+    paddingHorizontal: 10,
+  },
+  separatorText: {
+    fontSize: 6.5,
+    fontWeight: 'bold',
+    color: '#94a3b8',
+    letterSpacing: 2,
   }
 });
 
-const FeeReceiptPDF = ({ data }) => {
-  const { school, receipt } = data;
-  const items = receipt.items || [];
+const ReceiptCopy = ({ copyType, receipt, school, items }) => {
+  const schoolNameFirstLetter = school.name ? school.name.charAt(0) + '.' : 'E.';
 
   return (
-    <Document>
-      <Page size="A4" style={styles.page}>
+    <View style={styles.copyContainer}>
+      {/* Watermark */}
+      {school.name && (
         <View style={styles.watermark}>
-          <Text>PAID</Text>
+          <Text style={styles.watermarkText}>{school.name.toUpperCase()}</Text>
         </View>
+      )}
 
-        {/* Header */}
+      {/* Copy Type Indicator */}
+      <Text style={styles.copyIndicator}>{copyType.toUpperCase()} COPY</Text>
+
+      <View>
+        {/* Brand Header */}
         <View style={styles.header}>
-          {school.logo_url && <Image src={school.logo_url} style={styles.logo} />}
-          <View style={styles.schoolInfo}>
-            <Text style={styles.schoolName}>{school.name}</Text>
-            <Text style={styles.schoolMeta}>{school.address}</Text>
-            <Text style={styles.schoolMeta}>Phone: {school.phone} | Email: {school.email}</Text>
+          <View style={styles.logoAndSchool}>
+            <View style={styles.logoContainer}>
+              <Text style={styles.logoText}>{schoolNameFirstLetter}</Text>
+            </View>
+            <View style={styles.schoolInfo}>
+              <Text style={styles.schoolName}>{school.name || ''}</Text>
+              <Text style={styles.schoolAddress}>{school.address || ''}</Text>
+              <View style={styles.schoolContact}>
+                <Text style={styles.schoolContactText}>
+                  {school.phone || ''} {school.phone && school.email ? ' • ' : ''} {school.email || ''}
+                </Text>
+              </View>
+            </View>
+          </View>
+          <View style={styles.receiptHeaderRight}>
+            <View style={styles.badge}>
+              <Text style={styles.badgeText}>FEE RECEIPT</Text>
+            </View>
+            <Text style={styles.receiptNoLabel}>Receipt No</Text>
+            <Text style={styles.receiptNoValue}>#{receipt.receipt_no}</Text>
           </View>
         </View>
 
-        <Text style={styles.receiptTitle}>Fee Receipt</Text>
+        {/* Divider Line */}
+        <View style={styles.divider} />
 
-        {/* Student & Receipt Info */}
-        <View style={styles.section}>
-          <View style={styles.row}>
-            <View style={styles.column}>
-              <Text style={styles.label}>Receipt Number</Text>
-              <Text style={styles.value}>{receipt.receipt_no}</Text>
+        {/* Info Grid */}
+        <View style={styles.infoGrid}>
+          {/* Student Details */}
+          <View style={styles.infoCol}>
+            <Text style={styles.sectionTitle}>STUDENT DETAILS</Text>
+            <Text style={styles.studentName}>{receipt.student_name}</Text>
+            <View style={styles.infoRow}>
+              <Text style={styles.infoLabel}>Adm No: </Text>
+              <Text style={styles.infoValue}>{receipt.admission_no}</Text>
             </View>
-            <View style={styles.column}>
-              <Text style={styles.label}>Date</Text>
-              <Text style={styles.value}>{new Date(receipt.payment_date).toLocaleDateString('en-IN', { day: '2-digit', month: 'long', year: 'numeric' })}</Text>
-            </View>
-          </View>
-          <View style={{ ...styles.row, marginTop: 15 }}>
-            <View style={styles.column}>
-              <Text style={styles.label}>Student Name</Text>
-              <Text style={styles.value}>{receipt.student_name}</Text>
-            </View>
-            <View style={styles.column}>
-              <Text style={styles.label}>Admission No.</Text>
-              <Text style={styles.value}>{receipt.admission_no}</Text>
+            <View style={styles.infoRow}>
+              <Text style={styles.infoLabel}>Class: </Text>
+              <Text style={styles.infoValue}>
+                {receipt.class_name} {receipt.section_name ? ` • Sec ${receipt.section_name}` : ''}
+              </Text>
             </View>
           </View>
-          <View style={{ ...styles.row, marginTop: 5 }}>
-            <View style={styles.column}>
-              <Text style={styles.label}>Class & Section</Text>
-              <Text style={styles.value}>{receipt.class_name} {receipt.section_name ? `- ${receipt.section_name}` : ''}</Text>
+
+          {/* Payment Info */}
+          <View style={[styles.infoCol, { alignItems: 'flex-end', textAlign: 'right' }]}>
+            <Text style={styles.sectionTitle}>PAYMENT INFO</Text>
+            <View style={styles.infoRow}>
+              <Text style={styles.infoLabel}>Date: </Text>
+              <Text style={styles.infoValue}>
+                {new Date(receipt.payment_date).toLocaleDateString('en-IN', { day: '2-digit', month: 'long', year: 'numeric' })}
+              </Text>
             </View>
-            <View style={styles.column}>
-              <Text style={styles.label}>Roll No.</Text>
-              <Text style={styles.value}>{receipt.roll_no || '-'}</Text>
+            <View style={styles.infoRow}>
+              <Text style={styles.infoLabel}>Mode: </Text>
+              <Text style={[styles.infoValue, { textTransform: 'capitalize' }]}>{receipt.payment_mode}</Text>
             </View>
+            {receipt.transaction_ref && (
+              <View style={styles.infoRow}>
+                <Text style={styles.infoLabel}>Ref: </Text>
+                <Text style={styles.infoValue}>{receipt.transaction_ref}</Text>
+              </View>
+            )}
           </View>
         </View>
 
-        {/* Fee Breakdown Table */}
+        {/* Table */}
         <View style={styles.table}>
+          {/* Table Header */}
           <View style={styles.tableHeader}>
-            <Text style={{ ...styles.tableCol, fontWeight: 'bold' }}>Description</Text>
-            <Text style={{ ...styles.tableColRight, fontWeight: 'bold' }}>Amount (INR)</Text>
+            <Text style={styles.colDescription}>DESCRIPTION</Text>
+            <Text style={styles.colAmount}>AMOUNT</Text>
           </View>
+          {/* Table Rows */}
           {items.map((item, index) => (
             <View key={index} style={styles.tableRow}>
-              <Text style={styles.tableCol}>{item.head_name}</Text>
-              <Text style={styles.tableColRight}>{parseFloat(item.amount).toFixed(2)}</Text>
+              <View style={styles.descriptionContainer}>
+                <Text style={styles.itemName}>{item.head_name}</Text>
+                <Text style={styles.itemSubtext}>Payment received towards student fee account</Text>
+              </View>
+              <Text style={styles.itemAmount}>{formatCurrency(item.amount)}</Text>
             </View>
           ))}
           {receipt.late_fee_amount > 0 && (
             <View style={styles.tableRow}>
-              <Text style={styles.tableCol}>Late Fee</Text>
-              <Text style={styles.tableColRight}>{parseFloat(receipt.late_fee_amount).toFixed(2)}</Text>
+              <View style={styles.descriptionContainer}>
+                <Text style={styles.itemName}>Late Fee</Text>
+              </View>
+              <Text style={styles.itemAmount}>{formatCurrency(receipt.late_fee_amount)}</Text>
             </View>
           )}
           {receipt.concession_amount > 0 && (
             <View style={styles.tableRow}>
-              <Text style={styles.tableCol}>Concession / Discount</Text>
-              <Text style={styles.tableColRight}>-{parseFloat(receipt.concession_amount).toFixed(2)}</Text>
+              <View style={styles.descriptionContainer}>
+                <Text style={styles.itemName}>Concession / Discount</Text>
+              </View>
+              <Text style={styles.itemAmount}>-{formatCurrency(receipt.concession_amount)}</Text>
             </View>
           )}
         </View>
 
-        {/* Summary */}
-        <View style={styles.summarySection}>
-          <View style={styles.summaryBox}>
-            <View style={styles.summaryRow}>
-              <Text>Total Payable:</Text>
-              <Text>INR {(parseFloat(receipt.amount_due) + parseFloat(receipt.late_fee_amount) - parseFloat(receipt.concession_amount)).toFixed(2)}</Text>
-            </View>
-            <View style={styles.summaryRow}>
-              <Text>Amount Paid:</Text>
-              <Text>INR {parseFloat(receipt.amount).toFixed(2)}</Text>
-            </View>
-            <View style={styles.totalRow}>
-              <Text style={styles.totalLabel}>Balance Due:</Text>
-              <Text style={styles.totalValue}>INR {parseFloat(receipt.balance_after).toFixed(2)}</Text>
-            </View>
+        {/* Grand Total Area */}
+        <View style={styles.grandTotalContainer}>
+          <Text style={styles.grandTotalLabel}>GRAND TOTAL</Text>
+          <View style={styles.grandTotalBox}>
+            <Text style={styles.grandTotalValue}>{formatCurrency(receipt.amount)}</Text>
+          </View>
+        </View>
+      </View>
+
+      {/* Footer Area */}
+      <View style={styles.footer}>
+        <View style={styles.termsContainer}>
+          <Text style={styles.termsTitle}>Terms & Conditions</Text>
+          <Text style={styles.termsItem}>• Fee once paid is non-refundable under any circumstances.</Text>
+          <Text style={styles.termsItem}>• This is a computer-generated receipt and requires no physical signature.</Text>
+          <Text style={styles.termsItem}>• Please keep this copy for your future reference and records.</Text>
+        </View>
+        <View style={styles.signatureContainer}>
+          <View style={styles.signatureLine} />
+          <Text style={styles.signatureLabel}>Authorized Signatory</Text>
+          <Text style={styles.academicYear}>Academic Year 2026-27</Text>
+        </View>
+      </View>
+    </View>
+  );
+};
+
+const FeeReceiptPDF = ({ data }) => {
+  if (!data) return null;
+  const { school = {}, receipt = {} } = data;
+
+  const getFeeMonthLabel = (dateStr) => {
+    if (!dateStr) return '';
+    const parts = String(dateStr).split('-');
+    if (parts.length < 2) return '';
+    const year = parts[0];
+    const monthIndex = parseInt(parts[1], 10) - 1;
+    const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+    const monthName = months[monthIndex];
+    return monthName ? `${monthName} ${year}` : '';
+  };
+
+  const formattedFeeName = `${receipt.fee_name || 'Academic Fee Payment'}${receipt.due_date ? ` (${getFeeMonthLabel(receipt.due_date)})` : ''}`;
+
+  const items = (receipt.items && receipt.items.length > 0)
+    ? receipt.items.map(item => ({
+        ...item,
+        head_name: `${item.head_name || 'Fee Item'}${receipt.due_date ? ` (${getFeeMonthLabel(receipt.due_date)})` : ''}`
+      }))
+    : [{ head_name: formattedFeeName, amount: receipt.amount }];
+
+  return (
+    <Document>
+      <Page size="A4" style={styles.page}>
+        {/* Original Copy */}
+        <ReceiptCopy copyType="Original" receipt={receipt} school={school} items={items} />
+
+        {/* Separator (Dashed line) */}
+        <View style={styles.separatorContainer}>
+          <View style={styles.dashedLine} />
+          <View style={styles.separatorTextContainer}>
+            <Text style={styles.separatorText}>CUT ALONG THIS LINE</Text>
           </View>
         </View>
 
-        {/* Payment Details */}
-        <View style={{ ...styles.section, marginTop: 20 }}>
-          <Text style={styles.label}>Payment Details</Text>
-          <Text style={styles.value}>
-            Mode: {receipt.payment_mode.toUpperCase()} 
-            {receipt.transaction_ref ? ` | Ref: ${receipt.transaction_ref}` : ''}
-          </Text>
-        </View>
-
-        {/* Footer / Signatures */}
-        <View style={styles.footer}>
-          <View>
-            <Text style={styles.signatureLine}>Parent's Signature</Text>
-          </View>
-          <View>
-            <Text style={styles.signatureLine}>Accountant / Cashier</Text>
-            <Text style={{ fontSize: 8, textAlign: 'center', marginTop: 2 }}>{receipt.received_by_name || 'Authorized Signatory'}</Text>
-          </View>
-          <View>
-            <Text style={styles.signatureLine}>Principal</Text>
-            <Text style={{ fontSize: 8, textAlign: 'center', marginTop: 2 }}>{school.principal_name}</Text>
-          </View>
-        </View>
-
-        <Text style={{ position: 'absolute', bottom: 30, left: 40, right: 40, textAlign: 'center', fontSize: 8, color: '#94a3b8' }}>
-          Computer generated receipt. No signature required for validation.
-        </Text>
+        {/* Office Copy */}
+        <ReceiptCopy copyType="Office" receipt={receipt} school={school} items={items} />
       </Page>
     </Document>
   );

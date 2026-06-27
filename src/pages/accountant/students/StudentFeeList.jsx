@@ -14,13 +14,21 @@ import * as classApi from '@/api/classApi'
 const STATUS_STYLES = {
   fully_paid: { bg: '#dcfce7', text: '#15803d' },
   partial:    { bg: '#fef9c3', text: '#a16207' },
-  pending:    { bg: '#fef9c3', text: '#a16207' },
+  pending:    { bg: '#dcfce7', text: '#15803d' },
   overdue:    { bg: '#fef2f2', text: '#b91c1c' },
   waived:     { bg: '#f1f5f9', text: '#64748b' },
 }
 
+const STATUS_LABELS = {
+  pending: 'Up to date',
+}
+
 const getFeeStatusStyle = (status) => {
   return STATUS_STYLES[status] || { bg: '#fef9c3', text: '#a16207' }
+}
+
+const getFeeStatusLabel = (status) => {
+  return STATUS_LABELS[status] || String(status || '').replace('_', ' ')
 }
 
 const StudentFeeList = () => {
@@ -134,7 +142,7 @@ const StudentFeeList = () => {
                       backgroundColor: getFeeStatusStyle(student.fee_status).bg, 
                       color: getFeeStatusStyle(student.fee_status).text 
                     }}>
-                      {String(student.fee_status || '').replace('_', ' ')}
+                      {getFeeStatusLabel(student.fee_status)}
                     </span>
                   </td>
                   <td className="px-5 py-4">

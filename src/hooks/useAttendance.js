@@ -20,6 +20,7 @@ const useAttendance = () => {
   const [studentPayload, setStudentPayload] = useState(null)
   const [loadingStudents, setLoadingStudents] = useState(false)
   const [savingAttendance, setSavingAttendance] = useState(false)
+  const [studentError, setStudentError] = useState(null)
   const [registerData, setRegisterData] = useState(null)
   const [loadingRegister, setLoadingRegister] = useState(false)
   const [reportData, setReportData] = useState({
@@ -111,6 +112,7 @@ const useAttendance = () => {
   const loadStudents = useCallback(async (payload) => {
     setLoadingStudents(true)
     setStudentPayload(null)
+    setStudentError(null)
     try {
       const assignment = findClassTeacherAssignment(payload?.class_id, payload?.section_id)
 
@@ -164,6 +166,9 @@ const useAttendance = () => {
 
       setStudentPayload(data)
       return data
+    } catch (err) {
+      setStudentError(err?.message || 'Failed to load students.')
+      throw err
     } finally {
       setLoadingStudents(false)
     }
@@ -185,11 +190,15 @@ const useAttendance = () => {
 
   const loadRegister = useCallback(async (params) => {
     setLoadingRegister(true)
+    setRegisterData(null)
     try {
       const res = await teacherApi.getTeacherAttendanceRegister(params)
       const data = res?.data || null
       setRegisterData(data)
       return data
+    } catch (err) {
+      setRegisterData(null)
+      throw err
     } finally {
       setLoadingRegister(false)
     }
@@ -235,6 +244,7 @@ const useAttendance = () => {
     studentPayload,
     loadingStudents,
     savingAttendance,
+    studentError,
     loadStudents,
     submitAttendance,
     overrideAttendance,

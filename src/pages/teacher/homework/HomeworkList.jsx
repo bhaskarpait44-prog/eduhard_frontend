@@ -135,38 +135,34 @@ const HomeworkList = () => {
   }
 
   return (
-    <div className="space-y-5 pb-24">
-      <section
-        className="rounded-[28px] border p-5 sm:p-6"
-        style={{
-          borderColor: 'var(--color-border)',
-          background: 'linear-gradient(135deg, rgba(13, 148, 136, 0.18), rgba(16, 185, 129, 0.06) 58%, var(--color-surface) 100%)',
-        }}
-      >
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-          <div>
-            <h1 className="text-2xl font-bold" style={{ color: 'var(--color-text-primary)' }}>
-              Homework
-            </h1>
-            <p className="mt-2 text-sm" style={{ color: 'var(--color-text-secondary)' }}>
-              Assign homework quickly, track every student, grade submissions, and send reminders from one teacher-first workflow.
-            </p>
-          </div>
+    <div className="max-w-[1400px] mx-auto space-y-6 pb-12">
+      {/* Page Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="flex-1">
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+            Homework
+          </h1>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
+            Assign homework quickly, track every student, grade submissions, and send reminders from one teacher-first workflow.
+          </p>
+        </div>
+        <div className="flex items-center gap-2">
           <Button variant="primary" icon={NotebookPen} onClick={() => { setEditingHomework(null); setFormOpen(true) }}>
             Assign Homework
           </Button>
         </div>
+      </div>
 
-        <div className="mt-5 grid grid-cols-2 gap-3 lg:grid-cols-4">
-          <StatCard title="Homework Items" value={stats.total} tone="#0f766e" />
-          <StatCard title="Submitted" value={stats.submittedStudents} tone="#10b981" />
-          <StatCard title="Pending" value={stats.pendingStudents} tone="#f59e0b" />
-          <StatCard title="Overdue" value={stats.overdue} tone="#ef4444" />
-        </div>
-      </section>
+      {/* Stats cards row */}
+      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+        <StatCard title="Homework Items" value={stats.total} tone="#2563eb" />
+        <StatCard title="Submitted" value={stats.submittedStudents} tone="#10b981" />
+        <StatCard title="Pending" value={stats.pendingStudents} tone="#f59e0b" />
+        <StatCard title="Overdue" value={stats.overdue} tone="#ef4444" />
+      </div>
 
       <section
-        className="rounded-[28px] border p-5 sm:p-6"
+        className="rounded-2xl border p-5 sm:p-6"
         style={{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface)' }}
       >
         <div className="mb-4 flex items-center gap-2">

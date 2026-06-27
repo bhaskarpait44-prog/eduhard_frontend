@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useLocation } from 'react-router-dom'
-import { AlertTriangle, BookOpen, GraduationCap, Layout, Info, BarChart3, TrendingUp, TrendingDown, Users, Download, Star, CheckCircle2, RefreshCw, FilterX, Search, ChevronRight } from 'lucide-react'
+import { AlertTriangle, BookOpen, GraduationCap, Layout, Info, BarChart3, TrendingUp, TrendingDown, Users, Download, Star, CheckCircle2, RefreshCw, FilterX, Search, ChevronRight, Lock } from 'lucide-react'
 import usePageTitle from '@/hooks/usePageTitle'
 import useToast from '@/hooks/useToast'
 import useMarksEntry from '@/hooks/useMarksEntry'
@@ -162,37 +162,40 @@ const MarksSummary = () => {
   const gradeDistribution = useMemo(() => buildGradeDistribution(summaryPayload?.students || []), [summaryPayload])
 
   return (
-    <div className="space-y-6">
-      {/* ── Header ── */}
-      <section className="rounded-2xl border p-5 sm:p-6" style={{ borderColor: 'var(--color-border)' }}>
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-          <div className="min-w-0">
-            <p className="text-[11px] font-semibold uppercase tracking-widest" style={{ color: '#0f766e' }}>
-              Academic Performance
-            </p>
-            <h1 className="mt-1.5 text-2xl font-bold sm:text-3xl" style={{ color: 'var(--color-text-primary)' }}>
-              Marks Summary
-            </h1>
-            <p className="mt-1.5 max-w-xl text-sm leading-relaxed" style={{ color: 'var(--color-text-secondary)' }}>
-              View performance analytics, grade distributions, and student-wise result summaries.
-            </p>
-          </div>
+    <div className="max-w-[1400px] mx-auto space-y-6 pb-12">
+      {/* Page Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="flex-1">
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+            Marks Summary
+          </h1>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
+            View performance analytics, grade distributions, and student-wise result summaries.
+          </p>
         </div>
+      </div>
 
-        {/* ── Filters ── */}
-        <div className="mt-5 grid grid-cols-1 gap-4 xl:grid-cols-6">
+      {/* ── Filters ── */}
+      <div 
+        className="rounded-2xl border p-6"
+        style={{
+          borderColor: 'var(--color-border)',
+          backgroundColor: 'var(--color-surface)',
+        }}
+      >
+        <div className="grid grid-cols-1 gap-4 xl:grid-cols-6">
           <div className="space-y-1.5 xl:col-span-2">
-            <label className="text-sm font-medium" style={{ color: 'var(--color-text-primary)' }}>Examination</label>
+            <label className="text-sm font-semibold ml-1" style={{ color: 'var(--color-text-primary)' }}>Examination</label>
             <Select
               value={examId}
               onChange={(e) => setExamId(e.target.value)}
               options={exams.map((ex) => ({ value: String(ex.id), label: ex.name }))}
               placeholder="Choose Exam"
-              className="h-9 px-3 py-1 rounded-xl bg-surface-raised border border-border/50 text-xs font-semibold focus:border-primary"
+              className="h-11 px-4 rounded-xl bg-surface-raised border border-border/50 text-sm font-semibold focus:border-primary transition-all"
             />
           </div>
           <div className="space-y-1.5 xl:col-span-2">
-            <label className="text-sm font-medium" style={{ color: 'var(--color-text-primary)' }}>Class & Section</label>
+            <label className="text-sm font-semibold ml-1" style={{ color: 'var(--color-text-primary)' }}>Class & Section</label>
             <Select
               value={sectionKey}
               onChange={(e) => setSectionKey(e.target.value)}
@@ -201,21 +204,21 @@ const MarksSummary = () => {
                 label: `${s.class_name} ${s.section_name}`,
               }))}
               placeholder="Choose Section"
-              className="h-9 px-3 py-1 rounded-xl bg-surface-raised border border-border/50 text-xs font-semibold focus:border-primary"
+              className="h-11 px-4 rounded-xl bg-surface-raised border border-border/50 text-sm font-semibold focus:border-primary transition-all"
             />
           </div>
           <div className="space-y-1.5 xl:col-span-2">
-            <label className="text-sm font-medium" style={{ color: 'var(--color-text-primary)' }}>Subject</label>
+            <label className="text-sm font-semibold ml-1" style={{ color: 'var(--color-text-primary)' }}>Subject</label>
             <Select
               value={subjectId}
               onChange={(e) => setSubjectId(e.target.value)}
               options={subjectOptions.map((s) => ({ value: String(s.id), label: s.name }))}
               placeholder="Choose Subject"
-              className="h-9 px-3 py-1 rounded-xl bg-surface-raised border border-border/50 text-xs font-semibold focus:border-primary"
+              className="h-11 px-4 rounded-xl bg-surface-raised border border-border/50 text-sm font-semibold focus:border-primary transition-all"
             />
           </div>
         </div>
-      </section>
+      </div>
 
       {/* ── Main Content ── */}
       <main className="min-h-[400px]">
@@ -265,134 +268,158 @@ const MarksSummary = () => {
                   <h4 className="text-[10px] font-bold uppercase tracking-widest text-text-muted">Current Review Status</h4>
                   <p className={cn(
                     "text-sm font-bold mt-0.5",
-                    summaryPayload?.review_status?.status === 'completed' ? 'text-success' : 'text-orange-600'
+                    summaryPayload?.review_status?.status === 'approved' ? 'text-success' : 'text-orange-600'
                   )}>
-                    {summaryPayload?.review_status?.label || 'Draft / In Progress'}
+                    {summaryPayload?.review_status?.label || 'Draft'}
                   </p>
                 </div>
               </div>
             </div>
 
-            {/* ── Analytics Grid ── */}
-            <section className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6">
-              <Stat icon={TrendingUp} title="Highest" value={summaryPayload?.summary?.highest ?? '--'} sub={summaryPayload?.summary?.highest_student || '—'} tone="var(--color-primary)" />
-              <Stat icon={TrendingDown} title="Lowest" value={summaryPayload?.summary?.lowest ?? '--'} sub={summaryPayload?.summary?.lowest_student || '—'} tone="var(--color-error)" />
-              <Stat icon={Star} title="Average" value={summaryPayload?.summary?.average ?? '--'} sub="Class Performance" tone="var(--color-text-primary)" />
-              <Stat icon={Users} title="Passed" value={summaryPayload?.summary?.pass_count ?? 0} sub="Students" tone="var(--color-success)" />
-              <Stat icon={Users} title="Failed" value={summaryPayload?.summary?.fail_count ?? 0} sub="Students" tone="var(--color-error)" />
-              <Stat icon={Info} title="Absent" value={summaryPayload?.summary?.absent_count ?? 0} sub="Students" tone="var(--color-text-muted)" />
-            </section>
-
-            {/* ── Visual Distributions ── */}
-            <section className="grid grid-cols-1 gap-6 xl:grid-cols-2">
-              <ChartCard title="Marks Distribution" icon={BarChart3} onExport={() => exportStudents(summaryPayload?.students || [])}>
-                <div className="space-y-4">
-                  {distribution.map((item) => (
-                    <BarRow key={item.label} label={item.label} value={item.count} max={Math.max(...distribution.map((row) => row.count), 1)} tone="var(--color-primary)" />
-                  ))}
+            {summaryPayload?.review_status?.status !== 'approved' ? (
+              <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed bg-surface-raised/20 py-24 px-6 text-center">
+                <div className="flex h-16 w-16 items-center justify-center rounded-full bg-amber-50 text-amber-600 mb-4 ring-8 ring-amber-50/50 dark:bg-amber-950/20 dark:text-amber-400 dark:ring-amber-950/10">
+                  <Lock size={30} />
                 </div>
-              </ChartCard>
-              <ChartCard title="Grade Distribution" icon={GraduationCap} onExport={() => exportStudents(summaryPayload?.students || [])}>
-                <div className="space-y-4">
-                  {gradeDistribution.map((item) => (
-                    <BarRow key={item.label} label={item.label} value={item.count} max={Math.max(...gradeDistribution.map((row) => row.count), 1)} tone="var(--color-success)" />
-                  ))}
-                </div>
-              </ChartCard>
-            </section>
-
-            {/* ── Detailed Table ── */}
-            <section
-              className="overflow-hidden rounded-2xl border bg-surface shadow-sm"
-              style={{ borderColor: 'var(--color-border)' }}
-            >
-              <div className="flex items-center justify-between border-b bg-surface-raised/30 p-4 sm:px-6" style={{ borderColor: 'var(--color-border)' }}>
-                <div className="flex items-center gap-3">
-                  <div className="h-8 w-8 rounded-lg bg-primary/10 text-primary flex items-center justify-center">
-                    <Layout size={16} />
-                  </div>
-                  <h2 className="text-sm font-bold text-text-primary">Student-wise Performance</h2>
-                </div>
-                <Button 
-                  variant="outline" 
-                  icon={Download}
-                  onClick={() => exportStudents(summaryPayload?.students || [])}
-                  className="h-9 rounded-xl px-4 text-xs font-bold"
-                >
-                  Export CSV
-                </Button>
+                <h3 className="text-xl font-bold text-text-primary">Summary Pending Approval</h3>
+                <p className="mt-2 text-sm text-text-muted max-w-md mx-auto leading-relaxed">
+                  The performance summary, analytics dashboard, and student-wise records are locked until the marks for this exam subject have been approved by the administrator.
+                </p>
               </div>
+            ) : (
+              <>
+                {/* ── Analytics Grid ── */}
+                <section className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6">
+                  <Stat icon={TrendingUp} title="Highest" value={summaryPayload?.summary?.highest ?? '--'} sub={summaryPayload?.summary?.highest_student || '—'} tone="var(--color-primary)" />
+                  <Stat icon={TrendingDown} title="Lowest" value={summaryPayload?.summary?.lowest ?? '--'} sub={summaryPayload?.summary?.lowest_student || '—'} tone="var(--color-error)" />
+                  <Stat icon={Star} title="Average" value={summaryPayload?.summary?.average ?? '--'} sub="Class Performance" tone="var(--color-text-primary)" />
+                  <Stat icon={Users} title="Passed" value={summaryPayload?.summary?.pass_count ?? 0} sub="Students" tone="var(--color-success)" />
+                  <Stat icon={Users} title="Failed" value={summaryPayload?.summary?.fail_count ?? 0} sub="Students" tone="var(--color-error)" />
+                  <Stat icon={Info} title="Absent" value={summaryPayload?.summary?.absent_count ?? 0} sub="Students" tone="var(--color-text-muted)" />
+                </section>
 
-              <div className="overflow-x-auto">
-                <table className="w-full border-collapse">
-                  <thead>
-                    <tr className="border-b bg-surface-raised/10" style={{ borderColor: 'var(--color-border)' }}>
-                      {[
-                        { label: 'Roll', width: '70px', align: 'center' },
-                        { label: 'Student Information', width: 'auto', align: 'left' },
-                        { label: 'Marks', width: '100px', align: 'center' },
-                        { label: 'Grade', width: '80px', align: 'center' },
-                        { label: 'Status', width: '100px', align: 'center' }
-                      ].map((col) => (
-                        <th 
-                          key={col.label} 
-                          className={cn(
-                            "px-4 py-4 text-[10px] font-bold uppercase tracking-widest text-text-muted",
-                            col.align === 'center' ? 'text-center' : 'text-left'
-                          )}
-                          style={{ width: col.width }}
-                        >
-                          {col.label}
-                        </th>
+                {/* ── Visual Distributions ── */}
+                <section className="grid grid-cols-1 gap-6 xl:grid-cols-2">
+                  <ChartCard title="Marks Distribution" icon={BarChart3} onExport={() => exportStudents(summaryPayload?.students || [])}>
+                    <div className="space-y-4">
+                      {distribution.map((item) => (
+                        <BarRow key={item.label} label={item.label} value={item.count} max={Math.max(...distribution.map((row) => row.count), 1)} tone="var(--color-primary)" />
                       ))}
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-border/30">
-                    {(summaryPayload?.students || []).map((student) => (
-                      <tr key={`${student.roll_number}-${student.first_name}`} className="hover:bg-surface-raised/40 transition-colors group">
-                        <td className="px-4 py-3 text-center text-xs font-mono font-bold text-text-muted">{student.roll_number || '--'}</td>
-                        <td className="px-4 py-3">
-                          <div className="flex flex-col min-w-0">
-                            <span className="text-sm font-bold text-text-primary group-hover:text-primary transition-colors truncate">
-                              {student.first_name} {student.last_name}
-                            </span>
-                            <div className="flex items-center gap-2 mt-0.5">
-                              <span className="text-[9px] font-bold text-text-muted uppercase tracking-widest">ID: {student.student_id}</span>
-                            </div>
-                          </div>
-                        </td>
-                        <td className="px-4 py-3 text-center text-sm font-black">
-                          {student.is_absent ? (
-                            <span className="text-text-muted/50">AB</span>
-                          ) : (
-                            <span className={cn(student.is_pass ? 'text-success' : 'text-error')}>
-                              {student.marks_obtained ?? '--'}
-                            </span>
-                          )}
-                        </td>
-                        <td className="px-4 py-3 text-center">
-                          <span className="inline-flex items-center rounded-md bg-surface-raised px-2 py-0.5 text-xs font-bold text-text-primary">
-                            {student.grade || '--'}
-                          </span>
-                        </td>
-                        <td className="px-4 py-3 text-center">
-                          <span className={cn(
-                            "inline-flex items-center rounded-full px-2.5 py-0.5 text-[9px] font-black uppercase tracking-wider",
-                            student.is_absent 
-                              ? 'bg-slate-100 text-slate-500' 
-                              : student.is_pass 
-                                ? 'bg-green-100 text-green-700' 
-                                : 'bg-red-100 text-red-700'
-                          )}>
-                            {student.is_absent ? 'Absent' : student.is_pass ? 'Pass' : 'Fail'}
-                          </span>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </section>
+                    </div>
+                  </ChartCard>
+                  <ChartCard title="Grade Distribution" icon={GraduationCap} onExport={() => exportStudents(summaryPayload?.students || [])}>
+                    <div className="space-y-4">
+                      {gradeDistribution.map((item) => (
+                        <BarRow key={item.label} label={item.label} value={item.count} max={Math.max(...gradeDistribution.map((row) => row.count), 1)} tone="var(--color-success)" />
+                      ))}
+                    </div>
+                  </ChartCard>
+                </section>
+
+                {/* ── Detailed Table ── */}
+                <section
+                  className="overflow-hidden rounded-2xl border bg-surface shadow-sm"
+                  style={{ borderColor: 'var(--color-border)' }}
+                >
+                  <div className="flex items-center justify-between border-b bg-surface-raised/30 p-4 sm:px-6" style={{ borderColor: 'var(--color-border)' }}>
+                    <div className="flex items-center gap-3">
+                      <div className="h-8 w-8 rounded-lg bg-primary/10 text-primary flex items-center justify-center">
+                        <Layout size={16} />
+                      </div>
+                      <h2 className="text-sm font-bold text-text-primary">Student-wise Performance</h2>
+                    </div>
+                    <Button 
+                      variant="outline" 
+                      icon={Download}
+                      onClick={() => exportStudents(summaryPayload?.students || [])}
+                      className="h-9 rounded-xl px-4 text-xs font-bold"
+                    >
+                      Export CSV
+                    </Button>
+                  </div>
+
+                  <div className="overflow-x-auto">
+                    <table className="w-full border-collapse">
+                      <thead>
+                        <tr className="border-b bg-surface-raised/10" style={{ borderColor: 'var(--color-border)' }}>
+                          {[
+                            { label: 'Roll', width: '70px', align: 'center' },
+                            { label: 'Student Information', width: 'auto', align: 'left' },
+                            { label: 'Marks', width: '100px', align: 'center' },
+                            { label: 'Grade', width: '80px', align: 'center' },
+                            { label: 'Status', width: '100px', align: 'center' }
+                          ].map((col) => (
+                            <th 
+                              key={col.label} 
+                              className={cn(
+                                "px-4 py-4 text-[10px] font-bold uppercase tracking-widest text-text-muted",
+                                col.align === 'center' ? 'text-center' : 'text-left'
+                              )}
+                              style={{ width: col.width }}
+                            >
+                              {col.label}
+                            </th>
+                          ))}
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-border/30">
+                        {(summaryPayload?.students || []).map((student) => (
+                          <tr key={`${student.roll_number}-${student.first_name}`} className="hover:bg-surface-raised/40 transition-colors group">
+                            <td className="px-4 py-3 text-center text-xs font-mono font-bold text-text-muted">{student.roll_number || '--'}</td>
+                            <td className="px-4 py-3">
+                              <div className="flex flex-col min-w-0">
+                                <span className="text-sm font-bold text-text-primary group-hover:text-primary transition-colors truncate">
+                                  {student.first_name} {student.last_name}
+                                </span>
+                                <div className="flex items-center gap-2 mt-0.5">
+                                  <span className="text-[9px] font-bold text-text-muted uppercase tracking-widest">ID: {student.student_id}</span>
+                                </div>
+                              </div>
+                            </td>
+                            <td className="px-4 py-3 text-center text-sm font-black">
+                              {student.is_absent ? (
+                                <span className="text-text-muted/50">AB</span>
+                              ) : student.marks_obtained == null ? (
+                                <span className="text-text-muted">--</span>
+                              ) : (
+                                <span className={cn(student.is_pass ? 'text-success' : 'text-error')}>
+                                  {student.marks_obtained}
+                                </span>
+                              )}
+                            </td>
+                            <td className="px-4 py-3 text-center">
+                              <span className="inline-flex items-center rounded-md bg-surface-raised px-2 py-0.5 text-xs font-bold text-text-primary">
+                                {student.grade || '--'}
+                              </span>
+                            </td>
+                            <td className="px-4 py-3 text-center">
+                              <span className={cn(
+                                "inline-flex items-center rounded-full px-2.5 py-0.5 text-[9px] font-black uppercase tracking-wider",
+                                student.is_absent 
+                                  ? 'bg-slate-100 text-slate-500' 
+                                  : student.marks_obtained == null
+                                    ? 'bg-amber-100 text-amber-700'
+                                    : student.is_pass 
+                                      ? 'bg-green-100 text-green-700' 
+                                      : 'bg-red-100 text-red-700'
+                              )}>
+                                {student.is_absent 
+                                  ? 'Absent' 
+                                  : student.marks_obtained == null 
+                                    ? 'Ongoing' 
+                                    : student.is_pass 
+                                      ? 'Pass' 
+                                      : 'Fail'}
+                              </span>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </section>
+              </>
+            )}
           </div>
         )}
       </main>
@@ -485,7 +512,13 @@ const exportStudents = (students) => {
       `${student.first_name} ${student.last_name}`,
       student.is_absent ? 'AB' : (student.marks_obtained ?? ''),
       student.grade || '',
-      student.is_absent ? 'Absent' : student.is_pass ? 'Pass' : 'Fail',
+      student.is_absent 
+        ? 'Absent' 
+        : student.marks_obtained == null 
+          ? 'Ongoing' 
+          : student.is_pass 
+            ? 'Pass' 
+            : 'Fail',
     ]),
   ]
   const csv = rows.map((row) => row.map((cell) => `"${String(cell ?? '').replace(/"/g, '""')}"`).join(',')).join('\n')

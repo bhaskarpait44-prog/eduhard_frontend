@@ -4,6 +4,7 @@ import { BookOpenCheck, ClipboardCheck, RefreshCw, School2, Users } from 'lucide
 import * as teacherApi from '@/api/teacherApi'
 import Badge from '@/components/ui/Badge'
 import EmptyState from '@/components/ui/EmptyState'
+import Button from '@/components/ui/Button'
 import usePageTitle from '@/hooks/usePageTitle'
 import useToast from '@/hooks/useToast'
 import { ROUTES } from '@/constants/app'
@@ -81,42 +82,37 @@ const TeacherMyClasses = () => {
   const hasAssignments = summary.totalSections > 0
 
   return (
-    <div className="space-y-6">
+    <div className="max-w-[1400px] mx-auto space-y-6 pb-12">
 
-      {/* ── Header ── */}
-      <section className="rounded-2xl border p-5 sm:p-6" style={{ borderColor: 'var(--color-border)' }}>
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-          <div className="min-w-0">
-            <p className="text-[11px] font-semibold uppercase tracking-widest" style={{ color: '#0f766e' }}>
-              Teacher Portal
-            </p>
-            <h1 className="mt-1.5 text-2xl font-bold sm:text-3xl" style={{ color: 'var(--color-text-primary)' }}>
-              My Classes
-            </h1>
-            <p className="mt-1.5 max-w-xl text-sm leading-relaxed" style={{ color: 'var(--color-text-secondary)' }}>
-              Shows only the classes and sections currently assigned to you.
-            </p>
-          </div>
-
-          <button
-            type="button"
+      {/* Page Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="flex-1">
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+            My Classes
+          </h1>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
+            Shows only the classes and sections currently assigned to you.
+          </p>
+        </div>
+        <div className="flex items-center gap-2">
+          <Button 
+            variant="secondary" 
+            icon={RefreshCw} 
+            loading={refreshing}
             onClick={() => loadClasses(true)}
-            disabled={loading || refreshing}
-            className="inline-flex items-center gap-2 self-start rounded-xl border px-4 py-2.5 text-sm font-semibold transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-60"
-            style={{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface)' }}
+            size="sm"
           >
-            <RefreshCw size={14} className={refreshing ? 'animate-spin' : ''} />
-            {refreshing ? 'Refreshing…' : 'Refresh'}
-          </button>
+            Refresh
+          </Button>
         </div>
+      </div>
 
-        {/* Stats row */}
-        <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-4">
-          <StatCard label="Assigned Sections" value={summary.totalSections}   color="#0f766e" />
-          <StatCard label="Class Teacher"      value={summary.classTeacherSections} color="#10b981" />
-          <StatCard label="Subject Sections"   value={summary.subjectTeacherSections} color="#0284c7" />
-          <StatCard label="Assigned Subjects"  value={summary.totalSubjects}  color="#f59e0b" />
-        </div>
+      {/* ── Stats ── */}
+      <section className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+        <StatCard label="Assigned Sections" value={summary.totalSections}   color="#2563eb" />
+        <StatCard label="Class Teacher"      value={summary.classTeacherSections} color="#2563eb" />
+        <StatCard label="Subject Sections"   value={summary.subjectTeacherSections} color="#2563eb" />
+        <StatCard label="Assigned Subjects"  value={summary.totalSubjects}  color="#2563eb" />
       </section>
 
       {/* ── Body ── */}
@@ -285,7 +281,7 @@ const AssignmentCard = ({ assignment, variant, navigate }) => {
 
       {/* Mini stats */}
       <div className="mt-4 grid grid-cols-4 gap-2">
-        <MiniStat label="Students"  value={assignment.student_count}                                color="#0f766e" />
+        <MiniStat label="Students"  value={assignment.student_count}                                color="#2563eb" />
         <MiniStat label="Att. rate" value={`${Number(assignment.attendance_rate || 0).toFixed(0)}%`} color="#0284c7" />
         <MiniStat label="Below 75%" value={assignment.below_75_count}                               color="#ef4444" />
         <MiniStat label="Fee due"   value={assignment.fee_defaulters_count}                         color="#f59e0b" />
@@ -351,7 +347,7 @@ const ActionBtn = ({ icon: Icon, label, onClick, disabled = false }) => (
     className="inline-flex items-center gap-1.5 rounded-xl border px-3.5 py-2 text-xs font-semibold transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-50"
     style={{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface)' }}
   >
-    <Icon size={13} style={{ color: disabled ? 'var(--color-text-muted)' : '#0f766e' }} />
+    <Icon size={13} style={{ color: disabled ? 'var(--color-text-muted)' : '#2563eb' }} />
     {label}
   </button>
 )

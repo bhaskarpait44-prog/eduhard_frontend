@@ -2,7 +2,6 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import * as teacherApi from '@/api/teacherApi'
 
 const useTeacherLeave = () => {
-  const [balances, setBalances] = useState([])
   const [applications, setApplications] = useState([])
   const [session, setSession] = useState(null)
   const [workingDays, setWorkingDays] = useState(null)
@@ -18,7 +17,6 @@ const useTeacherLeave = () => {
         teacherApi.getTeacherLeaveApplications(),
       ])
 
-      setBalances(balanceRes?.data?.balances || [])
       setSession(balanceRes?.data?.session || null)
       setWorkingDays(balanceRes?.data?.working_days || null)
       setHolidays(balanceRes?.data?.holidays || [])
@@ -63,7 +61,6 @@ const useTeacherLeave = () => {
   }, { total: 0, pending: 0, approved: 0, rejected: 0 }), [applications])
 
   return {
-    balances,
     applications,
     session,
     workingDays,

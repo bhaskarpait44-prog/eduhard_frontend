@@ -104,56 +104,49 @@ const NoticeList = () => {
   }
 
   return (
-    <div className="space-y-5">
-      {/* ── Header ── */}
-      <section
-        className="rounded-[24px] border px-4 py-3 sm:px-5 sm:py-4"
-        style={{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface)' }}
-      >
-        <div className="flex items-center gap-3">
-          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl" style={{ backgroundColor: 'rgba(13,148,136,0.12)' }}>
-            <BellRing size={16} style={{ color: '#0f766e' }} />
-          </div>
-
-          <div className="min-w-0 flex-1">
-            <h1 className="text-base font-semibold leading-tight" style={{ color: 'var(--color-text-primary)' }}>Notices</h1>
-            <p className="truncate text-xs" style={{ color: 'var(--color-text-secondary)' }}>View school announcements and manage notices you posted</p>
-          </div>
-
-          <div className="flex shrink-0 items-center gap-2">
-            <Button variant="primary" icon={BellPlus} size="sm" onClick={() => navigate(ROUTES.TEACHER_NOTICE_NEW)}>
-              <span className="hidden sm:inline">Post Notice</span>
-            </Button>
-          </div>
+    <div className="max-w-[1400px] mx-auto space-y-6 pb-12">
+      {/* Page Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="flex-1">
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+            Notices
+          </h1>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
+            View school announcements and manage notices you posted.
+          </p>
         </div>
-
-        <div className="my-3 h-px" style={{ backgroundColor: 'var(--color-border)' }} />
-
-        <div className="grid grid-cols-3 gap-2">
-          <CompactStat label="Total" value={stats.total} color="#0f766e" />
-          <CompactStat label="Unread" value={stats.unread} color="#f59e0b" />
-          <CompactStat label="Urgent" value={stats.urgent} color="#ef4444" />
+        <div className="flex items-center gap-2">
+          <Button variant="primary" icon={BellPlus} size="sm" onClick={() => navigate(ROUTES.TEACHER_NOTICE_NEW)}>
+            Post Notice
+          </Button>
         </div>
-      </section>
+      </div>
+
+      {/* Stats cards row */}
+      <div className="grid grid-cols-3 gap-4">
+        <CompactStat label="Total" value={stats.total} color="#2563eb" />
+        <CompactStat label="Unread" value={stats.unread} color="#f59e0b" />
+        <CompactStat label="Urgent" value={stats.urgent} color="#ef4444" />
+      </div>
 
       {/* ── Filters ── */}
-      <section
-        className="rounded-[18px] border px-3 py-3"
+      <div
+        className="rounded-2xl border p-4"
         style={{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface)' }}
       >
         <div className="flex flex-wrap items-center gap-2">
-          <div className="relative flex-1 min-w-[130px]">
-            <Search size={12} className="absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400" />
+          <div className="relative flex-1 min-w-[200px]">
+            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400" />
             <input
               value={filters.search}
               onChange={(e) => setFilters((prev) => ({ ...prev, search: e.target.value }))}
               placeholder="Search notices..."
-              className="w-full rounded-[10px] border py-1.5 pl-7 pr-3 text-xs outline-none transition-colors"
+              className="w-full rounded-xl border py-2 pl-9 pr-4 text-sm outline-none transition-colors"
               style={{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface-raised)', color: 'var(--color-text-primary)' }}
             />
           </div>
         </div>
-      </section>
+      </div>
 
       {/* ── Notice Cards ── */}
       <section className="space-y-4">

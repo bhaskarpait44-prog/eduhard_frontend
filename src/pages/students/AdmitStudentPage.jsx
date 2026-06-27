@@ -104,7 +104,7 @@ const AdmitStudentPage = () => {
         
         father_name: allData.father_name,
         father_phone: allData.father_phone,
-        father_email: allData.father_email,
+        parent_email: allData.parent_email,
         father_occupation: allData.father_occupation,
         father_qualification: allData.father_qualification,
         father_aadhar: allData.father_aadhar,

@@ -39,9 +39,20 @@ const Select = forwardRef(({
         }}
       >
         <option value="">{placeholder}</option>
-        {options.map(opt => (
-          <option key={opt.value} value={opt.value}>{opt.label}</option>
-        ))}
+        {options.map(opt => {
+          if (opt.options) {
+            return (
+              <optgroup key={opt.label} label={opt.label}>
+                {opt.options.map(subOpt => (
+                  <option key={subOpt.value} value={subOpt.value}>{subOpt.label}</option>
+                ))}
+              </optgroup>
+            )
+          }
+          return (
+            <option key={opt.value} value={opt.value}>{opt.label}</option>
+          )
+        })}
       </select>
       <ChevronDown
         size={14}

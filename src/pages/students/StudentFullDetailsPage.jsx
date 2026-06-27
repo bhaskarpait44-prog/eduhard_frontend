@@ -141,7 +141,8 @@ const StudentFullDetailsPage = () => {
             <div className="space-y-6">
               <h4 className="text-xs font-black uppercase tracking-widest text-indigo-600">Current Address</h4>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <DataField label="Village/Locality" value={student.address} colSpan="sm:col-span-2" />
+                <DataField label="House No. / Street / Locality" value={student.address} colSpan="sm:col-span-2" />
+                <DataField label="Village / Town" value={student.village} />
                 <DataField label="Police Station" value={student.police_station} />
                 <DataField label="Post Office" value={student.post_office} />
                 <DataField label="District" value={student.district} />
@@ -159,11 +160,12 @@ const StudentFullDetailsPage = () => {
                 </div>
               ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <DataField label="Village/Locality" value={student.perm_address} colSpan="sm:col-span-2" />
+                  <DataField label="House No. / Street / Locality" value={student.perm_address} colSpan="sm:col-span-2" />
+                  <DataField label="Village / Town" value={student.perm_village} />
                   <DataField label="Police Station" value={student.perm_police_station} />
                   <DataField label="Post Office" value={student.perm_post_office} />
                   <DataField label="District" value={student.perm_district} />
-                  <DataField label="City/Town" value={student.city} />
+                  <DataField label="City/Town" value={student.perm_city} />
                   <DataField label="State" value={student.perm_state} />
                   <DataField label="PIN Code" value={student.perm_pincode} />
                 </div>
@@ -187,19 +189,24 @@ const StudentFullDetailsPage = () => {
             {/* Mother */}
             <div className="space-y-4">
               <div className="inline-flex items-center gap-2 px-3 py-1 bg-indigo-50 rounded-lg text-indigo-700 font-bold text-[10px] uppercase tracking-wider">Mother's Particulars</div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6">
                 <DataField label="Name" value={student.mother_name} />
                 <DataField label="Phone" value={student.mother_phone} />
+                <DataField label="Email" value={student.mother_email} />
                 <DataField label="Qualification" value={student.mother_qualification} />
+                <DataField label="Aadhar No" value={student.mother_aadhar} />
+                <DataField label="Annual Income" value={student.mother_annual_income} />
               </div>
             </div>
 
             {/* Father */}
             <div className="space-y-4">
               <div className="inline-flex items-center gap-2 px-3 py-1 bg-blue-50 rounded-lg text-blue-700 font-bold text-[10px] uppercase tracking-wider">Father's Particulars</div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-7 gap-6">
                 <DataField label="Name" value={student.father_name} />
                 <DataField label="Phone" value={student.father_phone} />
+                <DataField label="Email" value={student.parent_email} />
+                <DataField label="Occupation" value={student.father_occupation} />
                 <DataField label="Qualification" value={student.father_qualification} />
                 <DataField label="Aadhar No" value={student.father_aadhar} />
                 <DataField label="Annual Income" value={student.father_annual_income} />

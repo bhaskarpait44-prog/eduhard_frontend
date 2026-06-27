@@ -22,7 +22,7 @@ const Header = ({ onMenuClick }) => {
   const { theme, toggleTheme }   = useUiStore()
   const { user, logout }         = useAuthStore()
   const { currentSession }       = useSessionStore()
-  const { toastSuccess }         = useToast()
+  const { toastSuccess, toastError }   = useToast()
   const navigate                 = useNavigate()
 
   const [userMenuOpen,  setUserMenuOpen]  = useState(false)
@@ -149,6 +149,23 @@ const Header = ({ onMenuClick }) => {
           try {
             const res = await teacherApi.getTeacherNotices();
             notices = Array.isArray(res?.data?.notices) ? res.data.notices : [];
+
+            const unreadLeaveNotices = notices.filter(
+              (item) => !item.is_read && (item.title === 'Leave Approved' || item.title === 'Leave Rejected')
+            );
+            for (const leaveNotice of unreadLeaveNotices) {
+              if (leaveNotice.title === 'Leave Approved') {
+                toastSuccess(leaveNotice.body);
+              } else {
+                toastError(leaveNotice.body);
+              }
+              try {
+                await teacherApi.markTeacherNoticeRead(leaveNotice.id, leaveNotice.source || 'unified');
+                leaveNotice.is_read = true;
+              } catch (err) {
+                console.error('Failed to auto-mark leave notice as read', err);
+              }
+            }
           } catch (e) { console.error('Failed to load teacher notices for header', e); }
 
           if (!active) return

@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { AlertTriangle, BookOpen, CalendarRange, Clock3, Printer, Sparkles } from 'lucide-react'
 import usePageTitle from '@/hooks/usePageTitle'
 import useToast from '@/hooks/useToast'
+import Button from '@/components/ui/Button'
 import * as teacherApi from '@/api/teacherApi'
 import TimetableGrid from '@/components/teacher/TimetableGrid'
 import TimetableToday from '@/components/shared/TimetableToday'
@@ -73,112 +74,91 @@ const TeacherTimetable = () => {
   const totalToday = todaySchedule.length
 
   return (
-    <div className="space-y-6">
+    <div className="max-w-[1400px] mx-auto space-y-6 pb-12">
 
-      {/* ── Hero Header ──────────────────────────────────────────────────── */}
-      <section
-        className="relative overflow-hidden rounded-2xl border p-6 sm:p-8"
+      {/* Page Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="flex-1">
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+            My Timetable
+          </h1>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
+            {getDayName()}, {getDateStr()}
+          </p>
+        </div>
+        <div className="flex items-center gap-2">
+          <Button 
+            variant="secondary" 
+            icon={Printer} 
+            onClick={() => window.print()}
+            size="sm"
+          >
+            Print Timetable
+          </Button>
+        </div>
+      </div>
+
+      {/* ── Stat cards ── */}
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+        <PeriodCard
+          label="Current Period"
+          icon={Clock3}
+          accent="#2563eb"
+          accentBg="rgba(37,99,235,0.1)"
+          primary={currentPeriod ? currentPeriod.subject_name : 'No active period'}
+          secondary={
+            currentPeriod
+              ? `${currentPeriod.class_name} ${currentPeriod.section_name}  ·  ${renderTimeRange(currentPeriod)}`
+              : 'You are free right now'
+          }
+          live={Boolean(currentPeriod)}
+        />
+        <PeriodCard
+          label="Next Up"
+          icon={CalendarRange}
+          accent="#f59e0b"
+          accentBg="rgba(245,158,11,0.1)"
+          primary={nextPeriod ? nextPeriod.subject_name : 'No upcoming period'}
+          secondary={
+            nextPeriod
+              ? `${nextPeriod.class_name} ${nextPeriod.section_name}  ·  ${renderTimeRange(nextPeriod)}`
+              : 'No more classes today'
+          }
+        />
+        <ProgressCard
+          done={completedCount}
+          total={totalToday}
+          slots={timetable.length}
+        />
+      </div>
+
+      {/* ── View Switcher ── */}
+      <div
+        className="flex flex-wrap gap-2 p-4 rounded-2xl"
         style={{
-          borderColor: 'var(--color-border)',
-          background: 'linear-gradient(135deg, rgba(15,118,110,0.12) 0%, rgba(2,132,199,0.07) 50%, var(--color-surface) 100%)',
+          backgroundColor : 'var(--color-surface)',
+          border          : '1px solid var(--color-border)',
         }}
       >
-        <div
-          className="pointer-events-none absolute -right-16 -top-16 h-56 w-56 rounded-full opacity-10"
-          style={{ background: 'radial-gradient(circle, #0f766e 0%, transparent 70%)' }}
-          aria-hidden="true"
-        />
-
-        <div className="relative flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
-          <div>
-            <div className="flex items-center gap-2 mb-2">
-              <span
-                className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[11px] font-semibold uppercase tracking-widest"
-                style={{ backgroundColor: 'rgba(15,118,110,0.12)', color: '#0f766e' }}
-              >
-                <Sparkles size={10} />
-                Teacher Portal
-              </span>
-            </div>
-            <h1 className="text-3xl font-bold tracking-tight sm:text-4xl" style={{ color: 'var(--color-text-primary)' }}>
-              My Timetable
-            </h1>
-            <p className="mt-1.5 text-sm" style={{ color: 'var(--color-text-secondary)' }}>
-              {getDayName()}, {getDateStr()}
-            </p>
-          </div>
-
+        {[
+          { key: 'weekly', label: 'Class Schedule' },
+          { key: 'exams',  label: 'Exam Duties' },
+        ].map((tab) => (
           <button
+            key={tab.key}
             type="button"
-            onClick={() => window.print()}
-            className="inline-flex items-center gap-2 self-start rounded-xl border px-4 py-2.5 text-sm font-semibold transition hover:-translate-y-0.5 hover:shadow-sm"
+            onClick={() => setView(tab.key)}
+            className="rounded-xl px-5 py-2 text-sm font-bold transition-all"
             style={{
-              borderColor: 'var(--color-border)',
-              backgroundColor: 'var(--color-surface)',
-              color: 'var(--color-text-primary)',
+              backgroundColor: view === tab.key ? '#2563eb' : 'rgba(37,99,235,0.08)',
+              color: view === tab.key ? '#fff' : '#2563eb',
+              boxShadow: view === tab.key ? '0 4px 12px rgba(37,99,235,0.25)' : 'none',
             }}
           >
-            <Printer size={14} />
-            Print Timetable
+            {tab.label}
           </button>
-        </div>
-
-        {/* ── Stat cards ── */}
-        <div className="relative mt-6 grid grid-cols-1 gap-3 sm:grid-cols-3">
-          <PeriodCard
-            label="Current Period"
-            icon={Clock3}
-            accent="#10b981"
-            accentBg="rgba(16,185,129,0.1)"
-            primary={currentPeriod ? currentPeriod.subject_name : 'No active period'}
-            secondary={
-              currentPeriod
-                ? `${currentPeriod.class_name} ${currentPeriod.section_name}  ·  ${renderTimeRange(currentPeriod)}`
-                : 'You are free right now'
-            }
-            live={Boolean(currentPeriod)}
-          />
-          <PeriodCard
-            label="Next Up"
-            icon={CalendarRange}
-            accent="#f59e0b"
-            accentBg="rgba(245,158,11,0.1)"
-            primary={nextPeriod ? nextPeriod.subject_name : 'No upcoming period'}
-            secondary={
-              nextPeriod
-                ? `${nextPeriod.class_name} ${nextPeriod.section_name}  ·  ${renderTimeRange(nextPeriod)}`
-                : 'No more classes today'
-            }
-          />
-          <ProgressCard
-            done={completedCount}
-            total={totalToday}
-            slots={timetable.length}
-          />
-        </div>
-
-        {/* ── View Switcher ── */}
-        <div className="mt-8 flex flex-wrap gap-2">
-          {[
-            { key: 'weekly', label: 'Class Schedule' },
-            { key: 'exams',  label: 'Exam Duties' },
-          ].map((tab) => (
-            <button
-              key={tab.key}
-              type="button"
-              onClick={() => setView(tab.key)}
-              className="rounded-xl px-5 py-2.5 text-sm font-bold transition-all"
-              style={{
-                backgroundColor: view === tab.key ? '#0f766e' : 'rgba(15,118,110,0.08)',
-                color: view === tab.key ? '#fff' : '#0f766e',
-                boxShadow: view === tab.key ? '0 4px 12px rgba(15,118,110,0.25)' : 'none',
-              }}
-            >
-              {tab.label}
-            </button>
-          ))}
-        </div>
-      </section>
+        ))}
+      </div>
 
       {/* ── Content ──────────────────────────────────────────────────────── */}
       {loading ? (
@@ -383,9 +363,9 @@ const ProgressCard = ({ done, total, slots }) => {
         <div className="flex items-center gap-2 mb-2">
           <div
             className="flex h-7 w-7 items-center justify-center rounded-lg"
-            style={{ backgroundColor: 'rgba(15,118,110,0.1)' }}
+            style={{ backgroundColor: 'rgba(37,99,235,0.1)' }}
           >
-            <BookOpen size={14} style={{ color: '#0f766e' }} />
+            <BookOpen size={14} style={{ color: '#2563eb' }} />
           </div>
           <p className="text-[11px] font-semibold uppercase tracking-widest" style={{ color: 'var(--color-text-muted)' }}>
             Today's Progress
@@ -402,7 +382,7 @@ const ProgressCard = ({ done, total, slots }) => {
         <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full" style={{ backgroundColor: 'var(--color-surface-raised)' }}>
           <div
             className="h-full rounded-full transition-all duration-700"
-            style={{ width: `${pct}%`, backgroundColor: '#0f766e' }}
+            style={{ width: `${pct}%`, backgroundColor: '#2563eb' }}
           />
         </div>
 

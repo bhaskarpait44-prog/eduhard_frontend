@@ -75,7 +75,18 @@ const StudentRemarks = () => {
   }), [remarks, filters])
 
   return (
-    <div className="space-y-5">
+    <div className="max-w-[1400px] mx-auto space-y-6 pb-12">
+      {/* Page Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="flex-1">
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+            Student Remarks
+          </h1>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
+            Record behavioral observations, academic notes, and communication logs for students.
+          </p>
+        </div>
+      </div>
       <RemarkForm
         students={students}
         value={form}
@@ -107,7 +118,7 @@ const StudentRemarks = () => {
       />
 
       <section
-        className="rounded-[28px] border p-5 sm:p-6"
+        className="rounded-2xl border p-5 sm:p-6"
         style={{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface)' }}
       >
         <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
@@ -220,8 +231,8 @@ const StudentRemarks = () => {
                             setEditText(remark.remark_text)
                             setEditVisibility(remark.visibility)
                           }}
-                          className="inline-flex min-h-10 items-center gap-2 rounded-2xl px-4 text-sm font-semibold"
-                          style={{ backgroundColor: '#0f766e', color: '#fff' }}
+                          className="inline-flex min-h-10 items-center gap-2 rounded-xl px-4 text-sm font-semibold hover:-translate-y-0.5 transition-transform"
+                          style={{ backgroundColor: '#2563eb', color: '#fff' }}
                         >
                           <PencilLine size={16} />
                           Edit
@@ -266,8 +277,8 @@ const StudentRemarks = () => {
                   toastError(error?.message || 'Failed to update remark.')
                 }
               }}
-              className="min-h-10 rounded-2xl px-4 text-sm font-semibold"
-              style={{ backgroundColor: '#0f766e', color: '#fff' }}
+              className="min-h-10 rounded-xl px-4 text-sm font-semibold"
+              style={{ backgroundColor: '#2563eb', color: '#fff' }}
             >
               Save Changes
             </button>
@@ -318,7 +329,7 @@ const remarkVisibilityLabel = (visibility) => {
 const RemarkSkeleton = () => (
   <div className="space-y-3 animate-pulse">
     {[...Array(4)].map((_, index) => (
-      <div key={index} className="h-32 rounded-[28px]" style={{ backgroundColor: 'var(--color-surface-raised)' }} />
+      <div key={index} className="h-32 rounded-2xl" style={{ backgroundColor: 'var(--color-surface-raised)' }} />
     ))}
   </div>
 )

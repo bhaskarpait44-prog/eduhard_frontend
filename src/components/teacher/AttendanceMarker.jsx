@@ -23,6 +23,7 @@ const AttendanceMarker = ({
   payload,
   loadingStudents,
   savingAttendance,
+  error = null,
   onLoad,
   onSubmit,
 }) => {
@@ -85,7 +86,7 @@ const AttendanceMarker = ({
   const hasStudents = (payload?.students || []).length > 0
   const hasLoadedPayload = !!payload
   const needsReason = !!payload?.requires_reason
-  const isDisableMarking = !!payload?.is_holiday || !!payload?.is_non_working_day
+  const isDisableMarking = !!payload?.is_holiday || !!payload?.is_non_working_day || !!payload?.is_on_leave
   const canSubmit = hasStudents && (!needsReason || reason.trim()) && !isDisableMarking
 
   const handleAssignmentChange = (value) => {
@@ -224,6 +225,15 @@ const AttendanceMarker = ({
         )}
       </section>
 
+      {error && (
+        <Banner
+          tone="error"
+          icon={AlertTriangle}
+          title="Access Restricted"
+          message={error}
+        />
+      )}
+
       {payload?.already_marked && (
         <Banner
           tone="warning"
@@ -248,6 +258,15 @@ const AttendanceMarker = ({
           icon={CalendarDays}
           title="Non-Working Day"
           message={`Cannot mark attendance. Selected date (${payload?.date}) is not a working day.`}
+        />
+      )}
+
+      {payload?.is_on_leave && (
+        <Banner
+          tone="error"
+          icon={CalendarDays}
+          title="On Approved Leave"
+          message="You are on approved leave for this date. Attendance marking is disabled."
         />
       )}
 

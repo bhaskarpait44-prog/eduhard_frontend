@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { useLocation } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 import {
   Card,
   Table,
@@ -19,16 +19,17 @@ import {
 } from '@ant-design/icons'
 import usePageTitle from '@/hooks/usePageTitle'
 import useTeacherStudents from '@/hooks/useTeacherStudents'
-import StudentQuickPanel from '@/components/teacher/StudentQuickPanel'
 import { formatCurrency, formatDate, getInitials } from '@/utils/helpers'
 import useUiStore from '@/store/uiStore'
+import { ROUTES } from '@/constants/app'
 
 const StudentList = () => {
   usePageTitle('Student List')
 
   const location = useLocation()
+  const navigate = useNavigate()
   const { theme: storeTheme } = useUiStore()
-  const { students, sections, subjects, loadingList, loadingStudentId, loadStudentBundle, getStudentBundle } = useTeacherStudents()
+  const { students, sections, subjects, loadingList } = useTeacherStudents()
   
   const [search, setSearch] = useState('')
   const [sectionKey, setSectionKey] = useState('')
@@ -36,7 +37,6 @@ const StudentList = () => {
   const [gender, setGender] = useState('')
   const [attendanceRange, setAttendanceRange] = useState('')
   const [resultStatus, setResultStatus] = useState('')
-  const [selectedStudent, setSelectedStudent] = useState(null)
 
   const isDark = storeTheme === 'dark' || (storeTheme === 'system' && window.matchMedia?.('(prefers-color-scheme: dark)').matches)
 
@@ -143,33 +143,16 @@ const StudentList = () => {
       }
     },
     {
-      title: 'Fee Balance',
-      dataIndex: 'fee_balance',
-      key: 'fee_balance',
-      render: (val) => {
-        if (val == null) return <span className="text-xs font-bold text-gray-400">Restricted</span>
-        const amount = Number(val)
-        if (amount > 0) {
-          return <Tag color="warning" className="rounded-full font-black text-[10px] border-0 px-2.5 py-0.5">Rs {amount.toFixed(0)}</Tag>
-        }
-        return <Tag color="green" className="rounded-full font-black text-[10px] border-0 px-2.5 py-0.5">Clear</Tag>
-      }
-    },
-    {
       title: '',
       key: 'action',
       render: (_, record) => (
         <Button
           type="primary"
           size="middle"
-          loading={loadingStudentId === record.id}
           className="rounded-xl font-bold text-xs border-0"
-          onClick={async () => {
-            setSelectedStudent(record)
-            await loadStudentBundle(record.id)
-          }}
+          onClick={() => navigate(ROUTES.TEACHER_STUDENT_DETAIL.replace(':id', String(record.id)))}
         >
-          Quick View
+          View Profile
         </Button>
       )
     }
@@ -180,22 +163,30 @@ const StudentList = () => {
       theme={{
         algorithm: isDark ? antdTheme.darkAlgorithm : antdTheme.defaultAlgorithm,
         token: {
-          colorPrimary: '#0f766e',
-          borderRadius: 24,
+          colorPrimary: '#2563eb',
+          borderRadius: 16,
           fontFamily: 'inherit',
         },
       }}
     >
-      <div className="space-y-6">
-        {/* Header and Filter Card */}
+      <div className="max-w-[1400px] mx-auto space-y-6 pb-12">
+        {/* Page Header */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="flex-1">
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+              Student List
+            </h1>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
+              View students from your assigned sections. Class teachers get full student context, while subject teachers stay limited to their teaching scope.
+            </p>
+          </div>
+        </div>
+
+        {/* Filter Card */}
         <Card 
-          className="rounded-[32px] shadow-sm border-gray-100 dark:border-gray-800"
+          className="rounded-2xl shadow-sm border-gray-100 dark:border-gray-800"
           styles={{ body: { padding: '24px' } }}
         >
-          <h1 className="text-2xl font-black text-gray-900 dark:text-white tracking-tight">Student List</h1>
-          <p className="mt-1 text-xs text-gray-500 dark:text-gray-400 font-semibold leading-relaxed">
-            View students from your assigned sections. Class teachers get full student context, while subject teachers stay limited to their teaching scope.
-          </p>
 
           <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-6">
             <div>
@@ -286,7 +277,7 @@ const StudentList = () => {
 
         {/* Results List Card */}
         <Card
-          className="rounded-[32px] shadow-sm border-gray-100 dark:border-gray-800 overflow-hidden"
+          className="rounded-2xl shadow-sm border-gray-100 dark:border-gray-800 overflow-hidden"
           styles={{ header: { borderBottom: '1px solid rgba(0,0,0,0.06)' }, body: { padding: '0px' } }}
           title={
             <div className="flex items-center justify-between py-1">
@@ -316,18 +307,10 @@ const StudentList = () => {
               pagination={false}
               size="middle"
               className="premium-table"
-              rowClassName="hover:bg-teal-50/10 dark:hover:bg-teal-950/10 transition-colors"
+              rowClassName="hover:bg-blue-50/10 dark:hover:bg-blue-950/10 transition-colors"
             />
           )}
         </Card>
-
-        <StudentQuickPanel
-          open={!!selectedStudent}
-          student={selectedStudent}
-          bundle={selectedStudent ? getStudentBundle(selectedStudent.id) : null}
-          loading={loadingStudentId === selectedStudent?.id}
-          onClose={() => setSelectedStudent(null)}
-        />
       </div>
     </ConfigProvider>
   )

@@ -134,15 +134,25 @@ const NoticeForm = () => {
   }
 
   return (
-    <div className="space-y-6 pb-20">
-      <div className="flex items-center gap-4">
-        <button onClick={() => navigate(ROUTES.TEACHER_NOTICES)} className="p-2 rounded-full bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 transition-all">
-          <ArrowLeft size={20} />
-        </button>
-        <h1 className="text-2xl font-bold">{isEditing ? 'Edit Notice' : 'Post New Notice'}</h1>
+    <div className="max-w-[1400px] mx-auto space-y-6 pb-12">
+      {/* Page Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="flex items-center gap-3">
+          <button onClick={() => navigate(ROUTES.TEACHER_NOTICES)} className="p-2 rounded-full bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 transition-all">
+            <ArrowLeft size={20} />
+          </button>
+          <div className="flex-1">
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+              {isEditing ? 'Edit Notice' : 'Post New Notice'}
+            </h1>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
+              {isEditing ? 'Update notice details and target audience.' : 'Send an announcement to your classes, sections, subjects, or specific students.'}
+            </p>
+          </div>
+        </div>
       </div>
 
-      <div className="max-w-2xl mx-auto w-full rounded-[24px] border p-6 shadow-md" style={{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface)' }}>
+      <div className="max-w-2xl mx-auto w-full rounded-2xl border p-6" style={{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface)' }}>
         <form onSubmit={handleSubmit} className="space-y-4">
           <Input 
             label="Notice Title" 

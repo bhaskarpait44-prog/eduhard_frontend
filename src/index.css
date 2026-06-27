@@ -1007,6 +1007,9 @@ html[data-portal="accountant"] .fixed.top-0.right-0 {
 ::-webkit-scrollbar-thumb   { background: var(--color-border); border-radius: 99px; }
 ::-webkit-scrollbar-thumb:hover { background: var(--color-text-muted); }
 
+/* ── Focus ring ─────────────────────────────────────var(--color-border); border-radius: 99px; }
+::-webkit-scrollbar-thumb:hover { background: var(--color-text-muted); }
+
 /* ── Focus ring ─────────────────────────────────────────────────────────── */
 :focus-visible {
   outline: 2px solid var(--color-brand);
@@ -1090,11 +1093,14 @@ html[data-portal="accountant"] .fixed.top-0.right-0 {
   }
 
   .student-report-print-root,
-  .student-report-print-root * {
+  .student-report-print-root *,
+  #printable-receipt-area,
+  #printable-receipt-area * {
     visibility: visible !important;
   }
 
-  .student-report-print-root {
+  .student-report-print-root,
+  #printable-receipt-area {
     position: absolute !important;
     inset: 0 auto auto 0 !important;
     width: 100% !important;

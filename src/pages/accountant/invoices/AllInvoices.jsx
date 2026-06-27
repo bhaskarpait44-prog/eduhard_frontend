@@ -4,7 +4,7 @@ import { Eye, Wallet, ExternalLink, MoreVertical } from 'lucide-react'
 import usePageTitle from '@/hooks/usePageTitle'
 import { ROUTES } from '@/constants/app'
 import * as accountantApi from '@/api/accountantApi'
-import { formatCurrency, formatDate } from '@/utils/helpers'
+import { formatCurrency, formatDate, getFeeMonthLabel } from '@/utils/helpers'
 
 const PAGE_SIZE = 20
 
@@ -249,7 +249,7 @@ export const InvoiceTable = ({ title, rows = [], loading = false }) => {
                     <td className="px-4 py-3.5">
                       <span className="text-xs font-semibold px-2 py-1 rounded-lg whitespace-nowrap"
                         style={{ backgroundColor: 'var(--color-surface-2)', color: 'var(--color-text-secondary)', border: '1px solid var(--color-border)' }}>
-                        {row.fee_name}
+                        {row.fee_name} {row.due_date ? `(${getFeeMonthLabel(row.due_date)})` : ''}
                       </span>
                     </td>
 

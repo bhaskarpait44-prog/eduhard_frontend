@@ -507,7 +507,6 @@ const TabDetails = ({ student }) => {
             name={student.guardian_name || student.father_name} 
             role={`Guardian (${student.guardian_relation || 'Father'})`} 
             phone={student.guardian_phone || student.father_phone} 
-            email={student.parent_email} 
           />
         </div>
       </div>
@@ -535,7 +534,7 @@ const TabDetails = ({ student }) => {
           <h3 className="text-base font-bold text-gray-900 mb-6">Address</h3>
           <div className="space-y-6">
             <AddressRow icon={MapPin} label="Current Address" value={`${student.address || ''}, ${student.city || ''}, ${student.state || ''} ${student.pincode || ''}`.trim() || 'Not Provided'} />
-            <AddressRow icon={ArrowRightLeft} label="Permanent Address" value={student.is_permanent_same ? `${student.address || ''}, ${student.city || ''}, ${student.state || ''} ${student.pincode || ''}`.trim() : `${student.perm_address || ''}, ${student.perm_district || ''}, ${student.perm_state || ''} ${student.perm_pincode || ''}`.trim() || 'Not Provided'} />
+            <AddressRow icon={ArrowRightLeft} label="Permanent Address" value={student.is_permanent_same ? `${student.address || ''}, ${student.city || ''}, ${student.state || ''} ${student.pincode || ''}`.trim() : `${student.perm_address || ''}, ${student.perm_city || ''}, ${student.perm_state || ''} ${student.perm_pincode || ''}`.trim() || 'Not Provided'} />
           </div>
         </div>
       </div>

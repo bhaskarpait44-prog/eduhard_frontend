@@ -95,7 +95,7 @@ const EditStudentPage = () => {
       
       father_name: student.father_name || '',
       father_phone: student.father_phone || '',
-      father_email: student.father_email || '',
+
       father_occupation: student.father_occupation || '',
       father_qualification: student.father_qualification || '',
       father_aadhar: student.father_aadhar || '',
@@ -250,10 +250,10 @@ const EditStudentPage = () => {
               {...register('email')} 
             />
             <Input 
-              label="Parent Login Email" 
+              label="Father's Email (Parent Login)" 
               type="email" 
               required 
-              hint="The email the parent uses to log in to the portal"
+              hint="The email the father uses to log in to the portal"
               error={errors.parent_email?.message} 
               {...register('parent_email')} 
             />
@@ -410,31 +410,25 @@ const EditStudentPage = () => {
               </label>
             </div>
 
-            {!isPermanentSame && (
-              <div className="space-y-5 animate-in fade-in slide-in-from-top-2 duration-300">
-                <Textarea label="House No. / Street / Locality" required error={errors.perm_address?.message} rows={2} {...register('perm_address')} />
-                <Input
-                  label="Village / Town"
-                  required
-                  placeholder="Village or town name"
-                  error={errors.perm_village?.message}
-                  {...register('perm_village')}
-                />
-                <div className="grid grid-cols-2 gap-4">
-                  <Input label="Police Station" required error={errors.perm_police_station?.message} {...register('perm_police_station')} />
-                  <Input label="Post Office" required error={errors.perm_post_office?.message} {...register('perm_post_office')} />
-                  <Input label="District" required error={errors.perm_district?.message} {...register('perm_district')} />
-                  <Input label="City" required error={errors.perm_city?.message} {...register('perm_city')} />
-                  <Input label="State" required error={errors.perm_state?.message} {...register('perm_state')} />
-                  <Input label="PIN Code" required error={errors.perm_pincode?.message} {...register('perm_pincode')} />
-                </div>
+            <div className="space-y-5 animate-in fade-in slide-in-from-top-2 duration-300">
+              <Textarea label="House No. / Street / Locality" required error={errors.perm_address?.message} rows={2} disabled={isPermanentSame} {...register('perm_address')} />
+              <Input
+                label="Village / Town"
+                required
+                placeholder="Village or town name"
+                error={errors.perm_village?.message}
+                disabled={isPermanentSame}
+                {...register('perm_village')}
+              />
+              <div className="grid grid-cols-2 gap-4">
+                <Input label="Police Station" required error={errors.perm_police_station?.message} disabled={isPermanentSame} {...register('perm_police_station')} />
+                <Input label="Post Office" required error={errors.perm_post_office?.message} disabled={isPermanentSame} {...register('perm_post_office')} />
+                <Input label="District" required error={errors.perm_district?.message} disabled={isPermanentSame} {...register('perm_district')} />
+                <Input label="City" required error={errors.perm_city?.message} disabled={isPermanentSame} {...register('perm_city')} />
+                <Input label="State" required error={errors.perm_state?.message} disabled={isPermanentSame} {...register('perm_state')} />
+                <Input label="PIN Code" required error={errors.perm_pincode?.message} disabled={isPermanentSame} {...register('perm_pincode')} />
               </div>
-            )}
-            {isPermanentSame && (
-              <div className="h-48 flex items-center justify-center border-2 border-dashed border-border rounded-xl bg-surface-raised/50">
-                <p className="text-xs font-bold text-text-muted uppercase tracking-widest">Permanent Address Synchronized</p>
-              </div>
-            )}
+            </div>
           </div>
         </div>
 
@@ -450,10 +444,7 @@ const EditStudentPage = () => {
               </div>
               <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
                 <Input label="Name" required error={errors.mother_name?.message} {...register('mother_name')} />
-                <Input label="Phone" error={errors.mother_phone?.message} {...register('mother_phone')} />
-                <p className="text-xs text-text-muted mt-1 md:col-span-3">
-                  At least one parent phone number is required
-                </p>
+                <Input label="Phone (Optional)" error={errors.mother_phone?.message} {...register('mother_phone')} />
                 <Input label="Qualification (Optional)" {...register('mother_qualification')} />
                 <Input
                   label="Mother's Email (Optional)"
@@ -481,17 +472,11 @@ const EditStudentPage = () => {
                 <Input label="Name" required error={errors.father_name?.message} {...register('father_name')} />
                 <Input 
                   label="Phone" 
+                  required
                   error={errors.father_phone?.message} 
                   {...register('father_phone')} 
                 />
-                <Input
-                  label="Father's Email"
-                  type="email"
-                  placeholder="father@email.com"
-                  hint="This email will be the parent's login ID for the portal"
-                  error={errors.father_email?.message}
-                  {...register('father_email')}
-                />
+
                 <Input
                   label="Father's Occupation (Optional)"
                   placeholder="e.g. Farmer, Engineer"
@@ -501,13 +486,15 @@ const EditStudentPage = () => {
                 <Input 
                   label="Aadhar No (Optional)" 
                   hint="12-digit Aadhaar number printed on the card (optional)"
+                  error={errors.father_aadhar?.message}
                   {...register('father_aadhar')} 
                 />
-                <Input label="Annual Income (Optional)" {...register('father_annual_income')} />
+                <Input 
+                  label="Annual Income (Optional)" 
+                  error={errors.father_annual_income?.message}
+                  {...register('father_annual_income')} 
+                />
               </div>
-              <p className="text-xs text-text-muted mt-1">
-                At least one parent phone number is required
-              </p>
             </div>
 
             {/* Guardian */}
@@ -518,15 +505,24 @@ const EditStudentPage = () => {
               <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
                 <Input label="Guardian Name (Optional)" {...register('guardian_name')} />
                 <Input label="Relation (Optional)" {...register('guardian_relation')} />
-                <Input label="Phone (Optional)" {...register('guardian_phone')} />
+                <Input 
+                  label="Phone (Optional)" 
+                  error={errors.guardian_phone?.message}
+                  {...register('guardian_phone')} 
+                />
                 <Input label="Qualification (Optional)" {...register('guardian_qualification')} />
                 <Input label="Occupation (Optional)" {...register('guardian_occupation')} />
                 <Input 
                   label="Aadhar No (Optional)" 
                   hint="12-digit Aadhaar number printed on the card (optional)"
+                  error={errors.guardian_aadhar?.message}
                   {...register('guardian_aadhar')} 
                 />
-                <Input label="Annual Income (Optional)" {...register('guardian_annual_income')} />
+                <Input 
+                  label="Annual Income (Optional)" 
+                  error={errors.guardian_annual_income?.message}
+                  {...register('guardian_annual_income')} 
+                />
               </div>
             </div>
           </div>

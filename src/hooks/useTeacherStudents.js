@@ -4,6 +4,7 @@ import * as teacherApi from '@/api/teacherApi'
 const useTeacherStudents = () => {
   const [students, setStudents] = useState([])
   const [subjects, setSubjects] = useState([])
+  const [classTeacherSections, setClassTeacherSections] = useState([])
   const [loadingList, setLoadingList] = useState(true)
   const [detailCache, setDetailCache] = useState({})
   const [attendanceCache, setAttendanceCache] = useState({})
@@ -18,6 +19,7 @@ const useTeacherStudents = () => {
       const rows = res?.data?.students || []
       setStudents(rows)
       setSubjects(res?.data?.available_subjects || [])
+      setClassTeacherSections(res?.data?.class_teacher_sections || [])
       return rows
     } finally {
       setLoadingList(false)
@@ -64,18 +66,42 @@ const useTeacherStudents = () => {
   }), [detailCache, attendanceCache, resultsCache, remarksCache])
 
   const sections = useMemo(() => {
+    const classTeacherOptions = []
+    const subjectTeacherOptions = []
     const map = new Map()
+
     students.forEach((student) => {
       const key = `${student.class_id}:${student.section_id}`
       if (!map.has(key)) {
-        map.set(key, {
+        const isClassTeacher = classTeacherSections.includes(key)
+        const option = {
           value: key,
           label: `${student.class_name} ${student.section_name}`,
-        })
+        }
+        map.set(key, option)
+        if (isClassTeacher) {
+          classTeacherOptions.push(option)
+        } else {
+          subjectTeacherOptions.push(option)
+        }
       }
     })
-    return [...map.values()]
-  }, [students])
+
+    const result = []
+    if (classTeacherOptions.length > 0) {
+      result.push({
+        label: 'Class Teacher Sections',
+        options: classTeacherOptions,
+      })
+    }
+    if (subjectTeacherOptions.length > 0) {
+      result.push({
+        label: 'Subject Teacher Sections',
+        options: subjectTeacherOptions,
+      })
+    }
+    return result
+  }, [students, classTeacherSections])
 
   return {
     students,

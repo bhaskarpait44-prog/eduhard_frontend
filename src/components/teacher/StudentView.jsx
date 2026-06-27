@@ -129,7 +129,7 @@ const StudentView = ({
 
 const OverviewTab = ({ student, detail, access, attendanceStats }) => (
   <div className="space-y-6 pt-4">
-    <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
       <MiniStat 
         title="Attendance" 
         value={formatPercent(attendanceStats.percentage)} 
@@ -142,14 +142,6 @@ const OverviewTab = ({ student, detail, access, attendanceStats }) => (
         tone="#0f766e"
         subtitle="Current Session"
       />
-      {access.isClassTeacher && (
-        <MiniStat
-          title="Fee Status"
-          value={detail?.fee_status?.balance != null ? `₹${Number(detail.fee_status.balance).toLocaleString()}` : '--'}
-          tone={Number(detail?.fee_status?.balance || 0) > 0 ? '#f59e0b' : '#10b981'}
-          subtitle={Number(detail?.fee_status?.balance || 0) > 0 ? 'Payment Pending' : 'No Dues'}
-        />
-      )}
     </div>
 
     <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
@@ -204,7 +196,7 @@ const ResultsTab = ({ results, access }) => (
     </h3>
     <div className="space-y-3">
       {(results || []).map((row) => (
-        <div key={row.id} className="group rounded-2xl border p-4 transition-all hover:border-[#0f766e]/30 hover:shadow-sm" style={{ backgroundColor: 'var(--color-surface-raised)', borderColor: 'var(--color-border)' }}>
+        <div key={row.id || `${row.exam_name}-${row.subject_name}`} className="group rounded-2xl border p-4 transition-all hover:border-[#0f766e]/30 hover:shadow-sm" style={{ backgroundColor: 'var(--color-surface-raised)', borderColor: 'var(--color-border)' }}>
           <div className="flex items-center justify-between gap-4">
             <div>
               <p className="text-sm font-bold" style={{ color: 'var(--color-text-primary)' }}>{row.exam_name}</p>
@@ -214,20 +206,38 @@ const ResultsTab = ({ results, access }) => (
               <p className="text-lg font-bold" style={{ color: 'var(--color-text-primary)' }}>
                 {row.is_absent ? (
                   <span className="text-red-500">Absent</span>
+                ) : row.marks_obtained == null ? (
+                  <span className="text-gray-400">--</span>
                 ) : (
                   <>
-                    {row.marks_obtained ?? '--'}
+                    {row.marks_obtained}
                     <span className="text-xs text-gray-400 font-normal ml-1">/ {row.max_marks || 100}</span>
                   </>
                 )}
               </p>
               <div className="mt-1 flex items-center justify-end gap-2">
-                <Badge variant={row.is_pass ? 'green' : row.is_absent ? 'grey' : 'red'}>
-                  {row.grade || (row.is_pass ? 'Pass' : 'Fail')}
+                <Badge 
+                  variant={
+                    row.is_absent 
+                      ? 'grey' 
+                      : row.marks_obtained == null 
+                        ? 'yellow' 
+                        : row.is_pass 
+                          ? 'green' 
+                          : 'red'
+                  }
+                >
+                  {row.is_absent 
+                    ? 'Absent' 
+                    : row.marks_obtained == null 
+                      ? 'Ongoing' 
+                      : row.grade || (row.is_pass ? 'Pass' : 'Fail')}
                 </Badge>
-                <span className="text-[10px] font-bold text-gray-400 uppercase tracking-tight">
-                  {formatPercent(row.percentage)}
-                </span>
+                {row.marks_obtained != null && (
+                  <span className="text-[10px] font-bold text-gray-400 uppercase tracking-tight">
+                    {formatPercent(row.percentage)}
+                  </span>
+                )}
               </div>
             </div>
           </div>

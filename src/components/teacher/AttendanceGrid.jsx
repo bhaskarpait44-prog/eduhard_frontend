@@ -17,24 +17,20 @@ const STATUS_STYLE = {
 const AttendanceGrid = ({
   registerData,
   loading,
-  canEdit = false,
-  onOverride,
 }) => {
-  const [editingCell, setEditingCell] = useState(null)
-  const [overrideStatus, setOverrideStatus] = useState('present')
-  const [overrideReason, setOverrideReason] = useState('')
-  const [savingOverride, setSavingOverride] = useState(false)
 
   const month = registerData?.month || new Date().getMonth() + 1
   const year = registerData?.year || new Date().getFullYear()
   const days = useMemo(() => {
     const count = new Date(year, month, 0).getDate()
+    const now = new Date()
+    const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`
+
     return [...Array(count)].map((_, index) => {
       const day = index + 1
       const date = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`
-      const now = new Date()
-      const dayDate = new Date(date)
-      const isFuture = dayDate > new Date(now.getFullYear(), now.getMonth(), now.getDate())
+      const dayDate = new Date(year, month - 1, day)
+      const isFuture = date > todayStr
       const weekend = dayDate.getDay() === 0
       return { day, date, weekend, isFuture }
     })
@@ -57,7 +53,7 @@ const AttendanceGrid = ({
           const record = recordMap.get(day.date)
           if (record) return STATUS_STYLE[record.status]?.label || ''
           const isHoliday = (registerData?.holidays || []).includes(day.date)
-          const isSunday = new Date(day.date).getDay() === 0
+          const isSunday = day.weekend
           if (isHoliday || isSunday) return '-'
           return ''
         }),
@@ -81,7 +77,7 @@ const AttendanceGrid = ({
           <div>
             <h2 className="text-base font-bold text-text-primary tracking-tight uppercase tracking-[0.05em]">Monthly Grid View</h2>
             <p className="text-[10px] font-semibold text-text-muted uppercase tracking-[0.15em] mt-0.5 opacity-70">
-              {canEdit ? 'Full write access active' : 'Read-only mode active'}
+              Read-only mode active
             </p>
           </div>
         </div>
@@ -154,7 +150,7 @@ const AttendanceGrid = ({
                       {days.map((day) => {
                         const record = recordMap.get(day.date)
                         const isHoliday = (registerData?.holidays || []).includes(day.date)
-                        const isSunday = new Date(day.date).getDay() === 0
+                        const isSunday = day.weekend
                         const type = day.isFuture 
                           ? 'future' 
                           : record 
@@ -166,29 +162,17 @@ const AttendanceGrid = ({
 
                         return (
                           <td key={day.date} className="px-0.5 py-1 text-center">
-                            <button
-                              type="button"
-                              disabled={!record?.attendance_id || !canEdit}
-                              onClick={() => {
-                                if (!record?.attendance_id || !canEdit) return
-                                setEditingCell({ record, student, date: day.date })
-                                setOverrideStatus(record.status)
-                                setOverrideReason('')
-                              }}
-                              className={cn(
-                                "mx-auto flex h-8 w-8 items-center justify-center rounded-[10px] text-[10px] font-bold transition-all duration-200 shadow-sm",
-                                record?.attendance_id && canEdit ? "hover:scale-110 active:scale-90 hover:shadow-md" : "cursor-default"
-                              )}
+                            <div
+                              className="mx-auto flex h-8 w-8 items-center justify-center rounded-[10px] text-[10px] font-bold transition-all duration-200 shadow-sm"
                               style={{
                                 backgroundColor: style.bg,
                                 color: style.color,
                                 opacity: day.isFuture ? 0.3 : 1,
                                 border: style.bg !== 'transparent' ? `1px solid ${style.color}22` : 'none'
                               }}
-                              title={!record?.attendance_id ? undefined : canEdit ? 'Click to override status' : 'Records locked'}
                             >
                               {style.label}
-                            </button>
+                            </div>
                           </td>
                         )
                       })}
@@ -268,86 +252,6 @@ const AttendanceGrid = ({
         />
       </section>
 
-      {/* ── Override Modal ── */}
-      <Modal open={!!editingCell} onClose={() => setEditingCell(null)} size="sm">
-        <div className="p-1">
-          <div className="flex h-14 w-14 items-center justify-center rounded-[20px] bg-amber-50 text-amber-600 mb-8 border border-amber-100 shadow-inner">
-            <Activity size={28} />
-          </div>
-          
-          <h3 className="text-2xl font-bold text-text-primary tracking-tight leading-tight">Manual Override</h3>
-          <p className="mt-3 text-sm font-medium text-text-muted leading-relaxed">
-            You are modifying the attendance record for <span className="font-bold text-text-primary">{editingCell?.student?.first_name} {editingCell?.student?.last_name}</span>.
-          </p>
-
-          <div className="mt-10 space-y-8">
-            <div className="grid grid-cols-2 gap-3">
-              {['present', 'absent', 'late', 'half_day'].map((status) => {
-                const style = STATUS_STYLE[status]
-                const selected = overrideStatus === status
-                return (
-                  <button
-                    key={status}
-                    type="button"
-                    onClick={() => setOverrideStatus(status)}
-                    className={cn(
-                      "h-12 rounded-[18px] border text-[11px] font-bold uppercase tracking-widest transition-all duration-200 flex items-center justify-center gap-2 active:scale-95",
-                      selected ? "text-white shadow-lg" : "text-text-primary hover:bg-surface-raised border-border/60"
-                    )}
-                    style={{
-                      borderColor: selected ? style.color : undefined,
-                      backgroundColor: selected ? style.color : undefined,
-                      boxShadow: selected ? `0 8px 20px ${style.color}44` : 'none'
-                    }}
-                  >
-                    <span className="text-base">{style.label}</span>
-                    <span className="opacity-80">{status.replace('_', ' ')}</span>
-                  </button>
-                )
-              })}
-            </div>
-
-            <div className="space-y-2.5">
-              <label className="text-[10px] font-bold uppercase tracking-[0.2em] text-text-muted ml-1 opacity-70">Audit Reason</label>
-              <textarea
-                value={overrideReason}
-                onChange={(e) => setOverrideReason(e.target.value)}
-                rows={3}
-                placeholder="Reason for manual update (required)..."
-                className="w-full rounded-[20px] px-5 py-4 text-sm outline-none border border-border focus:ring-2 focus:ring-primary/10 transition-all bg-surface-raised font-medium shadow-inner"
-              />
-            </div>
-          </div>
-
-          <div className="mt-10 grid grid-cols-2 gap-4">
-            <button
-              type="button"
-              onClick={() => setEditingCell(null)}
-              className="h-14 rounded-[22px] bg-surface-raised text-[11px] font-bold uppercase tracking-widest text-text-primary hover:bg-border/20 transition-all active:scale-95 border border-border"
-            >
-              Cancel
-            </button>
-            <button
-              disabled={!overrideReason.trim() || savingOverride}
-              onClick={async () => {
-                setSavingOverride(true)
-                try {
-                  await onOverride(editingCell.record.attendance_id, {
-                    status: overrideStatus,
-                    reason: overrideReason.trim(),
-                  })
-                  setEditingCell(null)
-                } finally {
-                  setSavingOverride(false)
-                }
-              }}
-              className="h-14 rounded-[22px] bg-primary text-[11px] font-bold uppercase tracking-widest text-white shadow-xl shadow-primary/30 transition-all flex items-center justify-center gap-2 active:scale-95 disabled:opacity-50"
-            >
-              {savingOverride ? <Loader2 size={18} className="animate-spin" /> : 'Apply Update'}
-            </button>
-          </div>
-        </div>
-      </Modal>
     </div>
   )
 }

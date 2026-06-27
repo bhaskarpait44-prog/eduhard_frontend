@@ -12,7 +12,7 @@ const TabTimeTable = ({ studentId }) => {
   useEffect(() => {
     const fetchTimetable = async () => {
       try {
-        const res = await api.get(`/api/students/${studentId}/timetable`)
+        const res = await api.get(`/students/${studentId}/timetable`)
         setTimetable(res.data?.timetable || [])
       } catch (err) {
         console.error('Failed to fetch timetable', err)

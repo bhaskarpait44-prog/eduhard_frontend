@@ -15,7 +15,7 @@ const TabResults = ({ studentId }) => {
     const fetchExams = async () => {
       try {
         // Use admin-facing endpoint instead of student portal
-        const res = await api.get(`/api/students/${studentId}/results`)
+        const res = await api.get(`/students/${studentId}/results`)
         setExams(res.data?.exams || [])
       } catch (err) {
         console.error('Failed to fetch exams', err)
@@ -34,7 +34,7 @@ const TabResults = ({ studentId }) => {
 
     if (!examDetails[examId]) {
       try {
-        const res = await api.get(`/api/students/${studentId}/results/${examId}`)
+        const res = await api.get(`/students/${studentId}/results/${examId}`)
         setExamDetails(prev => ({ ...prev, [examId]: res.data }))
       } catch (err) {
         console.error('Failed to fetch exam details', err)

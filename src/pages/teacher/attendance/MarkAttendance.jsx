@@ -24,6 +24,7 @@ const MarkAttendance = () => {
     studentPayload,
     loadingStudents,
     savingAttendance,
+    studentError,
     loadStudents,
     submitAttendance,
   } = useAttendance()
@@ -108,40 +109,18 @@ const MarkAttendance = () => {
   }, [todaySchedule, assignments, markingContext.class_id, markingContext.section_id])
 
   return (
-    <div className="space-y-6 pb-20 lg:pb-8">
-      {/* ── Header ── */}
-      <section 
-        className="rounded-[28px] border p-6 overflow-hidden" 
-        style={{ 
-          borderColor: 'var(--color-border)',
-          background: 'linear-gradient(135deg, rgba(13, 148, 136, 0.12), rgba(16, 185, 129, 0.05) 55%, var(--color-surface) 100%)'
-        }}
-      >
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-          <div className="min-w-0">
-            <p className="text-sm font-semibold uppercase tracking-[0.18em]" style={{ color: '#0f766e' }}>
-              Attendance Management
-            </p>
-            <h1 className="mt-2 text-2xl font-bold leading-tight sm:text-3xl" style={{ color: 'var(--color-text-primary)' }}>
-              Mark Attendance
-            </h1>
-            <p className="mt-2 text-sm sm:text-base opacity-80" style={{ color: 'var(--color-text-secondary)' }}>
-              Record daily student attendance for your assigned sections. Ensure accuracy for session reports and parent notifications.
-            </p>
-          </div>
-          <div className="flex items-center gap-3 bg-white/50 backdrop-blur-sm px-5 py-3 rounded-2xl border border-white shadow-sm shrink-0">
-            <div className="text-right">
-              <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-text-muted">Today</p>
-              <p className="text-sm font-bold text-text-primary leading-tight mt-0.5">
-                {new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
-              </p>
-            </div>
-            <div className="h-10 w-10 flex items-center justify-center rounded-xl bg-teal-50 text-teal-600 border border-teal-100 shadow-inner">
-              <CalendarDays size={20} />
-            </div>
-          </div>
+    <div className="max-w-[1400px] mx-auto space-y-6 pb-12">
+      {/* Page Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="flex-1">
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+            Mark Attendance
+          </h1>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
+            Record daily student attendance for your assigned sections. Ensure accuracy for session reports and parent notifications. Today is {new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}.
+          </p>
         </div>
-      </section>
+      </div>
 
       {/* Empty state */}
       {!loadingAssignments && assignments.length === 0 && (
@@ -160,6 +139,7 @@ const MarkAttendance = () => {
           payload={studentPayload}
           loadingStudents={loadingStudents || loadingAssignments}
           savingAttendance={savingAttendance}
+          error={studentError}
           onLoad={async (params) => {
             try {
               await loadStudents(params)

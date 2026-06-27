@@ -111,8 +111,10 @@ const baseStudentProfileSchema = z.object({
   perm_pincode: pincodeSchema,
 
   father_name: z.string().min(1, 'Father\'s name is missing — please enter the father\'s full name'),
-  father_phone: phoneSchema,
-  father_email: z.string().email('Father\'s email is invalid — enter a valid email address to be used for parent portal login'),
+  father_phone: z.string()
+    .min(1, 'Father\'s phone is missing — please enter a valid 10-digit mobile number')
+    .regex(/^[6-9]\d{9}$/, 'Father\'s phone is invalid — enter a valid 10-digit mobile number starting with 6, 7, 8, or 9'),
+  parent_email: z.string().email('Father\'s email is invalid — enter a valid email address to be used for parent portal login'),
   father_occupation: z.string().optional(),
   father_qualification: z.string().optional(),
   father_aadhar: z
@@ -178,12 +180,6 @@ const applyProfileRefinements = (data, ctx) => {
     if (!data.perm_pincode || !/^\d{6}$/.test(data.perm_pincode)) ctx.addIssue({ code: 'custom', message: 'Permanent PIN code is invalid — please enter exactly 6 digits', path: ['perm_pincode'] });
   }
 
-  // At least one parent phone must be provided
-  if (!data.father_phone && !data.mother_phone) {
-    const msg = 'Parent phone is missing — please add either the father\'s or mother\'s phone number';
-    ctx.addIssue({ code: 'custom', message: msg, path: ['father_phone'] });
-    ctx.addIssue({ code: 'custom', message: msg, path: ['mother_phone'] });
-  }
 }
 
 export const studentProfileSchema = baseStudentProfileSchema.superRefine(applyProfileRefinements)
@@ -207,7 +203,7 @@ export const studentUpdateSchema = baseStudentProfileSchema.extend({
     .max(30, 'Admission number is too long — please limit to 30 characters')
     .regex(/^[a-zA-Z0-9\-_]+$/, 'Admission number contains invalid characters — only letters, numbers, hyphens, and underscores are allowed'),
 
-  father_email: z.string().email('Email is invalid — please enter a valid email address for the father').optional().or(z.literal('')),
+
 
   date_of_birth: z
     .string()
@@ -218,6 +214,17 @@ export const studentUpdateSchema = baseStudentProfileSchema.extend({
       const age = (Date.now() - new Date(val)) / (1000 * 60 * 60 * 24 * 365.25)
       return age >= 3 && age <= 100
     }, 'Date of birth is suspicious — student must be between 3 and 100 years old'),
+
+  gender: z.enum(['male', 'female', 'other'], {
+    required_error: 'Gender is required — please select an option from the list',
+    invalid_type_error: 'Gender selection is invalid — please select a valid option',
+  }),
+
+  aadhar_no: z
+    .string()
+    .regex(/^\d{12}$/, 'Aadhaar must be exactly 12 digits — enter numbers only, no spaces')
+    .optional()
+    .or(z.literal('')),
 
   parent_email: z
     .string().trim()

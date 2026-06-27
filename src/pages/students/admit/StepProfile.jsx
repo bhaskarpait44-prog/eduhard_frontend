@@ -129,20 +129,18 @@ const StepProfile = ({ defaultValues, onNext, onBack }) => {
             </label>
           </div>
 
-          {!isPermanentSame && (
             <div className="space-y-5 animate-in fade-in slide-in-from-top-2 duration-300">
-              <Textarea label="House No. / Street / Locality" required placeholder="House/Flat No, Street, Locality" rows={2} error={errors.perm_address?.message} {...register('perm_address')} />
+              <Textarea label="House No. / Street / Locality" required placeholder="House/Flat No, Street, Locality" rows={2} error={errors.perm_address?.message} disabled={isPermanentSame} {...register('perm_address')} />
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                <Input label="Village / Town" required placeholder="Village or Town name" error={errors.perm_village?.message} {...register('perm_village')} />
-                <Input label="Police Station (P.S.)" required placeholder="P.S." error={errors.perm_police_station?.message} {...register('perm_police_station')} />
-                <Input label="Post Office (P.O.)" required placeholder="P.O." error={errors.perm_post_office?.message} {...register('perm_post_office')} />
-                <Input label="District" required placeholder="District" error={errors.perm_district?.message} {...register('perm_district')} />
-                <Input label="City" placeholder="City/Town" error={errors.perm_city?.message} {...register('perm_city')} />
-                <Input label="State" required  placeholder="State" error={errors.perm_state?.message} {...register('perm_state')} />
-                <Input label="Pincode" required placeholder="781001" type="text" error={errors.perm_pincode?.message} {...register('perm_pincode')} />
+                <Input label="Village / Town" required placeholder="Village or Town name" error={errors.perm_village?.message} disabled={isPermanentSame} {...register('perm_village')} />
+                <Input label="Police Station (P.S.)" required placeholder="P.S." error={errors.perm_police_station?.message} disabled={isPermanentSame} {...register('perm_police_station')} />
+                <Input label="Post Office (P.O.)" required placeholder="P.O." error={errors.perm_post_office?.message} disabled={isPermanentSame} {...register('perm_post_office')} />
+                <Input label="District" required placeholder="District" error={errors.perm_district?.message} disabled={isPermanentSame} {...register('perm_district')} />
+                <Input label="City" required placeholder="City/Town" error={errors.perm_city?.message} disabled={isPermanentSame} {...register('perm_city')} />
+                <Input label="State" required  placeholder="State" error={errors.perm_state?.message} disabled={isPermanentSame} {...register('perm_state')} />
+                <Input label="Pincode" required placeholder="781001" type="text" error={errors.perm_pincode?.message} disabled={isPermanentSame} {...register('perm_pincode')} />
               </div>
             </div>
-          )}
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -163,10 +161,9 @@ const StepProfile = ({ defaultValues, onNext, onBack }) => {
           <Input label="Mother's Name" required placeholder="Sunita Sharma" error={errors.mother_name?.message} {...register('mother_name')} />
           <Input label="Mother's Qualification (Optional)" placeholder="e.g. B.A., M.Sc." {...register('mother_qualification')} />
           <Input 
-            label="Mother's Phone" 
+            label="Mother's Phone (Optional)" 
             type="text" 
             placeholder="9876543212" 
-            hint="At least one parent phone number is required"
             error={errors.mother_phone?.message} 
             {...register('mother_phone')} 
           />
@@ -189,9 +186,10 @@ const StepProfile = ({ defaultValues, onNext, onBack }) => {
           <Input label="Father's Qualification (Optional)" placeholder="e.g. B.Tech, M.A." {...register('father_qualification')} />
           <Input 
             label="Father's Phone" 
+            required
             type="text" 
             placeholder="9876543211" 
-            hint="At least one parent phone number is required"
+            hint="10-digit mobile number"
             error={errors.father_phone?.message} 
             {...register('father_phone')} 
           />
@@ -201,8 +199,8 @@ const StepProfile = ({ defaultValues, onNext, onBack }) => {
             required 
             type="email" 
             placeholder="father@email.com" 
-            error={errors.father_email?.message} 
-            {...register('father_email')} 
+            error={errors.parent_email?.message} 
+            {...register('parent_email')} 
           />
           <Input 
             label="Father's Aadhar (Optional)" 
@@ -210,9 +208,15 @@ const StepProfile = ({ defaultValues, onNext, onBack }) => {
             type="text" 
             maxLength={12} 
             hint="12-digit Aadhaar number printed on the card (optional)"
+            error={errors.father_aadhar?.message}
             {...register('father_aadhar')} 
           />
-          <Input label="Father's Annual Income (Optional)" placeholder="e.g. 8,00,000" {...register('father_annual_income')} />
+          <Input 
+            label="Father's Annual Income (Optional)" 
+            placeholder="e.g. 8,00,000" 
+            error={errors.father_annual_income?.message}
+            {...register('father_annual_income')} 
+          />
         </div>
 
         {/* Guardian Expansion */}
@@ -220,7 +224,13 @@ const StepProfile = ({ defaultValues, onNext, onBack }) => {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           <Input label="Guardian's Name (Optional)" placeholder="Guardian Name" {...register('guardian_name')} />
           <Input label="Relation (Optional)" placeholder="Relation to student" {...register('guardian_relation')} />
-          <Input label="Guardian's Phone (Optional)" type="text" placeholder="9876543213" {...register('guardian_phone')} />
+          <Input 
+            label="Guardian's Phone (Optional)" 
+            type="text" 
+            placeholder="9876543213" 
+            error={errors.guardian_phone?.message}
+            {...register('guardian_phone')} 
+          />
           <Input label="Qualification (Optional)" placeholder="Qualification" {...register('guardian_qualification')} />
           <Input label="Occupation (Optional)" placeholder="Occupation" {...register('guardian_occupation')} />
           <Input 
@@ -229,9 +239,15 @@ const StepProfile = ({ defaultValues, onNext, onBack }) => {
             type="text" 
             maxLength={12} 
             hint="12-digit Aadhaar number printed on the card (optional)"
+            error={errors.guardian_aadhar?.message}
             {...register('guardian_aadhar')} 
           />
-          <Input label="Guardian's Annual Income (Optional)" placeholder="e.g. 8,00,000" {...register('guardian_annual_income')} />
+          <Input 
+            label="Guardian's Annual Income (Optional)" 
+            placeholder="e.g. 8,00,000" 
+            error={errors.guardian_annual_income?.message}
+            {...register('guardian_annual_income')} 
+          />
         </div>
 
         {/* Medical */}

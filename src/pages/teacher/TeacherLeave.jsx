@@ -3,7 +3,6 @@ import { CalendarDays, ChevronLeft, ChevronRight, FileClock, ShieldCheck, XCircl
 import usePageTitle from '@/hooks/usePageTitle'
 import useToast from '@/hooks/useToast'
 import useTeacherLeave from '@/hooks/useTeacherLeave'
-import LeaveBalance from '@/components/teacher/LeaveBalance'
 import LeaveForm from '@/components/teacher/LeaveForm'
 import Badge from '@/components/ui/Badge'
 import Button from '@/components/ui/Button'
@@ -20,7 +19,6 @@ const TeacherLeave = () => {
 
   const { toastSuccess, toastError } = useToast()
   const {
-    balances,
     applications,
     session,
     workingDays,
@@ -63,63 +61,26 @@ const TeacherLeave = () => {
   }
 
   return (
-    <div className="space-y-5 pb-20">
-      <section
-        className="rounded-[28px] border p-5 sm:p-6"
-        style={{
-          borderColor: 'var(--color-border)',
-          background: 'linear-gradient(135deg, rgba(13, 148, 136, 0.18), rgba(16, 185, 129, 0.06) 58%, var(--color-surface) 100%)',
-        }}
-      >
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-          <div>
-            <h1 className="text-2xl font-bold" style={{ color: 'var(--color-text-primary)' }}>
-              Leave Application
-            </h1>
-            <p className="mt-2 text-sm" style={{ color: 'var(--color-text-secondary)' }}>
-              Apply for leave, track approval status, view your session leave balance, and check your leave calendar at a glance.
-            </p>
-            <p className="mt-2 text-xs font-medium uppercase tracking-[0.16em]" style={{ color: '#0f766e' }}>
-              Current Session: {session?.name || 'Not available'}
-            </p>
-          </div>
-
-          <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-            <StatCard title="Applications" value={stats.total} tone="#0f766e" />
-            <StatCard title="Pending" value={stats.pending} tone="#f59e0b" />
-            <StatCard title="Approved" value={stats.approved} tone="#10b981" />
-            <StatCard title="Rejected" value={stats.rejected} tone="#ef4444" />
-          </div>
+    <div className="max-w-[1400px] mx-auto space-y-6 pb-12">
+      {/* Page Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="flex-1">
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+            Leave Application
+          </h1>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
+            Apply for leave, track approval status, and check your leave calendar. Current Session: {session?.name || 'Not available'}
+          </p>
         </div>
-      </section>
+      </div>
 
-      <section
-        className="rounded-[28px] border p-5 sm:p-6"
-        style={{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface)' }}
-      >
-        <div className="mb-4 flex items-center gap-2">
-          <ShieldCheck size={16} style={{ color: 'var(--color-text-secondary)' }} />
-          <h2 className="text-lg font-semibold" style={{ color: 'var(--color-text-primary)' }}>
-            Leave Balance
-          </h2>
-        </div>
-
-        {loading ? (
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
-            {[...Array(3)].map((_, index) => (
-              <div key={index} className="h-36 animate-pulse rounded-[24px]" style={{ backgroundColor: 'var(--color-surface-raised)' }} />
-            ))}
-          </div>
-        ) : balances.length ? (
-          <LeaveBalance balances={balances} />
-        ) : (
-          <EmptyState
-            icon={ShieldCheck}
-            title="No leave balances configured"
-            description="Leave balances are not yet configured for this session."
-          />
-        )}
-      </section>
+      {/* Stats cards row */}
+      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+        <StatCard title="Applications" value={stats.total} tone="#2563eb" />
+        <StatCard title="Pending" value={stats.pending} tone="#f59e0b" />
+        <StatCard title="Approved" value={stats.approved} tone="#10b981" />
+        <StatCard title="Rejected" value={stats.rejected} tone="#ef4444" />
+      </div>
 
       <div className="grid grid-cols-1 gap-5 xl:grid-cols-[minmax(0,1.2fr)_minmax(360px,420px)]">
         <section
@@ -152,10 +113,9 @@ const TeacherLeave = () => {
           </div>
 
           <div
-            className="rounded-[26px] border p-3 sm:p-4"
+            className="rounded-2xl border p-3 sm:p-4 bg-surface"
             style={{
               borderColor: 'var(--color-border)',
-              background: 'linear-gradient(180deg, var(--color-surface-raised), var(--color-surface))',
             }}
           >
             <div className="mb-4 flex items-center justify-between gap-3">
@@ -199,15 +159,9 @@ const TeacherLeave = () => {
               </div>
             </div>
 
-            <div className="mb-2 grid grid-cols-7 gap-2">
+            <div className="mb-2 grid grid-cols-7 gap-2 text-center text-[11px] font-semibold uppercase tracking-wider text-gray-500">
               {WEEKDAY_LABELS.map((label) => (
-                <div
-                  key={label}
-                  className="rounded-2xl py-2 text-center text-[11px] font-semibold uppercase tracking-[0.16em]"
-                  style={{ color: 'var(--color-text-muted)', backgroundColor: 'var(--color-surface)' }}
-                >
-                  {label}
-                </div>
+                <div key={label} className="py-2">{label}</div>
               ))}
             </div>
 
@@ -215,41 +169,41 @@ const TeacherLeave = () => {
               {calendarDays.map((day) => (
                 <div
                   key={day.key}
-                  className="min-h-[72px] rounded-[18px] border p-1.5 sm:min-h-[82px] sm:rounded-[22px] sm:p-2"
+                  className={`min-h-[72px] sm:min-h-[82px] rounded-xl border p-1.5 sm:p-2 flex flex-col justify-between transition-all ${
+                    day.isCurrentMonth ? '' : 'opacity-40'
+                  }`}
                   style={{
-                    borderColor: day.isToday ? day.accent : day.isCurrentMonth ? 'var(--color-border)' : 'transparent',
+                    borderColor: day.isToday ? '#2563eb' : day.isCurrentMonth ? 'var(--color-border)' : 'transparent',
                     backgroundColor: day.bg,
-                    opacity: day.isCurrentMonth ? 1 : 0.45,
-                    boxShadow: day.isToday ? `0 0 0 1px ${day.accent} inset` : 'none',
+                    boxShadow: day.isToday ? '0 0 0 1px #2563eb' : 'none',
                   }}
                 >
-                  <div className="flex items-start justify-between gap-2">
-                    <div>
-                      <p className="text-[9px] font-semibold uppercase tracking-[0.12em]" style={{ color: day.textMuted }}>
-                        {MONTH_NAMES[day.date.getMonth()]}
-                      </p>
-                      <p className="mt-0.5 text-xs font-bold sm:mt-1 sm:text-sm" style={{ color: day.text }}>
-                        {day.date.getDate()}
-                      </p>
-                    </div>
-                    {day.isToday ? (
-                      <span
-                        className="rounded-full px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-[0.12em]"
-                        style={{ backgroundColor: day.accent, color: '#fff' }}
-                      >
+                  <div className="flex items-center justify-between gap-1.5">
+                    <span 
+                      className={`text-xs font-bold sm:text-sm h-5 w-5 rounded-full flex items-center justify-center`}
+                      style={{ 
+                        color: day.isToday ? '#fff' : day.text, 
+                        backgroundColor: day.isToday ? '#2563eb' : 'transparent' 
+                      }}
+                    >
+                      {day.date.getDate()}
+                    </span>
+                    {day.isToday && (
+                      <span className="hidden sm:inline-block rounded-full bg-blue-600/10 text-blue-600 text-[8px] font-bold px-1 py-0.5 uppercase tracking-wider">
                         Today
                       </span>
-                    ) : null}
+                    )}
                   </div>
 
-                  <div className="mt-2 sm:mt-3">
-                    <p className="text-[9px] font-semibold leading-tight sm:text-[10px]" style={{ color: day.text }}>
+                  <div className="mt-1.5">
+                    <p className="text-[9px] font-bold sm:text-[10px] truncate leading-tight" style={{ color: day.isToday ? '#2563eb' : day.text }}>
                       {day.shortLabel || day.label}
                     </p>
                     {day.subLabel ? (
                       <p
-                        className="mt-0.5 text-[8px] leading-tight sm:mt-1 sm:text-[9px]"
-                        style={{ color: day.textMuted, wordBreak: 'break-word', overflowWrap: 'anywhere' }}
+                        className="text-[8px] sm:text-[9px] truncate mt-0.5"
+                        style={{ color: day.textMuted }}
+                        title={day.subLabel}
                       >
                         {day.shortSubLabel || day.subLabel}
                       </p>
@@ -266,10 +220,10 @@ const TeacherLeave = () => {
               { label: 'Pending Leave', color: '#d97706', bg: 'rgba(245, 158, 11, 0.14)' },
               { label: 'Rejected Leave', color: '#dc2626', bg: 'rgba(239, 68, 68, 0.12)' },
               { label: 'Holiday', color: '#7c3aed', bg: 'rgba(124, 58, 237, 0.10)' },
-              { label: 'Working Day', color: '#0f766e', bg: 'rgba(15, 118, 110, 0.10)' },
+              { label: 'Working Day', color: '#2563eb', bg: 'rgba(37, 99, 235, 0.10)' },
               { label: 'Weekend / Off Day', color: '#64748b', bg: 'rgba(100, 116, 139, 0.12)' },
             ].map((item) => (
-              <div key={item.label} className="rounded-2xl border px-3 py-2" style={{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface)' }}>
+              <div key={item.label} className="rounded-xl border px-3 py-2" style={{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface)' }}>
                 <div className="flex items-center gap-2">
                   <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: item.color, boxShadow: `0 0 0 4px ${item.bg}` }} />
                   <span className="text-xs font-semibold" style={{ color: 'var(--color-text-primary)' }}>{item.label}</span>
@@ -376,19 +330,33 @@ const statusVariant = (status) => {
 
 const buildMonthCalendar = (monthDate, workingDays, holidays, applications) => {
   const today = new Date()
-  const todayKey = today.toISOString().slice(0, 10)
+
+  // Format local date as YYYY-MM-DD
+  const getLocalDateString = (date) => {
+    const y = date.getFullYear()
+    const m = String(date.getMonth() + 1).padStart(2, '0')
+    const d = String(date.getDate()).padStart(2, '0')
+    return `${y}-${m}-${d}`
+  }
+
+  const todayKey = getLocalDateString(today)
   const monthStart = new Date(monthDate.getFullYear(), monthDate.getMonth(), 1)
   const monthEnd = new Date(monthDate.getFullYear(), monthDate.getMonth() + 1, 0)
   const gridStart = new Date(monthStart)
   gridStart.setDate(monthStart.getDate() - monthStart.getDay())
   const gridEnd = new Date(monthEnd)
   gridEnd.setDate(monthEnd.getDate() + (6 - monthEnd.getDay()))
-  const holidayMap = new Map((holidays || []).map((holiday) => [String(holiday.holiday_date).slice(0, 10), holiday]))
+  
+  const holidayMap = new Map((holidays || []).map((holiday) => {
+    const dateStr = holiday.holiday_date ? String(holiday.holiday_date).slice(0, 10) : ''
+    return [dateStr, holiday]
+  }))
+  
   const result = []
 
   for (let cursor = new Date(gridStart); cursor <= gridEnd; cursor.setDate(cursor.getDate() + 1)) {
     const currentDate = new Date(cursor)
-    const key = currentDate.toISOString().slice(0, 10)
+    const key = getLocalDateString(currentDate)
     const dayKey = DAY_KEYS[currentDate.getDay()]
     const matchingLeave = applications.find((application) => key >= application.from_date && key <= application.to_date)
     const holiday = holidayMap.get(key)
@@ -416,7 +384,7 @@ const buildMonthCalendar = (monthDate, workingDays, holidays, applications) => {
       bg = 'rgba(16, 185, 129, 0.12)'
       accent = '#10b981'
       text = '#065f46'
-      textMuted = '#0f766e'
+      textMuted = '#047857'
     } else if (matchingLeave?.status === 'rejected') {
       label = 'Rejected leave'
       subLabel = matchingLeave.leave_type.replace('_', ' ')
@@ -431,10 +399,10 @@ const buildMonthCalendar = (monthDate, workingDays, holidays, applications) => {
       text = '#5b21b6'
       textMuted = '#7c3aed'
     } else if (isWorkingDay) {
-      bg = 'rgba(15, 118, 110, 0.10)'
-      accent = '#0f766e'
-      text = '#115e59'
-      textMuted = '#0f766e'
+      bg = 'rgba(37, 99, 235, 0.10)'
+      accent = '#2563eb'
+      text = '#1e3a8a'
+      textMuted = '#2563eb'
     }
 
     result.push({

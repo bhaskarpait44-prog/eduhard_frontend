@@ -597,10 +597,8 @@ const SidebarContent = ({ collapsed, toggleCollapsed, user, initials, navGroups,
       <div
         className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0"
         style={{
-          background : user?.role === ROLES.TEACHER
-            ? 'linear-gradient(135deg,#0f766e 0%,#10b981 100%)'
-            : 'linear-gradient(135deg,var(--color-brand) 0%,var(--color-brand-light) 100%)',
-          boxShadow  : '0 4px 12px rgba(16,185,129,0.25)',
+          background : 'linear-gradient(135deg,var(--color-brand) 0%,var(--color-brand-light) 100%)',
+          boxShadow  : '0 4px 12px rgba(37,99,235,0.25)',
         }}
       >
         <Icons.GraduationCap size={17} color="#fff" />

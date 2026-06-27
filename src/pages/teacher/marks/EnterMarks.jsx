@@ -245,33 +245,36 @@ const EnterMarks = () => {
   }, [entryPayload?.students?.length, entryPayload?.locked, persistAll])
 
   return (
-    <div className="space-y-6">
-      {/* ── Header ── */}
-      <section className="rounded-2xl border p-5 sm:p-6" style={{ borderColor: 'var(--color-border)' }}>
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-          <div className="min-w-0">
-            <p className="text-[11px] font-semibold uppercase tracking-widest" style={{ color: '#0f766e' }}>
-              Academic Performance
-            </p>
-            <h1 className="mt-1.5 text-2xl font-bold sm:text-3xl" style={{ color: 'var(--color-text-primary)' }}>
-              Enter Marks
-            </h1>
-            <p className="mt-1.5 max-w-xl text-sm leading-relaxed" style={{ color: 'var(--color-text-secondary)' }}>
-              Record and manage student examination marks for your assigned classes and subjects.
-            </p>
-          </div>
-          {entryPayload?.locked && (
-            <div className="flex items-center gap-2 rounded-xl bg-amber-50 px-4 py-2 text-amber-700 ring-1 ring-amber-200">
-              <Lock size={16} />
-              <span className="text-xs font-bold uppercase tracking-wider">Locked</span>
-            </div>
-          )}
+    <div className="max-w-[1400px] mx-auto space-y-6 pb-12">
+      {/* Page Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="flex-1">
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+            Enter Marks
+          </h1>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
+            Record and manage student examination marks for your assigned classes and subjects.
+          </p>
         </div>
+        {entryPayload?.locked && (
+          <div className="flex items-center gap-2 rounded-xl bg-amber-50 px-4 py-2 text-amber-700 ring-1 ring-amber-200">
+            <Lock size={16} />
+            <span className="text-xs font-bold uppercase tracking-wider">Locked</span>
+          </div>
+        )}
+      </div>
 
-        {/* ── Filters ── */}
-        <div className="mt-5 grid grid-cols-1 gap-4 xl:grid-cols-6">
+      {/* ── Filters ── */}
+      <div 
+        className="rounded-2xl border p-6"
+        style={{
+          borderColor: 'var(--color-border)',
+          backgroundColor: 'var(--color-surface)',
+        }}
+      >
+        <div className="grid grid-cols-1 gap-4 xl:grid-cols-6">
           <div className="space-y-1.5 xl:col-span-3">
-            <label className="text-sm font-medium" style={{ color: 'var(--color-text-primary)' }}>Class & Section</label>
+            <label className="text-sm font-semibold ml-1" style={{ color: 'var(--color-text-primary)' }}>Class & Section</label>
             <Select
               value={sectionKey}
               onChange={(e) => setSectionKey(e.target.value)}
@@ -280,21 +283,21 @@ const EnterMarks = () => {
                 label: `${s.class_name} ${s.section_name}`,
               }))}
               placeholder="Choose Section"
-              className="h-9 px-3 py-1 rounded-xl bg-surface-raised border border-border/50 text-xs font-semibold focus:border-primary"
+              className="h-11 px-4 rounded-xl bg-surface-raised border border-border/50 text-sm font-semibold focus:border-primary transition-all"
             />
           </div>
           <div className="space-y-1.5 xl:col-span-3">
-            <label className="text-sm font-medium" style={{ color: 'var(--color-text-primary)' }}>Subject</label>
+            <label className="text-sm font-semibold ml-1" style={{ color: 'var(--color-text-primary)' }}>Subject</label>
             <Select
               value={subjectId}
               onChange={(e) => setSubjectId(e.target.value)}
               options={subjectOptions.map((s) => ({ value: String(s.id), label: s.name }))}
               placeholder="Choose Subject"
-              className="h-9 px-3 py-1 rounded-xl bg-surface-raised border border-border/50 text-xs font-semibold focus:border-primary"
+              className="h-11 px-4 rounded-xl bg-surface-raised border border-border/50 text-sm font-semibold focus:border-primary transition-all"
             />
           </div>
         </div>
-      </section>
+      </div>
 
       {/* ── Main Content ── */}
       <main className="min-h-[400px]">
