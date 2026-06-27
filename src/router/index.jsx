@@ -693,7 +693,7 @@ const router = createBrowserRouter([
       {
         path: ROUTES.AI_RISK_ANALYSIS,
         element: (
-          <ProtectedRoute roles={[ROLES.ADMIN, ROLES.TEACHER]}>
+          <ProtectedRoute roles={[ROLES.ADMIN]}>
             <Lazy component={StudentRiskPage} />
           </ProtectedRoute>
         ),

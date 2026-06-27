@@ -8,7 +8,6 @@ import useAuthStore from '@/store/authStore'
 import usePageTitle from '@/hooks/usePageTitle'
 import useTeacherDashboard from '@/hooks/useTeacherDashboard'
 import useToast from '@/hooks/useToast'
-import RiskScoreWidget from '@/components/dashboard/RiskScoreWidget'
 import Button from '@/components/ui/Button'
 import { ROUTES } from '@/constants/app'
 import { formatPercent, titleCase } from '@/utils/helpers'
@@ -346,8 +345,6 @@ const TeacherDashboard = () => {
         </div>
 
         <div className="space-y-5">
-          <RiskScoreWidget sessionId={dashboard?.current_session?.id} />
-
           <SectionShell
             title="Quick Actions"
             caption="Shortcuts for the actions teachers repeat most during the day."
