@@ -109,10 +109,10 @@ const TeacherMyClasses = () => {
 
       {/* ── Stats ── */}
       <section className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-        <StatCard label="Assigned Sections" value={summary.totalSections}   color="#2563eb" />
-        <StatCard label="Class Teacher"      value={summary.classTeacherSections} color="#2563eb" />
-        <StatCard label="Subject Sections"   value={summary.subjectTeacherSections} color="#2563eb" />
-        <StatCard label="Assigned Subjects"  value={summary.totalSubjects}  color="#2563eb" />
+        <StatCard label="Assigned Sections" value={summary.totalSections}   color="#00bc7d" />
+        <StatCard label="Class Teacher"      value={summary.classTeacherSections} color="#00bc7d" />
+        <StatCard label="Subject Sections"   value={summary.subjectTeacherSections} color="#00bc7d" />
+        <StatCard label="Assigned Subjects"  value={summary.totalSubjects}  color="#00bc7d" />
       </section>
 
       {/* ── Body ── */}
@@ -281,7 +281,7 @@ const AssignmentCard = ({ assignment, variant, navigate }) => {
 
       {/* Mini stats */}
       <div className="mt-4 grid grid-cols-4 gap-2">
-        <MiniStat label="Students"  value={assignment.student_count}                                color="#2563eb" />
+        <MiniStat label="Students"  value={assignment.student_count}                                color="#00bc7d" />
         <MiniStat label="Att. rate" value={`${Number(assignment.attendance_rate || 0).toFixed(0)}%`} color="#0284c7" />
         <MiniStat label="Below 75%" value={assignment.below_75_count}                               color="#ef4444" />
         <MiniStat label="Fee due"   value={assignment.fee_defaulters_count}                         color="#f59e0b" />
@@ -347,7 +347,7 @@ const ActionBtn = ({ icon: Icon, label, onClick, disabled = false }) => (
     className="inline-flex items-center gap-1.5 rounded-xl border px-3.5 py-2 text-xs font-semibold transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-50"
     style={{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface)' }}
   >
-    <Icon size={13} style={{ color: disabled ? 'var(--color-text-muted)' : '#2563eb' }} />
+    <Icon size={13} style={{ color: disabled ? 'var(--color-text-muted)' : '#00bc7d' }} />
     {label}
   </button>
 )

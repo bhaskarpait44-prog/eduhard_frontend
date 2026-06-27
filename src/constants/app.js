@@ -120,6 +120,7 @@ export const ROUTES = {
 
   // Library Portal
   LIBRARY_ROOT: '/library',
+  TEACHER_ROOT: '/teacher',
   LIBRARY_DASHBOARD: '/library/dashboard',
   LIBRARY_BOOKS: '/library/books',
   LIBRARY_ISSUES: '/library/issues',

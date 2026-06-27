@@ -124,7 +124,7 @@ const NoticeList = () => {
 
       {/* Stats cards row */}
       <div className="grid grid-cols-3 gap-4">
-        <CompactStat label="Total" value={stats.total} color="#2563eb" />
+        <CompactStat label="Total" value={stats.total} color="#00bc7d" />
         <CompactStat label="Unread" value={stats.unread} color="#f59e0b" />
         <CompactStat label="Urgent" value={stats.urgent} color="#ef4444" />
       </div>

@@ -163,7 +163,8 @@ const StudentList = () => {
       theme={{
         algorithm: isDark ? antdTheme.darkAlgorithm : antdTheme.defaultAlgorithm,
         token: {
-          colorPrimary: '#2563eb',
+          colorPrimary: '#00bc7d',
+          colorLink:    '#00bc7d',
           borderRadius: 16,
           fontFamily: 'inherit',
         },

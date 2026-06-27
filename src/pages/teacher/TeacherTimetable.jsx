@@ -103,7 +103,7 @@ const TeacherTimetable = () => {
         <PeriodCard
           label="Current Period"
           icon={Clock3}
-          accent="#2563eb"
+          accent="#00bc7d"
           accentBg="rgba(37,99,235,0.1)"
           primary={currentPeriod ? currentPeriod.subject_name : 'No active period'}
           secondary={
@@ -150,8 +150,8 @@ const TeacherTimetable = () => {
             onClick={() => setView(tab.key)}
             className="rounded-xl px-5 py-2 text-sm font-bold transition-all"
             style={{
-              backgroundColor: view === tab.key ? '#2563eb' : 'rgba(37,99,235,0.08)',
-              color: view === tab.key ? '#fff' : '#2563eb',
+              backgroundColor: view === tab.key ? '#00bc7d' : 'rgba(37,99,235,0.08)',
+              color: view === tab.key ? '#fff' : '#00bc7d',
               boxShadow: view === tab.key ? '0 4px 12px rgba(37,99,235,0.25)' : 'none',
             }}
           >
@@ -365,7 +365,7 @@ const ProgressCard = ({ done, total, slots }) => {
             className="flex h-7 w-7 items-center justify-center rounded-lg"
             style={{ backgroundColor: 'rgba(37,99,235,0.1)' }}
           >
-            <BookOpen size={14} style={{ color: '#2563eb' }} />
+            <BookOpen size={14} style={{ color: '#00bc7d' }} />
           </div>
           <p className="text-[11px] font-semibold uppercase tracking-widest" style={{ color: 'var(--color-text-muted)' }}>
             Today's Progress
@@ -382,7 +382,7 @@ const ProgressCard = ({ done, total, slots }) => {
         <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full" style={{ backgroundColor: 'var(--color-surface-raised)' }}>
           <div
             className="h-full rounded-full transition-all duration-700"
-            style={{ width: `${pct}%`, backgroundColor: '#2563eb' }}
+            style={{ width: `${pct}%`, backgroundColor: '#00bc7d' }}
           />
         </div>
 

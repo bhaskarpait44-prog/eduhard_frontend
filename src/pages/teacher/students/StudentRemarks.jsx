@@ -232,7 +232,7 @@ const StudentRemarks = () => {
                             setEditVisibility(remark.visibility)
                           }}
                           className="inline-flex min-h-10 items-center gap-2 rounded-xl px-4 text-sm font-semibold hover:-translate-y-0.5 transition-transform"
-                          style={{ backgroundColor: '#2563eb', color: '#fff' }}
+                          style={{ backgroundColor: '#00bc7d', color: '#fff' }}
                         >
                           <PencilLine size={16} />
                           Edit
@@ -278,7 +278,7 @@ const StudentRemarks = () => {
                 }
               }}
               className="min-h-10 rounded-xl px-4 text-sm font-semibold"
-              style={{ backgroundColor: '#2563eb', color: '#fff' }}
+              style={{ backgroundColor: '#00bc7d', color: '#fff' }}
             >
               Save Changes
             </button>

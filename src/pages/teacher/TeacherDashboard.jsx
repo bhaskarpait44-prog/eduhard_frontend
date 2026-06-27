@@ -87,7 +87,7 @@ const TeacherDashboard = () => {
       key: 'marks',
       title: 'Pending Marks Entry',
       icon: BookOpenCheck,
-      tone: Number(glance?.pending_marks?.pending_exams || 0) > 0 ? '#ef4444' : '#2563eb',
+      tone: Number(glance?.pending_marks?.pending_exams || 0) > 0 ? '#ef4444' : '#00bc7d',
       route: ROUTES.TEACHER_MARKS_ENTER,
       description: Number(glance?.pending_marks?.pending_exams || 0) === 0
         ? 'All exam marks submitted'
@@ -97,7 +97,7 @@ const TeacherDashboard = () => {
       key: 'students',
       title: 'My Students Today',
       icon: Users,
-      tone: '#2563eb',
+      tone: '#00bc7d',
       route: ROUTES.TEACHER_STUDENTS,
       description: Number(glance?.attendance_status?.total || 0) === 0
         ? 'No classes scheduled today'
@@ -109,8 +109,8 @@ const TeacherDashboard = () => {
 
   const quickActions = [
     { label: 'Mark Attendance', icon: ClipboardCheck, route: ROUTES.TEACHER_ATTENDANCE_MARK, tone: '#10b981' },
-    { label: 'Enter Marks', icon: BookMarked, route: ROUTES.TEACHER_MARKS_ENTER, tone: '#2563eb' },
-    { label: 'Post Notice', icon: BellPlus, route: ROUTES.TEACHER_NOTICE_NEW, tone: '#2563eb' },
+    { label: 'Enter Marks', icon: BookMarked, route: ROUTES.TEACHER_MARKS_ENTER, tone: '#00897b' },
+    { label: 'Post Notice', icon: BellPlus, route: ROUTES.TEACHER_NOTICE_NEW, tone: '#00bc7d' },
     { label: 'View Timetable', icon: LayoutGrid, route: ROUTES.TEACHER_TIMETABLE, tone: '#f59e0b' },
   ]
 
@@ -271,7 +271,7 @@ const TeacherDashboard = () => {
                           />
                           <QuickActionButton
                             label="Enter Marks"
-                            tone="#2563eb"
+                            tone="#00897b"
                             onClick={() => navigate(ROUTES.TEACHER_MARKS_ENTER, {
                               state: {
                                 class_id: String(item.class_id),
@@ -283,7 +283,7 @@ const TeacherDashboard = () => {
                           />
                           <QuickActionButton
                             label="View Students"
-                            tone="#2563eb"
+                            tone="#00bc7d"
                             onClick={() => navigate(ROUTES.TEACHER_STUDENTS, {
                               state: {
                                 class_id: String(item.class_id),
@@ -594,7 +594,7 @@ const timeToDate = (time, baseDate = new Date()) => {
 
 const statusTone = (status) => {
   if (status === 'current') return '#10b981'
-  if (status === 'done') return '#2563eb'
+  if (status === 'done') return '#00897b'
   return '#94a3b8'
 }
 
@@ -636,8 +636,8 @@ const activityMessage = (item) => {
 
 const activityTone = (tableName) => {
   if (tableName === 'attendance') return '#10b981'
-  if (tableName === 'exam_results') return '#2563eb'
-  if (tableName === 'student_remarks') return '#2563eb'
+  if (tableName === 'exam_results') return '#00897b'
+  if (tableName === 'student_remarks') return '#00bc7d'
   if (tableName === 'teacher_notices') return '#f59e0b'
   return '#94a3b8'
 }

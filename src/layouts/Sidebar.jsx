@@ -20,7 +20,7 @@ const getNavGroups = (user) => {
       {
         label: 'Main',
         items: [
-          { label: 'Dashboard',   icon: 'LayoutDashboard', path: ROUTES.DASHBOARD },
+          { label: 'Dashboard',   icon: 'LayoutDashboard', path: `${ROUTES.TEACHER_ROOT}/dashboard` },
           { label: 'My Classes',  icon: 'School2',         path: ROUTES.TEACHER_CLASSES },
           { label: 'Timetable',   icon: 'CalendarRange',   path: ROUTES.TEACHER_TIMETABLE },
         ],
@@ -305,6 +305,13 @@ const NavItem = ({ item, collapsed }) => {
   // Check if any child is active
   const isChildActive = hasChildren && item.children.some(child => location.pathname === child.path)
 
+  // Auto-open accordion when a child is active in expanded mode
+  useEffect(() => {
+    if (isChildActive && !collapsed) {
+      setIsClicked(true)
+    }
+  }, [isChildActive, collapsed])
+
   const updateCoords = () => {
     if (itemRef.current) {
       const rect = itemRef.current.getBoundingClientRect()
@@ -318,14 +325,14 @@ const NavItem = ({ item, collapsed }) => {
   }
 
   const handleMouseEnter = () => {
-    if (hasChildren) {
+    if (hasChildren && collapsed) {
       updateCoords()
       setIsOpen(true)
     }
   }
 
   const handleMouseLeave = () => {
-    if (hasChildren && !isClicked) {
+    if (hasChildren && collapsed && !isClicked) {
       setIsOpen(false)
     }
   }
@@ -333,15 +340,19 @@ const NavItem = ({ item, collapsed }) => {
   const handleClick = (e) => {
     if (hasChildren) {
       e.preventDefault()
-      updateCoords()
-      setIsClicked(!isClicked)
-      setIsOpen(true)
+      if (collapsed) {
+        updateCoords()
+        setIsClicked(!isClicked)
+        setIsOpen(true)
+      } else {
+        setIsClicked(!isClicked)
+      }
     }
   }
 
-  // Close when clicking outside
+  // Close when clicking outside (only for flyout mode)
   useEffect(() => {
-    if (!isClicked) return
+    if (!isClicked || !collapsed) return
     const handleOutsideClick = (e) => {
       if (itemRef.current && !itemRef.current.contains(e.target)) {
         setIsClicked(false)
@@ -350,7 +361,9 @@ const NavItem = ({ item, collapsed }) => {
     }
     document.addEventListener('mousedown', handleOutsideClick)
     return () => document.removeEventListener('mousedown', handleOutsideClick)
-  }, [isClicked])
+  }, [isClicked, collapsed])
+
+  const showSubmenu = hasChildren && (collapsed ? (isOpen || isClicked) : isClicked)
 
   return (
     <div 
@@ -369,14 +382,12 @@ const NavItem = ({ item, collapsed }) => {
             'text-sm font-medium select-none outline-none',
             'transition-all duration-200 ease-out cursor-pointer',
             collapsed && 'justify-center px-0 mx-auto w-10 h-10 rounded-xl',
-            // Highlight if active path OR a child is active OR flyout is clicked open
-            ((isActive && item.path !== '#') || isChildActive || isClicked) && 'bg-[var(--color-sidebar-active)] text-white shadow-[0_4px_14px_rgba(16,185,129,0.25)]'
+            // Highlight if active path OR a child is active OR flyout/dropdown is clicked open
+            ((isActive && item.path !== '#') || isChildActive || isClicked)
+              ? 'bg-[var(--color-sidebar-active)] text-white shadow-[0_4px_14px_rgba(16,185,129,0.25)]'
+              : 'text-[var(--color-sidebar-text)] hover:bg-[var(--color-sidebar-hover)] hover:text-[var(--color-text-primary)]'
           )
         }
-        style={({ isActive }) => ({
-          color: ((isActive && item.path !== '#') || isChildActive || isClicked) ? '#fff' : 'var(--color-sidebar-text)',
-          backgroundColor: ((isActive && item.path !== '#') || isChildActive || isClicked) ? 'var(--color-sidebar-active)' : 'transparent',
-        })}
       >
         {({ isActive }) => (
           <>
@@ -397,10 +408,17 @@ const NavItem = ({ item, collapsed }) => {
             )}
 
             {!collapsed && hasChildren && (
-              <Icons.ChevronRight 
-                size={14} 
-                className={cn('ml-auto transition-transform duration-200 opacity-50 group-hover:opacity-100', (isOpen || isClicked) && 'translate-x-1')} 
-              />
+              collapsed ? (
+                <Icons.ChevronRight 
+                  size={14} 
+                  className={cn('ml-auto transition-transform duration-200 opacity-50 group-hover:opacity-100', showSubmenu && 'translate-x-1')} 
+                />
+              ) : (
+                <Icons.ChevronDown 
+                  size={14} 
+                  className={cn('ml-auto transition-transform duration-200 opacity-50 group-hover:opacity-100', showSubmenu && 'rotate-180')} 
+                />
+              )
             )}
 
             {/* Collapsed Tooltip (for non-children items) */}
@@ -426,9 +444,9 @@ const NavItem = ({ item, collapsed }) => {
         )}
       </NavLink>
 
-      {/* Flyout Submenu - Now outside the NavLink */}
+      {/* Flyout Submenu (only in collapsed mode) */}
       <AnimatePresence>
-        {hasChildren && (isOpen || isClicked) && (
+        {collapsed && showSubmenu && (
           <motion.div
             initial={{ opacity: 0, x: 8 }}
             animate={{ opacity: 1, x: 0 }}
@@ -475,6 +493,41 @@ const NavItem = ({ item, collapsed }) => {
                 </NavLink>
               ))}
             </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Accordion Dropdown Submenu (only in expanded mode) */}
+      <AnimatePresence initial={false}>
+        {!collapsed && showSubmenu && (
+          <motion.div
+            initial="collapsed"
+            animate="open"
+            exit="collapsed"
+            variants={{
+              open: { opacity: 1, height: 'auto' },
+              collapsed: { opacity: 0, height: 0 }
+            }}
+            transition={{ duration: 0.2, ease: 'easeOut' }}
+            className="overflow-hidden mt-1 ml-4 pl-3 border-l border-[var(--color-sidebar-border)] space-y-0.5"
+          >
+            {item.children.map(child => (
+              <NavLink
+                key={child.path}
+                to={child.path}
+                className={({ isActive }) => cn(
+                  "flex items-center gap-3 px-3 py-2 rounded-xl text-[13px] font-medium transition-all",
+                  isActive 
+                    ? "bg-[var(--color-sidebar-active)] text-white shadow-sm" 
+                    : "text-[var(--color-sidebar-text)] hover:bg-[var(--color-sidebar-hover)] hover:text-[var(--color-text-primary)]"
+                )}
+              >
+                <span className="shrink-0 opacity-80">
+                  <NavIcon name={child.icon} size={15} />
+                </span>
+                <span className="truncate">{child.label}</span>
+              </NavLink>
+            ))}
           </motion.div>
         )}
       </AnimatePresence>
@@ -598,7 +651,7 @@ const SidebarContent = ({ collapsed, toggleCollapsed, user, initials, navGroups,
         className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0"
         style={{
           background : 'linear-gradient(135deg,var(--color-brand) 0%,var(--color-brand-light) 100%)',
-          boxShadow  : '0 4px 12px rgba(37,99,235,0.25)',
+          boxShadow  : '0 4px 12px rgba(0,0,0,0.18)',
         }}
       >
         <Icons.GraduationCap size={17} color="#fff" />

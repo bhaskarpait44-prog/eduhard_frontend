@@ -9,6 +9,7 @@ import AccountantLayout from '@/layouts/AccountantLayout'
 import LibraryLayout from '@/layouts/LibraryLayout'
 import ParentLayout from '@/layouts/ParentLayout'
 import ReceptionistLayout from '@/layouts/ReceptionistLayout'
+import TeacherLayout from '@/layouts/TeacherLayout'
 import LoginPage from '@/pages/LoginPage'
 import NotFoundPage from '@/pages/NotFoundPage'
 
@@ -182,7 +183,7 @@ const DashboardGate = () => {
   }
 
   if (role === ROLES.TEACHER) {
-    return <Lazy component={TeacherDashboard} />
+    return <Navigate to={`${ROUTES.TEACHER_ROOT}/dashboard`} replace />
   }
 
   if (role === ROLES.ACCOUNTANT) {
@@ -378,6 +379,35 @@ const router = createBrowserRouter([
       { path: 'fees', element: <Lazy component={ParentFees} /> },
       { path: 'results', element: <Lazy component={ParentResults} /> },
       { path: 'notices', element: <Lazy component={ParentNotices} /> },
+    ],
+  },
+
+  {
+    path: ROUTES.TEACHER_ROOT,
+    element: (
+      <ProtectedRoute roles={[ROLES.TEACHER]}>
+        <TeacherLayout />
+      </ProtectedRoute>
+    ),
+    children: [
+      { index: true, element: <Navigate to="dashboard" replace /> },
+      { path: 'dashboard', element: <Lazy component={TeacherDashboard} /> },
+      { path: 'my-classes', element: <Lazy component={TeacherMyClasses} /> },
+      { path: 'timetable',  element: <Lazy component={TeacherTimetable} /> },
+      { path: 'attendance/mark',     element: <Lazy component={TeacherMarkAttendance} /> },
+      { path: 'attendance/register', element: <Lazy component={TeacherAttendanceRegister} /> },
+      { path: 'attendance/reports',  element: <Lazy component={TeacherAttendanceReports} /> },
+      { path: 'marks/enter',        element: <Lazy component={TeacherEnterMarks} /> },
+      { path: 'marks/summary',      element: <Lazy component={TeacherMarksSummary} /> },
+      { path: 'students',           element: <Lazy component={TeacherStudentList} /> },
+      { path: 'students/:id',       element: <Lazy component={TeacherStudentDetail} /> },
+      { path: 'students/:id/remarks', element: <Lazy component={TeacherStudentRemarks} /> },
+      { path: 'homework',           element: <Lazy component={TeacherHomeworkList} /> },
+      { path: 'chat',        element: <Lazy component={TeacherChat} /> },
+      { path: 'notices',     element: <Lazy component={TeacherNoticeList} /> },
+      { path: 'notices/new', element: <Lazy component={TeacherNoticeForm} /> },
+      { path: 'leave',   element: <Lazy component={TeacherLeave} /> },
+      { path: 'profile', element: <Lazy component={TeacherProfile} /> },
     ],
   },
 
@@ -831,134 +861,6 @@ const router = createBrowserRouter([
         element: (
           <ProtectedRoute roles={[ROLES.ADMIN]}>
             <Lazy component={TeacherDetailPage} />
-          </ProtectedRoute>
-        ),
-      },
-      {
-        path: ROUTES.TEACHER_CLASSES,
-        element: (
-          <ProtectedRoute roles={[ROLES.TEACHER]}>
-            <Lazy component={TeacherMyClasses} />
-          </ProtectedRoute>
-        ),
-      },
-      {
-        path: ROUTES.TEACHER_ATTENDANCE_MARK,
-        element: (
-          <ProtectedRoute roles={[ROLES.TEACHER]}>
-            <Lazy component={TeacherMarkAttendance} />
-          </ProtectedRoute>
-        ),
-      },
-      {
-        path: ROUTES.TEACHER_ATTENDANCE_REGISTER,
-        element: (
-          <ProtectedRoute roles={[ROLES.TEACHER]}>
-            <Lazy component={TeacherAttendanceRegister} />
-          </ProtectedRoute>
-        ),
-      },
-      {
-        path: ROUTES.TEACHER_ATTENDANCE_REPORTS,
-        element: (
-          <ProtectedRoute roles={[ROLES.TEACHER]}>
-            <Lazy component={TeacherAttendanceReports} />
-          </ProtectedRoute>
-        ),
-      },
-      {
-        path: ROUTES.TEACHER_MARKS_ENTER,
-        element: (
-          <ProtectedRoute roles={[ROLES.TEACHER]}>
-            <Lazy component={TeacherEnterMarks} />
-          </ProtectedRoute>
-        ),
-      },
-      {
-        path: ROUTES.TEACHER_MARKS_SUMMARY,
-        element: (
-          <ProtectedRoute roles={[ROLES.TEACHER]}>
-            <Lazy component={TeacherMarksSummary} />
-          </ProtectedRoute>
-        ),
-      },
-      {
-        path: ROUTES.TEACHER_STUDENTS,
-        element: (
-          <ProtectedRoute roles={[ROLES.TEACHER]}>
-            <Lazy component={TeacherStudentList} />
-          </ProtectedRoute>
-        ),
-      },
-      {
-        path: ROUTES.TEACHER_STUDENT_DETAIL,
-        element: (
-          <ProtectedRoute roles={[ROLES.TEACHER]}>
-            <Lazy component={TeacherStudentDetail} />
-          </ProtectedRoute>
-        ),
-      },
-      {
-        path: ROUTES.TEACHER_STUDENT_REMARKS,
-        element: (
-          <ProtectedRoute roles={[ROLES.TEACHER]}>
-            <Lazy component={TeacherStudentRemarks} />
-          </ProtectedRoute>
-        ),
-      },
-      {
-        path: ROUTES.TEACHER_TIMETABLE,
-        element: (
-          <ProtectedRoute roles={[ROLES.TEACHER]}>
-            <Lazy component={TeacherTimetable} />
-          </ProtectedRoute>
-        ),
-      },
-      {
-        path: ROUTES.TEACHER_HOMEWORK,
-        element: (
-          <ProtectedRoute roles={[ROLES.TEACHER]}>
-            <Lazy component={TeacherHomeworkList} />
-          </ProtectedRoute>
-        ),
-      },
-      {
-        path: ROUTES.TEACHER_CHAT,
-        element: (
-          <ProtectedRoute roles={[ROLES.TEACHER]}>
-            <Lazy component={TeacherChat} />
-          </ProtectedRoute>
-        ),
-      },
-      {
-        path: ROUTES.TEACHER_NOTICES,
-        element: (
-          <ProtectedRoute roles={[ROLES.TEACHER]}>
-            <Lazy component={TeacherNoticeList} />
-          </ProtectedRoute>
-        ),
-      },
-      {
-        path: ROUTES.TEACHER_NOTICE_NEW,
-        element: (
-          <ProtectedRoute roles={[ROLES.TEACHER]}>
-            <Lazy component={TeacherNoticeForm} />
-          </ProtectedRoute>
-        ),
-      },
-      {
-        path: ROUTES.TEACHER_LEAVE,
-        element: (
-          <ProtectedRoute roles={[ROLES.TEACHER]}>
-            <Lazy component={TeacherLeave} />
-          </ProtectedRoute>
-        ),
-      },
-      {
-        path: ROUTES.TEACHER_PROFILE,
-        element: (
-          <ProtectedRoute roles={[ROLES.TEACHER]}>
-            <Lazy component={TeacherProfile} />
           </ProtectedRoute>
         ),
       },

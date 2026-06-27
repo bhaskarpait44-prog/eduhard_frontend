@@ -288,7 +288,7 @@ const Panel = ({ title, icon: Icon, children }) => (
 const MiniInfo = ({ icon: Icon, label, value }) => (
   <div className="rounded-2xl px-4 py-3" style={{ backgroundColor: 'var(--color-surface-raised)' }}>
     <div className="flex items-center gap-2">
-      <Icon size={14} style={{ color: '#2563eb' }} />
+      <Icon size={14} style={{ color: '#00bc7d' }} />
       <p className="text-xs font-semibold uppercase tracking-[0.12em]" style={{ color: 'var(--color-text-muted)' }}>{label}</p>
     </div>
     <p className="mt-2 text-sm font-semibold break-words" style={{ color: 'var(--color-text-primary)' }}>{value}</p>

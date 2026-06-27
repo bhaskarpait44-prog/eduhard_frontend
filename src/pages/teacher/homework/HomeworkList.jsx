@@ -155,7 +155,7 @@ const HomeworkList = () => {
 
       {/* Stats cards row */}
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-        <StatCard title="Homework Items" value={stats.total} tone="#2563eb" />
+        <StatCard title="Homework Items" value={stats.total} tone="#00bc7d" />
         <StatCard title="Submitted" value={stats.submittedStudents} tone="#10b981" />
         <StatCard title="Pending" value={stats.pendingStudents} tone="#f59e0b" />
         <StatCard title="Overdue" value={stats.overdue} tone="#ef4444" />

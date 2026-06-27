@@ -76,7 +76,7 @@ const TeacherLeave = () => {
 
       {/* Stats cards row */}
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-        <StatCard title="Applications" value={stats.total} tone="#2563eb" />
+        <StatCard title="Applications" value={stats.total} tone="#00bc7d" />
         <StatCard title="Pending" value={stats.pending} tone="#f59e0b" />
         <StatCard title="Approved" value={stats.approved} tone="#10b981" />
         <StatCard title="Rejected" value={stats.rejected} tone="#ef4444" />
@@ -173,9 +173,9 @@ const TeacherLeave = () => {
                     day.isCurrentMonth ? '' : 'opacity-40'
                   }`}
                   style={{
-                    borderColor: day.isToday ? '#2563eb' : day.isCurrentMonth ? 'var(--color-border)' : 'transparent',
+                    borderColor: day.isToday ? '#00bc7d' : day.isCurrentMonth ? 'var(--color-border)' : 'transparent',
                     backgroundColor: day.bg,
-                    boxShadow: day.isToday ? '0 0 0 1px #2563eb' : 'none',
+                    boxShadow: day.isToday ? '0 0 0 1px #00bc7d' : 'none',
                   }}
                 >
                   <div className="flex items-center justify-between gap-1.5">
@@ -183,7 +183,7 @@ const TeacherLeave = () => {
                       className={`text-xs font-bold sm:text-sm h-5 w-5 rounded-full flex items-center justify-center`}
                       style={{ 
                         color: day.isToday ? '#fff' : day.text, 
-                        backgroundColor: day.isToday ? '#2563eb' : 'transparent' 
+                        backgroundColor: day.isToday ? '#00bc7d' : 'transparent' 
                       }}
                     >
                       {day.date.getDate()}
@@ -196,7 +196,7 @@ const TeacherLeave = () => {
                   </div>
 
                   <div className="mt-1.5">
-                    <p className="text-[9px] font-bold sm:text-[10px] truncate leading-tight" style={{ color: day.isToday ? '#2563eb' : day.text }}>
+                    <p className="text-[9px] font-bold sm:text-[10px] truncate leading-tight" style={{ color: day.isToday ? '#00bc7d' : day.text }}>
                       {day.shortLabel || day.label}
                     </p>
                     {day.subLabel ? (
@@ -220,7 +220,7 @@ const TeacherLeave = () => {
               { label: 'Pending Leave', color: '#d97706', bg: 'rgba(245, 158, 11, 0.14)' },
               { label: 'Rejected Leave', color: '#dc2626', bg: 'rgba(239, 68, 68, 0.12)' },
               { label: 'Holiday', color: '#7c3aed', bg: 'rgba(124, 58, 237, 0.10)' },
-              { label: 'Working Day', color: '#2563eb', bg: 'rgba(37, 99, 235, 0.10)' },
+              { label: 'Working Day', color: '#00bc7d', bg: 'rgba(37, 99, 235, 0.10)' },
               { label: 'Weekend / Off Day', color: '#64748b', bg: 'rgba(100, 116, 139, 0.12)' },
             ].map((item) => (
               <div key={item.label} className="rounded-xl border px-3 py-2" style={{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface)' }}>
@@ -400,9 +400,9 @@ const buildMonthCalendar = (monthDate, workingDays, holidays, applications) => {
       textMuted = '#7c3aed'
     } else if (isWorkingDay) {
       bg = 'rgba(37, 99, 235, 0.10)'
-      accent = '#2563eb'
+      accent = '#00bc7d'
       text = '#1e3a8a'
-      textMuted = '#2563eb'
+      textMuted = '#00bc7d'
     }
 
     result.push({
