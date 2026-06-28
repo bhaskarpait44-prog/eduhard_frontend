@@ -6,13 +6,17 @@ import { z } from 'zod'
 import {
   ArrowLeft, ArrowRight, BadgeCheck, BookOpen, Briefcase,
   Check, Copy, GraduationCap, KeyRound, Mail, Plus,
-  Search, ShieldCheck, UserRound, Users, List,
+  Search, ShieldCheck, UserRound, Users, List, FileDown,
 } from 'lucide-react'
 import * as userApi from '@/api/userManagementApi'
 import { ROUTES } from '@/constants/app'
 import usePageTitle from '@/hooks/usePageTitle'
 import useToast from '@/hooks/useToast'
 import { getDefaultPermissionsForRole } from '@/utils/permissions'
+import { pdf } from '@react-pdf/renderer'
+import { TeacherListPDF } from '@/pdf/TeacherListPDF'
+import { getSettings } from '@/api/settingsApi'
+import useSessionStore from '@/store/sessionStore'
 import Button from '@/components/ui/Button'
 import Modal from '@/components/ui/Modal'
 import Input from '@/components/ui/Input'
@@ -101,6 +105,42 @@ const TeacherListPanel = ({ navigate, toastError }) => {
   const [loading, setLoading]     = useState(false)
   const [search, setSearch]       = useState('')
 
+  const { currentSession, fetchCurrentSession } = useSessionStore()
+  
+  useEffect(() => {
+    if (!currentSession?.id) fetchCurrentSession?.().catch(() => {})
+  }, [currentSession, fetchCurrentSession])
+
+  const handleExportList = async () => {
+    try {
+      const settingsRes = await getSettings()
+      const schoolData = {
+        name: settingsRes.data?.school_name,
+        email: settingsRes.data?.school_email,
+        phone: settingsRes.data?.school_phone,
+        address: settingsRes.data?.school_address,
+        logo_url: settingsRes.data?.logo_url,
+      }
+
+      const blob = await pdf(
+        <TeacherListPDF
+          teachers={teachers}
+          school={schoolData}
+          session={currentSession}
+        />
+      ).toBlob()
+
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `Teacher_Directory_${new Date().toISOString().slice(0, 10)}.pdf`
+      a.click()
+      URL.revokeObjectURL(url)
+    } catch (err) {
+      toastError('Failed to export PDF.')
+    }
+  }
+
   const getTeacherRouteId = (teacher) => teacher?.uid || `teacher-${teacher?.source_id || teacher?.id}`
 
   useEffect(() => {
@@ -120,29 +160,39 @@ const TeacherListPanel = ({ navigate, toastError }) => {
 
   return (
     <div className="space-y-4">
-      {/* search */}
-      <div
-        className="flex items-center gap-3 rounded-[18px] px-4 py-3"
-        style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)' }}
-      >
-        <Search size={15} style={{ color: 'var(--color-text-secondary)', flexShrink: 0 }} />
-        <input
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          placeholder="Search by name, email or employee ID…"
-          className="flex-1 bg-transparent text-sm outline-none"
-          style={{ color: 'var(--color-text-primary)' }}
-        />
-        {search && (
-          <button
-            type="button"
-            onClick={() => setSearch('')}
-            className="text-xs"
-            style={{ color: 'var(--color-text-secondary)' }}
-          >
-            Clear
-          </button>
-        )}
+      {/* search and export */}
+      <div className="flex flex-col sm:flex-row gap-3">
+        <div
+          className="flex flex-1 items-center gap-3 rounded-[18px] px-4 py-3"
+          style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)' }}
+        >
+          <Search size={15} style={{ color: 'var(--color-text-secondary)', flexShrink: 0 }} />
+          <input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search by name, email or employee ID…"
+            className="flex-1 bg-transparent text-sm outline-none"
+            style={{ color: 'var(--color-text-primary)' }}
+          />
+          {search && (
+            <button
+              type="button"
+              onClick={() => setSearch('')}
+              className="text-xs"
+              style={{ color: 'var(--color-text-secondary)' }}
+            >
+              Clear
+            </button>
+          )}
+        </div>
+        <button
+          type="button"
+          onClick={handleExportList}
+          className="inline-flex items-center gap-2 rounded-[18px] px-4 py-3 text-sm font-semibold transition-all border shrink-0"
+          style={{ backgroundColor: 'var(--color-surface)', color: 'var(--color-text-secondary)', borderColor: 'var(--color-border)' }}
+        >
+          <FileDown size={14} /> Export PDF
+        </button>
       </div>
 
       {/* table */}

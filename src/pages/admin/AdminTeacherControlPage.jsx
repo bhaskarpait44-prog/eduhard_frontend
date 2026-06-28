@@ -4,9 +4,9 @@ import {
   Grid3x3, School2, ShieldCheck, UserRoundCheck, Zap,
   Pencil, Trash2, FileDown
 } from 'lucide-react'
-import { pdf } from '@react-pdf/renderer'
-import { TeacherListPDF } from '@/pdf/TeacherListPDF'
 import * as teacherControlApi from '@/api/adminTeacherControlApi'
+import { pdf } from '@react-pdf/renderer'
+import { TeacherAssignmentListPDF } from '@/pdf/TeacherAssignmentListPDF'
 import { getSettings } from '@/api/settingsApi'
 import { getClasses, getClassList, getSections, getSubjects } from '@/api/classApi'
 import usePageTitle from '@/hooks/usePageTitle'
@@ -18,6 +18,7 @@ import Button from '@/components/ui/Button'
 import Badge from '@/components/ui/Badge'
 import EmptyState from '@/components/ui/EmptyState'
 import TimePicker12h from '@/components/shared/TimePicker12h'
+import Modal from '@/components/ui/Modal'
 
 const DAY_OPTIONS = [
   { value: 'monday',    label: 'Mon' },
@@ -74,6 +75,7 @@ const AdminTeacherControlPage = () => {
   const [corrections, setCorrections] = useState([])
   const [studentCorrections, setStudentCorrections] = useState([])
   const [homework,    setHomework]    = useState([])
+  const [selectedLeave, setSelectedLeave] = useState(null)
 
   const [tab, setTab] = useState('assignments')
 
@@ -109,7 +111,7 @@ const AdminTeacherControlPage = () => {
     id: null, teacher_id: '', class_id: '', section_id: '', subject_id: '', is_class_teacher: false,
   })
   const [slotForm, setSlotForm] = useState({
-    teacher_id: '', class_id: '', section_id: '', subject_id: '',
+    id: null, teacher_id: '', class_id: '', section_id: '', subject_id: '',
     day_of_week: 'monday', period_number: '1',
     start_time: '08:00', end_time: '08:45', room_number: '',
   })
@@ -258,7 +260,7 @@ const AdminTeacherControlPage = () => {
   }, [filteredSlots])
 
   /* ── actions ── */
-  const handleExportList = async () => {
+  const handleExportAssignments = async () => {
     try {
       const settingsRes = await getSettings()
       const schoolData = {
@@ -270,8 +272,8 @@ const AdminTeacherControlPage = () => {
       }
 
       const blob = await pdf(
-        <TeacherListPDF
-          teachers={teachers}
+        <TeacherAssignmentListPDF
+          groups={filteredGroups}
           school={schoolData}
           session={session}
         />
@@ -280,13 +282,14 @@ const AdminTeacherControlPage = () => {
       const url = URL.createObjectURL(blob)
       const a = document.createElement('a')
       a.href = url
-      a.download = `Teacher_Directory_${new Date().toISOString().slice(0, 10)}.pdf`
+      a.download = `Teacher_Assignments_${new Date().toISOString().slice(0, 10)}.pdf`
       a.click()
       URL.revokeObjectURL(url)
     } catch (err) {
       toastError('Failed to export PDF.')
     }
   }
+
 
   const handleAssignmentSave = async (e) => {
     e.preventDefault();
@@ -356,10 +359,10 @@ const AdminTeacherControlPage = () => {
     finally { setSaving(false) }
   }
 
-  const handleSlotCreate = async (e) => {
+  const handleSlotSave = async (e) => {
     e.preventDefault(); setSaving(true)
     try {
-      await teacherControlApi.createTeacherControlTimetableSlot({
+      const payload = {
         teacher_id:    Number(slotForm.teacher_id),
         class_id:      Number(slotForm.class_id),
         section_id:    Number(slotForm.section_id),
@@ -369,12 +372,50 @@ const AdminTeacherControlPage = () => {
         start_time:    slotForm.start_time,
         end_time:      slotForm.end_time,
         room_number:   slotForm.room_number || null,
+      }
+      if (slotForm.id) {
+        await teacherControlApi.updateTeacherControlTimetableSlot(slotForm.id, payload)
+        toastSuccess('Slot updated.')
+      } else {
+        await teacherControlApi.createTeacherControlTimetableSlot(payload)
+        toastSuccess('Slot created.')
+      }
+      setSlotForm({
+        id: null, teacher_id: '', class_id: '', section_id: '', subject_id: '',
+        day_of_week: 'monday', period_number: '1',
+        start_time: '08:00', end_time: '08:45', room_number: '',
       })
-      toastSuccess('Slot created.')
-      setSlotForm((p) => ({ ...p, section_id: '', subject_id: '', room_number: '' }))
       setShowSlotForm(false)
       await load()
-    } catch (err) { toastError(err?.message || 'Unable to create.') }
+    } catch (err) { toastError(err?.message || 'Unable to save slot.') }
+    finally { setSaving(false) }
+  }
+
+  const editSlot = (item) => {
+    setSlotForm({
+      id: item.id,
+      teacher_id: String(item.teacher_id),
+      class_id: String(item.class_id),
+      section_id: String(item.section_id),
+      subject_id: String(item.subject_id),
+      day_of_week: item.day_of_week,
+      period_number: String(item.period_number),
+      start_time: item.start_time.slice(0, 5),
+      end_time: item.end_time.slice(0, 5),
+      room_number: item.room_number || '',
+    })
+    setShowSlotForm(true)
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+
+  const deleteSlot = async (id) => {
+    if (!window.confirm('Are you sure you want to delete this timetable slot?')) return
+    setSaving(true)
+    try {
+      await teacherControlApi.deleteTeacherControlTimetableSlot(id)
+      toastSuccess('Timetable slot deleted.')
+      await load()
+    } catch (err) { toastError(err?.message || 'Failed to delete.') }
     finally { setSaving(false) }
   }
 
@@ -413,26 +454,25 @@ const AdminTeacherControlPage = () => {
   return (
     <div className="space-y-5 pb-20">
 
-      {/* ── Hero ── */}
-      <header className="rounded-[28px] border p-5 sm:p-6" style={{ borderColor: 'var(--color-border)', background: 'linear-gradient(135deg,rgba(2,132,199,.14),rgba(13,148,136,.09) 60%,var(--color-surface))' }}>
-        <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
-          <div>
-            <p className="text-[11px] font-semibold uppercase tracking-[0.18em]" style={{ color: '#0369a1' }}>
-              {session?.name || '—'}
-            </p>
-            <h1 className="mt-1 text-2xl font-bold" style={{ color: 'var(--color-text-primary)' }}>Teacher Control Center</h1>
-            <p className="mt-1 max-w-xl text-sm" style={{ color: 'var(--color-text-secondary)' }}>
-              Manage assignments, timetable, leave approvals and correction requests from one place.
-            </p>
-          </div>
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:min-w-[320px]">
-            <HeroStat label="Teachers"    value={overview.teachers            || 0} color="#0369a1" />
-            <HeroStat label="Assignments" value={overview.active_assignments  || 0} color="#0f766e" />
-            <HeroStat label="Leaves"      value={overview.pending_leaves      || 0} color="#d97706" />
-            <HeroStat label="Corrections" value={overview.pending_corrections || 0} color="#dc2626" />
-          </div>
+      {/* ── Page header ──────────────────────────────────────────────── */}
+      <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+        <div className="flex-1">
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+            Teacher Control Center
+          </h1>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
+            Manage assignments, timetable, leave approvals and correction requests
+          </p>
         </div>
-      </header>
+      </div>
+
+      {/* ── Stats row ────────────────────────────────────────────────── */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <StatCard icon={UserRoundCheck} label="Total Teachers" value={overview.teachers} color="bg-indigo-500" />
+        <StatCard icon={School2} label="Active Assignments" value={overview.active_assignments} color="bg-sky-500" />
+        <StatCard icon={CalendarRange} label="Pending Leaves" value={overview.pending_leaves} color="bg-violet-500" />
+        <StatCard icon={ShieldCheck} label="Pending Corrections" value={overview.pending_corrections} color="bg-emerald-500" />
+      </div>
 
       {/* ── Tabs ── */}
       <nav className="flex flex-wrap gap-2">
@@ -485,7 +525,7 @@ const AdminTeacherControlPage = () => {
             <div className="flex gap-2">
               <button
                 type="button"
-                onClick={handleExportList}
+                onClick={handleExportAssignments}
                 className="inline-flex min-h-10 items-center gap-2 rounded-2xl px-4 text-sm font-semibold transition-all"
                 style={{ backgroundColor: 'var(--color-surface)', color: 'var(--color-text-primary)', border: '1px solid var(--color-border)' }}
               >
@@ -571,7 +611,17 @@ const AdminTeacherControlPage = () => {
             </div>
             <button
               type="button"
-              onClick={() => setShowSlotForm((p) => !p)}
+              onClick={() => {
+                const next = !showSlotForm
+                setShowSlotForm(next)
+                if (!next) {
+                  setSlotForm({
+                    id: null, teacher_id: '', class_id: '', section_id: '', subject_id: '',
+                    day_of_week: 'monday', period_number: '1',
+                    start_time: '08:00', end_time: '08:45', room_number: '',
+                  })
+                }
+              }}
               className="inline-flex min-h-10 items-center gap-2 rounded-2xl px-4 text-sm font-semibold"
               style={{ backgroundColor: '#0f766e', color: '#fff', border: 'none' }}
             >
@@ -582,8 +632,8 @@ const AdminTeacherControlPage = () => {
           {/* slot form */}
           {showSlotForm && (
             <div className="rounded-[24px] border p-5" style={{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface)' }}>
-              <p className="mb-4 text-sm font-semibold" style={{ color: 'var(--color-text-primary)' }}>Create Timetable Slot</p>
-              <form className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4" onSubmit={handleSlotCreate}>
+              <p className="mb-4 text-sm font-semibold" style={{ color: 'var(--color-text-primary)' }}>{slotForm.id ? 'Edit' : 'Create'} Timetable Slot</p>
+              <form className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4" onSubmit={handleSlotSave}>
                 <Select label="Teacher" value={slotForm.teacher_id} onChange={(e) => setSlotForm((p) => ({ ...p, teacher_id: e.target.value, subject_id: '' }))} options={teacherOptions} required />
                 <Select label="Class"   value={slotForm.class_id}   onChange={(e) => setSlotForm((p) => ({ ...p, class_id: e.target.value, section_id: '', subject_id: '' }))} options={classOptions} required />
                 <Select label="Section" value={slotForm.section_id} onChange={(e) => setSlotForm((p) => ({ ...p, section_id: e.target.value, subject_id: '' }))} options={slotSectionOpts} required />
@@ -596,7 +646,7 @@ const AdminTeacherControlPage = () => {
                   <Input label="Room (optional)" value={slotForm.room_number} onChange={(e) => setSlotForm((p) => ({ ...p, room_number: e.target.value }))} placeholder="e.g. 6-A" />
                 </div>
                 <div className="flex items-end">
-                  <Button type="submit" variant="primary" loading={saving} className="w-full">Add Slot</Button>
+                  <Button type="submit" variant="primary" loading={saving} className="w-full">{slotForm.id ? 'Save Changes' : 'Add Slot'}</Button>
                 </div>
               </form>
             </div>
@@ -606,9 +656,9 @@ const AdminTeacherControlPage = () => {
           {loading ? <GridSkeleton /> : !filteredSlots.length ? (
             <EmptyState icon={CalendarRange} title="No timetable slots" description="Add slots or adjust your filters." />
           ) : ttView === 'grid' ? (
-            <TimetableGrid matrix={ttMatrix} onToggle={toggleSlot} />
+            <TimetableGrid matrix={ttMatrix} onToggle={toggleSlot} onEdit={editSlot} onDelete={deleteSlot} />
           ) : (
-            <TimetableList slots={filteredSlots} onToggle={toggleSlot} />
+            <TimetableList slots={filteredSlots} onToggle={toggleSlot} onEdit={editSlot} onDelete={deleteSlot} />
           )}
         </div>
       )}
@@ -617,25 +667,15 @@ const AdminTeacherControlPage = () => {
           TAB: WORKFLOWS
       ════════════════════════════════════════ */}
       {tab === 'workflows' && (
-        <div className="space-y-4">
+        <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
           <WorkflowSection title="Leave Approval Queue" icon={UserRoundCheck} items={leaves} loading={loading}
-            renderItem={(item) => (
-              <WorkflowCard key={item.id}
-                title={`${item.teacher_name} • ${(item.leave_type || '').replace('_', ' ')}`}
-                meta={`${item.from_date} → ${item.to_date} | ${Number(item.days_count || 0)} day(s)`}
-                description={item.reason} status={item.status}
-                onApprove={item.status === 'pending' ? () => reviewLeave(item, 'approved') : null}
-                onReject={item.status  === 'pending' ? () => reviewLeave(item, 'rejected') : null}
-              />
-            )}
             emptyTitle="No leave requests" emptyDesc="Teacher leave applications will appear here."
-          />
+          >
+            <LeaveRequestList items={leaves} onClickItem={setSelectedLeave} />
+          </WorkflowSection>
           <WorkflowSection title="Profile Correction Requests" icon={ShieldCheck} items={corrections} loading={loading}
             renderItem={(item) => (
-              <WorkflowCard key={item.id}
-                title={`${item.teacher_name} • ${item.field_name}`}
-                meta={`${item.current_value || '--'} → ${item.requested_value}`}
-                description={item.reason} status={item.status}
+              <CorrectionRequestCard key={item.id} item={item} isStudent={false}
                 onApprove={item.status === 'pending' ? () => reviewCorrection(item, 'approved') : null}
                 onReject={item.status  === 'pending' ? () => reviewCorrection(item, 'rejected') : null}
               />
@@ -644,10 +684,7 @@ const AdminTeacherControlPage = () => {
           />
           <WorkflowSection title="Student Correction Requests" icon={ShieldCheck} items={studentCorrections} loading={loading}
             renderItem={(item) => (
-              <WorkflowCard key={item.id}
-                title={`${item.student_name} (${item.admission_no}) • ${item.field_name}`}
-                meta={`${item.current_value || '--'} → ${item.requested_value}`}
-                description={item.reason} status={item.status}
+              <CorrectionRequestCard key={item.id} item={item} isStudent={true}
                 onApprove={item.status === 'pending' ? () => reviewStudentCorrection(item, 'approved') : null}
                 onReject={item.status  === 'pending' ? () => reviewStudentCorrection(item, 'rejected') : null}
               />
@@ -656,17 +693,89 @@ const AdminTeacherControlPage = () => {
           />
           <WorkflowSection title="Homework Oversight" icon={BookOpenText} items={homework} loading={loading}
             renderItem={(item) => (
-              <div key={item.id} className="rounded-[22px] border p-4" style={{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface-raised)' }}>
-                <p className="text-sm font-semibold" style={{ color: 'var(--color-text-primary)' }}>{item.teacher_name} • {item.title}</p>
-                <p className="mt-1 text-xs" style={{ color: 'var(--color-text-secondary)' }}>
-                  {item.class_name}{item.class_stream ? ` (${item.class_stream.charAt(0).toUpperCase() + item.class_stream.slice(1)})` : ''} {item.section_name} | {item.subject_name} | Due {item.due_date}
-                </p>
-                <Badge className="mt-2" variant={item.status === 'active' ? 'green' : 'grey'}>{item.status}</Badge>
-              </div>
+              <HomeworkCard key={item.id} item={item} />
             )}
             emptyTitle="No homework" emptyDesc="Homework assigned by teachers will appear here."
           />
         </div>
+      )}
+
+      {selectedLeave && (
+        <Modal 
+          isOpen={!!selectedLeave} 
+          onClose={() => setSelectedLeave(null)} 
+          title="Leave Request Details"
+        >
+          <div className="space-y-4 p-1">
+            <div className="flex items-center gap-3">
+              <div className="flex h-12 w-12 items-center justify-center rounded-2xl font-bold text-sm text-white"
+                style={{ background: 'linear-gradient(135deg, #0f766e, #0d9488)' }}>
+                {selectedLeave.teacher_name ? selectedLeave.teacher_name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase() : 'T'}
+              </div>
+              <div>
+                <h3 className="text-base font-bold text-gray-900 dark:text-gray-100">{selectedLeave.teacher_name}</h3>
+                <p className="text-xs text-gray-500">Teacher Account</p>
+              </div>
+            </div>
+
+            <hr style={{ borderColor: 'var(--color-border)' }} />
+
+            <div className="grid grid-cols-2 gap-4 text-sm">
+              <div>
+                <span className="block text-[10px] uppercase font-bold tracking-wider text-gray-400">Leave Type</span>
+                <span className="font-semibold capitalize text-gray-900 dark:text-gray-100">
+                  {(selectedLeave.leave_type || '').replace('_', ' ')} Leave
+                </span>
+              </div>
+              <div>
+                <span className="block text-[10px] uppercase font-bold tracking-wider text-gray-400">Duration</span>
+                <span className="font-semibold text-teal-700 dark:text-teal-400">
+                  {Number(selectedLeave.days_count || 0)} day(s)
+                </span>
+              </div>
+              <div className="col-span-2">
+                <span className="block text-[10px] uppercase font-bold tracking-wider text-gray-400">Dates</span>
+                <span className="font-semibold text-gray-900 dark:text-gray-100">
+                  {selectedLeave.from_date} to {selectedLeave.to_date}
+                </span>
+              </div>
+            </div>
+
+            <hr style={{ borderColor: 'var(--color-border)' }} />
+
+            <div>
+              <span className="block text-[10px] uppercase font-bold tracking-wider text-gray-400 mb-1">Reason / Message</span>
+              <div className="rounded-2xl p-4 text-sm italic border" style={{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface-raised)', color: 'var(--color-text-secondary)', borderLeft: '4px solid #0f766e' }}>
+                "{selectedLeave.reason || 'No reason provided.'}"
+              </div>
+            </div>
+
+            {selectedLeave.status === 'pending' && (
+              <div className="flex justify-end gap-3 pt-2">
+                <Button 
+                  variant="secondary" 
+                  onClick={async () => {
+                    await reviewLeave(selectedLeave, 'rejected');
+                    setSelectedLeave(null);
+                  }}
+                  loading={saving}
+                >
+                  Reject Request
+                </Button>
+                <Button 
+                  variant="primary" 
+                  onClick={async () => {
+                    await reviewLeave(selectedLeave, 'approved');
+                    setSelectedLeave(null);
+                  }}
+                  loading={saving}
+                >
+                  Approve Request
+                </Button>
+              </div>
+            )}
+          </div>
+        </Modal>
       )}
     </div>
   )
@@ -780,7 +889,7 @@ const SubjectChip = ({ item, onToggle, onEdit, onDelete }) => (
 /* ════════════════════════════════════════════════════════════════════════════
    Timetable Grid
 ════════════════════════════════════════════════════════════════════════════ */
-const TimetableGrid = ({ matrix, onToggle }) => {
+const TimetableGrid = ({ matrix, onToggle, onEdit, onDelete }) => {
   const periods = [1, 2, 3, 4, 5, 6, 7]
   const days    = ['monday','tuesday','wednesday','thursday','friday','saturday']
 
@@ -812,7 +921,7 @@ const TimetableGrid = ({ matrix, onToggle }) => {
                     {slots.length ? (
                       <div className="space-y-1">
                         {slots.map((s) => (
-                          <TimetableCell key={s.id} slot={s} onToggle={onToggle} />
+                          <TimetableCell key={s.id} slot={s} onToggle={onToggle} onEdit={onEdit} onDelete={onDelete} />
                         ))}
                       </div>
                     ) : (
@@ -829,7 +938,7 @@ const TimetableGrid = ({ matrix, onToggle }) => {
   )
 }
 
-const TimetableCell = ({ slot, onToggle }) => {
+const TimetableCell = ({ slot, onToggle, onEdit, onDelete }) => {
   const color = subjectColor(slot.subject_id)
   return (
     <div
@@ -845,15 +954,36 @@ const TimetableCell = ({ slot, onToggle }) => {
         {slot.teacher_name?.split(' ')[0]}
         {slot.section_name ? ` · ${slot.class_name}${slot.class_stream ? ` (${slot.class_stream.charAt(0).toUpperCase()})` : ''} ${slot.section_name}` : ''}
       </p>
-      {/* hover toggle */}
-      <button
-        type="button"
-        onClick={(e) => { e.stopPropagation(); onToggle(slot) }}
-        className="absolute inset-0 flex items-center justify-center rounded-xl text-[10px] font-bold opacity-0 transition-opacity group-hover:opacity-100"
-        style={{ backgroundColor: slot.is_active ? 'rgba(220,38,38,.85)' : 'rgba(5,150,105,.85)', color: '#fff' }}
+      {/* hover actions overlay */}
+      <div
+        className="absolute inset-0 flex items-center justify-center gap-1.5 rounded-xl opacity-0 transition-opacity group-hover:opacity-100"
+        style={{ backgroundColor: 'rgba(15, 118, 110, 0.95)', color: '#fff' }}
       >
-        {slot.is_active ? 'Deactivate' : 'Activate'}
-      </button>
+        <button
+          type="button"
+          onClick={(e) => { e.stopPropagation(); onEdit(slot) }}
+          className="p-1 rounded-lg bg-white/20 hover:bg-white/40 transition-colors"
+          title="Edit Slot"
+        >
+          <Pencil size={11} />
+        </button>
+        <button
+          type="button"
+          onClick={(e) => { e.stopPropagation(); onDelete(slot.id) }}
+          className="p-1 rounded-lg bg-red-600/70 hover:bg-red-600 transition-colors"
+          title="Delete Slot"
+        >
+          <Trash2 size={11} />
+        </button>
+        <button
+          type="button"
+          onClick={(e) => { e.stopPropagation(); onToggle(slot) }}
+          className="rounded-lg px-1.5 py-0.5 bg-white/20 hover:bg-white/40 text-[9px] font-bold transition-colors"
+          title={slot.is_active ? 'Deactivate' : 'Activate'}
+        >
+          {slot.is_active ? 'Off' : 'On'}
+        </button>
+      </div>
     </div>
   )
 }
@@ -861,7 +991,7 @@ const TimetableCell = ({ slot, onToggle }) => {
 /* ════════════════════════════════════════════════════════════════════════════
    Timetable List
 ════════════════════════════════════════════════════════════════════════════ */
-const TimetableList = ({ slots, onToggle }) => {
+const TimetableList = ({ slots, onToggle, onEdit, onDelete }) => {
   const grouped = useMemo(() => {
     const g = {}
     slots.forEach((s) => {
@@ -879,7 +1009,7 @@ const TimetableList = ({ slots, onToggle }) => {
           <p className="mb-2 text-xs font-bold uppercase tracking-widest" style={{ color: 'var(--color-text-secondary)' }}>{DAY_FULL[d]}</p>
           <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
             {(grouped[d] || []).sort((a, b) => a.period_number - b.period_number).map((slot) => (
-              <TimetableListRow key={slot.id} slot={slot} onToggle={onToggle} />
+              <TimetableListRow key={slot.id} slot={slot} onToggle={onToggle} onEdit={onEdit} onDelete={onDelete} />
             ))}
           </div>
         </section>
@@ -888,7 +1018,7 @@ const TimetableList = ({ slots, onToggle }) => {
   )
 }
 
-const TimetableListRow = ({ slot, onToggle }) => {
+const TimetableListRow = ({ slot, onToggle, onEdit, onDelete }) => {
   const color = subjectColor(slot.subject_id)
   return (
     <div
@@ -908,14 +1038,18 @@ const TimetableListRow = ({ slot, onToggle }) => {
           <Clock size={10} />{formatTime(slot.start_time)} – {formatTime(slot.end_time)}
         </p>
       </div>
-      <button
-        type="button"
-        onClick={() => onToggle(slot)}
-        className="flex-shrink-0 rounded-xl px-2.5 py-1 text-[11px] font-semibold"
-        style={{ backgroundColor: slot.is_active ? '#d1fae5' : '#fee2e2', color: slot.is_active ? '#065f46' : '#991b1b' }}
-      >
-        {slot.is_active ? 'On' : 'Off'}
-      </button>
+      <div className="flex items-center gap-1.5">
+        <button onClick={() => onEdit(slot)} className="p-1 rounded-lg hover:bg-black/5" title="Edit"><Pencil size={13} /></button>
+        <button onClick={() => onDelete(slot.id)} className="p-1 rounded-lg hover:bg-red-50 text-red-600" title="Delete"><Trash2 size={13} /></button>
+        <button
+          type="button"
+          onClick={() => onToggle(slot)}
+          className="flex-shrink-0 rounded-xl px-2 py-0.5 text-[10px] font-semibold transition-all ml-1"
+          style={{ backgroundColor: slot.is_active ? '#d1fae5' : '#fee2e2', color: slot.is_active ? '#065f46' : '#991b1b' }}
+        >
+          {slot.is_active ? 'Active' : 'Off'}
+        </button>
+      </div>
     </div>
   )
 }
@@ -923,51 +1057,283 @@ const TimetableListRow = ({ slot, onToggle }) => {
 /* ════════════════════════════════════════════════════════════════════════════
    Workflow helpers
 ════════════════════════════════════════════════════════════════════════════ */
-const WorkflowSection = ({ title, icon: Icon, items, loading, renderItem, emptyTitle, emptyDesc }) => (
-  <section className="rounded-[24px] border p-5" style={{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface)' }}>
-    <div className="mb-4 flex items-center gap-2">
-      <Icon size={15} style={{ color: 'var(--color-text-secondary)' }} />
-      <h2 className="text-base font-semibold" style={{ color: 'var(--color-text-primary)' }}>{title}</h2>
+const WorkflowSection = ({ title, icon: Icon, items, loading, renderItem, emptyTitle, emptyDesc, children }) => (
+  <section className="rounded-3xl border p-6 transition-all duration-300 hover:shadow-md" style={{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface)' }}>
+    <div className="mb-5 flex items-center justify-between border-b pb-4" style={{ borderColor: 'var(--color-border)' }}>
+      <div className="flex items-center gap-2.5">
+        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-teal-500/10 text-[#0f766e]">
+          <Icon size={16} />
+        </div>
+        <h2 className="text-base font-bold" style={{ color: 'var(--color-text-primary)' }}>{title}</h2>
+      </div>
       {items.length > 0 && (
-        <span className="ml-auto rounded-xl px-2.5 py-0.5 text-xs font-bold" style={{ backgroundColor: 'var(--color-surface-raised)', color: 'var(--color-text-secondary)' }}>{items.length}</span>
+        <span className="rounded-full bg-teal-50 px-2.5 py-0.5 text-xs font-bold text-teal-700">{items.length}</span>
       )}
     </div>
     {loading ? <GridSkeleton rows={2} /> : !items.length ? (
       <EmptyState icon={Icon} title={emptyTitle} description={emptyDesc} />
     ) : (
-      <div className="space-y-2">{items.map(renderItem)}</div>
+      children || <div className="space-y-4">{items.map(renderItem)}</div>
     )}
   </section>
 )
 
-const WorkflowCard = ({ title, meta, description, status, onApprove, onReject }) => (
-  <article className="rounded-[20px] border p-4" style={{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface-raised)' }}>
-    <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-      <div className="min-w-0 flex-1">
-        <div className="flex flex-wrap items-center gap-2">
-          <span className="rounded-xl px-2.5 py-0.5 text-[11px] font-bold capitalize" style={{
-            backgroundColor: status === 'approved' ? '#d1fae5' : status === 'rejected' ? '#fee2e2' : '#fef3c7',
-            color: status === 'approved' ? '#065f46' : status === 'rejected' ? '#991b1b' : '#92400e',
-          }}>{status}</span>
-        </div>
-        <p className="mt-2 text-sm font-semibold" style={{ color: 'var(--color-text-primary)' }}>{title}</p>
-        <p className="mt-0.5 text-xs" style={{ color: 'var(--color-text-secondary)' }}>{meta}</p>
-        {description && <p className="mt-1 text-xs" style={{ color: 'var(--color-text-secondary)' }}>{description}</p>}
-      </div>
-      {(onApprove || onReject) && (
-        <div className="flex flex-shrink-0 gap-2">
-          {onReject  && <Button variant="secondary" size="sm" onClick={onReject}>Reject</Button>}
-          {onApprove && <Button variant="primary"   size="sm" onClick={onApprove}>Approve</Button>}
-        </div>
-      )}
-    </div>
-  </article>
-)
+const LeaveRequestList = ({ items, onClickItem }) => {
+  return (
+    <div className="overflow-x-auto rounded-2xl border" style={{ borderColor: 'var(--color-border)' }}>
+      <table className="w-full min-w-[500px] border-collapse text-left text-xs">
+        <thead>
+          <tr style={{ backgroundColor: 'var(--color-surface-raised)', borderBottom: '1px solid var(--color-border)' }}>
+            <th className="p-3 font-semibold text-gray-500 uppercase tracking-wider">Teacher</th>
+            <th className="p-3 font-semibold text-gray-500 uppercase tracking-wider">Type</th>
+            <th className="p-3 font-semibold text-gray-500 uppercase tracking-wider">Duration</th>
+            <th className="p-3 font-semibold text-gray-500 uppercase tracking-wider text-center">Days</th>
+            <th className="p-3 font-semibold text-gray-500 uppercase tracking-wider">Status</th>
+          </tr>
+        </thead>
+        <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
+          {items.map((item) => {
+            const statusColors = {
+              approved: { bg: 'rgba(16, 185, 129, 0.1)', text: '#10b981' },
+              rejected: { bg: 'rgba(239, 68, 68, 0.1)', text: '#ef4444' },
+              pending: { bg: 'rgba(245, 158, 11, 0.1)', text: '#f59e0b' }
+            }[item.status] || { bg: '#f3f4f6', text: '#6b7280' };
 
-const HeroStat = ({ label, value, color }) => (
-  <div className="rounded-[20px] border px-4 py-3" style={{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface)' }}>
-    <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: 'var(--color-text-secondary)' }}>{label}</p>
-    <p className="mt-1.5 text-2xl font-bold" style={{ color }}>{value}</p>
+            return (
+              <tr 
+                key={item.id} 
+                onClick={() => onClickItem(item)}
+                className="cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/20 transition-colors"
+              >
+                <td className="p-3 font-semibold text-gray-900 dark:text-gray-100">{item.teacher_name}</td>
+                <td className="p-3 capitalize" style={{ color: 'var(--color-text-secondary)' }}>
+                  {(item.leave_type || '').replace('_', ' ')}
+                </td>
+                <td className="p-3" style={{ color: 'var(--color-text-secondary)' }}>
+                  {item.from_date} to {item.to_date}
+                </td>
+                <td className="p-3 text-center font-semibold text-gray-900 dark:text-gray-100">{Number(item.days_count || 0)}</td>
+                <td className="p-3">
+                  <span className="inline-flex rounded-full px-2.5 py-0.5 text-[10px] font-bold capitalize"
+                    style={{ backgroundColor: statusColors.bg, color: statusColors.text }}>
+                    {item.status}
+                  </span>
+                </td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+const LeaveRequestCard = ({ item, onApprove, onReject }) => {
+  const statusColors = {
+    approved: { bg: 'rgba(16, 185, 129, 0.1)', text: '#10b981', border: 'rgba(16, 185, 129, 0.2)' },
+    rejected: { bg: 'rgba(239, 68, 68, 0.1)', text: '#ef4444', border: 'rgba(239, 68, 68, 0.2)' },
+    pending: { bg: 'rgba(245, 158, 11, 0.1)', text: '#f59e0b', border: 'rgba(245, 158, 11, 0.2)' }
+  }[item.status] || { bg: '#f3f4f6', text: '#6b7280', border: '#e5e7eb' };
+
+  const initials = item.teacher_name ? item.teacher_name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase() : 'T';
+
+  return (
+    <article className="group relative overflow-hidden rounded-3xl border p-5 transition-all duration-300 hover:shadow-lg hover:border-teal-500/30" 
+      style={{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface)' }}>
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
+        {/* Avatar */}
+        <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-2xl font-bold text-sm"
+          style={{ background: 'linear-gradient(135deg, #0f766e, #0d9488)', color: '#fff' }}>
+          {initials}
+        </div>
+        
+        {/* Info */}
+        <div className="min-w-0 flex-1">
+          <div className="flex flex-wrap items-center gap-2">
+            <h3 className="text-sm font-semibold" style={{ color: 'var(--color-text-primary)' }}>{item.teacher_name}</h3>
+            <span className="rounded-lg px-2.5 py-0.5 text-[10px] font-bold capitalize border"
+              style={{ backgroundColor: statusColors.bg, color: statusColors.text, borderColor: statusColors.border }}>
+              {item.status}
+            </span>
+          </div>
+          <p className="mt-1 text-xs font-medium" style={{ color: '#0d9488' }}>
+            {(item.leave_type || '').replace('_', ' ').toUpperCase()} LEAVE
+          </p>
+          
+          {/* Date details */}
+          <div className="mt-3 flex flex-wrap items-center gap-3 text-xs" style={{ color: 'var(--color-text-secondary)' }}>
+            <span className="flex items-center gap-1">
+              <CalendarRange size={13} /> {item.from_date}
+            </span>
+            <ChevronRight size={12} className="text-gray-400" />
+            <span className="flex items-center gap-1">
+              <CalendarRange size={13} /> {item.to_date}
+            </span>
+            <span className="inline-flex items-center rounded-lg bg-teal-50 px-2 py-0.5 font-semibold text-teal-700 text-[10px]">
+              {Number(item.days_count || 0)} day(s)
+            </span>
+          </div>
+
+          {/* Reason */}
+          {item.reason && (
+            <div className="mt-3 rounded-2xl p-3 text-xs italic" style={{ backgroundColor: 'var(--color-surface-raised)', color: 'var(--color-text-secondary)', borderLeft: '3px solid #0f766e' }}>
+              "{item.reason}"
+            </div>
+          )}
+        </div>
+
+        {/* Actions */}
+        {item.status === 'pending' && (
+          <div className="flex flex-row sm:flex-col justify-end gap-2 sm:self-center">
+            <button
+              onClick={onReject}
+              className="px-4 py-2 rounded-xl text-xs font-semibold border transition-all hover:bg-red-50 hover:text-red-600 hover:border-red-200"
+              style={{ color: 'var(--color-text-primary)', borderColor: 'var(--color-border)' }}
+            >
+              Reject
+            </button>
+            <button
+              onClick={onApprove}
+              className="px-4 py-2 rounded-xl text-xs font-semibold text-white transition-all hover:bg-teal-700"
+              style={{ backgroundColor: '#0f766e' }}
+            >
+              Approve
+            </button>
+          </div>
+        )}
+      </div>
+    </article>
+  )
+}
+
+const CorrectionRequestCard = ({ item, isStudent = false, onApprove, onReject }) => {
+  const statusColors = {
+    approved: { bg: 'rgba(16, 185, 129, 0.1)', text: '#10b981', border: 'rgba(16, 185, 129, 0.2)' },
+    rejected: { bg: 'rgba(239, 68, 68, 0.1)', text: '#ef4444', border: 'rgba(239, 68, 68, 0.2)' },
+    pending: { bg: 'rgba(245, 158, 11, 0.1)', text: '#f59e0b', border: 'rgba(245, 158, 11, 0.2)' }
+  }[item.status] || { bg: '#f3f4f6', text: '#6b7280', border: '#e5e7eb' };
+
+  const name = isStudent ? item.student_name : item.teacher_name;
+  const subInfo = isStudent ? `Admission No: ${item.admission_no || 'N/A'}` : 'Teacher Account';
+
+  return (
+    <article className="group relative overflow-hidden rounded-3xl border p-5 transition-all duration-300 hover:shadow-lg hover:border-teal-500/30" 
+      style={{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface)' }}>
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
+        <div className="min-w-0 flex-1">
+          <div className="flex flex-wrap items-center gap-2">
+            <h3 className="text-sm font-semibold" style={{ color: 'var(--color-text-primary)' }}>{name}</h3>
+            <span className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>• {subInfo}</span>
+            <span className="rounded-lg px-2.5 py-0.5 text-[10px] font-bold capitalize border ml-auto sm:ml-0"
+              style={{ backgroundColor: statusColors.bg, color: statusColors.text, borderColor: statusColors.border }}>
+              {item.status}
+            </span>
+          </div>
+
+          <p className="mt-2 text-xs font-semibold uppercase tracking-wider" style={{ color: '#0369a1' }}>
+            Correction Field: {item.field_name?.replace('_', ' ')}
+          </p>
+
+          {/* Comparison */}
+          <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-3 rounded-2xl p-3 border" style={{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface-raised)' }}>
+            <div>
+              <p className="text-[10px] uppercase font-bold tracking-wider" style={{ color: 'var(--color-text-secondary)' }}>Current Value</p>
+              <p className="mt-0.5 text-xs font-medium line-through decoration-red-500/50" style={{ color: 'var(--color-text-primary)' }}>
+                {item.current_value || '—'}
+              </p>
+            </div>
+            <div className="border-t sm:border-t-0 sm:border-l pt-2 sm:pt-0 sm:pl-3" style={{ borderColor: 'var(--color-border)' }}>
+              <p className="text-[10px] uppercase font-bold tracking-wider text-teal-600">Requested Value</p>
+              <p className="mt-0.5 text-xs font-bold text-teal-600">
+                {item.requested_value}
+              </p>
+            </div>
+          </div>
+
+          {/* Reason */}
+          {item.reason && (
+            <p className="mt-3 text-xs" style={{ color: 'var(--color-text-secondary)' }}>
+              <span className="font-semibold text-gray-500">Reason:</span> "{item.reason}"
+            </p>
+          )}
+        </div>
+
+        {/* Actions */}
+        {item.status === 'pending' && (
+          <div className="flex flex-row sm:flex-col justify-end gap-2 sm:self-center">
+            <button
+              onClick={onReject}
+              className="px-4 py-2 rounded-xl text-xs font-semibold border transition-all hover:bg-red-50 hover:text-red-600 hover:border-red-200"
+              style={{ color: 'var(--color-text-primary)', borderColor: 'var(--color-border)' }}
+            >
+              Reject
+            </button>
+            <button
+              onClick={onApprove}
+              className="px-4 py-2 rounded-xl text-xs font-semibold text-white transition-all hover:bg-teal-700"
+              style={{ backgroundColor: '#0f766e' }}
+            >
+              Approve
+            </button>
+          </div>
+        )}
+      </div>
+    </article>
+  )
+}
+
+const HomeworkCard = ({ item }) => {
+  const statusColors = item.status === 'active' 
+    ? { bg: 'rgba(16, 185, 129, 0.1)', text: '#10b981', border: 'rgba(16, 185, 129, 0.2)' }
+    : { bg: '#f3f4f6', text: '#6b7280', border: '#e5e7eb' };
+
+  return (
+    <article className="group relative overflow-hidden rounded-3xl border p-5 transition-all duration-300 hover:shadow-lg hover:border-teal-500/30" 
+      style={{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface)' }}>
+      <div className="flex items-start gap-4">
+        <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl"
+          style={{ backgroundColor: 'rgba(15, 118, 110, 0.1)', color: '#0f766e' }}>
+          <BookOpenText size={18} />
+        </div>
+        <div className="min-w-0 flex-1">
+          <div className="flex flex-wrap items-center gap-2">
+            <h3 className="text-sm font-semibold" style={{ color: 'var(--color-text-primary)' }}>{item.title}</h3>
+            <span className="rounded-lg px-2 py-0.5 text-[10px] font-bold capitalize border"
+              style={{ backgroundColor: statusColors.bg, color: statusColors.text, borderColor: statusColors.border }}>
+              {item.status}
+            </span>
+          </div>
+          
+          <p className="mt-1 text-xs" style={{ color: 'var(--color-text-secondary)' }}>
+            Assigned by <span className="font-medium" style={{ color: 'var(--color-text-primary)' }}>{item.teacher_name}</span>
+          </p>
+
+          <div className="mt-3 flex flex-wrap gap-2 text-[11px]" style={{ color: 'var(--color-text-secondary)' }}>
+            <span className="rounded-lg bg-gray-100 px-2 py-0.5 font-medium">
+              {item.class_name}{item.class_stream ? ` (${item.class_stream.toUpperCase()})` : ''} — {item.section_name}
+            </span>
+            <span className="rounded-lg bg-teal-50 px-2 py-0.5 font-semibold text-teal-700">
+              {item.subject_name}
+            </span>
+            <span className="flex items-center gap-1 ml-auto font-medium text-amber-600">
+              <Clock size={11} /> Due {item.due_date}
+            </span>
+          </div>
+        </div>
+      </div>
+    </article>
+  )
+}
+
+const StatCard = ({ icon: Icon, label, value, color }) => (
+  <div className="flex items-center gap-3 p-4 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700">
+    <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${color}`}>
+      <Icon size={18} className="text-white" />
+    </div>
+    <div>
+      <p className="text-xl font-bold text-gray-900 dark:text-gray-100">{value ?? '—'}</p>
+      <p className="text-xs text-gray-500 dark:text-gray-400">{label}</p>
+    </div>
   </div>
 )
 

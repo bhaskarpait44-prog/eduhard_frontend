@@ -12,8 +12,12 @@ import {
   ChevronRight,
   Search,
   Save,
-  UserCheck
+  UserCheck,
+  FileDown
 } from 'lucide-react'
+import { pdf } from '@react-pdf/renderer'
+import { StaffAttendancePDF } from '@/pdf/StaffAttendancePDF'
+import { getSettings } from '@/api/settingsApi'
 import Button from '@/components/ui/Button'
 import Badge from '@/components/ui/Badge'
 import EmptyState from '@/components/ui/EmptyState'
@@ -104,6 +108,81 @@ export default function StaffAttendancePage() {
     }
   }
 
+  const handleDownloadPdf = async () => {
+    try {
+      const settingsRes = await getSettings()
+      const schoolData = {
+        name: settingsRes.data?.school_name,
+        email: settingsRes.data?.school_email,
+        phone: settingsRes.data?.school_phone,
+        address: settingsRes.data?.school_address,
+        logo_url: settingsRes.data?.logo_url,
+      }
+
+      let pdfDoc;
+      let filename;
+
+      if (activeTab === 'daily') {
+        const recordsToExport = dailyAttendance.map((s) => {
+          const localRec = localRecords.find(r => r.staff_id === s.staff_id && r.type === s.type) || { status: 'present', remarks: '' };
+          return {
+            ...s,
+            status: localRec.status,
+            remarks: localRec.remarks
+          };
+        });
+        
+        pdfDoc = (
+          <StaffAttendancePDF
+            mode="daily"
+            data={recordsToExport}
+            school={schoolData}
+            dateStr={formatDate(selectedDate, 'long')}
+          />
+        );
+        filename = `Staff_Attendance_${selectedDate}.pdf`;
+      } else {
+        const monthName = new Date(selectedYear, selectedMonth - 1).toLocaleString('default', { month: 'long' });
+        const registerToExport = filteredStaff.map((s) => {
+          const stats = s.records.reduce((acc, r) => {
+            acc[r.status] = (acc[r.status] || 0) + 1;
+            return acc;
+          }, {});
+          return {
+            ...s,
+            present: stats.present || 0,
+            absent: stats.absent || 0,
+            late: stats.late || 0,
+            half_day: stats.half_day || 0,
+            leave: stats.leave || 0,
+          };
+        });
+
+        pdfDoc = (
+          <StaffAttendancePDF
+            mode="register"
+            data={registerToExport}
+            school={schoolData}
+            monthName={monthName}
+            year={selectedYear}
+          />
+        );
+        filename = `Staff_Register_${monthName}_${selectedYear}.pdf`;
+      }
+
+      const blob = await pdf(pdfDoc).toBlob()
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = filename
+      a.click()
+      URL.revokeObjectURL(url)
+      toastSuccess('PDF downloaded successfully.')
+    } catch (err) {
+      toastError('Failed to download PDF.')
+    }
+  }
+
   const handlePrevDate = () => {
     const parts = selectedDate.split('-').map(Number)
     const d = new Date(parts[0], parts[1] - 1, parts[2] - 1)
@@ -156,6 +235,14 @@ export default function StaffAttendancePage() {
               className="pl-10 pr-4 py-2 bg-gray-50 dark:bg-gray-800 border-none rounded-2xl text-sm focus:ring-2 focus:ring-indigo-500/20 w-full sm:w-64"
             />
           </div>
+          <Button
+            variant="secondary"
+            icon={FileDown}
+            onClick={handleDownloadPdf}
+            className="rounded-2xl"
+          >
+            Download PDF
+          </Button>
           {activeTab === 'daily' && (
             <Button 
               icon={Save} 

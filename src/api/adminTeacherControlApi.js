@@ -10,6 +10,7 @@ export const deleteTeacherControlAssignment = (id) => api.delete(`/admin/teacher
 export const getTeacherControlTimetable = (params) => api.get('/admin/teacher-control/timetable', { params })
 export const createTeacherControlTimetableSlot = (data) => api.post('/admin/teacher-control/timetable', data)
 export const updateTeacherControlTimetableSlot = (id, data) => api.patch(`/admin/teacher-control/timetable/${id}`, data)
+export const deleteTeacherControlTimetableSlot = (id) => api.delete(`/admin/teacher-control/timetable/${id}`)
 
 export const getTeacherControlHomework = () => api.get('/admin/teacher-control/homework')
 export const updateTeacherControlHomework = (id, data) => api.patch(`/admin/teacher-control/homework/${id}`, data)
