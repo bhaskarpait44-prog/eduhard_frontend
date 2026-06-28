@@ -1,5 +1,4 @@
-// src/pages/students/tabs/TabEnrolledSubjects.jsx
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { Book, ShieldCheck, ShieldAlert, Trash2, Plus } from 'lucide-react'
 import * as studentSubjectsApi from '@/api/studentSubjectsApi'
 import useToast from '@/hooks/useToast'
@@ -13,9 +12,11 @@ const TabEnrolledSubjects = ({ studentId, isAdmin }) => {
   const [isLoading, setIsLoading] = useState(true)
   const { currentSession } = useSessionStore()
   const { toastError, toastSuccess } = useToast()
+  const autoAssignAttempted = useRef(false)
 
   useEffect(() => {
     if (studentId && currentSession?.id) {
+      autoAssignAttempted.current = false
       fetchSubjects()
     }
   }, [studentId, currentSession?.id])
@@ -24,7 +25,12 @@ const TabEnrolledSubjects = ({ studentId, isAdmin }) => {
     setIsLoading(true)
     try {
       const res = await studentSubjectsApi.getStudentSubjects(studentId, currentSession.id)
-      setSubjects(res.data || [])
+      const data = res.data || []
+      setSubjects(data)
+      if (data.length === 0 && isAdmin && !autoAssignAttempted.current) {
+        autoAssignAttempted.current = true
+        await handleAutoAssignSilent()
+      }
     } catch (err) {
       toastError('Failed to load enrolled subjects')
     } finally {
@@ -42,11 +48,12 @@ const TabEnrolledSubjects = ({ studentId, isAdmin }) => {
     }
   }
 
-  const handleAutoAssign = async () => {
+  const handleAutoAssignSilent = async () => {
     try {
       await studentSubjectsApi.autoAssignCoreSubjects({ student_id: studentId, session_id: currentSession.id })
-      toastSuccess('Core subjects assigned')
-      fetchSubjects()
+      toastSuccess('Core subjects assigned automatically')
+      const res = await studentSubjectsApi.getStudentSubjects(studentId, currentSession.id)
+      setSubjects(res.data || [])
     } catch (err) {
       toastError(err.message || 'Failed to auto-assign subjects')
     }
@@ -73,11 +80,6 @@ const TabEnrolledSubjects = ({ studentId, isAdmin }) => {
             {subjects.length} subjects assigned for {currentSession?.name}
           </p>
         </div>
-        {isAdmin && subjects.length === 0 && (
-          <Button size="sm" icon={Plus} onClick={handleAutoAssign}>
-            Auto-Assign Core
-          </Button>
-        )}
       </div>
 
       {subjects.length === 0 ? (
@@ -85,11 +87,6 @@ const TabEnrolledSubjects = ({ studentId, isAdmin }) => {
           icon={Book}
           title="No subjects assigned"
           description="This student has not been assigned any subjects for the current session."
-          action={isAdmin && (
-            <Button size="sm" icon={Plus} onClick={handleAutoAssign}>
-              Assign Core Subjects
-            </Button>
-          )}
         />
       ) : (
         <div className="grid grid-cols-1 gap-3">

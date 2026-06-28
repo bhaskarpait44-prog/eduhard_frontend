@@ -14,6 +14,30 @@ const STATUS_CONFIG = {
   waived: { label: 'Waived', variant: 'grey' },
 }
 
+const getPeriodText = (dueDate, frequency) => {
+  if (!dueDate) return '—'
+  const parts = dueDate.split('-')
+  if (parts.length !== 3) return '—'
+  const year = parseInt(parts[0], 10)
+  const monthIdx = parseInt(parts[1], 10) - 1
+  const day = parseInt(parts[2], 10)
+  const date = new Date(year, monthIdx, day)
+  if (isNaN(date.getTime())) return '—'
+  const monthName = date.toLocaleString('default', { month: 'long' })
+  
+  if (frequency === 'monthly') {
+    return `${monthName} ${year}`
+  } else if (frequency === 'quarterly') {
+    if (monthIdx >= 0 && monthIdx <= 2) return `Q1 (Jan-Mar) ${year}`
+    if (monthIdx >= 3 && monthIdx <= 5) return `Q2 (Apr-Jun) ${year}`
+    if (monthIdx >= 6 && monthIdx <= 8) return `Q3 (Jul-Sep) ${year}`
+    return `Q4 (Oct-Dec) ${year}`
+  } else if (frequency === 'annual') {
+    return `Annual ${year}`
+  }
+  return 'One-time'
+}
+
 const SummaryCard = ({ label, value, color = 'var(--color-text-primary)' }) => (
   <div
     className="rounded-xl p-4"
@@ -97,7 +121,7 @@ const TabFees = ({ enrollmentId }) => {
           <table className="w-full">
             <thead>
               <tr style={{ borderBottom: '1px solid var(--color-border)' }}>
-                {['Fee Name', 'Due Date', 'Amount Due', 'Paid', 'Balance', 'Status'].map((h) => (
+                {['Fee Name', 'Period', 'Due Date', 'Amount Due', 'Paid', 'Balance', 'Status'].map((h) => (
                   <th key={h} className="pb-3 text-left text-xs font-semibold uppercase tracking-wider pr-4" style={{ color: 'var(--color-text-muted)' }}>
                     {h}
                   </th>
@@ -114,6 +138,9 @@ const TabFees = ({ enrollmentId }) => {
                   >
                     <td className="py-3.5 pr-4 text-sm font-medium" style={{ color: 'var(--color-text-primary)' }}>
                       {inv.fee_name}
+                    </td>
+                    <td className="py-3.5 pr-4 text-sm" style={{ color: 'var(--color-text-secondary)' }}>
+                      {getPeriodText(inv.due_date, inv.fee_frequency)}
                     </td>
                     <td className="py-3.5 pr-4 text-sm" style={{ color: 'var(--color-text-secondary)' }}>
                       {formatDate(inv.due_date)}

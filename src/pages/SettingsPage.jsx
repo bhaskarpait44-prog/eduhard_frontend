@@ -337,50 +337,6 @@ const SettingsPage = () => {
 
   return (
     <div className="space-y-6">
-      <section
-        className="rounded-[28px] p-6 sm:p-7"
-        style={{
-          background: 'linear-gradient(135deg, #0f766e 0%, #14532d 100%)',
-        }}
-      >
-        <div className="flex flex-col lg:flex-row lg:items-start gap-5 lg:gap-8 justify-between">
-          <div className="max-w-2xl">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold bg-white/12 text-white/90 mb-4">
-              <MonitorCog size={14} />
-              Admin Workspace Settings
-            </div>
-            <h1 className="text-2xl sm:text-3xl font-bold text-white tracking-tight">
-              Keep your school workspace organized and ready for the team.
-            </h1>
-            <p className="text-sm sm:text-base text-emerald-50/90 mt-3 max-w-xl leading-relaxed">
-              Update school details, tune your workspace preferences, and check the current session setup from one place.
-            </p>
-          </div>
-
-          <div
-            className="min-w-[240px] rounded-3xl p-4 sm:p-5"
-            style={{ backgroundColor: 'rgba(255,255,255,0.10)', border: '1px solid rgba(255,255,255,0.16)' }}
-          >
-            <p className="text-xs uppercase tracking-[0.2em] text-emerald-100/80 mb-2">
-              Setup Progress
-            </p>
-            <div className="flex items-end gap-3">
-              <span className="text-4xl font-bold text-white">{completion}%</span>
-              <span className="text-sm text-emerald-50/80 mb-1">profile completed</span>
-            </div>
-            <div className="mt-4 h-2 rounded-full bg-white/15 overflow-hidden">
-              <div
-                className="h-full rounded-full bg-white transition-all duration-500"
-                style={{ width: `${completion}%` }}
-              />
-            </div>
-            <p className="text-xs text-emerald-50/80 mt-3">
-              Press Save to DB to persist school details permanently.
-            </p>
-          </div>
-        </div>
-      </section>
-
       <div className="grid grid-cols-1 xl:grid-cols-[1.6fr_1fr] gap-6">
         <div className="space-y-6">
           <SettingsCard

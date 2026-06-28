@@ -23,14 +23,9 @@ import useAuth from '@/hooks/useAuth'
 import TabAuditLog from './tabs/TabAuditLog'
 import TabResults from './tabs/TabResults'
 import TabFees from './tabs/TabFees'
-import TabDocuments from './tabs/TabDocuments'
-import TabEnrolledSubjects from './tabs/TabEnrolledSubjects'
 import TabHealth from './tabs/TabHealth'
 import TabFamily from './tabs/TabFamily'
 import TabServices from './tabs/TabServices'
-import TabSummary from './tabs/TabSummary'
-import TabIdentity from './tabs/TabIdentity'
-import TabProfile from './tabs/TabProfile'
 import TabLibrary from './tabs/TabLibrary'
 import TabTimeTable from './tabs/TabTimeTable'
 import useAttendanceStore from '@/store/attendanceStore'
@@ -44,19 +39,15 @@ import AttendanceCalendar from '@/components/attendance/AttendanceCalendar'
 
 /* ─── Tab config ─────────────────────────────────────────── */
 const TABS = [
-  { key: 'summary',    label: 'Summary',            icon: LayoutDashboard },
-  { key: 'profile',    label: 'Profile',            icon: UserRound },
-  { key: 'identity',   label: 'Identity',           icon: IdCard },
+  { key: 'details',    label: 'Student Details',    icon: User },
   { key: 'timetable',  label: 'Time Table',         icon: Clock },
   { key: 'attendance', label: 'Leave & Attendance', icon: CalendarCheck },
   { key: 'fees',       label: 'Fees',               icon: Wallet },
   { key: 'results',    label: 'Exam & Results',     icon: GraduationCap },
-  { key: 'subjects',   label: 'Subjects',           icon: Book },
   { key: 'health',     label: 'Health',             icon: Heart },
   { key: 'library',    label: 'Library',            icon: Library },
   { key: 'family',     label: 'Family',             icon: Users },
   { key: 'services',   label: 'Services',           icon: Truck },
-  { key: 'documents',  label: 'Documents',          icon: ScrollText },
   { key: 'audit',      label: 'Audit Log',          icon: History },
 ]
 
@@ -84,7 +75,7 @@ const StudentDetailPage = () => {
     isSaving,
   } = useAdminStudentStore()
 
-  const [activeTab, setActiveTab] = useState(searchParams.get('tab') || 'summary')
+  const [activeTab, setActiveTab] = useState(searchParams.get('tab') || 'details')
   const [pageLoading, setPageLoading] = useState(true)
   
   /* Modals */
@@ -132,7 +123,7 @@ const StudentDetailPage = () => {
 
   const handleTabChange = (tab) => {
     setActiveTab(tab)
-    setSearchParams(tab === 'summary' ? {} : { tab })
+    setSearchParams(tab === 'details' ? {} : { tab })
   }
 
   const handleResetPassword = async () => {
@@ -370,8 +361,8 @@ const StudentDetailPage = () => {
                 <button
                   key={tab.key}
                   onClick={() => handleTabChange(tab.key)}
-                  className={`flex items-center gap-2 px-6 py-4 text-xs font-bold whitespace-nowrap border-b-2 transition-all transition-colors ${
-                    active ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-gray-500 hover:text-gray-700'
+                  className={`flex items-center gap-2 px-6 py-4 text-xs font-bold whitespace-nowrap border-b-2 transition-all duration-300 ease-in-out ${
+                    active ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-gray-500 hover:text-indigo-600 hover:border-indigo-500'
                   }`}
                 >
                   <tab.icon size={16} /> {tab.label}
@@ -382,19 +373,14 @@ const StudentDetailPage = () => {
 
           {/* Tab Content */}
           <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
-            {activeTab === 'summary' && <TabSummary student={student} onTabChange={handleTabChange} />}
-            {activeTab === 'profile' && <TabProfile student={student} studentId={student.id} />}
-            {activeTab === 'identity' && <TabIdentity student={student} studentId={student.id} />}
             {activeTab === 'timetable' && <TabTimeTable studentId={student.id} />}
             {activeTab === 'attendance' && <TabAttendance enrollmentId={enrollment?.id} />}
             {activeTab === 'fees' && <TabFees enrollmentId={enrollment?.id} />}
             {activeTab === 'results' && <TabResults studentId={student.id} />}
-            {activeTab === 'subjects' && <TabEnrolledSubjects studentId={student.id} isAdmin={isAdmin} />}
             {activeTab === 'health' && <TabHealth studentId={student.id} isAdmin={isAdmin} />}
             {activeTab === 'library' && <TabLibrary student={student} />}
             {activeTab === 'family' && <TabFamily student={student} />}
             {activeTab === 'services' && <TabServices student={student} />}
-            {activeTab === 'documents' && <TabDocuments studentId={student.id} />}
             {activeTab === 'audit' && <TabAuditLog studentId={student.id} />}
             {activeTab === 'details' && <TabDetails student={student} />}
           </div>
@@ -403,7 +389,7 @@ const StudentDetailPage = () => {
       </div>
 
       {/* ── Modals ── */}
-      <Modal open={passwordOpen} onClose={() => setPasswordOpen(false)} title="Access Credentials" size="md">
+      <Modal open={passwordOpen} onClose={() => setPasswordOpen(false)} title="Access Credentials" size="lg">
         <div className="space-y-6 p-1">
           <div className="p-4 rounded-xl bg-indigo-50 border border-indigo-100 flex items-start gap-3">
             <ShieldCheck size={20} className="text-indigo-600 mt-0.5" />
