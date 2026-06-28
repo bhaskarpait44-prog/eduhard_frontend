@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from 'recharts';
-import { Book, Bookmark, Clock, AlertCircle, TrendingUp, PieChart as PieIcon, ExternalLink } from 'lucide-react';
+import { Book, Bookmark, Clock, AlertCircle, IndianRupee, TrendingUp, PieChart as PieIcon } from 'lucide-react';
 import libraryApi from '../../api/libraryApi';
 import useToast from '../../hooks/useToast';
 import usePageTitle from '../../hooks/usePageTitle';
@@ -16,6 +17,7 @@ const COLORS = ['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'
 const LibraryDashboardPage = () => {
   usePageTitle('Library Dashboard');
   const { toastError } = useToast();
+  const navigate = useNavigate();
 
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -73,15 +75,16 @@ const LibraryDashboardPage = () => {
           <p className="text-text-muted text-sm font-medium">Real-time performance and collection insights</p>
         </div>
         <div className="flex gap-2">
-           <Button variant="secondary" size="sm" icon={ExternalLink} onClick={() => window.open('/library/books', '_self')}>Go to Catalog</Button>
+           <Button variant="secondary" size="sm" onClick={() => navigate('/library/books')}>Go to Catalog</Button>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
         <StatCard title="Total Collection" value={stats.total_books || 0} icon={Book} color="indigo" />
         <StatCard title="On Shelves" value={stats.total_available_copies || 0} icon={Bookmark} color="emerald" />
         <StatCard title="In Circulation" value={stats.total_currently_issued || 0} icon={Clock} color="amber" />
-        <StatCard title="Overdue Penalty" value={stats.total_overdue || 0} icon={AlertCircle} color="rose" />
+        <StatCard title="Overdue Books" value={stats.total_overdue || 0} icon={AlertCircle} color="rose" />
+        <StatCard title="Fines This Month (₹)" value={`₹${(stats.total_fine_this_month || 0).toFixed(0)}`} icon={IndianRupee} color="orange" />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

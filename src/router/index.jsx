@@ -132,6 +132,7 @@ const FineCollectionPage = lazy(() => import('@/pages/library/FineCollectionPage
 const LibrarySettingsPage = lazy(() => import('@/pages/library/LibrarySettingsPage'))
 const MyBooksPage = lazy(() => import('@/pages/library/MyBooksPage'))
 const LibrarianProfile = lazy(() => import('@/pages/library/LibrarianProfile'))
+const ReservationsPage = lazy(() => import('@/pages/library/ReservationsPage'))
 const BulkImportBooksPage = lazy(() => import('@/pages/library/BulkImportBooksPage'))
 const LibrarianNotices = lazy(() => import('@/pages/library/LibrarianNotices'))  // BUG-07
 
@@ -355,6 +356,11 @@ const router = createBrowserRouter([
         </ProtectedRoute>
       )},
       { path: 'my-books', element: <Lazy component={MyBooksPage} /> },
+      { path: 'reservations', element: (
+        <ProtectedRoute roles={[ROLES.ADMIN, ROLES.LIBRARIAN]}>
+          <Lazy component={ReservationsPage} />
+        </ProtectedRoute>
+      )},
       { path: 'profile', element: <Lazy component={LibrarianProfile} /> },
       { path: 'notices', element: (  // BUG-07: new route for librarian notices
         <ProtectedRoute roles={[ROLES.ADMIN, ROLES.LIBRARIAN]}>

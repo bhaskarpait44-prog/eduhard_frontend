@@ -74,6 +74,7 @@ const getNavGroups = (user) => {
         label: 'Circulation',
         items: [
           { label: 'Issue Register', icon: 'BookOpenCheck', path: ROUTES.LIBRARY_ISSUES },
+          { label: 'Reservations Queue', icon: 'Clock', path: '/library/reservations' },
           { label: 'Fine Collection', icon: 'CircleDollarSign', path: ROUTES.LIBRARY_FINES },
         ],
       },

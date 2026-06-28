@@ -32,9 +32,12 @@ const FineCollectionPage = () => {
   const [actionLoading, setActionLoading] = useState(false);
 
   useEffect(() => {
-    fetchFines();
-    fetchSummary();
-  }, [page, fineStatus]);
+    const timer = setTimeout(() => {
+      fetchFines();
+      fetchSummary();
+    }, search ? 400 : 0);
+    return () => clearTimeout(timer);
+  }, [page, fineStatus, search]);
 
   const fetchFines = async () => {
     setLoading(true);
@@ -66,7 +69,6 @@ const FineCollectionPage = () => {
   const handleSearch = (e) => {
     e.preventDefault();
     setPage(1);
-    fetchFines();
   };
 
   const handleAction = async (e) => {

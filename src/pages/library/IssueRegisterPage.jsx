@@ -31,8 +31,11 @@ const IssueRegisterPage = () => {
   const [overdueLoading, setOverdueLoading] = useState(false);
 
   useEffect(() => {
-    fetchIssues();
-  }, [page, status, borrowerType]);
+    const timer = setTimeout(() => {
+      fetchIssues();
+    }, search ? 400 : 0);
+    return () => clearTimeout(timer);
+  }, [page, status, borrowerType, search, startDate, endDate]);
 
   const fetchIssues = async () => {
     setLoading(true);
@@ -71,7 +74,6 @@ const IssueRegisterPage = () => {
   const handleSearch = (e) => {
     e.preventDefault();
     setPage(1);
-    fetchIssues();
   };
 
   const handleReturn = async (returnData) => {

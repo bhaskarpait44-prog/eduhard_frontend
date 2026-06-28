@@ -4,6 +4,8 @@ import Input from '../ui/Input';
 import Select from '../ui/Select';
 import Textarea from '../ui/Textarea';
 import Button from '../ui/Button';
+import useToast from '../../hooks/useToast';
+import libraryApi from '../../api/libraryApi';
 
 const CATEGORIES = [
   { label: 'Fiction', value: 'fiction' },
@@ -32,6 +34,44 @@ const BookFormModal = ({ open, onClose, onSubmit, book, loading }) => {
     cover_image_url: '',
     digital_url: '',
   });
+
+  const { toastSuccess, toastWarning, toastError } = useToast();
+  const [lookupLoading, setLookupLoading] = useState(false);
+
+  const lookupISBN = async (targetIsbn) => {
+    if (!targetIsbn) {
+      toastWarning('Please enter an ISBN first.');
+      return;
+    }
+    const cleanIsbn = targetIsbn.replace(/[- ]/g, '').trim();
+    if (!cleanIsbn) return;
+
+    setLookupLoading(true);
+    try {
+      const { data } = await libraryApi.lookupISBN(cleanIsbn);
+      
+      if (data) {
+        setFormData(prev => ({
+          ...prev,
+          isbn: cleanIsbn,
+          title: data.title || prev.title,
+          author: data.author || prev.author,
+          publisher: data.publisher || prev.publisher,
+          publication_year: data.publication_year || prev.publication_year,
+          cover_image_url: data.cover_image_url || prev.cover_image_url,
+          description: data.description || prev.description
+        }));
+        const sourceLabel = data.source === 'open_library' ? 'Open Library' : 'Google Books';
+        toastSuccess(`Book details autofilled from ${sourceLabel}!`);
+      }
+    } catch (err) {
+      console.error('ISBN lookup failed', err);
+      const errMsg = err.response?.data?.message || 'No book metadata found for this ISBN. You can still enter details manually.';
+      toastWarning(errMsg);
+    } finally {
+      setLookupLoading(false);
+    }
+  };
 
   useEffect(() => {
     if (book) {
@@ -118,13 +158,38 @@ const BookFormModal = ({ open, onClose, onSubmit, book, loading }) => {
               required
               placeholder="e.g. F. Scott Fitzgerald"
             />
-            <Input
-              label="ISBN"
-              name="isbn"
-              value={formData.isbn}
-              onChange={handleChange}
-              placeholder="e.g. 978-0743273565"
-            />
+            <div className="sm:col-span-2 flex flex-col gap-1.5">
+              <label className="text-sm font-medium" style={{ color: 'var(--color-text-primary)' }}>
+                ISBN (Scan or Type to Autofill)
+              </label>
+              <div className="flex gap-2 items-center">
+                <div className="flex-1">
+                  <Input
+                    name="isbn"
+                    value={formData.isbn}
+                    onChange={handleChange}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        lookupISBN(formData.isbn);
+                      }
+                    }}
+                    placeholder="Scan barcode or enter ISBN..."
+                    containerClassName="w-full"
+                    autoFocus={!book}
+                  />
+                </div>
+                <Button
+                  type="button"
+                  variant="secondary"
+                  className="h-[42px] font-bold text-xs shrink-0"
+                  onClick={() => lookupISBN(formData.isbn)}
+                  loading={lookupLoading}
+                >
+                  Autofill
+                </Button>
+              </div>
+            </div>
             <Select
               label="Category"
               options={CATEGORIES}
@@ -158,7 +223,7 @@ const BookFormModal = ({ open, onClose, onSubmit, book, loading }) => {
             value={formData.cover_image_url}
             onChange={handleChange}
             placeholder="https://example.com/cover.jpg"
-            helperText="Direct link to a JPEG/PNG image."
+            hint="Direct link to a JPEG/PNG image."
           />
           <Input
             label="Digital Copy (URL)"
@@ -166,7 +231,7 @@ const BookFormModal = ({ open, onClose, onSubmit, book, loading }) => {
             value={formData.digital_url}
             onChange={handleChange}
             placeholder="https://example.com/ebook.pdf"
-            helperText="Link for students to read online."
+            hint="Link for students to read online."
           />
            <Input
             label="Publisher"

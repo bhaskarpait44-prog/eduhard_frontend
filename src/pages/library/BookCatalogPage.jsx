@@ -52,7 +52,7 @@ const BookCatalogPage = () => {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [bookToDelete, setBookToDelete] = useState(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
-  const [reserveLoading, setReserveLoading] = useState(false);
+  const [reserveLoadingId, setReserveLoadingId] = useState(null);
 
   useEffect(() => {
     const delayDebounceFn = setTimeout(() => {
@@ -134,7 +134,7 @@ const BookCatalogPage = () => {
   };
 
   const handleReserve = async (bookId) => {
-    setReserveLoading(true);
+    setReserveLoadingId(bookId);
     try {
       await libraryApi.createReservation({ book_id: bookId });
       toastSuccess('Book reserved successfully');
@@ -142,7 +142,7 @@ const BookCatalogPage = () => {
     } catch (err) {
       toastError(err.response?.data?.message || 'Failed to reserve book');
     } finally {
-      setReserveLoading(false);
+      setReserveLoadingId(null);
     }
   };
 
@@ -259,7 +259,7 @@ const BookCatalogPage = () => {
                         size="sm" 
                         className="flex-1 text-orange-600"
                         onClick={() => handleReserve(book.id)}
-                        loading={reserveLoading}
+                        loading={reserveLoadingId === book.id}
                       >
                         Reserve
                       </Button>
@@ -366,7 +366,7 @@ const BookCatalogPage = () => {
                               size="sm" 
                               className="text-orange-600 font-black uppercase tracking-widest text-[10px]"
                               onClick={() => handleReserve(book.id)}
-                              loading={reserveLoading}
+                              loading={reserveLoadingId === book.id}
                             >
                               Reserve
                             </Button>

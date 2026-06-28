@@ -47,6 +47,9 @@ const LibrarySettingsPage = () => {
 
   const handleSave = async (e) => {
     e.preventDefault();
+    if (settings.fine_per_day <= 0) return toastError('Fine per day must be a positive number.');
+    if (settings.max_books_per_borrower < 1) return toastError('Max books per borrower must be at least 1.');
+    if (settings.max_issue_days < 1) return toastError('Max issue days must be at least 1.');
     setSaving(true);
     try {
       await libraryApi.updateSettings(settings);
@@ -74,6 +77,7 @@ const LibrarySettingsPage = () => {
             name="fine_per_day"
             type="number"
             step="0.01"
+            min="0.01"
             value={settings.fine_per_day}
             onChange={handleChange}
             required
@@ -84,6 +88,7 @@ const LibrarySettingsPage = () => {
             label="Max Books Per Borrower"
             name="max_books_per_borrower"
             type="number"
+            min="1"
             value={settings.max_books_per_borrower}
             onChange={handleChange}
             required
@@ -94,6 +99,7 @@ const LibrarySettingsPage = () => {
             label="Max Issue Duration (Days)"
             name="max_issue_days"
             type="number"
+            min="1"
             value={settings.max_issue_days}
             onChange={handleChange}
             required

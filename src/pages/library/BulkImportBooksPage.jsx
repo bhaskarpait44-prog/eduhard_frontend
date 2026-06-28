@@ -1,35 +1,15 @@
-import { useEffect, useRef, useState } from 'react'
+import { useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
   ArrowLeft, Upload, FileSpreadsheet, CheckCircle2,
   AlertCircle, Download, Loader2, ArrowRight,
 } from 'lucide-react'
+import Papa from 'papaparse'
 import libraryApi from '@/api/libraryApi'
 import usePageTitle from '@/hooks/usePageTitle'
 import useToast from '@/hooks/useToast'
 
 const STEPS = ['Download Template', 'Upload File', 'Review & Validate', 'Processing', 'Summary']
-
-function parseCSV(text) {
-  const lines = text.trim().split('\n')
-  const headers = lines[0]
-    .split(',')
-    .map(h => h.trim().replace(/^"(.*)"$/, '$1').toLowerCase().replace(/\s+/g, '_').replace(/[^a-z_]/g, ''))
-
-  const rows = []
-  for (let i = 1; i < lines.length; i += 1) {
-    const values = lines[i].split(',').map(v => v.trim().replace(/^"(.*)"$/, '$1'))
-    if (values.every(v => !v)) continue
-
-    const row = {}
-    headers.forEach((header, index) => {
-      row[header] = values[index] || ''
-    })
-    rows.push(row)
-  }
-
-  return rows
-}
 
 const BulkImportBooksPage = () => {
   usePageTitle('Bulk Import Books')
@@ -71,7 +51,16 @@ const BulkImportBooksPage = () => {
 
     try {
       const text = await file.text()
-      const rows = parseCSV(text)
+      const { data: rows, errors: parseErrors } = Papa.parse(text, {
+        header: true,
+        skipEmptyLines: true,
+        transformHeader: h =>
+          h.trim().toLowerCase().replace(/\s+/g, '_').replace(/[^a-z_]/g, ''),
+      })
+      if (parseErrors.length > 0) {
+        setParseError(`CSV parse error: ${parseErrors[0].message}`)
+        return
+      }
       if (rows.length === 0) {
         setParseError('No data rows found in file.')
         return

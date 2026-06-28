@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import libraryApi from '../../api/libraryApi';
 import usePageTitle from '../../hooks/usePageTitle';
+import useToast from '../../hooks/useToast';
 import { formatDate } from '../../utils/helpers';
 import Badge from '../../components/ui/Badge';
 import EmptyState from '../../components/ui/EmptyState';
@@ -8,6 +9,7 @@ import TableSkeleton from '../../components/ui/TableSkeleton';
 
 const MyBooksPage = () => {
   usePageTitle('My Library');
+  const { toastSuccess, toastError } = useToast();
 
   const [activeTab, setActiveTab] = useState('issues');
   const [issues, setIssues] = useState([]);
@@ -48,9 +50,11 @@ const MyBooksPage = () => {
     setCancelLoading(true);
     try {
       await libraryApi.cancelReservation(id);
+      toastSuccess('Reservation cancelled successfully.');
       fetchMyReservations();
     } catch (err) {
       console.error('Failed to cancel reservation', err);
+      toastError('Failed to cancel reservation. Please try again.');
     } finally {
       setCancelLoading(false);
     }
