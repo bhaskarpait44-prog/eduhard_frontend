@@ -3,6 +3,7 @@ import api from './axios'
 
 export const getExams         = (params)  => api.get('/exams', { params })
 export const createExam       = (data)    => api.post('/exams', data)
+export const createBulkExams   = (data)    => api.post('/exams/bulk', data)
 export const updateExamStatus = (id,data) => api.patch(`/exams/${id}`, data)
 export const updateExamTimetable = (id,data) => api.patch(`/exams/${id}/timetable`, data)
 export const getExamSubjects  = (id)      => api.get(`/exams/${id}/subjects`)
@@ -11,6 +12,7 @@ export const reviewExamSubject = (examId, subjectId, data) => api.patch(`/exams/
 export const deleteExam       = (id)      => api.delete(`/exams/${id}`)
 export const downloadExamTimetablePdf = (id) => api.get(`/exams/${id}/timetable/pdf`, { responseType: 'blob' })
 export const downloadClassTimetablePdf = (params) => api.get('/exams/class/timetable/pdf', { params, responseType: 'blob' })
+export const downloadAllClassesTimetablePdf = (params) => api.get('/exams/timetable/all-classes/pdf', { params, responseType: 'blob' })
 export const getSubjects      = (classId) => api.get(`/classes/${classId}/subjects`)
 export const enterMarks       = (data)    => api.post('/results/enter', data)
 export const getResults       = (enrollmentId) => api.get(`/results/${enrollmentId}`)

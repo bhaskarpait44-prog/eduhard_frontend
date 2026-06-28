@@ -14,6 +14,7 @@ const IssueBookModal = ({ open, onClose, onSubmit, preSelectedBook = null, loadi
   const [borrowerSearch, setBorrowerSearch] = useState('');
   const [borrowers, setBorrowers] = useState([]);
   const [selectedBorrowerId, setSelectedBorrowerId] = useState('');
+  const [selectedBorrowerRole, setSelectedBorrowerRole] = useState('');
   
   const [bookSearch, setBookSearch] = useState('');
   const [books, setBooks] = useState([]);
@@ -71,13 +72,15 @@ const IssueBookModal = ({ open, onClose, onSubmit, preSelectedBook = null, loadi
         setBorrowers(data.students.map(s => ({
           id: s.id,
           name: `${s.first_name} ${s.last_name}`,
+          role: 'student',
           identifier: s.admission_no
         })));
       } else {
         const { data } = await getUsers({ search: borrowerSearch, limit: 10 });
         setBorrowers(data.users.map(u => ({
-          id: u.source_id || u.id, // Use source_id for portal accounts
+          id: u.source_id || u.id,
           name: u.name,
+          role: u.role,
           identifier: u.email
         })));
       }
@@ -115,9 +118,13 @@ const IssueBookModal = ({ open, onClose, onSubmit, preSelectedBook = null, loadi
     if (!selectedBorrowerId) return toastWarning('Please select a borrower');
     if (!dueDate) return toastWarning('Please select a due date');
 
+    const finalBorrowerType = selectedBorrowerRole === 'student'
+      ? 'student'
+      : (selectedBorrowerRole === 'teacher' ? 'teacher' : 'staff');
+
     onSubmit({
       book_id: parseInt(selectedBookId, 10),
-      borrower_type: borrowerType,
+      borrower_type: finalBorrowerType,
       borrower_id: parseInt(selectedBorrowerId, 10),
       due_date: dueDate
     });
@@ -210,6 +217,7 @@ const IssueBookModal = ({ open, onClose, onSubmit, preSelectedBook = null, loadi
                     onClick={() => {
                       setSelectedBorrowerId(b.id);
                       setBorrowerSearch(b.name);
+                      setSelectedBorrowerRole(b.role);
                       setBorrowers([]);
                     }}
                   >

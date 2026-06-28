@@ -19,7 +19,7 @@ const STATUS_OPTIONS = [
 
 const schema = z.object({
   name: z.string().trim().min(1, 'Exam name is required'),
-  class_id: z.string().min(1, 'Class is required'),
+  class_id: z.string().optional(),
   start_date: z.string().min(1, 'Start date required'),
   end_date: z.string().min(1, 'End date required'),
   status: z.enum(['draft', 'published'], { required_error: 'Status is required' }),
@@ -36,7 +36,7 @@ const schema = z.object({
 
 const CreateExamModal = ({ open, onClose, sessionId, onCreated, prefillClassId, editingExam }) => {
   const { toastSuccess, toastError } = useToast()
-  const { createExam, updateExam, isSaving } = useExamStore()
+  const { createExam, updateExam, createBulkExams, isSaving } = useExamStore()
   const [classes, setClasses] = useState([])
   const [teachers, setTeachers] = useState([])
   const [classSubjects, setClassSubjects] = useState([])
@@ -47,6 +47,7 @@ const CreateExamModal = ({ open, onClose, sessionId, onCreated, prefillClassId, 
   const [bulkPracticalTotal, setBulkPracticalTotal] = useState('')
   const [bulkPracticalPassing, setBulkPracticalPassing] = useState('')
   const [showBulkPanel, setShowBulkPanel] = useState(false)
+  const [isBulk, setIsBulk] = useState(false)
 
   const isEditing = !!editingExam
 
@@ -56,6 +57,7 @@ const CreateExamModal = ({ open, onClose, sessionId, onCreated, prefillClassId, 
     reset,
     watch,
     setValue,
+    setError,
     formState: { errors },
   } = useForm({
     resolver: zodResolver(schema),
@@ -71,6 +73,7 @@ const CreateExamModal = ({ open, onClose, sessionId, onCreated, prefillClassId, 
 
   useEffect(() => {
     if (open) {
+      setIsBulk(false)
       if (isEditing) {
         reset({
           name: editingExam.name,
@@ -99,6 +102,7 @@ const CreateExamModal = ({ open, onClose, sessionId, onCreated, prefillClassId, 
 
   useEffect(() => {
     if (!open) {
+      setIsBulk(false)
       if (!isEditing) {
         reset({
           name: '',
@@ -120,7 +124,7 @@ const CreateExamModal = ({ open, onClose, sessionId, onCreated, prefillClassId, 
   }, [open, isEditing, reset])
 
   useEffect(() => {
-    if (!classId || !open) {
+    if (!classId || !open || isBulk) {
       if (!isEditing) {
         setClassSubjects([])
         setSubjectConfigs({})
@@ -215,6 +219,34 @@ const CreateExamModal = ({ open, onClose, sessionId, onCreated, prefillClassId, 
 
   const onSubmit = async (data) => {
     const examName = data.name.trim()
+
+    if (isBulk) {
+      const payload = {
+        session_id: Number(sessionId),
+        name: examName,
+        exam_type: 'term',
+        start_date: data.start_date,
+        end_date: data.end_date,
+        status: data.status,
+        weightage: data.weightage,
+      }
+
+      const result = await createBulkExams(payload)
+      if (result.success) {
+        toastSuccess(`${result.count} class exams created in bulk`)
+        onCreated?.()
+        onClose()
+      } else {
+        toastError(result.message || 'Failed to create bulk exams')
+      }
+      return
+    }
+
+    if (!data.class_id) {
+      setError('class_id', { type: 'manual', message: 'Class is required' })
+      return
+    }
+
     const subjects = classSubjects
       .filter((subject) => subjectConfigs[subject.id]?.selected)
       .map((subject) => {
@@ -288,16 +320,42 @@ const CreateExamModal = ({ open, onClose, sessionId, onCreated, prefillClassId, 
             error={errors.status?.message}
             {...register('status')}
           />
-          <Select
-            label="Class"
-            options={classes}
-            error={errors.class_id?.message}
-            disabled={isEditing}
-            {...register('class_id')}
-          />
-          <div className="rounded-2xl px-4 py-3 text-sm" style={{ backgroundColor: 'var(--color-surface-raised)', color: 'var(--color-text-secondary)' }}>
-            This exam is for the selected class and only the chosen subjects below.
-          </div>
+          {!isEditing && (
+            <label className="flex items-center gap-2 select-none col-span-1 md:col-span-2 py-2">
+              <input
+                type="checkbox"
+                checked={isBulk}
+                onChange={(e) => {
+                  setIsBulk(e.target.checked)
+                  if (e.target.checked) {
+                    setValue('class_id', '')
+                  }
+                }}
+                className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+              />
+              <span className="text-sm font-semibold" style={{ color: 'var(--color-text-primary)' }}>
+                Create for all classes (Bulk Exam)
+              </span>
+            </label>
+          )}
+          {!isBulk ? (
+            <>
+              <Select
+                label="Class"
+                options={classes}
+                error={errors.class_id?.message}
+                disabled={isEditing}
+                {...register('class_id')}
+              />
+              <div className="rounded-2xl px-4 py-3 text-sm flex items-center" style={{ backgroundColor: 'var(--color-surface-raised)', color: 'var(--color-text-secondary)' }}>
+                This exam is for the selected class and only the chosen subjects below.
+              </div>
+            </>
+          ) : (
+            <div className="rounded-2xl px-4 py-3 text-sm col-span-1 md:col-span-2" style={{ backgroundColor: 'rgba(67, 56, 202, 0.05)', border: '1px solid var(--color-border)', color: 'var(--color-text-secondary)' }}>
+              <strong>Bulk Exam Mode:</strong> This will create a separate exam with the same details (name, dates, status, weightage) for each active class in the school, using their respective active subjects and default marks configuration.
+            </div>
+          )}
           <Input label="Start Date" type="date" error={errors.start_date?.message} {...register('start_date')} />
           <Input label="End Date" type="date" error={errors.end_date?.message} {...register('end_date')} />
           <Input
@@ -312,180 +370,182 @@ const CreateExamModal = ({ open, onClose, sessionId, onCreated, prefillClassId, 
           />
         </div>
 
-        <section className="space-y-3">
-          <div className="flex items-center justify-between">
-            <div>
-              <h3 className="text-sm font-semibold" style={{ color: 'var(--color-text-primary)' }}>Subject Selection</h3>
-              <p className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>
-                {selectedCount} subject(s) selected for this exam.
-              </p>
-            </div>
-            <div className="flex gap-2">
-              {classId && classSubjects.length > 0 && (
+        {!isBulk && (
+          <section className="space-y-3">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-sm font-semibold" style={{ color: 'var(--color-text-primary)' }}>Subject Selection</h3>
+                <p className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>
+                  {selectedCount} subject(s) selected for this exam.
+                </p>
+              </div>
+              <div className="flex gap-2">
+                {classId && classSubjects.length > 0 && (
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    onClick={() => setShowBulkPanel(!showBulkPanel)}
+                  >
+                    {showBulkPanel ? 'Hide Bulk Fill' : 'Bulk Fill Marks'}
+                  </Button>
+                )}
                 <Button
                   type="button"
                   variant="secondary"
-                  onClick={() => setShowBulkPanel(!showBulkPanel)}
+                  onClick={() => {
+                    const nextSelected = selectedCount !== classSubjects.length
+                    setSubjectConfigs((prev) => Object.fromEntries(classSubjects.map((subject) => [subject.id, {
+                      ...prev[subject.id],
+                      selected: nextSelected,
+                    }])))
+                  }}
                 >
-                  {showBulkPanel ? 'Hide Bulk Fill' : 'Bulk Fill Marks'}
+                  {selectedCount === classSubjects.length ? 'Clear All' : 'Select All'}
                 </Button>
-              )}
-              <Button
-                type="button"
-                variant="secondary"
-                onClick={() => {
-                  const nextSelected = selectedCount !== classSubjects.length
-                  setSubjectConfigs((prev) => Object.fromEntries(classSubjects.map((subject) => [subject.id, {
-                    ...prev[subject.id],
-                    selected: nextSelected,
-                  }])))
-                }}
-              >
-                {selectedCount === classSubjects.length ? 'Clear All' : 'Select All'}
-              </Button>
+              </div>
             </div>
-          </div>
 
-          {showBulkPanel && classId && classSubjects.length > 0 && (
-            <div 
-              className="p-4 rounded-2xl border-2 border-dashed flex flex-wrap items-end gap-4" 
-              style={{ borderColor: 'var(--color-border)', backgroundColor: 'rgba(67, 56, 202, 0.03)' }}
-            >
-              <Input
-                label="Bulk Theory Total"
-                type="number"
-                min="1"
-                value={bulkTheoryTotal}
-                onChange={(e) => setBulkTheoryTotal(e.target.value)}
-                containerClassName="w-36"
-              />
-              <Input
-                label="Bulk Theory Passing"
-                type="number"
-                min="1"
-                value={bulkTheoryPassing}
-                onChange={(e) => setBulkTheoryPassing(e.target.value)}
-                containerClassName="w-36"
-              />
-              <Input
-                label="Bulk Practical Total"
-                type="number"
-                min="1"
-                value={bulkPracticalTotal}
-                onChange={(e) => setBulkPracticalTotal(e.target.value)}
-                containerClassName="w-36"
-              />
-              <Input
-                label="Bulk Practical Passing"
-                type="number"
-                min="1"
-                value={bulkPracticalPassing}
-                onChange={(e) => setBulkPracticalPassing(e.target.value)}
-                containerClassName="w-36"
-              />
-              <Button
-                type="button"
-                onClick={handleBulkFillMarks}
-                disabled={bulkTheoryTotal === '' && bulkTheoryPassing === '' && bulkPracticalTotal === '' && bulkPracticalPassing === ''}
+            {showBulkPanel && classId && classSubjects.length > 0 && (
+              <div 
+                className="p-4 rounded-2xl border-2 border-dashed flex flex-wrap items-end gap-4" 
+                style={{ borderColor: 'var(--color-border)', backgroundColor: 'rgba(67, 56, 202, 0.03)' }}
               >
-                Apply to Selected
-              </Button>
-            </div>
-          )}
+                <Input
+                  label="Bulk Theory Total"
+                  type="number"
+                  min="1"
+                  value={bulkTheoryTotal}
+                  onChange={(e) => setBulkTheoryTotal(e.target.value)}
+                  containerClassName="w-36"
+                />
+                <Input
+                  label="Bulk Theory Passing"
+                  type="number"
+                  min="1"
+                  value={bulkTheoryPassing}
+                  onChange={(e) => setBulkTheoryPassing(e.target.value)}
+                  containerClassName="w-36"
+                />
+                <Input
+                  label="Bulk Practical Total"
+                  type="number"
+                  min="1"
+                  value={bulkPracticalTotal}
+                  onChange={(e) => setBulkPracticalTotal(e.target.value)}
+                  containerClassName="w-36"
+                />
+                <Input
+                  label="Bulk Practical Passing"
+                  type="number"
+                  min="1"
+                  value={bulkPracticalPassing}
+                  onChange={(e) => setBulkPracticalPassing(e.target.value)}
+                  containerClassName="w-36"
+                />
+                <Button
+                  type="button"
+                  onClick={handleBulkFillMarks}
+                  disabled={bulkTheoryTotal === '' && bulkTheoryPassing === '' && bulkPracticalTotal === '' && bulkPracticalPassing === ''}
+                >
+                  Apply to Selected
+                </Button>
+              </div>
+            )}
 
-          {!classId ? (
-            <div className="rounded-2xl px-4 py-6 text-sm" style={{ backgroundColor: 'var(--color-surface-raised)', color: 'var(--color-text-secondary)' }}>
-              Select a class first to configure subjects.
-            </div>
-          ) : classSubjects.length === 0 ? (
-            <div className="rounded-2xl px-4 py-6 text-sm" style={{ backgroundColor: 'var(--color-surface-raised)', color: 'var(--color-text-secondary)' }}>
-              No subjects found for this class.
-            </div>
-          ) : (
-            <div className="space-y-4">
-              {classSubjects.map((subject) => {
-                const config = subjectConfigs[subject.id] || {}
-                const subjectType = config.subject_type || subject.subject_type || 'theory'
-                return (
-                  <div
-                    key={subject.id}
-                    className="rounded-2xl border p-4"
-                    style={{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface)' }}
-                  >
-                    <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-                      <label className="flex items-center gap-3">
-                        <input
-                          type="checkbox"
-                          checked={!!config.selected}
-                          onChange={(event) => updateSubjectConfig(subject.id, { selected: event.target.checked })}
-                        />
-                        <div>
-                          <p className="text-sm font-semibold" style={{ color: 'var(--color-text-primary)' }}>{subject.name}</p>
-                          <p className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>{subject.code}</p>
+            {!classId ? (
+              <div className="rounded-2xl px-4 py-6 text-sm" style={{ backgroundColor: 'var(--color-surface-raised)', color: 'var(--color-text-secondary)' }}>
+                Select a class first to configure subjects.
+              </div>
+            ) : classSubjects.length === 0 ? (
+              <div className="rounded-2xl px-4 py-6 text-sm" style={{ backgroundColor: 'var(--color-surface-raised)', color: 'var(--color-text-secondary)' }}>
+                No subjects found for this class.
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {classSubjects.map((subject) => {
+                  const config = subjectConfigs[subject.id] || {}
+                  const subjectType = config.subject_type || subject.subject_type || 'theory'
+                  return (
+                    <div
+                      key={subject.id}
+                      className="rounded-2xl border p-4"
+                      style={{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface)' }}
+                    >
+                      <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+                        <label className="flex items-center gap-3">
+                          <input
+                            type="checkbox"
+                            checked={!!config.selected}
+                            onChange={(event) => updateSubjectConfig(subject.id, { selected: event.target.checked })}
+                          />
+                          <div>
+                            <p className="text-sm font-semibold" style={{ color: 'var(--color-text-primary)' }}>{subject.name}</p>
+                            <p className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>{subject.code}</p>
+                          </div>
+                        </label>
+                        <div className="w-full lg:w-56">
+                          <Select
+                            label="Subject Type"
+                            value={subjectType}
+                            onChange={(event) => updateSubjectConfig(subject.id, { subject_type: event.target.value })}
+                            options={[
+                              { value: 'theory', label: 'Theory' },
+                              { value: 'practical', label: 'Practical' },
+                              { value: 'both', label: 'Theory + Practical' },
+                            ]}
+                          />
                         </div>
-                      </label>
-                      <div className="w-full lg:w-56">
-                        <Select
-                          label="Subject Type"
-                          value={subjectType}
-                          onChange={(event) => updateSubjectConfig(subject.id, { subject_type: event.target.value })}
-                          options={[
-                            { value: 'theory', label: 'Theory' },
-                            { value: 'practical', label: 'Practical' },
-                            { value: 'both', label: 'Theory + Practical' },
-                          ]}
-                        />
                       </div>
+
+                      {config.selected && (
+                        <div className="mt-4 space-y-4">
+                          <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+                            {subjectType !== 'practical' && (
+                              <>
+                                <Input
+                                  label="Theory Total"
+                                  type="number"
+                                  min="1"
+                                  value={config.theory_total_marks ?? ''}
+                                  onChange={(event) => updateSubjectConfig(subject.id, { theory_total_marks: event.target.value })}
+                                />
+                                <Input
+                                  label="Theory Passing"
+                                  type="number"
+                                  min="1"
+                                  value={config.theory_passing_marks ?? ''}
+                                  onChange={(event) => updateSubjectConfig(subject.id, { theory_passing_marks: event.target.value })}
+                                />
+                              </>
+                            )}
+                            {subjectType !== 'theory' && (
+                              <>
+                                <Input
+                                  label="Practical Total"
+                                  type="number"
+                                  min="1"
+                                  value={config.practical_total_marks ?? ''}
+                                  onChange={(event) => updateSubjectConfig(subject.id, { practical_total_marks: event.target.value })}
+                                />
+                                <Input
+                                  label="Practical Passing"
+                                  type="number"
+                                  min="1"
+                                  value={config.practical_passing_marks ?? ''}
+                                  onChange={(event) => updateSubjectConfig(subject.id, { practical_passing_marks: event.target.value })}
+                                />
+                              </>
+                            )}
+                          </div>
+                        </div>
+                      )}
                     </div>
-
-                    {config.selected && (
-                      <div className="mt-4 space-y-4">
-                        <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-                          {subjectType !== 'practical' && (
-                            <>
-                              <Input
-                                label="Theory Total"
-                                type="number"
-                                min="1"
-                                value={config.theory_total_marks ?? ''}
-                                onChange={(event) => updateSubjectConfig(subject.id, { theory_total_marks: event.target.value })}
-                              />
-                              <Input
-                                label="Theory Passing"
-                                type="number"
-                                min="1"
-                                value={config.theory_passing_marks ?? ''}
-                                onChange={(event) => updateSubjectConfig(subject.id, { theory_passing_marks: event.target.value })}
-                              />
-                            </>
-                          )}
-                          {subjectType !== 'theory' && (
-                            <>
-                              <Input
-                                label="Practical Total"
-                                type="number"
-                                min="1"
-                                value={config.practical_total_marks ?? ''}
-                                onChange={(event) => updateSubjectConfig(subject.id, { practical_total_marks: event.target.value })}
-                              />
-                              <Input
-                                label="Practical Passing"
-                                type="number"
-                                min="1"
-                                value={config.practical_passing_marks ?? ''}
-                                onChange={(event) => updateSubjectConfig(subject.id, { practical_passing_marks: event.target.value })}
-                              />
-                            </>
-                          )}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                )
-              })}
-            </div>
-          )}
-        </section>
+                  )
+                })}
+              </div>
+            )}
+          </section>
+        )}
       </form>
     </Modal>
   )

@@ -39,6 +39,19 @@ const useExamStore = create((set, get) => ({
     }
   },
 
+  createBulkExams: async (data) => {
+    set({ isSaving: true })
+    try {
+      const res = await api.createBulkExams(data)
+      const newExams = Array.isArray(res.data?.exams) ? res.data.exams : []
+      set(s => ({ exams: [...newExams, ...s.exams], isSaving: false }))
+      return { success: true, count: res.data?.count || 0 }
+    } catch (err) {
+      set({ isSaving: false })
+      return { success: false, message: err.message }
+    }
+  },
+
   updateExam: async (id, data) => {
     set({ isSaving: true })
     try {
@@ -314,6 +327,16 @@ const useExamStore = create((set, get) => ({
     try {
       const response = await api.getReportCard(enrollmentId);
       downloadBlob(response, `ReportCard_${enrollmentId}.pdf`);
+      return { success: true };
+    } catch (err) {
+      return { success: false, message: err.message };
+    }
+  },
+
+  downloadAllClassesTimetablePdf: async (params) => {
+    try {
+      const response = await api.downloadAllClassesTimetablePdf(params);
+      downloadBlob(response, `${params.exam_name.replace(/\s+/g, '_')}_All_Classes_Timetable.pdf`);
       return { success: true };
     } catch (err) {
       return { success: false, message: err.message };

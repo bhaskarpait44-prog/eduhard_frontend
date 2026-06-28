@@ -14,6 +14,7 @@ import ConfirmDialog from '@/components/ui/ConfirmDialog'
 import CreateExamModal from './CreateExamModal'
 import ReviewExamSubjectsModal from './ReviewExamSubjectsModal'
 import AdmitCardModal from './AdmitCardModal'
+import Modal from '@/components/ui/Modal'
 import { downloadClassTimetablePdf } from '@/api/examsApi'
 import { formatDate, getExamTypeLabel } from '@/utils/helpers'
 import { downloadBlob } from '@/utils/downloadBlob'
@@ -288,7 +289,7 @@ const SummaryStrip = ({ exams, classCount }) => {
 const ExamsListPage = ({ onNavigate }) => {
   const navigate = useNavigate()
   const { toastError, toastSuccess } = useToast()
-  const { exams, isLoading, isSaving, fetchExams, deleteExam, changeExamStatus } = useExamStore()
+  const { exams, isLoading, isSaving, fetchExams, deleteExam, changeExamStatus, downloadAllClassesTimetablePdf } = useExamStore()
   const { sessions, currentSession, fetchSessions } = useSessionStore()
   const { user } = useAuthStore()
   const isTeacher = user?.role === 'teacher'
@@ -300,6 +301,9 @@ const ExamsListPage = ({ onNavigate }) => {
   const [deleteTarget,    setDeleteTarget]     = useState(null)
   const [reviewTarget,    setReviewTarget]     = useState(null)
   const [admitCardTarget, setAdmitCardTarget]  = useState(null)
+  const [downloadAllOpen, setDownloadAllOpen] = useState(false)
+  const [selectedExamName, setSelectedExamName] = useState('')
+  const [isDownloading, setIsDownloading] = useState(false)
 
   const handleNavigateTimetable = (exam) => {
     navigate(ROUTES.EXAM_TIMETABLE.replace(':id', exam.id))
@@ -386,6 +390,34 @@ const ExamsListPage = ({ onNavigate }) => {
     }
   }
 
+  const uniqueExamNames = useMemo(() => {
+    const names = new Set(exams.map(e => e.name))
+    return Array.from(names)
+  }, [exams])
+
+  useEffect(() => {
+    if (downloadAllOpen && uniqueExamNames.length > 0 && !selectedExamName) {
+      setSelectedExamName(uniqueExamNames[0])
+    }
+  }, [downloadAllOpen, uniqueExamNames, selectedExamName])
+
+  const handleDownloadAll = async () => {
+    if (!selectedExamName) return
+    setIsDownloading(true)
+    const result = await downloadAllClassesTimetablePdf({
+      session_id: sessionId,
+      exam_name: selectedExamName
+    })
+    setIsDownloading(false)
+    if (result.success) {
+      toastSuccess('Timetable downloaded successfully')
+      setDownloadAllOpen(false)
+      setSelectedExamName('')
+    } else {
+      toastError(result.message || 'Failed to download timetable')
+    }
+  }
+
   /* ────────────────────────── render ─────────────────────── */
   return (
     <div className="space-y-4">
@@ -405,11 +437,22 @@ const ExamsListPage = ({ onNavigate }) => {
           }))}
           containerClassName="flex-1"
         />
-        {!isTeacher && (
-          <Button icon={Plus} onClick={() => { setPrefillClass(null); setCreateOpen(true) }}>
-            Create Exam
-          </Button>
-        )}
+        <div className="flex gap-2">
+          {!isTeacher && exams.length > 0 && (
+            <Button 
+              variant="secondary" 
+              icon={Download} 
+              onClick={() => setDownloadAllOpen(true)}
+            >
+              Download Timetables
+            </Button>
+          )}
+          {!isTeacher && (
+            <Button icon={Plus} onClick={() => { setPrefillClass(null); setCreateOpen(true) }}>
+              Create Exam
+            </Button>
+          )}
+        </div>
       </div>
 
       {/* content */}
@@ -476,6 +519,57 @@ const ExamsListPage = ({ onNavigate }) => {
       />
       <ReviewExamSubjectsModal exam={reviewTarget} open={!!reviewTarget} onClose={() => setReviewTarget(null)} />
       <AdmitCardModal exam={admitCardTarget} open={!!admitCardTarget} onClose={() => setAdmitCardTarget(null)} />
+      <Modal
+        open={downloadAllOpen}
+        onClose={() => {
+          setDownloadAllOpen(false)
+          setSelectedExamName('')
+        }}
+        title="Download All Class Timetables"
+        size="md"
+        footer={(
+          <>
+            <Button 
+              variant="secondary" 
+              onClick={() => {
+                setDownloadAllOpen(false)
+                setSelectedExamName('')
+              }}
+              disabled={isDownloading}
+            >
+              Cancel
+            </Button>
+            <Button 
+              onClick={handleDownloadAll}
+              loading={isDownloading}
+              disabled={!selectedExamName}
+            >
+              Download PDF
+            </Button>
+          </>
+        )}
+      >
+        <div className="space-y-4">
+          <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>
+            Select an exam to download the combined timetable for all classes. The downloaded PDF will group timetables by class.
+          </p>
+          {uniqueExamNames.length === 0 ? (
+            <div className="text-sm font-medium text-red-500">
+              No exams found in this session.
+            </div>
+          ) : (
+            <Select
+              label="Select Exam"
+              value={selectedExamName}
+              onChange={e => setSelectedExamName(e.target.value)}
+              options={uniqueExamNames.map(name => ({
+                value: name,
+                label: name
+              }))}
+            />
+          )}
+        </div>
+      </Modal>
       <ConfirmDialog
         open={!!deleteTarget}
         onClose={() => setDeleteTarget(null)}
