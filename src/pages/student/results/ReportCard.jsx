@@ -12,13 +12,14 @@ const ReportCard = () => {
   usePageTitle('Report Card')
 
   const [searchParams, setSearchParams] = useSearchParams()
-  const { toastError, toastInfo } = useToast()
+  const { toastSuccess, toastError, toastInfo } = useToast()
   const queryExamId = searchParams.get('examId') || ''
   const [publishedExams, setPublishedExams] = useState([])
   const [selectedExamId, setSelectedExamId] = useState(queryExamId || '')
   const [reportCard, setReportCard] = useState(null)
   const [loading, setLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
+  const [downloading, setDownloading] = useState(false)
   const [error, setError] = useState(null)
 
   const loadReportCard = useCallback(async ({ silent = false, forcedExamId } = {}) => {
@@ -89,6 +90,26 @@ const ReportCard = () => {
     await loadReportCard({ silent: true, forcedExamId: selectedExamId })
   }
 
+  const handleDownloadPDF = async () => {
+    if (!selectedExamId) return
+    setDownloading(true)
+    try {
+      const res = await studentApi.getStudentResultExport(selectedExamId)
+      const blob = new Blob([res.data], { type: 'application/pdf' })
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `ReportCard_${selectedExam?.name || 'Result'}.pdf`
+      a.click()
+      URL.revokeObjectURL(url)
+      toastSuccess('Report card downloaded successfully.')
+    } catch (err) {
+      toastError('Failed to download report card PDF.')
+    } finally {
+      setDownloading(false)
+    }
+  }
+
   return (
     <div className="report-card-page">
       {/* ── Action Bar ── */}
@@ -103,6 +124,15 @@ const ReportCard = () => {
           </div>
         </div>
         <div className="report-card-action-bar__right">
+          <Button
+            variant="secondary"
+            onClick={handleDownloadPDF}
+            loading={downloading}
+            size="sm"
+            style={{ backgroundColor: 'var(--student-accent)', color: '#fff', border: 'none' }}
+          >
+            Download PDF
+          </Button>
           <Button
             variant="secondary"
             onClick={handleRefresh}

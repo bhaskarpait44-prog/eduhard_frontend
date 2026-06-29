@@ -17,7 +17,7 @@ const RESULT_COLOR = {
   pass:'#16a34a', fail:'#dc2626', compartment:'#d97706', detained:'#7f1d1d'
 }
 
-const ReportCardModal = ({ open, student, onClose }) => {
+const ReportCardModal = ({ open, student, examId, onClose }) => {
   const { studentResult, fetchStudentResult, fetchReportCardData } = useExamStore()
   const { currentSession } = useSessionStore()
   const [reportData, setReportData] = useState(null)
@@ -29,14 +29,15 @@ const ReportCardModal = ({ open, student, onClose }) => {
       fetchStudentResult(student.enrollment_id).catch(() => {})
       
       setFetchingData(true)
-      fetchReportCardData(student.enrollment_id)
+      const params = examId ? { exam_id: examId } : {}
+      fetchReportCardData(student.enrollment_id, params)
         .then(data => setReportData(data))
         .catch(() => {})
         .finally(() => setFetchingData(false))
     } else {
       setReportData(null)
     }
-  }, [open, student, fetchStudentResult, fetchReportCardData])
+  }, [open, student, examId, fetchStudentResult, fetchReportCardData])
 
   const handlePrint = () => {
     const content = printRef.current?.innerHTML
@@ -92,7 +93,6 @@ const ReportCardModal = ({ open, student, onClose }) => {
               </Button>
             )}
           </div>
-          <Button icon={Printer} onClick={handlePrint} className="flex-1">Print</Button>
         </div>
       }
     >

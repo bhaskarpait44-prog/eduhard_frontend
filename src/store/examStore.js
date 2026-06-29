@@ -155,9 +155,9 @@ const useExamStore = create((set, get) => ({
     }
   },
 
-  fetchReportCardData: async (enrollmentId) => {
+  fetchReportCardData: async (enrollmentId, params) => {
     try {
-      const res = await api.getReportCardData(enrollmentId)
+      const res = await api.getReportCardData(enrollmentId, params)
       return res.data
     } catch (err) {
       throw err

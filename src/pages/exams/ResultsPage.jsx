@@ -532,6 +532,7 @@ const ResultsPage = () => {
       <ReportCardModal
         open={!!reportTarget}
         student={reportTarget}
+        examId={examId}
         onClose={() => setReportTarget(null)}
       />
     </div>

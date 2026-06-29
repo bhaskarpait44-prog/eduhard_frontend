@@ -17,7 +17,7 @@ export const getSubjects      = (classId) => api.get(`/classes/${classId}/subjec
 export const enterMarks       = (data)    => api.post('/results/enter', data)
 export const getResults       = (enrollmentId) => api.get(`/results/${enrollmentId}`)
 export const getReportCard     = (enrollmentId) => api.get(`/results/${enrollmentId}/report-card`, { responseType: 'blob' })
-export const getReportCardData = (enrollmentId) => api.get(`/results/${enrollmentId}/report-card/data`)
+export const getReportCardData = (enrollmentId, params) => api.get(`/results/${enrollmentId}/report-card/data`, { params })
 export const getMarksTemplate  = (id, subjectId) => api.get(`/exams/${id}/subjects/${subjectId}/template`, { responseType: 'blob' })
 export const uploadMarksExcel  = (id, subjectId, data) => api.post(`/exams/${id}/subjects/${subjectId}/upload-marks`, data)
 export const getClassResults  = (params)  => api.get('/results/class', { params })
