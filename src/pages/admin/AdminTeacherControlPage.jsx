@@ -2,11 +2,12 @@ import { useEffect, useMemo, useState } from 'react'
 import {
   BookOpenText, CalendarRange, ChevronDown, ChevronRight, Clock,
   Grid3x3, School2, ShieldCheck, UserRoundCheck, Zap,
-  Pencil, Trash2, FileDown
+  Pencil, Trash2, FileDown, Copy
 } from 'lucide-react'
 import * as teacherControlApi from '@/api/adminTeacherControlApi'
 import { pdf } from '@react-pdf/renderer'
 import { TeacherAssignmentListPDF } from '@/pdf/TeacherAssignmentListPDF'
+import { TimetablePDF } from '@/pdf/TimetablePDF'
 import { getSettings } from '@/api/settingsApi'
 import { getClasses, getClassList, getSections, getSubjects } from '@/api/classApi'
 import usePageTitle from '@/hooks/usePageTitle'
@@ -117,6 +118,76 @@ const AdminTeacherControlPage = () => {
   })
   const [showAssignForm, setShowAssignForm] = useState(false)
   const [showSlotForm,   setShowSlotForm]   = useState(false)
+
+  const [periodTimes, setPeriodTimes] = useState(() => {
+    const saved = localStorage.getItem('timetable_period_times')
+    if (saved) {
+      try {
+        return JSON.parse(saved)
+      } catch {
+        // Fallback below
+      }
+    }
+    return {
+      1: { start: '08:00', end: '08:45' },
+      2: { start: '08:45', end: '09:30' },
+      3: { start: '09:30', end: '10:15' },
+      4: { start: '10:30', end: '11:15' },
+      5: { start: '11:15', end: '12:00' },
+      6: { start: '12:30', end: '13:15' },
+      7: { start: '13:15', end: '14:00' },
+    }
+  })
+  const [showPeriodConfig, setShowPeriodConfig] = useState(false)
+
+  const handlePeriodTimeChange = (periodNum, field, value) => {
+    const updated = {
+      ...periodTimes,
+      [periodNum]: {
+        ...periodTimes[periodNum],
+        [field]: value
+      }
+    }
+    setPeriodTimes(updated)
+    localStorage.setItem('timetable_period_times', JSON.stringify(updated))
+  }
+
+  const handleAddPeriod = () => {
+    const nextPeriod = Object.keys(periodTimes).length + 1
+    const lastPeriod = periodTimes[nextPeriod - 1]
+    const defaultStart = lastPeriod ? lastPeriod.end : '08:00'
+    const [h, m] = defaultStart.split(':')
+    const date = new Date()
+    date.setHours(parseInt(h, 10), parseInt(m, 10) + 45)
+    const defaultEnd = `${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`
+
+    const updated = {
+      ...periodTimes,
+      [nextPeriod]: { start: defaultStart, end: defaultEnd }
+    }
+    setPeriodTimes(updated)
+    localStorage.setItem('timetable_period_times', JSON.stringify(updated))
+  }
+
+  const handleDeleteLastPeriod = () => {
+    const keys = Object.keys(periodTimes).map(Number).sort((a, b) => a - b)
+    if (keys.length <= 1) return // Keep at least 1 period
+    const lastKey = keys[keys.length - 1]
+    const updated = { ...periodTimes }
+    delete updated[lastKey]
+    setPeriodTimes(updated)
+    localStorage.setItem('timetable_period_times', JSON.stringify(updated))
+  }
+
+  const handlePeriodNumberChange = (num) => {
+    const pTimes = periodTimes[num]
+    setSlotForm((prev) => ({
+      ...prev,
+      period_number: num,
+      start_time: pTimes ? pTimes.start : prev.start_time,
+      end_time: pTimes ? pTimes.end : prev.end_time,
+    }))
+  }
 
   /* ── load ── */
   const load = async () => {
@@ -290,6 +361,84 @@ const AdminTeacherControlPage = () => {
     }
   }
 
+  const handleExportTimetable = async () => {
+    try {
+      const settingsRes = await getSettings()
+      const schoolData = {
+        name: settingsRes.data?.school_name,
+        email: settingsRes.data?.school_email,
+        phone: settingsRes.data?.school_phone,
+        address: settingsRes.data?.school_address,
+        logo_url: settingsRes.data?.logo_url,
+      }
+
+      const activeClass = classes.find((c) => String(c.id) === ttFilterClass);
+      const activeTeacher = teachers.find((t) => String(t.id) === ttFilterTeacher);
+
+      const filterClassName = activeClass 
+        ? `${activeClass.name}${activeClass.stream ? ` (${activeClass.stream.toUpperCase()})` : ''} - ${ttFilterSection ? (sectionsByClass[ttFilterClass]?.find(s => String(s.id) === ttFilterSection)?.name || 'All Sections') : 'All Sections'}` 
+        : '';
+      const filterTeacherName = activeTeacher ? activeTeacher.name : '';
+
+      // If both are unfiltered, export all classes/sections
+      const isAllClasses = !ttFilterClass && !ttFilterTeacher;
+
+      let pdfDoc;
+      if (isAllClasses) {
+        // Collect all sections
+        const classSectionTargets = []
+        classes.forEach((c) => {
+          if (Array.isArray(c.sections)) {
+            c.sections.forEach((s) => {
+              classSectionTargets.push({
+                class_id: c.id,
+                section_id: s.id,
+                class_name: c.name,
+                section_name: s.name,
+                class_stream: c.stream,
+              })
+            })
+          }
+        })
+
+        pdfDoc = (
+          <TimetablePDF
+            mode="all_classes"
+            slots={timetable}
+            periodTimes={periodTimes}
+            school={schoolData}
+            session={session}
+            sections={classSectionTargets}
+          />
+        );
+      } else {
+        pdfDoc = (
+          <TimetablePDF
+            slots={filteredSlots}
+            periodTimes={periodTimes}
+            school={schoolData}
+            session={session}
+            filterClassName={filterClassName}
+            filterTeacherName={filterTeacherName}
+          />
+        );
+      }
+
+      const blob = await pdf(pdfDoc).toBlob()
+
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = isAllClasses 
+        ? `All_Classes_Weekly_Timetable_${new Date().toISOString().slice(0, 10)}.pdf` 
+        : `Weekly_Timetable_${new Date().toISOString().slice(0, 10)}.pdf`
+      a.click()
+      URL.revokeObjectURL(url)
+    } catch (err) {
+      toastError('Failed to export PDF.')
+    }
+  }
+
 
   const handleAssignmentSave = async (e) => {
     e.preventDefault();
@@ -427,6 +576,95 @@ const AdminTeacherControlPage = () => {
       await load()
     } catch (err) { toastError(err?.message || 'Failed.') }
     finally { setSaving(false) }
+  }
+
+  const handleSlotDrop = async (slot, targetDay, targetPeriod, isCopy = false) => {
+    if (!isCopy && slot.day_of_week === targetDay && slot.period_number === Number(targetPeriod)) {
+      return
+    }
+
+    const pTimes = periodTimes[targetPeriod]
+    const start = pTimes ? pTimes.start : '08:00'
+    const end = pTimes ? pTimes.end : '08:45'
+
+    const payload = {
+      teacher_id:    Number(slot.teacher_id),
+      class_id:      Number(slot.class_id),
+      section_id:    Number(slot.section_id),
+      subject_id:    Number(slot.subject_id),
+      day_of_week:   targetDay,
+      period_number: Number(targetPeriod),
+      start_time:    start,
+      end_time:      end,
+      room_number:   slot.room_number || null,
+    }
+
+    const previousTimetable = [...timetable]
+
+    if (isCopy) {
+      const tempId = Date.now()
+      setTimetable((prev) => [
+        ...prev,
+        {
+          ...slot,
+          id: tempId,
+          day_of_week: targetDay,
+          period_number: Number(targetPeriod),
+          start_time: start,
+          end_time: end,
+        }
+      ])
+
+      setSaving(true)
+      try {
+        await teacherControlApi.createTeacherControlTimetableSlot(payload)
+        toastSuccess('Slot duplicated successfully.')
+        await load()
+      } catch (err) {
+        toastError(err?.message || 'Failed to duplicate slot.')
+        setTimetable(previousTimetable)
+      } finally {
+        setSaving(false)
+      }
+    } else {
+      // Optimistic Update
+      setTimetable((prev) =>
+        prev.map((s) =>
+          s.id === slot.id
+            ? { ...s, day_of_week: targetDay, period_number: Number(targetPeriod), start_time: start, end_time: end }
+            : s
+        )
+      )
+
+      setSaving(true)
+      try {
+        await teacherControlApi.updateTeacherControlTimetableSlot(slot.id, payload)
+        toastSuccess('Slot rescheduled successfully.')
+        await load()
+      } catch (err) {
+        toastError(err?.message || 'Failed to reschedule slot.')
+        setTimetable(previousTimetable)
+      } finally {
+        setSaving(false)
+      }
+    }
+  }
+
+  const duplicateSlot = (item) => {
+    setSlotForm({
+      id: null,
+      teacher_id: String(item.teacher_id),
+      class_id: String(item.class_id),
+      section_id: String(item.section_id),
+      subject_id: String(item.subject_id),
+      day_of_week: item.day_of_week,
+      period_number: String(item.period_number),
+      start_time: item.start_time.slice(0, 5),
+      end_time: item.end_time.slice(0, 5),
+      room_number: item.room_number || '',
+    })
+    setShowSlotForm(true)
+    window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
   const reviewLeave = async (item, status) => {
@@ -609,25 +847,116 @@ const AdminTeacherControlPage = () => {
                 ))}
               </div>
             </div>
-            <button
-              type="button"
-              onClick={() => {
-                const next = !showSlotForm
-                setShowSlotForm(next)
-                if (!next) {
-                  setSlotForm({
-                    id: null, teacher_id: '', class_id: '', section_id: '', subject_id: '',
-                    day_of_week: 'monday', period_number: '1',
-                    start_time: '08:00', end_time: '08:45', room_number: '',
-                  })
-                }
-              }}
-              className="inline-flex min-h-10 items-center gap-2 rounded-2xl px-4 text-sm font-semibold"
-              style={{ backgroundColor: '#0f766e', color: '#fff', border: 'none' }}
-            >
-              <Zap size={14} />{showSlotForm ? 'Cancel' : 'New Slot'}
-            </button>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={handleExportTimetable}
+                className="inline-flex min-h-10 items-center gap-2 rounded-2xl px-4 text-xs sm:text-sm font-semibold border"
+                style={{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface)', color: 'var(--color-text-primary)' }}
+              >
+                <FileDown size={14} />Export PDF
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowPeriodConfig(prev => !prev)
+                  setShowSlotForm(false)
+                }}
+                className="inline-flex min-h-10 items-center gap-2 rounded-2xl px-4 text-xs sm:text-sm font-semibold border"
+                style={{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface-raised)', color: 'var(--color-text-primary)' }}
+              >
+                {showPeriodConfig ? 'Hide Periods' : 'Configure Periods'}
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  const next = !showSlotForm
+                  setShowSlotForm(next)
+                  setShowPeriodConfig(false)
+                  if (next) {
+                    const pTimes = periodTimes[1]
+                    setSlotForm({
+                      id: null, teacher_id: '', class_id: '', section_id: '', subject_id: '',
+                      day_of_week: 'monday', period_number: '1',
+                      start_time: pTimes ? pTimes.start : '08:00',
+                      end_time: pTimes ? pTimes.end : '08:45',
+                      room_number: '',
+                    })
+                  } else {
+                    setSlotForm({
+                      id: null, teacher_id: '', class_id: '', section_id: '', subject_id: '',
+                      day_of_week: 'monday', period_number: '1',
+                      start_time: '08:00', end_time: '08:45', room_number: '',
+                    })
+                  }
+                }}
+                className="inline-flex min-h-10 items-center gap-2 rounded-2xl px-4 text-xs sm:text-sm font-semibold"
+                style={{ backgroundColor: '#0f766e', color: '#fff', border: 'none' }}
+              >
+                <Zap size={14} />{showSlotForm ? 'Cancel' : 'New Slot'}
+              </button>
+            </div>
           </div>
+
+          {/* period configuration form */}
+          {showPeriodConfig && (
+            <div className="rounded-[24px] border p-5 space-y-4" style={{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface)' }}>
+              <div className="flex items-center justify-between flex-wrap gap-2">
+                <div>
+                  <p className="text-sm font-semibold" style={{ color: 'var(--color-text-primary)' }}>Configure Period Timings</p>
+                  <p className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>Pre-define times for each period. Creating/editing slots will automatically pull these times.</p>
+                </div>
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={handleDeleteLastPeriod}
+                    className="px-3 py-1.5 text-xs font-semibold rounded-xl border border-red-200 text-red-600 bg-red-50 hover:bg-red-100 transition-colors"
+                  >
+                    Delete Last Period
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleAddPeriod}
+                    className="px-3 py-1.5 text-xs font-semibold rounded-xl border hover:bg-black/5 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+                    style={{ borderColor: 'var(--color-border)' }}
+                  >
+                    + Add Period
+                  </button>
+                </div>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                {Object.keys(periodTimes).map((p) => {
+                  return (
+                    <div key={p} className="p-3 rounded-xl border flex flex-col gap-2" style={{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface-raised)' }}>
+                      <p className="text-xs font-bold" style={{ color: 'var(--color-text-primary)' }}>Period {p}</p>
+                      <div className="grid grid-cols-2 gap-2">
+                        <div>
+                          <label className="text-[10px] font-bold text-gray-400 block mb-0.5">Start Time</label>
+                          <input
+                            type="time"
+                            value={periodTimes[p].start}
+                            onChange={(e) => handlePeriodTimeChange(p, 'start', e.target.value)}
+                            className="w-full text-xs p-1.5 rounded-lg border bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+                            style={{ borderColor: 'var(--color-border)' }}
+                          />
+                        </div>
+                        <div>
+                          <label className="text-[10px] font-bold text-gray-400 block mb-0.5">End Time</label>
+                          <input
+                            type="time"
+                            value={periodTimes[p].end}
+                            onChange={(e) => handlePeriodTimeChange(p, 'end', e.target.value)}
+                            className="w-full text-xs p-1.5 rounded-lg border bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+                            style={{ borderColor: 'var(--color-border)' }}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+          )}
 
           {/* slot form */}
           {showSlotForm && (
@@ -639,7 +968,7 @@ const AdminTeacherControlPage = () => {
                 <Select label="Section" value={slotForm.section_id} onChange={(e) => setSlotForm((p) => ({ ...p, section_id: e.target.value, subject_id: '' }))} options={slotSectionOpts} required />
                 <Select label="Subject" value={slotForm.subject_id} onChange={(e) => setSlotForm((p) => ({ ...p, subject_id: e.target.value }))} options={slotSubjectOpts} placeholder="Select assigned subject" required />
                 <Select label="Day" value={slotForm.day_of_week} onChange={(e) => setSlotForm((p) => ({ ...p, day_of_week: e.target.value }))} options={DAY_OPTIONS.map((d) => ({ value: d.value, label: DAY_FULL[d.value] }))} required />
-                <Input type="number" label="Period #" value={slotForm.period_number} onChange={(e) => setSlotForm((p) => ({ ...p, period_number: e.target.value }))} min="1" max="10" required />
+                <Input type="number" label="Period #" value={slotForm.period_number} onChange={(e) => handlePeriodNumberChange(e.target.value)} min="1" max="20" required />
                 <TimePicker12h   label="Start"    value={slotForm.start_time}    onChange={(val) => setSlotForm((p) => ({ ...p, start_time: val }))} required />
                 <TimePicker12h   label="End"      value={slotForm.end_time}      onChange={(val) => setSlotForm((p) => ({ ...p, end_time: val }))} required />
                 <div className="sm:col-span-2 xl:col-span-3">
@@ -656,9 +985,9 @@ const AdminTeacherControlPage = () => {
           {loading ? <GridSkeleton /> : !filteredSlots.length ? (
             <EmptyState icon={CalendarRange} title="No timetable slots" description="Add slots or adjust your filters." />
           ) : ttView === 'grid' ? (
-            <TimetableGrid matrix={ttMatrix} onToggle={toggleSlot} onEdit={editSlot} onDelete={deleteSlot} />
+            <TimetableGrid matrix={ttMatrix} onToggle={toggleSlot} onEdit={editSlot} onDelete={deleteSlot} onSlotDrop={handleSlotDrop} periodTimes={periodTimes} onDuplicate={duplicateSlot} />
           ) : (
-            <TimetableList slots={filteredSlots} onToggle={toggleSlot} onEdit={editSlot} onDelete={deleteSlot} />
+            <TimetableList slots={filteredSlots} onToggle={toggleSlot} onEdit={editSlot} onDelete={deleteSlot} onDuplicate={duplicateSlot} />
           )}
         </div>
       )}
@@ -886,12 +1215,52 @@ const SubjectChip = ({ item, onToggle, onEdit, onDelete }) => (
   </div>
 )
 
+const formatPeriodTimeRange = (timeObj) => {
+  if (!timeObj) return ''
+  const to12h = (val) => {
+    if (!val) return ''
+    const [h, m] = val.split(':')
+    const hrs = parseInt(h, 10)
+    const ampm = hrs >= 12 ? 'PM' : 'AM'
+    const displayHrs = hrs % 12 || 12
+    return `${displayHrs.toString().padStart(2, '0')}:${m} ${ampm}`
+  }
+  return `${to12h(timeObj.start)} – ${to12h(timeObj.end)}`
+}
+
 /* ════════════════════════════════════════════════════════════════════════════
    Timetable Grid
 ════════════════════════════════════════════════════════════════════════════ */
-const TimetableGrid = ({ matrix, onToggle, onEdit, onDelete }) => {
-  const periods = [1, 2, 3, 4, 5, 6, 7]
+const TimetableGrid = ({ matrix, onToggle, onEdit, onDelete, onSlotDrop, periodTimes, onDuplicate }) => {
+  const periods = Object.keys(periodTimes).map(Number).sort((a, b) => a - b)
   const days    = ['monday','tuesday','wednesday','thursday','friday','saturday']
+  const [dragOverCell, setDragOverCell] = useState(null) // 'day:period'
+
+  const handleDragOver = (e, day, period) => {
+    e.preventDefault()
+    setDragOverCell(`${day}:${period}`)
+  }
+
+  const handleDragLeave = () => {
+    setDragOverCell(null)
+  }
+
+  const handleDrop = (e, day, period) => {
+    e.preventDefault()
+    setDragOverCell(null)
+    try {
+      const dataStr = e.dataTransfer.getData('application/json')
+      if (dataStr) {
+        const slot = JSON.parse(dataStr)
+        const isCopy = e.altKey || e.ctrlKey || e.shiftKey
+        if (onSlotDrop) {
+          onSlotDrop(slot, day, period, isCopy)
+        }
+      }
+    } catch (err) {
+      console.error('Failed to parse drag data', err)
+    }
+  }
 
   return (
     <div className="overflow-x-auto rounded-[24px] border" style={{ borderColor: 'var(--color-border)' }}>
@@ -912,20 +1281,33 @@ const TimetableGrid = ({ matrix, onToggle, onEdit, onDelete }) => {
               {/* period label */}
               <td className="border-r p-3 align-top" style={{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface-raised)' }}>
                 <p className="text-xs font-bold" style={{ color: 'var(--color-text-primary)' }}>P{p}</p>
-                <p className="mt-0.5 text-[10px]" style={{ color: 'var(--color-text-secondary)' }}>{PERIOD_TIMES[p] || ''}</p>
+                <p className="mt-0.5 text-[10px]" style={{ color: 'var(--color-text-secondary)' }}>{formatPeriodTimeRange(periodTimes[p])}</p>
               </td>
               {days.map((d) => {
                 const slots = (matrix[d]?.[p]) || []
+                const isOver = dragOverCell === `${d}:${p}`
                 return (
-                  <td key={d} className="border-r p-2 align-top" style={{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface)', minWidth: 100 }}>
+                  <td
+                    key={d}
+                    className="border-r p-2 align-top transition-all"
+                    style={{
+                      borderColor: 'var(--color-border)',
+                      backgroundColor: isOver ? 'var(--color-sidebar-hover)' : 'var(--color-surface)',
+                      boxShadow: isOver ? 'inset 0 0 0 2px var(--color-brand)' : 'none',
+                      minWidth: 100
+                    }}
+                    onDragOver={(e) => handleDragOver(e, d, p)}
+                    onDragLeave={handleDragLeave}
+                    onDrop={(e) => handleDrop(e, d, p)}
+                  >
                     {slots.length ? (
                       <div className="space-y-1">
                         {slots.map((s) => (
-                          <TimetableCell key={s.id} slot={s} onToggle={onToggle} onEdit={onEdit} onDelete={onDelete} />
+                          <TimetableCell key={s.id} slot={s} onToggle={onToggle} onEdit={onEdit} onDelete={onDelete} onDuplicate={onDuplicate} />
                         ))}
                       </div>
                     ) : (
-                      <div className="h-12 rounded-xl" style={{ backgroundColor: 'var(--color-surface-raised)' }} />
+                      <div className="h-12 rounded-xl transition-all" style={{ backgroundColor: 'var(--color-surface-raised)' }} />
                     )}
                   </td>
                 )
@@ -938,11 +1320,19 @@ const TimetableGrid = ({ matrix, onToggle, onEdit, onDelete }) => {
   )
 }
 
-const TimetableCell = ({ slot, onToggle, onEdit, onDelete }) => {
+const TimetableCell = ({ slot, onToggle, onEdit, onDelete, onDuplicate }) => {
   const color = subjectColor(slot.subject_id)
+
+  const handleDragStart = (e, slot) => {
+    e.dataTransfer.setData('application/json', JSON.stringify(slot))
+    e.dataTransfer.effectAllowed = 'move'
+  }
+
   return (
     <div
-      className="group relative cursor-pointer overflow-hidden rounded-xl p-2 transition-all"
+      draggable={true}
+      onDragStart={(e) => handleDragStart(e, slot)}
+      className="group relative cursor-grab active:cursor-grabbing overflow-hidden rounded-xl p-2 transition-all hover:scale-[1.02] hover:shadow-sm"
       style={{ backgroundColor: `${color}18`, border: `1px solid ${color}40`, opacity: slot.is_active ? 1 : 0.45 }}
       title={`${slot.subject_name} • ${slot.teacher_name}${slot.room_number ? ` • Room ${slot.room_number}` : ''}`}
     >
@@ -969,6 +1359,14 @@ const TimetableCell = ({ slot, onToggle, onEdit, onDelete }) => {
         </button>
         <button
           type="button"
+          onClick={(e) => { e.stopPropagation(); onDuplicate(slot) }}
+          className="p-1 rounded-lg bg-white/20 hover:bg-white/40 transition-colors"
+          title="Duplicate Slot"
+        >
+          <Copy size={11} />
+        </button>
+        <button
+          type="button"
           onClick={(e) => { e.stopPropagation(); onDelete(slot.id) }}
           className="p-1 rounded-lg bg-red-600/70 hover:bg-red-600 transition-colors"
           title="Delete Slot"
@@ -990,8 +1388,8 @@ const TimetableCell = ({ slot, onToggle, onEdit, onDelete }) => {
 
 /* ════════════════════════════════════════════════════════════════════════════
    Timetable List
-════════════════════════════════════════════════════════════════════════════ */
-const TimetableList = ({ slots, onToggle, onEdit, onDelete }) => {
+ ════════════════════════════════════════════════════════════════════════════ */
+const TimetableList = ({ slots, onToggle, onEdit, onDelete, onDuplicate }) => {
   const grouped = useMemo(() => {
     const g = {}
     slots.forEach((s) => {
@@ -1009,7 +1407,7 @@ const TimetableList = ({ slots, onToggle, onEdit, onDelete }) => {
           <p className="mb-2 text-xs font-bold uppercase tracking-widest" style={{ color: 'var(--color-text-secondary)' }}>{DAY_FULL[d]}</p>
           <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
             {(grouped[d] || []).sort((a, b) => a.period_number - b.period_number).map((slot) => (
-              <TimetableListRow key={slot.id} slot={slot} onToggle={onToggle} onEdit={onEdit} onDelete={onDelete} />
+              <TimetableListRow key={slot.id} slot={slot} onToggle={onToggle} onEdit={onEdit} onDelete={onDelete} onDuplicate={onDuplicate} />
             ))}
           </div>
         </section>
@@ -1018,7 +1416,7 @@ const TimetableList = ({ slots, onToggle, onEdit, onDelete }) => {
   )
 }
 
-const TimetableListRow = ({ slot, onToggle, onEdit, onDelete }) => {
+const TimetableListRow = ({ slot, onToggle, onEdit, onDelete, onDuplicate }) => {
   const color = subjectColor(slot.subject_id)
   return (
     <div
@@ -1040,6 +1438,7 @@ const TimetableListRow = ({ slot, onToggle, onEdit, onDelete }) => {
       </div>
       <div className="flex items-center gap-1.5">
         <button onClick={() => onEdit(slot)} className="p-1 rounded-lg hover:bg-black/5" title="Edit"><Pencil size={13} /></button>
+        <button onClick={() => onDuplicate(slot)} className="p-1 rounded-lg hover:bg-black/5 text-gray-600" title="Duplicate"><Copy size={13} /></button>
         <button onClick={() => onDelete(slot.id)} className="p-1 rounded-lg hover:bg-red-50 text-red-600" title="Delete"><Trash2 size={13} /></button>
         <button
           type="button"
