@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import * as z from 'zod'
@@ -62,7 +62,6 @@ const applicationSchema = z.object({
   perm_pincode: z.string().optional(),
 
   phone: z.string().regex(phoneRegex, 'Enter valid 10-digit mobile'),
-  whatsapp_no: z.string().regex(phoneRegex, 'Enter valid 10-digit mobile').optional().or(z.literal('')),
   email: z.string().email('Invalid student email').optional().or(z.literal('')),
 
   father_name: z.string().min(1, "Father's name is required"),
@@ -75,6 +74,7 @@ const applicationSchema = z.object({
   mother_name: z.string().min(1, "Mother's name is required"),
   mother_phone: z.string().regex(phoneRegex, 'Enter valid 10-digit mobile').optional().or(z.literal('')),
   mother_qualification: z.string().optional(),
+  mother_occupation: z.string().optional(),
 
   guardian_name: z.string().optional(),
   guardian_phone: z.string().regex(phoneRegex, 'Enter valid 10-digit mobile').optional().or(z.literal('')),
@@ -142,6 +142,7 @@ const AdmissionsPortal = () => {
 
   const {
     register, handleSubmit, trigger, watch, setValue,
+    setError, clearErrors,
     formState: { errors },
   } = useForm({
     resolver: zodResolver(applicationSchema),
@@ -151,6 +152,35 @@ const AdmissionsPortal = () => {
       medium: 'English', caste: 'Gen', is_permanent_same: false
     }
   })
+
+  const checkTimeouts = useRef({})
+  const handleUniqueCheck = async (field, label, value) => {
+    if (!value || value.trim() === '') {
+      clearErrors(field)
+      return
+    }
+    try {
+      const res = await api.get('/public/check-uniqueness', {
+        params: { field, value }
+      })
+      if (!res.data.isUnique) {
+        setError(field, { type: 'manual', message: `${label} is already taken` })
+      } else {
+        clearErrors(field)
+      }
+    } catch (err) {
+      console.error(err)
+    }
+  }
+
+  const handleUniqueCheckDebounced = (field, label, value) => {
+    if (checkTimeouts.current[field]) {
+      clearTimeout(checkTimeouts.current[field])
+    }
+    checkTimeouts.current[field] = setTimeout(() => {
+      handleUniqueCheck(field, label, value)
+    }, 500)
+  }
 
   const formData = watch()
   const isPermanentSame = watch('is_permanent_same')
@@ -168,6 +198,19 @@ const AdmissionsPortal = () => {
       setValue('perm_pincode', currentAddress[6])
     }
   }, [isPermanentSame, ...currentAddress, setValue])
+
+  const fatherPhone = watch('father_phone')
+  const emergencyContact = watch('emergency_contact')
+  const [lastFatherPhone, setLastFatherPhone] = useState('')
+
+  useEffect(() => {
+    if (fatherPhone !== lastFatherPhone) {
+      if (!emergencyContact || emergencyContact === lastFatherPhone) {
+        setValue('emergency_contact', fatherPhone)
+      }
+      setLastFatherPhone(fatherPhone)
+    }
+  }, [fatherPhone, emergencyContact, lastFatherPhone, setValue])
 
   useEffect(() => {
     const fetchData = async () => {
@@ -219,10 +262,51 @@ const AdmissionsPortal = () => {
     }
 
     const isValid = await trigger(fields)
-    if (isValid) {
-      setCurrentStep(prev => Math.min(prev + 1, 4))
-      window.scrollTo({ top: 0, behavior: 'smooth' })
+    if (!isValid) return
+
+    // Final uniqueness checks before proceeding
+    if (currentStep === 1) {
+      const aadharVal = watch('aadhar_no')
+      if (aadharVal && aadharVal.trim() !== '') {
+        try {
+          const res = await api.get('/public/check-uniqueness', { params: { field: 'aadhar_no', value: aadharVal } })
+          if (!res.data.isUnique) {
+            setError('aadhar_no', { type: 'manual', message: 'Student Aadhar No. is already taken' })
+            return
+          }
+        } catch (e) {
+          console.error(e)
+        }
+      }
     }
+
+    if (currentStep === 2) {
+      const uniqueChecks = [
+        { key: 'phone', label: 'Student Phone', val: watch('phone') },
+        { key: 'email', label: 'Student Email', val: watch('email') },
+        { key: 'father_phone', label: "Father's Phone No", val: watch('father_phone') },
+        { key: 'parent_email', label: "Father's Email", val: watch('father_email') },
+        { key: 'father_aadhar', label: "Father's Aadhaar", val: watch('father_aadhar') },
+        { key: 'mother_phone', label: "Mother's Phone No", val: watch('mother_phone') },
+      ]
+
+      for (const check of uniqueChecks) {
+        if (check.val && check.val.trim() !== '') {
+          try {
+            const res = await api.get('/public/check-uniqueness', { params: { field: check.key, value: check.val } })
+            if (!res.data.isUnique) {
+              setError(check.key === 'parent_email' ? 'father_email' : check.key, { type: 'manual', message: `${check.label} is already taken` })
+              return
+            }
+          } catch (e) {
+            console.error(e)
+          }
+        }
+      }
+    }
+
+    setCurrentStep(prev => Math.min(prev + 1, 4))
+    window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
   const handleFileChange = (e) => {
@@ -453,7 +537,9 @@ const AdmissionsPortal = () => {
                   </div>
                   <div className={`form-field ${errors.aadhar_no ? 'error' : ''}`}>
                     <label>Student Aadhar No.</label>
-                    <input {...register('aadhar_no')} maxLength={12} placeholder="12-digit UID" />
+                    <input {...register('aadhar_no', {
+                      onChange: (e) => handleUniqueCheckDebounced('aadhar_no', 'Student Aadhar No.', e.target.value)
+                    })} maxLength={12} placeholder="12-digit UID" />
                     {errors.aadhar_no && <span className="error-message">{errors.aadhar_no.message}</span>}
                   </div>
                   <div className={`form-field ${errors.nationality ? 'error' : ''}`}>
@@ -465,7 +551,7 @@ const AdmissionsPortal = () => {
                     <label>Religion <span className="text-red-500">*</span></label>
                     <select {...register('religion')}>
                       <option value="">Select Religion</option>
-                      <option value="Hindu">Hindu</option>
+                      <option value="Hinduism">Hinduism</option>
                       <option value="Muslim">Muslim</option>
                       <option value="Christian">Christian</option>
                       <option value="Sikh">Sikh</option>
@@ -677,17 +763,23 @@ const AdmissionsPortal = () => {
                       </div>
                       <div className={`form-field ${errors.father_phone ? 'error' : ''}`}>
                         <label>Father's Phone No <span className="text-red-500">*</span></label>
-                        <input {...register('father_phone')} maxLength={10} placeholder="10-digit mobile" />
+                        <input {...register('father_phone', {
+                          onChange: (e) => handleUniqueCheckDebounced('father_phone', "Father's Phone No", e.target.value)
+                        })} maxLength={10} placeholder="10-digit mobile" />
                         {errors.father_phone && <span className="error-message">{errors.father_phone.message}</span>}
                       </div>
                       <div className={`form-field ${errors.father_email ? 'error' : ''}`}>
                         <label>Father's Email <span className="text-red-500">*</span></label>
-                        <input {...register('father_email')} type="email" placeholder="Required for portal access" />
+                        <input {...register('father_email', {
+                          onChange: (e) => handleUniqueCheckDebounced('parent_email', "Father's Email", e.target.value)
+                        })} type="email" placeholder="Required for portal access" />
                         {errors.father_email && <span className="error-message">{errors.father_email.message}</span>}
                       </div>
                       <div className="form-field">
                         <label>Father's Aadhar</label>
-                        <input {...register('father_aadhar')} maxLength={12} placeholder="12-digit UID" />
+                        <input {...register('father_aadhar', {
+                          onChange: (e) => handleUniqueCheckDebounced('father_aadhar', "Father's Aadhaar", e.target.value)
+                        })} maxLength={12} placeholder="12-digit UID" />
                         {errors.father_aadhar && <span className="error-message">{errors.father_aadhar.message}</span>}
                       </div>
                     </div>
@@ -706,12 +798,18 @@ const AdmissionsPortal = () => {
                       </div>
                       <div className={`form-field ${errors.mother_phone ? 'error' : ''}`}>
                         <label>Mother's Phone No</label>
-                        <input {...register('mother_phone')} maxLength={10} placeholder="Optional" />
+                        <input {...register('mother_phone', {
+                          onChange: (e) => handleUniqueCheckDebounced('mother_phone', "Mother's Phone No", e.target.value)
+                        })} maxLength={10} placeholder="Optional" />
                         {errors.mother_phone && <span className="error-message">{errors.mother_phone.message}</span>}
                       </div>
                       <div className="form-field">
                         <label>Qualification</label>
                         <input {...register('mother_qualification')} placeholder="e.g. B.A., M.Sc." />
+                      </div>
+                      <div className="form-field">
+                        <label>Mother's Occupation</label>
+                        <input {...register('mother_occupation')} placeholder="e.g. Doctor, Homemaker" />
                       </div>
                     </div>
                   </div>
@@ -719,22 +817,21 @@ const AdmissionsPortal = () => {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
                     <div className={`form-field ${errors.phone ? 'error' : ''}`}>
                       <label>Student Phone <span className="text-red-500">*</span></label>
-                      <input {...register('phone')} maxLength={10} placeholder="Mobile number" />
+                      <input {...register('phone', {
+                        onChange: (e) => handleUniqueCheckDebounced('phone', 'Student Phone', e.target.value)
+                      })} maxLength={10} placeholder="Mobile number" />
                       {errors.phone && <span className="error-message">{errors.phone.message}</span>}
                     </div>
                     <div className={`form-field ${errors.email ? 'error' : ''}`}>
                       <label>Student Email</label>
-                      <input type="email" {...register('email')} placeholder="Student email address (optional)" />
+                      <input type="email" {...register('email', {
+                        onChange: (e) => handleUniqueCheckDebounced('email', 'Student Email', e.target.value)
+                      })} placeholder="Student email address (optional)" />
                       {errors.email && <span className="error-message">{errors.email.message}</span>}
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <div className={`form-field ${errors.whatsapp_no ? 'error' : ''}`}>
-                      <label>WhatsApp Number</label>
-                      <input {...register('whatsapp_no')} maxLength={10} placeholder="WhatsApp number" />
-                      {errors.whatsapp_no && <span className="error-message">{errors.whatsapp_no.message}</span>}
-                    </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className={`form-field ${errors.blood_group ? 'error' : ''}`}>
                       <label>Blood Group <span className="text-red-500">*</span></label>
                       <select {...register('blood_group')}>

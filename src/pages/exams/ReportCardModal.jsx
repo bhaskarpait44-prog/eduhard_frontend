@@ -148,66 +148,173 @@ const ReportCardModal = ({ open, student, examId, onClose }) => {
             className="rounded-xl overflow-hidden mb-5"
             style={{ border: '1px solid var(--color-border)' }}
           >
-            <table className="w-full">
-              <thead>
-                <tr style={{ borderBottom: '1px solid var(--color-border)', backgroundColor: 'var(--color-surface-raised)' }}>
-                  {['Subject','Total Marks','Obtained','%','Grade','Status'].map(h => (
-                    <th key={h} className="px-4 py-2.5 text-left text-xs font-semibold uppercase"
-                      style={{ color: 'var(--color-text-muted)' }}>
-                      {h}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {subjectResults.map((sr, i) => {
-                  const pct    = sr.total_marks > 0 ? (sr.marks_obtained / sr.total_marks * 100).toFixed(1) : 0
-                  const passed = !sr.is_absent && sr.is_pass
-                  return (
-                    <tr
-                      key={i}
-                      style={{ borderBottom: i < subjectResults.length - 1 ? '1px solid var(--color-border)' : 'none' }}
-                    >
-                      <td className="px-4 py-3">
-                        <p className="text-sm font-medium" style={{ color: 'var(--color-text-primary)' }}>
-                          {sr.subject_name || sr.subject}
-                        </p>
-                        {sr.is_core && (
-                          <p className="text-[10px]" style={{ color: 'var(--color-brand)' }}>Core Subject</p>
-                        )}
-                      </td>
-                      <td className="px-4 py-3 text-sm" style={{ color: 'var(--color-text-secondary)' }}>
-                        {sr.total_marks}
-                      </td>
-                      <td className="px-4 py-3">
-                        <span className="text-sm font-semibold" style={{ color: sr.is_absent ? '#94a3b8' : 'var(--color-text-primary)' }}>
-                          {sr.is_absent ? 'AB' : sr.marks_obtained}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3 text-sm" style={{ color: 'var(--color-text-secondary)' }}>
-                        {sr.is_absent ? '—' : `${pct}%`}
-                      </td>
-                      <td className="px-4 py-3">
-                        <span className="text-sm font-bold" style={{ color: GRADE_COLOR[sr.grade] || '#64748b' }}>
-                          {sr.is_absent ? '—' : (sr.grade || '—')}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3">
-                        <span
-                          className="text-xs font-semibold px-2 py-0.5 rounded-full"
-                          style={{
-                            backgroundColor: sr.is_absent ? '#f1f5f9' : passed ? '#f0fdf4' : '#fef2f2',
-                            color          : sr.is_absent ? '#94a3b8' : passed ? '#16a34a' : '#dc2626',
-                          }}
-                        >
-                          {sr.is_absent ? 'Absent' : passed ? 'Pass' : 'Fail'}
-                        </span>
-                      </td>
+            {(() => {
+              // Group Subject Results
+              const subjectsMap = {};
+              subjectResults.forEach(row => {
+                const subKey = row.subject_id || row.subject_name;
+                if (!subjectsMap[subKey]) {
+                  subjectsMap[subKey] = {
+                    subject_id: row.subject_id,
+                    subject_name: row.subject_name,
+                    subject_code: row.subject_code,
+                    is_core: row.is_core,
+                    exams: [],
+                    weighted_max: 0,
+                    weighted_obtained: 0,
+                    weighted_passing: 0,
+                    is_absent: true,
+                  };
+                }
+                const sub = subjectsMap[subKey];
+                sub.exams.push(row);
+
+                const weight = parseFloat(row.exam_weightage || 100) / 100;
+                const totalMarks = parseFloat(row.combined_total_marks || 0);
+                sub.weighted_max += totalMarks * weight;
+                sub.weighted_obtained += (row.is_absent ? 0 : parseFloat(row.marks_obtained || 0)) * weight;
+                sub.weighted_passing += parseFloat(row.passing_marks || 0) * weight;
+
+                if (!row.is_absent) {
+                  sub.is_absent = false;
+                }
+              });
+
+              const percentageToGrade = (pct) => {
+                if (pct >= 90) return 'A+';
+                if (pct >= 80) return 'A';
+                if (pct >= 70) return 'B+';
+                if (pct >= 60) return 'B';
+                if (pct >= 50) return 'C';
+                if (pct >= 40) return 'D';
+                return 'F';
+              };
+
+              const groupedSubjects = Object.values(subjectsMap).map(sub => {
+                const pct = sub.weighted_max > 0 ? parseFloat(((sub.weighted_obtained / sub.weighted_max) * 100).toFixed(1)) : 0;
+                return {
+                  ...sub,
+                  final_percentage: pct,
+                  final_grade: percentageToGrade(pct),
+                  final_is_pass: sub.weighted_obtained >= sub.weighted_passing,
+                };
+              });
+
+              return (
+                <table className="w-full">
+                  <thead>
+                    <tr style={{ borderBottom: '1px solid var(--color-border)', backgroundColor: 'var(--color-surface-raised)' }}>
+                      {['Subject / Exam Name', 'Weightage', 'Theory', 'Practical', 'Total', 'Obtained', '% / Grade', 'Status'].map(h => (
+                        <th key={h} className="px-4 py-2.5 text-left text-xs font-semibold uppercase"
+                          style={{ color: 'var(--color-text-muted)' }}>
+                          {h}
+                        </th>
+                      ))}
                     </tr>
-                  )
-                })}
-              </tbody>
-            </table>
+                  </thead>
+                  <tbody>
+                    {groupedSubjects.map((sub, sIdx) => (
+                      <tr key={sub.subject_id || sIdx} className="border-b border-border/40 last:border-b-0">
+                        <td colSpan={8} className="p-0">
+                          <table className="w-full border-collapse">
+                            <tbody>
+                              {/* Subject Header Row */}
+                              <tr className="bg-surface-raised/40">
+                                <td colSpan={8} className="px-4 py-2.5 font-bold text-sm text-text-primary flex items-center justify-between">
+                                  <span>
+                                    {sub.subject_name.toUpperCase()} {sub.subject_code ? `(${sub.subject_code})` : ''}
+                                  </span>
+                                  {sub.is_core && (
+                                    <span className="text-[10px] bg-brand/10 text-brand px-2 py-0.5 rounded-full font-semibold">Core Subject</span>
+                                  )}
+                                </td>
+                              </tr>
+                              
+                              {/* Exam Details Rows */}
+                              {sub.exams.map((exam, eIdx) => {
+                                const pct = exam.combined_total_marks > 0 ? (exam.marks_obtained / exam.combined_total_marks * 100).toFixed(1) : 0;
+                                const passed = !exam.is_absent && exam.is_pass;
+                                return (
+                                  <tr key={eIdx} className="text-xs border-b border-border/20 last:border-0 hover:bg-surface-raised/20">
+                                    <td className="px-6 py-2 text-text-secondary">{exam.exam_name}</td>
+                                    <td className="px-4 py-2 text-text-secondary">{parseFloat(exam.exam_weightage || 100)}%</td>
+                                    <td className="px-4 py-2 text-text-secondary">
+                                      {exam.theory_marks_obtained !== null ? `${exam.theory_marks_obtained}/${exam.theory_total_marks}` : '—'}
+                                    </td>
+                                    <td className="px-4 py-2 text-text-secondary">
+                                      {exam.practical_marks_obtained !== null ? `${exam.practical_marks_obtained}/${exam.practical_total_marks}` : '—'}
+                                    </td>
+                                    <td className="px-4 py-2 text-text-secondary">{exam.combined_total_marks}</td>
+                                    <td className="px-4 py-2 font-medium">
+                                      {exam.is_absent ? 'AB' : exam.marks_obtained}
+                                    </td>
+                                    <td className="px-4 py-2 text-text-secondary">
+                                      {exam.is_absent ? '—' : `${pct}% (${exam.grade || '—'})`}
+                                    </td>
+                                    <td className="px-4 py-2">
+                                      <span className={`font-semibold ${exam.is_absent ? 'text-slate-400' : passed ? 'text-green-600' : 'text-red-600'}`}>
+                                        {exam.is_absent ? 'Absent' : passed ? 'Pass' : 'Fail'}
+                                      </span>
+                                    </td>
+                                  </tr>
+                                );
+                              })}
+
+                              {/* Subject Final Weighted Summary Row */}
+                              <tr className="text-xs font-semibold bg-surface/50 border-t border-border/30">
+                                <td className="px-6 py-2.5 text-text-primary italic">Weighted Total:</td>
+                                <td className="px-4 py-2.5 text-text-primary">100%</td>
+                                
+                                {(() => {
+                                  let weightedTheoryMax = 0, weightedTheoryObt = 0, hasTheory = false;
+                                  let weightedPracMax = 0, weightedPracObt = 0, hasPrac = false;
+                                  sub.exams.forEach(e => {
+                                    const w = parseFloat(e.exam_weightage || 100) / 100;
+                                    if (e.theory_total_marks !== null) {
+                                      weightedTheoryMax += parseFloat(e.theory_total_marks) * w;
+                                      weightedTheoryObt += (e.is_absent ? 0 : parseFloat(e.theory_marks_obtained || 0)) * w;
+                                      hasTheory = true;
+                                    }
+                                    if (e.practical_total_marks !== null) {
+                                      weightedPracMax += parseFloat(e.practical_total_marks) * w;
+                                      weightedPracObt += (e.is_absent ? 0 : parseFloat(e.practical_marks_obtained || 0)) * w;
+                                      hasPrac = true;
+                                    }
+                                  });
+                                  return (
+                                    <>
+                                      <td className="px-4 py-2.5 text-text-secondary">
+                                        {hasTheory ? `${weightedTheoryObt.toFixed(1)}/${weightedTheoryMax.toFixed(1)}` : '—'}
+                                      </td>
+                                      <td className="px-4 py-2.5 text-text-secondary">
+                                        {hasPrac ? `${weightedPracObt.toFixed(1)}/${weightedPracMax.toFixed(1)}` : '—'}
+                                      </td>
+                                    </>
+                                  );
+                                })()}
+
+                                <td className="px-4 py-2.5 text-text-secondary">{sub.weighted_max.toFixed(1)}</td>
+                                <td className="px-4 py-2.5 text-text-primary">
+                                  {sub.is_absent ? 'AB' : sub.weighted_obtained.toFixed(1)}
+                                </td>
+                                <td className="px-4 py-2.5 font-bold" style={{ color: GRADE_COLOR[sub.final_grade] || '#333' }}>
+                                  {sub.is_absent ? '—' : `${sub.final_percentage}% (${sub.final_grade})`}
+                                </td>
+                                <td className="px-4 py-2.5">
+                                  <span className={`font-bold ${sub.is_absent ? 'text-slate-400' : sub.final_is_pass ? 'text-green-600' : 'text-red-600'}`}>
+                                    {sub.is_absent ? 'Absent' : sub.final_is_pass ? 'Pass' : 'Fail'}
+                                  </span>
+                                </td>
+                              </tr>
+                            </tbody>
+                          </table>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              );
+            })()}
           </div>
         ) : (
           <div

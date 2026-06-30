@@ -93,11 +93,12 @@ const TabProfile = ({ student, studentId }) => {
         <InfoRow label="Religion"         value={student.religion} />
         <InfoRow label="Caste / Category" value={`${student.caste || ''} ${student.category ? `(${student.category})` : ''}`} />
         <InfoRow label="Address"          value={[student.address, student.city, student.state, student.pincode].filter(Boolean).join(', ')} />
-        <InfoRow label="Phone"            value={student.phone} />
+        <InfoRow label="Student Phone Number" value={student.phone} />
         <InfoRow label="Student Email"    value={student.email} />
         <InfoRow label="Mother tongue"    value={student.mother_tongue} />
         <InfoRow label="Father's Name"    value={student.father_name} />
         <InfoRow label="Mother's Name"    value={student.mother_name} />
+        <InfoRow label="Mother's Occupation" value={student.mother_occupation} />
         <InfoRow label="Parent Login Email" value={student.parent_email} />
         <InfoRow label="Blood Group"      value={student.blood_group} />
       </div>

@@ -3,7 +3,7 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { Shuffle, Loader2 } from 'lucide-react'
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import api from '@/api/axios'
 import Input from '@/components/ui/Input'
 import Select from '@/components/ui/Select'
@@ -18,11 +18,40 @@ const genAdmissionNo = () => {
 
 const StepIdentity = ({ defaultValues, onNext }) => {
   const [checking, setChecking] = useState(false)
-  const { register, handleSubmit, setValue, watch, setError, formState: { errors } } = useForm({
+  const { register, handleSubmit, setValue, watch, setError, clearErrors, formState: { errors } } = useForm({
     resolver     : zodResolver(studentAdmitSchema),
     defaultValues: { ...defaultValues, admission_no: defaultValues.admission_no || genAdmissionNo() },
     mode         : 'onBlur',
   })
+
+  const checkTimeouts = useRef({})
+  const handleUniqueCheck = async (field, label, value) => {
+    if (!value || value.trim() === '') {
+      clearErrors(field)
+      return
+    }
+    try {
+      const res = await api.get('/public/check-uniqueness', {
+        params: { field, value }
+      })
+      if (!res.data.isUnique) {
+        setError(field, { type: 'manual', message: `${label} is already taken` })
+      } else {
+        clearErrors(field)
+      }
+    } catch (err) {
+      console.error(err)
+    }
+  }
+
+  const handleUniqueCheckDebounced = (field, label, value) => {
+    if (checkTimeouts.current[field]) {
+      clearTimeout(checkTimeouts.current[field])
+    }
+    checkTimeouts.current[field] = setTimeout(() => {
+      handleUniqueCheck(field, label, value)
+    }, 500)
+  }
 
   const handleProceed = async (data) => {
     setChecking(true)
@@ -83,7 +112,9 @@ const StepIdentity = ({ defaultValues, onNext }) => {
             type="text" 
             hint="12-digit Aadhaar number printed on the card (optional)"
             error={errors.aadhar_no?.message} 
-            {...register('aadhar_no')} 
+            {...register('aadhar_no', {
+              onChange: (e) => handleUniqueCheckDebounced('aadhar_no', 'Aadhar Card No.', e.target.value)
+            })} 
           />
           <div className="hidden sm:block" />
         </div>
@@ -99,7 +130,9 @@ const StepIdentity = ({ defaultValues, onNext }) => {
               hint="Auto-generated or enter manually. Format: ADM-2024-0001"
               containerClassName="flex-1"
               autoComplete="off"
-              {...register('admission_no')}
+              {...register('admission_no', {
+                onChange: (e) => handleUniqueCheckDebounced('admission_no', 'Admission number', e.target.value)
+              })}
             />
             <button
               type="button"

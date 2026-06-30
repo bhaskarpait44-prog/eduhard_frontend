@@ -173,9 +173,8 @@ const StudentFullDetailsPage = () => {
             </div>
           </div>
 
-          <div className="pt-6 border-t border-border grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
-            <DataField label="Phone Number" value={student.phone} />
-            <DataField label="WhatsApp Number" value={student.whatsapp_no} />
+          <div className="pt-6 border-t border-border grid grid-cols-1 sm:grid-cols-3 gap-6">
+            <DataField label="Student Phone Number" value={student.phone} />
             <DataField label="Student Email" value={student.email} />
             <DataField label="Emergency Contact" value={student.emergency_contact} />
           </div>
@@ -189,10 +188,11 @@ const StudentFullDetailsPage = () => {
             {/* Mother */}
             <div className="space-y-4">
               <div className="inline-flex items-center gap-2 px-3 py-1 bg-indigo-50 rounded-lg text-indigo-700 font-bold text-[10px] uppercase tracking-wider">Mother's Particulars</div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-7 gap-6">
                 <DataField label="Name" value={student.mother_name} />
                 <DataField label="Phone" value={student.mother_phone} />
                 <DataField label="Email" value={student.mother_email} />
+                <DataField label="Occupation" value={student.mother_occupation} />
                 <DataField label="Qualification" value={student.mother_qualification} />
                 <DataField label="Aadhar No" value={student.mother_aadhar} />
                 <DataField label="Annual Income" value={student.mother_annual_income} />
@@ -217,14 +217,13 @@ const StudentFullDetailsPage = () => {
             {(student.guardian_name || student.guardian_phone) && (
               <div className="space-y-4">
                 <div className="inline-flex items-center gap-2 px-3 py-1 bg-gray-100 rounded-lg text-gray-700 font-bold text-[10px] uppercase tracking-wider">Guardian Details</div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
                   <DataField label="Guardian Name" value={student.guardian_name} />
                   <DataField label="Relation" value={student.guardian_relation} />
                   <DataField label="Phone" value={student.guardian_phone} />
                   <DataField label="Qualification" value={student.guardian_qualification} />
                   <DataField label="Occupation" value={student.guardian_occupation} />
                   <DataField label="Aadhar No" value={student.guardian_aadhar} />
-                  <DataField label="Annual Income" value={student.guardian_annual_income} />
                 </div>
               </div>
             )}

@@ -86,7 +86,6 @@ const baseStudentProfileSchema = z.object({
   police_station: z.string().min(1, 'Police station is missing — please enter the nearest police station name'),
   post_office: z.string().min(1, 'Post office is missing — please enter the nearest post office name'),
   district: z.string().min(1, 'District is missing — please enter the district name'),
-  whatsapp_no: phoneSchema,
   nationality: z.string().min(1, 'Nationality is missing — please enter a nationality (e.g., Indian)'),
   religion: z.string().min(1, 'Religion is missing — please select an option from the list'),
   caste: z.enum(['OBC', 'ST', 'SC', 'Gen'], { required_error: 'Caste is missing — please select an option from the list' }),
@@ -140,6 +139,7 @@ const baseStudentProfileSchema = z.object({
     val => (val === '' || val === null || val === undefined ? undefined : String(val).replace(/,/g, '')),
     z.string().regex(/^\d+$/, 'Annual income is invalid — enter numbers only without commas or symbols (Optional)').optional()
   ),
+  mother_occupation: z.string().optional(),
 
   guardian_name: z.string().optional(),
   guardian_relation: z.string().optional(),
@@ -151,10 +151,6 @@ const baseStudentProfileSchema = z.object({
     .regex(/^\d{12}$/, 'Guardian\'s Aadhaar number is invalid — enter exactly 12 digits (numbers only) (Optional)')
     .optional()
     .or(z.literal('')),
-  guardian_annual_income: z.preprocess(
-    val => (val === '' || val === null || val === undefined ? undefined : String(val).replace(/,/g, '')),
-    z.string().regex(/^\d+$/, 'Annual income is invalid — enter numbers only without commas or symbols (Optional)').optional()
-  ),
 
   emergency_contact: z
     .string()

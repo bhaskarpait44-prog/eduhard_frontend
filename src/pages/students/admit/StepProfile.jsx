@@ -2,7 +2,8 @@
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { useEffect } from 'react'
+import { useEffect, useState, useRef } from 'react'
+import api from '@/api/axios'
 import Input    from '@/components/ui/Input'
 import Select   from '@/components/ui/Select'
 import Textarea from '@/components/ui/Textarea'
@@ -19,12 +20,43 @@ const StepProfile = ({ defaultValues, onNext, onBack }) => {
     handleSubmit,
     watch,
     setValue,
+    setError,
+    clearErrors,
     formState: { errors },
   } = useForm({
     defaultValues,
     resolver: zodResolver(studentProfileSchema),
     mode: 'onBlur',
   })
+
+  const checkTimeouts = useRef({})
+  const handleUniqueCheck = async (field, label, value) => {
+    if (!value || value.trim() === '') {
+      clearErrors(field)
+      return
+    }
+    try {
+      const res = await api.get('/public/check-uniqueness', {
+        params: { field, value }
+      })
+      if (!res.data.isUnique) {
+        setError(field, { type: 'manual', message: `${label} is already taken` })
+      } else {
+        clearErrors(field)
+      }
+    } catch (err) {
+      console.error(err)
+    }
+  }
+
+  const handleUniqueCheckDebounced = (field, label, value) => {
+    if (checkTimeouts.current[field]) {
+      clearTimeout(checkTimeouts.current[field])
+    }
+    checkTimeouts.current[field] = setTimeout(() => {
+      handleUniqueCheck(field, label, value)
+    }, 500)
+  }
 
   const isPermanentSame = watch('is_permanent_same')
   const currentAddress = watch(['address', 'village', 'police_station', 'post_office', 'district', 'city', 'state', 'pincode'])
@@ -43,8 +75,60 @@ const StepProfile = ({ defaultValues, onNext, onBack }) => {
     }
   }, [isPermanentSame, ...currentAddress, setValue])
 
+  const fatherPhone = watch('father_phone')
+  const emergencyContact = watch('emergency_contact')
+  const [lastFatherPhone, setLastFatherPhone] = useState(defaultValues.father_phone || '')
+
+  useEffect(() => {
+    if (fatherPhone !== lastFatherPhone) {
+      if (!emergencyContact || emergencyContact === lastFatherPhone) {
+        setValue('emergency_contact', fatherPhone)
+      }
+      setLastFatherPhone(fatherPhone)
+    }
+  }, [fatherPhone, emergencyContact, lastFatherPhone, setValue])
+
+  const [checking, setChecking] = useState(false)
+  const handleProceed = async (data) => {
+    setChecking(true)
+    try {
+      const checkFields = [
+        { key: 'phone', label: 'Student Phone Number', val: data.phone },
+        { key: 'email', label: 'Student Email', val: data.email },
+        { key: 'father_phone', label: "Father's Phone Number", val: data.father_phone },
+        { key: 'parent_email', label: "Father's Email", val: data.parent_email },
+        { key: 'father_aadhar', label: "Father's Aadhaar", val: data.father_aadhar },
+        { key: 'mother_phone', label: "Mother's Phone Number", val: data.mother_phone },
+        { key: 'mother_email', label: "Mother's Email", val: data.mother_email },
+        { key: 'mother_aadhar', label: "Mother's Aadhaar", val: data.mother_aadhar },
+        { key: 'guardian_phone', label: "Guardian's Phone Number", val: data.guardian_phone },
+        { key: 'guardian_aadhar', label: "Guardian's Aadhaar", val: data.guardian_aadhar },
+      ]
+
+      for (const field of checkFields) {
+        if (field.val && field.val.trim() !== '') {
+          const res = await api.get('/public/check-uniqueness', {
+            params: { field: field.key, value: field.val }
+          })
+          if (!res.data.isUnique) {
+            setError(field.key, { type: 'manual', message: `${field.label} is already taken` })
+            setChecking(false)
+            return
+          }
+        }
+      }
+
+      onNext(data)
+    } catch (err) {
+      console.error(err)
+      onNext(data)
+    } finally {
+      setChecking(false)
+    }
+  }
+
   return (
-    <form onSubmit={handleSubmit(onNext)}>
+    <form onSubmit={handleSubmit(handleProceed)}>
       <div
         className="rounded-2xl p-6 space-y-5"
         style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)' }}
@@ -58,7 +142,7 @@ const StepProfile = ({ defaultValues, onNext, onBack }) => {
             required
             error={errors.religion?.message}
             options={[
-              { value: 'Hindu', label: 'Hindu' },
+              { value: 'Hinduism', label: 'Hinduism' },
               { value: 'Muslim', label: 'Muslim' },
               { value: 'Christian', label: 'Christian' },
               { value: 'Sikh', label: 'Sikh' },
@@ -143,15 +227,18 @@ const StepProfile = ({ defaultValues, onNext, onBack }) => {
             </div>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <Input label="Phone"  type="text" placeholder="9876543210" error={errors.phone?.message} {...register('phone')} />
-          <Input label="WhatsApp No. (Optional)" type="text" placeholder="9876543210" error={errors.whatsapp_no?.message} {...register('whatsapp_no')} />
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <Input label="Student Phone Number (Optional)"  type="text" placeholder="9876543210" error={errors.phone?.message} {...register('phone', {
+            onChange: (e) => handleUniqueCheckDebounced('phone', 'Student Phone Number', e.target.value)
+          })} />
           <Input
             label="Student Email (Optional)"
             type="email"
             placeholder="student@email.com"
             error={errors.email?.message}
-            {...register('email')}
+            {...register('email', {
+              onChange: (e) => handleUniqueCheckDebounced('email', 'Student Email', e.target.value)
+            })}
           />
         </div>
 
@@ -165,9 +252,18 @@ const StepProfile = ({ defaultValues, onNext, onBack }) => {
             type="text" 
             placeholder="9876543212" 
             error={errors.mother_phone?.message} 
-            {...register('mother_phone')} 
+            {...register('mother_phone', {
+              onChange: (e) => handleUniqueCheckDebounced('mother_phone', "Mother's Phone Number", e.target.value)
+            })} 
           />
-          <Input label="Mother's Email (Optional)" type="email" placeholder="mother@email.com" error={errors.mother_email?.message} {...register('mother_email')} />
+          <Input label="Mother's Email (Optional)" type="email" placeholder="mother@email.com" error={errors.mother_email?.message} {...register('mother_email', {
+            onChange: (e) => handleUniqueCheckDebounced('mother_email', "Mother's Email", e.target.value)
+          })} />
+          <Input 
+            label="Mother's Occupation (Optional)" 
+            placeholder="e.g. Doctor, Homemaker" 
+            {...register('mother_occupation')} 
+          />
           <Input 
             label="Mother's Aadhar (Optional)" 
             placeholder="12-digit number" 
@@ -175,7 +271,9 @@ const StepProfile = ({ defaultValues, onNext, onBack }) => {
             maxLength={12} 
             hint="12-digit Aadhaar number printed on the card (optional)"
             error={errors.mother_aadhar?.message}
-            {...register('mother_aadhar')} 
+            {...register('mother_aadhar', {
+              onChange: (e) => handleUniqueCheckDebounced('mother_aadhar', "Mother's Aadhaar", e.target.value)
+            })} 
           />
           <Input label="Mother's Annual Income (Optional)" placeholder="e.g. 8,00,000" error={errors.mother_annual_income?.message} {...register('mother_annual_income')} />
         </div>
@@ -191,7 +289,9 @@ const StepProfile = ({ defaultValues, onNext, onBack }) => {
             placeholder="9876543211" 
             hint="10-digit mobile number"
             error={errors.father_phone?.message} 
-            {...register('father_phone')} 
+            {...register('father_phone', {
+              onChange: (e) => handleUniqueCheckDebounced('father_phone', "Father's Phone Number", e.target.value)
+            })} 
           />
           <Input 
             label="Father's Email" 
@@ -200,7 +300,9 @@ const StepProfile = ({ defaultValues, onNext, onBack }) => {
             type="email" 
             placeholder="father@email.com" 
             error={errors.parent_email?.message} 
-            {...register('parent_email')} 
+            {...register('parent_email', {
+              onChange: (e) => handleUniqueCheckDebounced('parent_email', "Father's Email", e.target.value)
+            })} 
           />
           <Input 
             label="Father's Aadhar (Optional)" 
@@ -209,7 +311,9 @@ const StepProfile = ({ defaultValues, onNext, onBack }) => {
             maxLength={12} 
             hint="12-digit Aadhaar number printed on the card (optional)"
             error={errors.father_aadhar?.message}
-            {...register('father_aadhar')} 
+            {...register('father_aadhar', {
+              onChange: (e) => handleUniqueCheckDebounced('father_aadhar', "Father's Aadhaar", e.target.value)
+            })} 
           />
           <Input 
             label="Father's Annual Income (Optional)" 
@@ -229,7 +333,9 @@ const StepProfile = ({ defaultValues, onNext, onBack }) => {
             type="text" 
             placeholder="9876543213" 
             error={errors.guardian_phone?.message}
-            {...register('guardian_phone')} 
+            {...register('guardian_phone', {
+              onChange: (e) => handleUniqueCheckDebounced('guardian_phone', "Guardian's Phone Number", e.target.value)
+            })} 
           />
           <Input label="Qualification (Optional)" placeholder="Qualification" {...register('guardian_qualification')} />
           <Input label="Occupation (Optional)" placeholder="Occupation" {...register('guardian_occupation')} />
@@ -240,13 +346,9 @@ const StepProfile = ({ defaultValues, onNext, onBack }) => {
             maxLength={12} 
             hint="12-digit Aadhaar number printed on the card (optional)"
             error={errors.guardian_aadhar?.message}
-            {...register('guardian_aadhar')} 
-          />
-          <Input 
-            label="Guardian's Annual Income (Optional)" 
-            placeholder="e.g. 8,00,000" 
-            error={errors.guardian_annual_income?.message}
-            {...register('guardian_annual_income')} 
+            {...register('guardian_aadhar', {
+              onChange: (e) => handleUniqueCheckDebounced('guardian_aadhar', "Guardian's Aadhaar", e.target.value)
+            })} 
           />
         </div>
 
@@ -275,7 +377,9 @@ const StepProfile = ({ defaultValues, onNext, onBack }) => {
 
       <div className="flex justify-between mt-4">
         <Button variant="secondary" type="button" onClick={onBack}>← Back</Button>
-        <Button type="submit">Continue to Enrollment →</Button>
+        <Button type="submit" loading={checking}>
+          {checking ? 'Checking uniqueness...' : 'Continue to Enrollment →'}
+        </Button>
       </div>
     </form>
   )
