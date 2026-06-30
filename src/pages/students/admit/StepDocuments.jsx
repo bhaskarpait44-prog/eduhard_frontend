@@ -35,8 +35,9 @@ const StepDocuments = ({ defaultValues, onNext, onBack }) => {
     const file = e.target.files[0]
     if (!file) return
 
-    if (!ALLOWED_MIME_TYPES.includes(file.type)) {
-      setErrors(prev => ({ ...prev, [id]: 'Only JPG, PNG, WEBP or PDF files are allowed' }))
+    const allowedTypes = id === 'photo' ? ['image/jpeg', 'image/png', 'image/webp'] : ALLOWED_MIME_TYPES
+    if (!allowedTypes.includes(file.type)) {
+      setErrors(prev => ({ ...prev, [id]: id === 'photo' ? 'Only JPG, PNG or WEBP images are allowed' : 'Only JPG, PNG, WEBP or PDF files are allowed' }))
       e.target.value = ''
       return
     }
@@ -142,7 +143,7 @@ const StepDocuments = ({ defaultValues, onNext, onBack }) => {
                     <input 
                       type="file" 
                       className="hidden" 
-                      accept="image/*,application/pdf"
+                      accept={doc.id === 'photo' ? "image/jpeg,image/png,image/webp" : "image/*,application/pdf"}
                       onChange={(e) => handleFileChange(doc.id, e)} 
                     />
                   </label>

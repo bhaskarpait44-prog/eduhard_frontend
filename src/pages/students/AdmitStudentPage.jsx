@@ -46,6 +46,45 @@ const AdmitStudentPage = () => {
     }
   }, [currentSession, isLoading, fetchCurrentSession])
 
+  // Save wizard state to sessionStorage when partial success occurs
+  useEffect(() => {
+    if (admittedStudent) {
+      sessionStorage.setItem('partial_admission_state', JSON.stringify({
+        formData,
+        admittedStudent,
+        admittedEnrollmentId,
+        step
+      }))
+    } else {
+      sessionStorage.removeItem('partial_admission_state')
+    }
+  }, [admittedStudent, formData, admittedEnrollmentId, step])
+
+  // Restore wizard state on load if present
+  useEffect(() => {
+    const saved = sessionStorage.getItem('partial_admission_state')
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved)
+        if (parsed.admittedStudent) {
+          const confirmResume = window.confirm(
+            `An incomplete admission for ${parsed.admittedStudent.first_name} ${parsed.admittedStudent.last_name} was found. Do you want to resume?`
+          )
+          if (confirmResume) {
+            setFormData(parsed.formData || {})
+            setAdmitted(parsed.admittedStudent)
+            setAdmittedEnrollmentId(parsed.admittedEnrollmentId || null)
+            setStep(parsed.step || 3)
+          } else {
+            sessionStorage.removeItem('partial_admission_state')
+          }
+        }
+      } catch (e) {
+        console.error(e)
+      }
+    }
+  }, [])
+
   const goNext = (stepData) => {
     setFormData(prev => ({ ...prev, ...stepData }))
     setStep(s => s + 1)
@@ -203,6 +242,7 @@ const AdmitStudentPage = () => {
       }
 
       setStep(7)
+      sessionStorage.removeItem('partial_admission_state')
     } finally {
       setIsSubmitting(false)
     }
@@ -352,6 +392,7 @@ const AdmitStudentPage = () => {
             setFormData({})
             setAdmitted(null)
             setAdmittedEnrollmentId(null)
+            sessionStorage.removeItem('partial_admission_state')
           }}
         />
       )}

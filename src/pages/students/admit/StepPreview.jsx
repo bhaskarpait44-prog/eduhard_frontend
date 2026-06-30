@@ -74,7 +74,7 @@ const StepPreview = ({ formData, onBack, onSubmit, isSaving }) => {
           <PreviewField label="Father's Name" value={formData.father_name} />
           <PreviewField label="Father's Occupation" value={formData.father_occupation} />
           <PreviewField label="Father's Phone" value={formData.father_phone} />
-          <PreviewField label="Father's Email" value={formData.father_email} />
+          <PreviewField label="Father's Email" value={formData.parent_email} />
           <PreviewField label="Mother's Name" value={formData.mother_name} />
           <PreviewField label="Mother's Occupation" value={formData.mother_occupation} />
           <PreviewField label="Mother's Email" value={formData.mother_email} />

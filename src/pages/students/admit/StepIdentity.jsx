@@ -56,11 +56,9 @@ const StepIdentity = ({ defaultValues, onNext }) => {
   const handleProceed = async (data) => {
     setChecking(true)
     try {
-      // M2: Pre-check against API to prevent collisions
-      const res = await api.get('/students', { params: { search: data.admission_no, perPage: 10 } })
-      const exists = res.data.students.some(s => s.admission_no === data.admission_no)
-      
-      if (exists) {
+      // Pre-check against dedicated uniqueness check API to prevent collisions
+      const res = await api.get('/public/check-uniqueness', { params: { field: 'admission_no', value: data.admission_no } })
+      if (!res.data.isUnique) {
         setError('admission_no', { message: 'This admission number is already taken — please generate a new one' })
         return
       }
