@@ -89,7 +89,6 @@ const AdmitStudentPage = () => {
         pincode: allData.pincode,
         phone: allData.phone,
         email: allData.email,
-        whatsapp_no: allData.whatsapp_no,
         village: allData.village,
         police_station: allData.police_station,
         post_office: allData.post_office,
@@ -117,13 +116,14 @@ const AdmitStudentPage = () => {
         mother_aadhar: allData.mother_aadhar,
         mother_annual_income: allData.mother_annual_income,
 
+        mother_occupation: allData.mother_occupation,
+
         guardian_name: allData.guardian_name,
         guardian_relation: allData.guardian_relation,
         guardian_phone: allData.guardian_phone,
         guardian_qualification: allData.guardian_qualification,
         guardian_occupation: allData.guardian_occupation,
         guardian_aadhar: allData.guardian_aadhar,
-        guardian_annual_income: allData.guardian_annual_income,
 
         is_permanent_same: allData.is_permanent_same,
         perm_address: allData.perm_address,
@@ -351,6 +351,7 @@ const AdmitStudentPage = () => {
             setStep(1)
             setFormData({})
             setAdmitted(null)
+            setAdmittedEnrollmentId(null)
           }}
         />
       )}

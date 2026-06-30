@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { 
   User, MapPin, Phone, Mail, GraduationCap, 
@@ -10,10 +10,11 @@ import usePageTitle from '@/hooks/usePageTitle'
 import useToast from '@/hooks/useToast'
 import Button from '@/components/ui/Button'
 import Badge from '@/components/ui/Badge'
-import { formatDate, getFileUrl, getInitials } from '@/utils/helpers'
+import { formatDate, getInitials } from '@/utils/helpers'
 import { ROUTES } from '@/constants/app'
 import { SectionHeading } from './admit/StepIdentity'
 import * as studentApi from '@/api/studentsApi'
+import api from '@/api/axios'
 import { downloadBlob } from '@/utils/downloadBlob'
 
 const DataField = ({ label, value, highlight, uppercase, capitalize, colSpan = '' }) => (
@@ -49,7 +50,6 @@ const StudentFullDetailsPage = () => {
     setIsDownloading(true)
     try {
       const blob = await studentApi.downloadAdmissionForm(id)
-      // The axios interceptor returns response.data directly
       downloadBlob(blob, `AdmissionForm_${student.admission_no}.pdf`)
       toastSuccess('Admission form downloaded')
     } catch (err) {
@@ -58,6 +58,18 @@ const StudentFullDetailsPage = () => {
       setIsDownloading(false)
     }
   }
+
+  const handleOpenDocument = useCallback(async (doc) => {
+    try {
+      const response = await api.get(`/uploads/${doc.file_path}`, { responseType: 'blob' })
+      const url = URL.createObjectURL(response.data)
+      window.open(url, '_blank')
+      // Revoke after a delay to allow the tab to load
+      setTimeout(() => URL.revokeObjectURL(url), 10000)
+    } catch (err) {
+      toastError('Failed to open document. It may have been moved or deleted.')
+    }
+  }, [toastError])
 
   if (loading || !student) return <div className="max-w-5xl mx-auto p-6 animate-pulse"><div className="h-8 w-48 bg-gray-200 rounded mb-6" /><div className="space-y-6"><div className="h-64 bg-gray-100 rounded-2xl" /><div className="h-64 bg-gray-100 rounded-2xl" /></div></div>
 
@@ -103,7 +115,7 @@ const StudentFullDetailsPage = () => {
             <DataField label="Gender" value={student.gender} capitalize />
             <DataField label="Nationality" value={student.nationality} />
             <DataField label="Religion" value={student.religion} />
-            <DataField label="Caste / Category" value={`${student.caste || ''} ${student.category ? `(${student.category})` : ''}`} />
+            <DataField label="Caste / Category" value={student.caste || ''} />
             <DataField label="Mother Tongue" value={student.mother_tongue} />
             <DataField label="Blood Group" value={student.blood_group} />
             <DataField label="Student Email" value={student.email} />
@@ -129,7 +141,8 @@ const StudentFullDetailsPage = () => {
             <DataField label="Distance from School" value={student.distance_km ? `${student.distance_km} km` : 'N/A'} />
             <DataField label="Prev. Year Attendance" value={student.prev_attendance_days ? `${student.prev_attendance_days} days` : 'N/A'} />
             <DataField label="Account Status" value={student.is_active ? 'Active' : 'Suspended'} />
-            <DataField label="Enrollment Status" value={student.status} capitalize />
+            <DataField label="Student Status" value={student.status} capitalize />
+            <DataField label="Enrollment Status" value={enrollment?.status} capitalize />
           </div>
         </section>
 
@@ -273,9 +286,13 @@ const StudentFullDetailsPage = () => {
                         <p className="text-[9px] font-bold text-text-muted uppercase">{doc.document_type?.replace(/_/g, ' ')}</p>
                       </div>
                     </div>
-                    <a href={getFileUrl(doc.file_path)} target="_blank" rel="noreferrer" className="p-2 text-text-muted hover:text-brand transition-colors">
+                    <button
+                      onClick={() => handleOpenDocument(doc)}
+                      className="p-2 text-text-muted hover:text-brand transition-colors"
+                      title="Open document"
+                    >
                       <Printer size={14} />
-                    </a>
+                    </button>
                   </div>
                 ))}
              </div>

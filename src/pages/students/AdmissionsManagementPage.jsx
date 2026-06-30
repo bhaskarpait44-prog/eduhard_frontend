@@ -194,17 +194,30 @@ const AdmissionsManagementPage = () => {
     }
   }
 
-  const onAdmitSubmit = async (e) => {
-    e.preventDefault()
+  const onAdmitSubmit = async (e, override = false) => {
+    if (e) e.preventDefault()
     setAdmitting(true)
     try {
-      await api.post(`/applications/${selectedApp.id}/admit`, admissionData)
+      const payload = override ? { ...admissionData, override_capacity: true } : admissionData
+      await api.post(`/applications/${selectedApp.id}/admit`, payload)
       toastSuccess('Student admitted successfully!')
       setAdmitModal(false)
       setSelectedApp(null)
       fetchApplications()
     } catch (err) {
-      toastError(err.response?.data?.message || 'Admission failed')
+      const isCapacityWarning = err.response?.data?.errors?.[0]?.capacityWarning
+      if (isCapacityWarning) {
+        const confirmOverride = window.confirm(
+          `${err.response?.data?.message || 'Section is at full capacity.'}\n\nDo you want to override and admit anyway?`
+        )
+        if (confirmOverride) {
+          // Re-trigger submission with override_capacity set to true
+          onAdmitSubmit(null, true)
+          return
+        }
+      } else {
+        toastError(err.response?.data?.message || 'Admission failed')
+      }
     } finally {
       setAdmitting(false)
     }

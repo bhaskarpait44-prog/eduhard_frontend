@@ -111,9 +111,13 @@ const StepEnrollment = ({ defaultValues, currentSession, onSubmit, onBack, isPar
       .then(r => {
         const subjList = r.data || []
         setSubjects(subjList)
-        // Auto-select core subjects
-        const coreSubjectIds = subjList.filter(s => s.is_core).map(s => String(s.id))
-        setValue('subject_ids', coreSubjectIds)
+        // Only auto-select core subjects if the user hasn't already made a selection
+        // for this exact class (prevents wiping electives when navigating back to this step)
+        const existingIds = watch('subject_ids') ?? []
+        if (existingIds.length === 0) {
+          const coreSubjectIds = subjList.filter(s => s.is_core).map(s => String(s.id))
+          setValue('subject_ids', coreSubjectIds)
+        }
       })
       .catch(() => {})
       .finally(() => setLoadingSubj(false))

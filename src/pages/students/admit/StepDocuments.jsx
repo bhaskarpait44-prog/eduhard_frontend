@@ -17,6 +17,7 @@ const DOCUMENT_TYPES = [
   { id: 'blood_group_doc', label: 'Blood Group Proof', required: false },
   { id: 'aadhar_student', label: 'Student Aadhar Card', required: false },
   { id: 'aadhar_father', label: 'Father Aadhar Card', required: false },
+  { id: 'aadhar_mother', label: "Mother's Aadhar Card", required: false },
 ]
 
 const ALLOWED_MIME_TYPES = [
