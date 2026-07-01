@@ -47,24 +47,53 @@ const BulkAdmissionPage = () => {
   const [preview, setPreview] = useState(null)
   const [jobStatus, setJobStatus] = useState(null)
   const [isLoading, setIsLoading] = useState(false)
+  const [templateData, setTemplateData] = useState(null)
+  const [isDownloadingTemplate, setIsDownloadingTemplate] = useState(false)
 
-  useEffect(() => () => {
-    if (pollRef.current) clearInterval(pollRef.current)
+  useEffect(() => {
+    const fetchTemplateInfo = async () => {
+      try {
+        const res = await api.getAdmissionTemplate()
+        if (res.success && res.data) {
+          setTemplateData(res.data)
+        }
+      } catch (err) {
+        console.error('Failed to pre-fetch template details', err)
+      }
+    }
+    fetchTemplateInfo()
+
+    return () => {
+      if (pollRef.current) clearInterval(pollRef.current)
+    }
   }, [])
 
-  const downloadTemplate = () => {
-    const csv = [
-      ['first_name', 'last_name', 'date_of_birth', 'gender', 'admission_class', 'section', 'admission_date', 'admission_no', 'father_name', 'mother_name', 'guardian_phone', 'address', 'blood_group', 'religion', 'caste', 'previous_school'].join(','),
-      ['Rahul', 'Sharma', '2015-05-15', 'male', 'Class 1', 'A', '2024-04-01', '', 'Vijay Sharma', 'Anjali Sharma', '9876543210', '123 Main St, Jorhat', 'O+', 'Hindu', 'General', 'Little Angels'].join(','),
-    ].join('\n')
+  const downloadTemplate = async () => {
+    setIsDownloadingTemplate(true)
+    try {
+      const res = await api.getAdmissionTemplate()
+      if (res.success && res.data?.columns) {
+        const columns = res.data.columns
+        const headerRow = columns.map(c => c.key)
+        const exampleRow = columns.map(c => c.example ?? '')
 
-    const blob = new Blob([csv], { type: 'text/csv' })
-    const url = URL.createObjectURL(blob)
-    const anchor = document.createElement('a')
-    anchor.href = url
-    anchor.download = 'educore_student_admission_template.csv'
-    anchor.click()
-    URL.revokeObjectURL(url)
+        const csv = [headerRow.join(','), exampleRow.join(',')].join('\n')
+
+        const blob = new Blob([csv], { type: 'text/csv' })
+        const url = URL.createObjectURL(blob)
+        const anchor = document.createElement('a')
+        anchor.href = url
+        anchor.download = 'educore_student_admission_template.csv'
+        anchor.click()
+        URL.revokeObjectURL(url)
+      } else {
+        toastError('Failed to fetch the CSV template from the server.')
+      }
+    } catch (err) {
+      toastError(err.message || 'Failed to download template.')
+    } finally {
+      setIsDownloadingTemplate(false)
+    }
   }
 
   const handleFile = async (file) => {
@@ -202,32 +231,57 @@ const BulkAdmissionPage = () => {
           <div className="text-left p-6 rounded-2xl mb-8 bg-gray-50 dark:bg-gray-900/50 border border-gray-100 dark:border-gray-800">
             <h3 className="text-sm font-bold mb-4 text-gray-800 dark:text-gray-200 uppercase tracking-widest">Required Columns</h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-2">
-              {[
-                'first_name', 'last_name', 'date_of_birth', 'gender',
-                'admission_class', 'section', 'admission_date'
-              ].map(col => (
-                <div key={col} className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 font-mono">
-                  <div className="w-1.5 h-1.5 rounded-full bg-indigo-500" />
-                  {col}
-                </div>
-              ))}
+              {(templateData?.columns || [
+                { key: 'first_name', label: 'First Name *' },
+                { key: 'last_name', label: 'Last Name *' },
+                { key: 'date_of_birth', label: 'DOB (YYYY-MM-DD) *' },
+                { key: 'gender', label: 'Gender *' },
+                { key: 'admission_class', label: 'Admission Class *' },
+                { key: 'section', label: 'Section *' },
+                { key: 'admission_date', label: 'Admission Date *' },
+                { key: 'father_name', label: 'Father Name *' },
+                { key: 'father_phone', label: 'Father Phone *' },
+                { key: 'parent_email', label: 'Father Email (Parent Login) *' }
+              ])
+                .filter(col => col.label.includes('*'))
+                .map(col => (
+                  <div key={col.key} className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 font-mono">
+                    <div className="w-1.5 h-1.5 rounded-full bg-indigo-500" />
+                    {col.key}
+                  </div>
+                ))}
             </div>
             <div className="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
-              <p className="text-xs text-gray-500 leading-relaxed">
-                • Class and Section names must exist in the system.<br />
-                • Use YYYY-MM-DD format for dates.<br />
-                • Valid genders: male, female, other.
-              </p>
+              <div className="text-xs text-gray-500 space-y-1.5 leading-relaxed text-left">
+                {templateData?.notes ? (
+                  templateData.notes.map((note, idx) => (
+                    <div key={idx}>• {note}</div>
+                  ))
+                ) : (
+                  <>
+                    <div>• Fields marked * are required.</div>
+                    <div>• Admission No will be auto-generated if left blank (ADM-YEAR-XXXX).</div>
+                    <div>• Admission Class and Section names must match exactly with existing records.</div>
+                    <div>• Admission Date will be used as the student's joined date.</div>
+                    <div>• Father Email (Parent Login) will be used to create the parent login credentials.</div>
+                  </>
+                )}
+              </div>
             </div>
           </div>
 
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
             <button
               onClick={downloadTemplate}
-              className="flex items-center justify-center gap-2 px-6 py-3 text-sm font-bold rounded-2xl border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-all"
+              disabled={isDownloadingTemplate}
+              className="flex items-center justify-center gap-2 px-6 py-3 text-sm font-bold rounded-2xl border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-all disabled:opacity-50"
             >
-              <Download size={18} />
-              Download CSV Template
+              {isDownloadingTemplate ? (
+                <Loader2 size={18} className="animate-spin" />
+              ) : (
+                <Download size={18} />
+              )}
+              {isDownloadingTemplate ? 'Downloading...' : 'Download CSV Template'}
             </button>
             <button
               onClick={() => setStep(1)}
