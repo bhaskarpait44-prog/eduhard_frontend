@@ -123,8 +123,8 @@ const SettingsPage = () => {
     setIsLoading(true)
     try {
       const res = await api.get('/settings')
-      if (res.data?.data) {
-        const data = res.data.data
+      if (res.success && res.data) {
+        const data = res.data
         setSettings((prev) => {
           const updated = { 
             ...prev, 

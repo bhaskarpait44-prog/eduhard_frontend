@@ -1,14 +1,14 @@
 import { Page, Text, View, Document, StyleSheet, Image } from '@react-pdf/renderer';
 import { getFileUrl } from '@/utils/helpers';
 
-const accentColor = '#0f766e';
+const accentColor = '#4F46E5';
 
 const styles = StyleSheet.create({
   page: {
     padding: 30,
     fontSize: 8,
     fontFamily: 'Helvetica',
-    color: '#1e293b',
+    color: '#111827',
     backgroundColor: '#fff',
   },
   grid: {
@@ -21,7 +21,7 @@ const styles = StyleSheet.create({
     width: '243pt', // 3.375 inches
     height: '153pt', // 2.125 inches
     border: `1.5pt solid ${accentColor}`,
-    borderRadius: 8,
+    borderRadius: 12,
     overflow: 'hidden',
     position: 'relative',
     backgroundColor: '#fff',
@@ -29,15 +29,15 @@ const styles = StyleSheet.create({
   },
   header: {
     backgroundColor: accentColor,
-    height: 35,
+    height: 36,
     flexDirection: 'row',
     alignItems: 'center',
-    padding: '0 8px',
+    padding: '0 10px',
   },
   logo: {
     width: 22,
     height: 22,
-    borderRadius: 4,
+    borderRadius: 6,
     backgroundColor: '#fff',
     marginRight: 6,
   },
@@ -47,25 +47,27 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     flex: 1,
     textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
   body: {
-    padding: 8,
+    padding: 10,
     flexDirection: 'row',
   },
   photoContainer: {
     width: 60,
     height: 75,
-    border: '1pt solid #e2e8f0',
-    borderRadius: 4,
+    border: '1pt solid #E5E7EB',
+    borderRadius: 6,
     marginRight: 10,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#f8fafc',
+    backgroundColor: '#F9FAFB',
   },
   photo: {
     width: '100%',
     height: '100%',
     objectFit: 'cover',
+    borderRadius: 5,
   },
   details: {
     flex: 1,
@@ -75,15 +77,15 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontWeight: 'bold',
     color: accentColor,
-    marginBottom: 4,
+    marginBottom: 6,
   },
   row: {
     flexDirection: 'row',
-    marginBottom: 2,
+    marginBottom: 3,
   },
   label: {
     width: 55,
-    color: '#64748b',
+    color: '#6B7280',
     fontSize: 7,
     fontWeight: 'bold',
   },
@@ -91,6 +93,7 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 8,
     fontWeight: 'bold',
+    color: '#111827',
   },
   footer: {
     position: 'absolute',
@@ -98,26 +101,27 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     height: 18,
-    backgroundColor: '#f1f5f9',
+    backgroundColor: '#F9FAFB',
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     borderTopWidth: 0.5,
-    borderTopColor: '#cbd5e1',
+    borderTopColor: '#E5E7EB',
   },
   sessionLabel: {
     fontSize: 7,
     fontWeight: 'bold',
-    color: '#475569',
+    color: '#4B5563',
   },
   idLabel: {
     position: 'absolute',
-    top: 38,
-    right: 8,
+    top: 40,
+    right: 10,
     fontSize: 6,
-    color: '#94a3b8',
+    color: '#9CA3AF',
     fontWeight: 'bold',
     textTransform: 'uppercase',
+    letterSpacing: 0.5,
   }
 });
 

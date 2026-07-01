@@ -64,8 +64,7 @@ const StepSuccess = ({ student, onViewStudent, onAdmitAnother }) => {
 
   return (
     <div
-      className="rounded-2xl p-6 sm:p-10 text-center"
-      style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)' }}
+      className="bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-3xl p-8 sm:p-12 text-center shadow-xl shadow-indigo-500/5"
     >
       <div
         className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-5"

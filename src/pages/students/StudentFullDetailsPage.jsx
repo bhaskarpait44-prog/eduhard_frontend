@@ -16,6 +16,9 @@ import { SectionHeading } from './admit/StepIdentity'
 import * as studentApi from '@/api/studentsApi'
 import api from '@/api/axios'
 import { downloadBlob } from '@/utils/downloadBlob'
+import { pdf } from '@react-pdf/renderer'
+import { StudentProfilePDF } from '@/pdf/StudentProfilePDF'
+import { getSettings } from '@/api/settingsApi'
 
 const DataField = ({ label, value, highlight, uppercase, capitalize, colSpan = '' }) => (
   <div className={colSpan}>
@@ -49,11 +52,27 @@ const StudentFullDetailsPage = () => {
   const handlePrint = async () => {
     setIsDownloading(true)
     try {
-      const blob = await studentApi.downloadAdmissionForm(id)
-      downloadBlob(blob, `AdmissionForm_${student.admission_no}.pdf`)
-      toastSuccess('Admission form downloaded')
+      const settingsRes = await getSettings()
+      const schoolData = {
+        name: settingsRes.data?.school_name,
+        email: settingsRes.data?.school_email,
+        phone: settingsRes.data?.school_phone,
+        address: settingsRes.data?.school_address,
+        logo_url: settingsRes.data?.logo_url,
+      }
+
+      const pdfDoc = (
+        <StudentProfilePDF
+          student={student}
+          school={schoolData}
+        />
+      )
+
+      const blob = await pdf(pdfDoc).toBlob()
+      downloadBlob(blob, `Student_Profile_${student.admission_no}.pdf`)
+      toastSuccess('Student profile PDF downloaded successfully')
     } catch (err) {
-      toastError(err.message || 'Failed to download admission form')
+      toastError(err.message || 'Failed to download student profile PDF')
     } finally {
       setIsDownloading(false)
     }
@@ -218,7 +237,7 @@ const StudentFullDetailsPage = () => {
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-7 gap-6">
                 <DataField label="Name" value={student.father_name} />
                 <DataField label="Phone" value={student.father_phone} />
-                <DataField label="Email" value={student.parent_email} />
+                <DataField label="Father's Email" value={student.parent_email} />
                 <DataField label="Occupation" value={student.father_occupation} />
                 <DataField label="Qualification" value={student.father_qualification} />
                 <DataField label="Aadhar No" value={student.father_aadhar} />
@@ -227,13 +246,14 @@ const StudentFullDetailsPage = () => {
             </div>
 
             {/* Guardian */}
-            {(student.guardian_name || student.guardian_phone) && (
+            {(student.guardian_name || student.guardian_phone || student.guardian_email) && (
               <div className="space-y-4">
                 <div className="inline-flex items-center gap-2 px-3 py-1 bg-gray-100 rounded-lg text-gray-700 font-bold text-[10px] uppercase tracking-wider">Guardian Details</div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
                   <DataField label="Guardian Name" value={student.guardian_name} />
                   <DataField label="Relation" value={student.guardian_relation} />
                   <DataField label="Phone" value={student.guardian_phone} />
+                  <DataField label="Email" value={student.guardian_email} />
                   <DataField label="Qualification" value={student.guardian_qualification} />
                   <DataField label="Occupation" value={student.guardian_occupation} />
                   <DataField label="Aadhar No" value={student.guardian_aadhar} />

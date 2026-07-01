@@ -91,6 +91,9 @@ const StudentDetailPage = () => {
   const [manualPassword, setManualPassword] = useState('')
   const [manualParentPassword, setManualParentPassword] = useState('')
   const [previewOpen, setPreviewOpen] = useState(false)
+  const [deleteOpen, setDeleteOpen] = useState(false)
+  const [deleteConfirmName, setDeleteConfirmName] = useState('')
+  const [deleteReason, setDeleteReason] = useState('Deleted from profile page')
 
   const [fetchingDocs, setFetchingDocs] = useState({ id: false, tc: false })
   const [docs, setDocs] = useState({ id: null, tc: null })
@@ -146,6 +149,28 @@ const StudentDetailPage = () => {
       toastSuccess('Parent password reset')
     } catch (err) { toastError(err.message || 'Failed') }
     finally { setIsResettingParentPass(false) }
+  }
+
+  const handleDeleteStudent = async () => {
+    if (deleteConfirmName.trim().toLowerCase() !== fullName.toLowerCase()) {
+      toastError('Confirmation name does not match student name')
+      return
+    }
+    try {
+      const res = await deleteStudent(student.id, {
+        confirm_name: deleteConfirmName.trim(),
+        reason: deleteReason.trim()
+      })
+      if (res.success) {
+        toastSuccess('Student deleted successfully')
+        setDeleteOpen(false)
+        navigate(ROUTES.STUDENTS)
+      } else {
+        toastError(res.message || 'Failed to delete student')
+      }
+    } catch (err) {
+      toastError(err.message || 'An error occurred during deletion')
+    }
   }
 
   const handleCopy = async (v) => {
@@ -346,7 +371,7 @@ const StudentDetailPage = () => {
                 {student.is_active ? 'Suspend Account' : 'Activate Account'}
               </Button>
               <Button variant="secondary" size="sm" icon={History} className="w-full justify-start" onClick={() => setHistoryOpen(true)}>Enrollment History</Button>
-              <Button variant="danger" size="sm" icon={Trash2} className="w-full justify-start" onClick={() => navigate(`${ROUTES.STUDENTS}/${student.id}/delete`)}>Delete Student</Button>
+              <Button variant="danger" size="sm" icon={Trash2} className="w-full justify-start" onClick={() => { setDeleteConfirmName(''); setDeleteOpen(true); }}>Delete Student</Button>
             </div>
           </div>
         </div>
@@ -468,6 +493,61 @@ const StudentDetailPage = () => {
       <ReadmitModal open={readmitOpen} student={student} onClose={() => setReadmitOpen(false)} onSuccess={() => { setReadmitOpen(false); fetchStudent(id) }} />
       <EnrollmentHistoryModal open={historyOpen} student={student} onClose={() => setHistoryOpen(false)} />
 
+      {/* Delete Student Modal */}
+      <Modal
+        open={deleteOpen}
+        onClose={() => setDeleteOpen(false)}
+        title="Delete Student Profile"
+        size="md"
+        footer={
+          <>
+            <Button variant="secondary" onClick={() => setDeleteOpen(false)}>Cancel</Button>
+            <Button 
+              variant="danger" 
+              onClick={handleDeleteStudent} 
+              disabled={deleteConfirmName.trim().toLowerCase() !== fullName.toLowerCase()}
+              loading={isSaving}
+            >
+              Permanently Delete
+            </Button>
+          </>
+        }
+      >
+        <div className="space-y-4">
+          <div className="p-4 rounded-xl bg-red-50 dark:bg-red-950/20 border border-red-100 dark:border-red-900/30 flex gap-3">
+            <AlertTriangle className="text-red-600 shrink-0 mt-0.5" size={20} />
+            <div>
+              <h4 className="text-sm font-bold text-red-800 dark:text-red-200">Critical Action!</h4>
+              <p className="text-xs text-red-700 dark:text-red-300 mt-1 leading-relaxed">
+                This will delete the student <strong>{fullName}</strong> ({student.admission_no}) permanently. All grade records, attendance sheets, fee histories, and active checkouts will be permanently unlinked or deleted. This action is irreversible.
+              </p>
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <p className="text-xs text-gray-500 font-medium leading-relaxed">
+              To proceed, please type the student's full name <strong className="text-gray-800 dark:text-gray-200 font-bold">"{fullName}"</strong> below:
+            </p>
+            <Input
+              type="text"
+              placeholder={fullName}
+              value={deleteConfirmName}
+              onChange={(e) => setDeleteConfirmName(e.target.value)}
+            />
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-xs text-gray-500 font-medium">Reason for Deletion (Optional):</label>
+            <Input
+              type="text"
+              placeholder="e.g. Left the institution / Duplicate entry"
+              value={deleteReason}
+              onChange={(e) => setDeleteReason(e.target.value)}
+            />
+          </div>
+        </div>
+      </Modal>
+
       {/* Image Preview Modal */}
       <Modal open={previewOpen} onClose={() => setPreviewOpen(false)} title="Profile Photo" size="md">
         <div className="flex justify-center p-2">
@@ -501,11 +581,13 @@ const TabDetails = ({ student }) => {
             name={student.mother_name} 
             role="Mother" 
             phone={student.mother_phone} 
+            email={student.mother_email}
           />
           <ParentCard 
             name={student.guardian_name || student.father_name} 
             role={`Guardian (${student.guardian_relation || 'Father'})`} 
             phone={student.guardian_phone || student.father_phone} 
+            email={student.guardian_email}
           />
         </div>
       </div>

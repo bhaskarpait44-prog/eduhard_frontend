@@ -86,8 +86,7 @@ const StepDocuments = ({ defaultValues, onNext, onBack }) => {
   return (
     <div className="space-y-6">
       <div
-        className="rounded-2xl p-6 space-y-5"
-        style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)' }}
+        className="bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-3xl p-8 space-y-6 shadow-xl shadow-indigo-500/5"
       >
         <div className="flex items-center justify-between gap-4">
           <SectionHeading 
@@ -159,13 +158,13 @@ const StepDocuments = ({ defaultValues, onNext, onBack }) => {
         </div>
       </div>
 
-      <div className="flex justify-between mt-4">
+      <div className="flex justify-between items-center bg-white dark:bg-gray-900 p-4 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm mt-6">
         <Button variant="secondary" type="button" onClick={onBack}>← Back</Button>
         <div className="flex gap-3">
            {missingAnyRequired && (
              <Button variant="ghost" onClick={() => handleNext(true)}>Skip for now</Button>
            )}
-           <Button onClick={() => handleNext(false)}>
+           <Button onClick={() => handleNext(false)} className="shadow-lg shadow-indigo-500/20">
              {missingAnyRequired ? 'Upload & Continue →' : 'Continue to Access →'}
            </Button>
         </div>

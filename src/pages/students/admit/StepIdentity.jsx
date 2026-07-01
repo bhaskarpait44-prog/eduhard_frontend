@@ -74,8 +74,7 @@ const StepIdentity = ({ defaultValues, onNext }) => {
   return (
     <form onSubmit={handleSubmit(handleProceed)}>
       <div
-        className="rounded-2xl p-6 space-y-5"
-        style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)' }}
+        className="bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-3xl p-8 space-y-6 shadow-xl shadow-indigo-500/5"
       >
         <SectionHeading title="Basic Identity" subtitle="Student's legal name and personal details" />
 
@@ -145,8 +144,9 @@ const StepIdentity = ({ defaultValues, onNext }) => {
         </div>
       </div>
 
-      <div className="flex justify-end mt-4">
-        <Button type="submit" loading={checking}>
+      <div className="flex justify-between items-center bg-white dark:bg-gray-900 p-4 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm mt-6">
+        <div />
+        <Button type="submit" loading={checking} className="shadow-lg shadow-indigo-500/20">
           {checking ? 'Checking uniqueness...' : 'Continue to Profile →'}
         </Button>
       </div>

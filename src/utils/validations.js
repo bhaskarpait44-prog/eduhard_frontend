@@ -109,8 +109,8 @@ const baseStudentProfileSchema = z.object({
   perm_state: z.string().optional(),
   perm_pincode: pincodeSchema,
 
-  father_name: z.string().optional().or(z.literal('')),
-  father_phone: phoneSchema,
+  father_name: z.string().min(1, 'Father\'s name is missing — please enter the father\'s full name'),
+  father_phone: z.string().min(1, 'Father\'s phone number is missing').regex(/^[6-9]\d{9}$/, 'Phone number is invalid — enter a valid 10-digit mobile number starting with 6, 7, 8, or 9'),
   parent_email: z.string().email('Parent login email is invalid — enter a valid email address to be used for parent portal login'),
   father_occupation: z.string().optional(),
   father_qualification: z.string().optional(),
@@ -124,7 +124,7 @@ const baseStudentProfileSchema = z.object({
     z.string().regex(/^\d+$/, 'Annual income is invalid — enter numbers only without commas or symbols (Optional)').optional()
   ),
 
-  mother_name: z.string().min(1, 'Mother\'s name is missing — please enter the mother\'s full name'),
+  mother_name: z.string().optional().or(z.literal('')),
   mother_phone: phoneSchema,
   mother_qualification: z.string().optional(),
   mother_email: z.string().email('Mother\'s email is invalid — please enter a valid email address (Optional)').optional().or(z.literal('')),
@@ -149,6 +149,7 @@ const baseStudentProfileSchema = z.object({
     .regex(/^\d{12}$/, 'Guardian\'s Aadhaar number is invalid — enter exactly 12 digits (numbers only) (Optional)')
     .optional()
     .or(z.literal('')),
+  guardian_email: z.string().email('Guardian\'s email is invalid — please enter a valid email address (Optional)').optional().or(z.literal('')),
 
   emergency_contact: z
     .string()
@@ -174,17 +175,6 @@ const applyProfileRefinements = (data, ctx) => {
     if (!data.perm_pincode || !/^\d{6}$/.test(data.perm_pincode)) ctx.addIssue({ code: 'custom', message: 'Permanent PIN code is invalid — please enter exactly 6 digits', path: ['perm_pincode'] });
   }
 
-  const hasFather = data.father_name?.trim() && data.father_phone?.trim();
-  const hasMother = data.mother_name?.trim() && data.mother_phone?.trim();
-  const hasGuardian = data.guardian_name?.trim() && data.guardian_phone?.trim();
-
-  if (!hasFather && !hasMother && !hasGuardian) {
-    ctx.addIssue({
-      code: 'custom',
-      message: 'At least one parent or guardian details (Name and Phone) must be fully provided',
-      path: ['father_name']
-    });
-  }
 }
 
 export const studentProfileSchema = baseStudentProfileSchema.superRefine(applyProfileRefinements)

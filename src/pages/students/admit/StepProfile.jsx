@@ -122,8 +122,7 @@ const StepProfile = ({ defaultValues, onNext, onBack }) => {
   return (
     <form onSubmit={handleSubmit(handleProceed)}>
       <div
-        className="rounded-2xl p-6 space-y-5"
-        style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)' }}
+        className="bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-3xl p-8 space-y-6 shadow-xl shadow-indigo-500/5"
       >
         {/* Identity Expansion */}
         <SectionHeading title="Identity Details" subtitle="Additional personal information" />
@@ -237,7 +236,7 @@ const StepProfile = ({ defaultValues, onNext, onBack }) => {
         {/* Parents */}
         <SectionHeading title="Parents Profile" subtitle="Detailed information of Mother and Father" />
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          <Input label="Mother's Name" required placeholder="Sunita Sharma" error={errors.mother_name?.message} {...register('mother_name')} />
+          <Input label="Mother's Name (Optional)" placeholder="Sunita Sharma" error={errors.mother_name?.message} {...register('mother_name')} />
           <Input label="Mother's Qualification (Optional)" placeholder="e.g. B.A., M.Sc." {...register('mother_qualification')} />
           <Input 
             label="Mother's Phone (Optional)" 
@@ -265,11 +264,12 @@ const StepProfile = ({ defaultValues, onNext, onBack }) => {
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-6">
-          <Input label="Father's Name (Optional)" placeholder="Rajesh Sharma" error={errors.father_name?.message} {...register('father_name')} />
+          <Input label="Father's Name" required placeholder="Rajesh Sharma" error={errors.father_name?.message} {...register('father_name')} />
           <Input label="Father's Occupation (Optional)" placeholder="e.g. Engineer, Farmer" {...register('father_occupation')} />
           <Input label="Father's Qualification (Optional)" placeholder="e.g. B.Tech, M.A." {...register('father_qualification')} />
           <Input 
-            label="Father's Phone (Optional)" 
+            label="Father's Phone" 
+            required 
             type="text" 
             placeholder="9876543211" 
             hint="10-digit mobile number"
@@ -325,6 +325,13 @@ const StepProfile = ({ defaultValues, onNext, onBack }) => {
             error={errors.guardian_aadhar?.message}
             {...register('guardian_aadhar')} 
           />
+          <Input 
+            label="Guardian's Email (Optional)" 
+            type="email" 
+            placeholder="guardian@email.com" 
+            error={errors.guardian_email?.message}
+            {...register('guardian_email')} 
+          />
         </div>
 
         {/* Medical */}
@@ -350,9 +357,9 @@ const StepProfile = ({ defaultValues, onNext, onBack }) => {
         />
       </div>
 
-      <div className="flex justify-between mt-4">
+      <div className="flex justify-between items-center bg-white dark:bg-gray-900 p-4 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm mt-6">
         <Button variant="secondary" type="button" onClick={onBack}>← Back</Button>
-        <Button type="submit" loading={checking}>
+        <Button type="submit" loading={checking} className="shadow-lg shadow-indigo-500/20">
           {checking ? 'Checking uniqueness...' : 'Continue to Enrollment →'}
         </Button>
       </div>

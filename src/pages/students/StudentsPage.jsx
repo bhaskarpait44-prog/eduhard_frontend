@@ -138,7 +138,6 @@ const CardMenu = ({ student, onView, onEdit, onDelete }) => {
     { icon: ExternalLink, label: 'Full Profile', action: onView },
     { icon: Pencil, label: 'Edit Profile',  action: onEdit },
     { icon: FileDown, label: 'Admission Form', action: handleDownloadForm, loading: isDownloading },
-    { icon: Trash2, label: 'Delete Student', action: onDelete, danger: true },
   ]
 
   return (
@@ -416,7 +415,7 @@ const StudentsPage = () => {
   const hasActiveFilters = search || Object.values(filters).some(v => v !== '')
 
   const goToDetail = (id) => navigate(`${ROUTES.STUDENTS}/${id}`)
-  const goToEdit   = (id) => navigate(`${ROUTES.STUDENTS}/${id}?tab=profile`)
+  const goToEdit   = (id) => navigate(`${ROUTES.STUDENTS}/${id}/edit`)
 
   const handleToggleStatus = async (student) => {
     const res = await toggleStatus(student.id)

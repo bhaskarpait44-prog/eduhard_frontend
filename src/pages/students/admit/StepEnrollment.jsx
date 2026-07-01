@@ -134,8 +134,7 @@ const StepEnrollment = ({ defaultValues, currentSession, onSubmit, onBack, isPar
   return (
     <form onSubmit={handleSubmit(onSubmit)}>
       <div
-        className="rounded-2xl p-6 space-y-5"
-        style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)' }}
+        className="bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-3xl p-8 space-y-6 shadow-xl shadow-indigo-500/5"
       >
         <SectionHeading title="Enrollment" subtitle="Assign class, section and subjects" />
 
@@ -313,7 +312,7 @@ const StepEnrollment = ({ defaultValues, currentSession, onSubmit, onBack, isPar
         </div>
       </div>
 
-      <div className="flex justify-between mt-4">
+      <div className="flex justify-between items-center bg-white dark:bg-gray-900 p-4 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm mt-6">
         <Button 
           variant="secondary" 
           type="button" 
@@ -323,7 +322,7 @@ const StepEnrollment = ({ defaultValues, currentSession, onSubmit, onBack, isPar
         >
           ← Back
         </Button>
-        <Button type="submit" disabled={!currentSession}>
+        <Button type="submit" disabled={!currentSession} className="shadow-lg shadow-indigo-500/20">
           Continue to Documents →
         </Button>
       </div>

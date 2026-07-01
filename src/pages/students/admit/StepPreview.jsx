@@ -29,8 +29,7 @@ const StepPreview = ({ formData, onBack, onSubmit, isSaving }) => {
   return (
     <div className="space-y-4">
       <div
-        className="rounded-2xl p-6 space-y-6"
-        style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)' }}
+        className="bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-3xl p-8 space-y-6 shadow-xl shadow-indigo-500/5"
       >
         <SectionHeading
           title="Review Admission Details"
@@ -82,6 +81,7 @@ const StepPreview = ({ formData, onBack, onSubmit, isSaving }) => {
           <PreviewField label="Mother's Aadhaar" value={formData.mother_aadhar} />
           <PreviewField label="Mother's Annual Income" value={formData.mother_annual_income} />
           <PreviewField label="Guardian Name" value={formData.guardian_name} />
+          <PreviewField label="Guardian Email" value={formData.guardian_email} />
         </PreviewGroup>
 
         {/* Documents */}

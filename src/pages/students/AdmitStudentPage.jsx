@@ -163,6 +163,11 @@ const AdmitStudentPage = () => {
         guardian_qualification: allData.guardian_qualification,
         guardian_occupation: allData.guardian_occupation,
         guardian_aadhar: allData.guardian_aadhar,
+        guardian_email: allData.guardian_email,
+        medium: allData.medium,
+        is_hostel: allData.is_hostel,
+        distance_km: allData.distance_km,
+        prev_attendance_days: allData.prev_attendance_days,
 
         is_permanent_same: allData.is_permanent_same,
         perm_address: allData.perm_address,
@@ -308,30 +313,31 @@ const AdmitStudentPage = () => {
       )}
 
       {step < 7 && (
-        <div
-          className="p-4 rounded-2xl"
-          style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)' }}
-        >
-          <div className="flex items-center">
+        <div className="bg-white/90 dark:bg-gray-900/90 backdrop-blur-md border border-gray-100 dark:border-gray-800 rounded-3xl p-6 shadow-xl shadow-indigo-500/5 relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-500/5 rounded-full blur-3xl pointer-events-none" />
+          
+          <div className="flex items-center justify-between">
             {STEPS.slice(0, 6).map((s, i) => {
               const isDone = step > s.id
               const isCurrent = step === s.id
               return (
                 <div key={s.id} className="flex items-center flex-1 last:flex-none">
-                  <div className="flex flex-col items-center gap-1">
+                  <div className="flex flex-col items-center gap-2 group relative z-10">
                     <div
-                      className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-all duration-300"
+                      className={`w-9 h-9 rounded-2xl flex items-center justify-center text-xs font-bold transition-all duration-300 transform ${
+                        isCurrent ? 'scale-110 shadow-lg shadow-indigo-500/30' : isDone ? 'shadow-md shadow-emerald-500/20' : ''
+                      }`}
                       style={{
-                        backgroundColor: isDone ? '#22c55e' : isCurrent ? 'var(--color-brand)' : 'var(--color-surface-raised)',
+                        backgroundColor: isDone ? '#10b981' : isCurrent ? 'var(--color-brand)' : 'var(--color-surface-raised)',
                         color: isDone || isCurrent ? '#fff' : 'var(--color-text-muted)',
-                        border: isCurrent ? '2px solid var(--color-brand)' : '2px solid transparent',
+                        border: isCurrent ? '2.5px solid #fff' : '1px solid var(--color-border)',
                       }}
                     >
-                      {isDone ? <Check size={14} /> : s.id}
+                      {isDone ? <Check size={16} className="text-white" /> : s.id}
                     </div>
                     <span
-                      className="text-xs font-medium hidden sm:block text-center"
-                      style={{ color: isCurrent ? 'var(--color-brand)' : 'var(--color-text-muted)', fontSize: '10px' }}
+                      className="text-[10px] font-extrabold uppercase tracking-wider hidden md:block text-center transition-colors duration-300"
+                      style={{ color: isCurrent ? 'var(--color-brand)' : isDone ? '#10b981' : 'var(--color-text-muted)' }}
                     >
                       {s.label}
                     </span>
@@ -339,9 +345,14 @@ const AdmitStudentPage = () => {
 
                   {i < 5 && (
                     <div
-                      className="flex-1 h-0.5 mx-1 transition-all duration-500"
-                      style={{ backgroundColor: isDone ? '#22c55e' : 'var(--color-border)' }}
-                    />
+                      className="flex-1 h-0.5 mx-2 rounded-full overflow-hidden relative"
+                      style={{ backgroundColor: 'var(--color-border)' }}
+                    >
+                      <div 
+                        className="absolute left-0 top-0 h-full bg-gradient-to-r from-emerald-500 to-indigo-600 transition-all duration-700 ease-in-out"
+                        style={{ width: isDone ? '100%' : '0%' }}
+                      />
+                    </div>
                   )}
                 </div>
               )

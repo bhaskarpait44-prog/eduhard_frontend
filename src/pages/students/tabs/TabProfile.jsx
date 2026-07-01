@@ -97,9 +97,15 @@ const TabProfile = ({ student, studentId }) => {
         <InfoRow label="Student Email"    value={student.email} />
         <InfoRow label="Mother tongue"    value={student.mother_tongue} />
         <InfoRow label="Father's Name"    value={student.father_name} />
+        <InfoRow label="Father's Phone"   value={student.father_phone} />
+        <InfoRow label="Father's Email (Login)" value={student.parent_email} />
         <InfoRow label="Mother's Name"    value={student.mother_name} />
+        <InfoRow label="Mother's Phone"   value={student.mother_phone} />
+        <InfoRow label="Mother's Email"   value={student.mother_email} />
         <InfoRow label="Mother's Occupation" value={student.mother_occupation} />
-        <InfoRow label="Parent Login Email" value={student.parent_email} />
+        <InfoRow label="Guardian Name"    value={student.guardian_name} />
+        <InfoRow label="Guardian Phone"   value={student.guardian_phone} />
+        <InfoRow label="Guardian Email"   value={student.guardian_email} />
         <InfoRow label="Blood Group"      value={student.blood_group} />
       </div>
 

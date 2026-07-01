@@ -91,6 +91,9 @@ const EditStudentPage = () => {
       identification_marks: student.identification_marks || '',
       pen_no: student.pen_no || '',
       apaar_id: student.apaar_id || '',
+      medium: student.medium || '',
+      distance_km: student.distance_km || '',
+      prev_attendance_days: student.prev_attendance_days || '',
       
       father_name: student.father_name || '',
       father_phone: student.father_phone || '',
@@ -114,6 +117,7 @@ const EditStudentPage = () => {
       guardian_qualification: student.guardian_qualification || '',
       guardian_occupation: student.guardian_occupation || '',
       guardian_aadhar: student.guardian_aadhar || '',
+      guardian_email: student.guardian_email || '',
 
       blood_group: student.blood_group || '',
       medical_notes: student.medical_notes || '',
@@ -295,14 +299,12 @@ const EditStudentPage = () => {
               })} 
             />
             <Input 
-              label="Father's Email (Parent Login)" 
+              label="Father Email (Parent Login)" 
               type="email" 
               required 
-              hint="The email the father uses to log in to the portal"
+              hint="The email the parent uses to log in to the portal"
               error={errors.parent_email?.message} 
-              {...register('parent_email', {
-                onChange: (e) => handleUniqueCheckDebounced('parent_email', "Father's Email", e.target.value)
-              })} 
+              {...register('parent_email')} 
             />
           </div>
           <div className="flex items-center gap-2 p-3 bg-white/50 rounded-xl text-[11px] text-indigo-700 font-medium">
@@ -391,6 +393,31 @@ const EditStudentPage = () => {
               label="APAAR ID (Optional)" 
               hint="Automated Permanent Academic Account Registry ID (optional)"
               {...register('apaar_id')} 
+            />
+            <Select
+              label="Medium"
+              options={[
+                { value: '', label: 'Select Medium (Optional)' },
+                { value: 'English', label: 'English' },
+                { value: 'Assamese', label: 'Assamese' }
+              ]}
+              error={errors.medium?.message}
+              {...register('medium')}
+            />
+            <Input
+              label="Distance from School (km) (Optional)"
+              type="number"
+              step="0.01"
+              placeholder="e.g. 2.5"
+              error={errors.distance_km?.message}
+              {...register('distance_km')}
+            />
+            <Input
+              label="Prev. Year Attendance (Days) (Optional)"
+              type="number"
+              placeholder="e.g. 180"
+              error={errors.prev_attendance_days?.message}
+              {...register('prev_attendance_days')}
             />
             <Input 
               label="Identification Marks (Optional)" 
@@ -490,11 +517,8 @@ const EditStudentPage = () => {
               <div className="flex items-center gap-2 border-b border-border pb-2">
                 <Badge variant="blue">Mother's Particulars</Badge>
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                 <Input label="Name" required error={errors.mother_name?.message} {...register('mother_name')} />
-                <Input label="Phone (Optional)" error={errors.mother_phone?.message} {...register('mother_phone', {
-                  onChange: (e) => handleUniqueCheckDebounced('mother_phone', "Mother's Phone Number", e.target.value)
-                })} />
+              <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">                 <Input label="Name (Optional)" error={errors.mother_name?.message} {...register('mother_name')} />
+                <Input label="Phone (Optional)" error={errors.mother_phone?.message} {...register('mother_phone')} />
                 <Input label="Qualification (Optional)" {...register('mother_qualification')} />
                 <Input label="Occupation (Optional)" placeholder="e.g. Doctor, Homemaker" {...register('mother_occupation')} />
                 <Input
@@ -502,17 +526,13 @@ const EditStudentPage = () => {
                   type="email"
                   placeholder="mother@email.com"
                   error={errors.mother_email?.message}
-                  {...register('mother_email', {
-                    onChange: (e) => handleUniqueCheckDebounced('mother_email', "Mother's Email", e.target.value)
-                  })}
+                  {...register('mother_email')}
                 />
                 <Input 
                   label="Mother's Aadhar No (Optional)" 
                   hint="12-digit Aadhaar number printed on the card (optional)"
                   error={errors.mother_aadhar?.message}
-                  {...register('mother_aadhar', {
-                    onChange: (e) => handleUniqueCheckDebounced('mother_aadhar', "Mother's Aadhaar", e.target.value)
-                  })} 
+                  {...register('mother_aadhar')} 
                 />
                 <Input label="Mother's Annual Income (Optional)" error={errors.mother_annual_income?.message} {...register('mother_annual_income')} />
               </div>
@@ -524,14 +544,12 @@ const EditStudentPage = () => {
                 <Badge variant="indigo">Father's Particulars</Badge>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-3 gap-4">
-                 <Input label="Name" required error={errors.father_name?.message} {...register('father_name')} />
+                  <Input label="Name" required error={errors.father_name?.message} {...register('father_name')} />
                 <Input 
                   label="Phone" 
                   required
                   error={errors.father_phone?.message} 
-                  {...register('father_phone', {
-                    onChange: (e) => handleUniqueCheckDebounced('father_phone', "Father's Phone Number", e.target.value)
-                  })} 
+                  {...register('father_phone')} 
                 />
 
                 <Input
@@ -544,9 +562,7 @@ const EditStudentPage = () => {
                   label="Aadhar No (Optional)" 
                   hint="12-digit Aadhaar number printed on the card (optional)"
                   error={errors.father_aadhar?.message}
-                  {...register('father_aadhar', {
-                    onChange: (e) => handleUniqueCheckDebounced('father_aadhar', "Father's Aadhaar", e.target.value)
-                  })} 
+                  {...register('father_aadhar')} 
                 />
                 <Input 
                   label="Annual Income (Optional)" 
@@ -567,20 +583,23 @@ const EditStudentPage = () => {
                 <Input 
                   label="Phone (Optional)" 
                   error={errors.guardian_phone?.message}
-                  {...register('guardian_phone', {
-                    onChange: (e) => handleUniqueCheckDebounced('guardian_phone', "Guardian's Phone Number", e.target.value)
-                  })} 
+                  {...register('guardian_phone')} 
                 />
                 <Input label="Qualification (Optional)" {...register('guardian_qualification')} />
                 <Input label="Occupation (Optional)" {...register('guardian_occupation')} />
-                <Input 
-                  label="Aadhar No (Optional)" 
-                  hint="12-digit Aadhaar number printed on the card (optional)"
-                  error={errors.guardian_aadhar?.message}
-                  {...register('guardian_aadhar', {
-                    onChange: (e) => handleUniqueCheckDebounced('guardian_aadhar', "Guardian's Aadhaar", e.target.value)
-                  })} 
-                />
+                 <Input 
+                   label="Aadhar No (Optional)" 
+                   hint="12-digit Aadhaar number printed on the card (optional)"
+                   error={errors.guardian_aadhar?.message}
+                   {...register('guardian_aadhar')} 
+                 />
+                 <Input 
+                   label="Guardian Email (Optional)" 
+                   type="email"
+                   placeholder="guardian@email.com"
+                   error={errors.guardian_email?.message}
+                   {...register('guardian_email')} 
+                 />
               </div>
             </div>
           </div>
