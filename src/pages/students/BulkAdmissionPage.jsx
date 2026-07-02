@@ -4,6 +4,7 @@ import {
   ArrowLeft, Upload, FileSpreadsheet, CheckCircle2,
   AlertCircle, Download, Loader2, ArrowRight,
 } from 'lucide-react'
+import Papa from 'papaparse'
 import * as api from '@/api/studentsApi'
 import usePageTitle from '@/hooks/usePageTitle'
 import useToast from '@/hooks/useToast'
@@ -12,24 +13,12 @@ import { ROUTES } from '@/constants/app'
 const STEPS = ['Download Template', 'Upload File', 'Review & Validate', 'Processing', 'Summary']
 
 function parseCSV(text) {
-  const lines = text.trim().split('\n')
-  const headers = lines[0]
-    .split(',')
-    .map(h => h.trim().replace(/^"(.*)"$/, '$1').toLowerCase().replace(/\s+/g, '_').replace(/[^a-z_]/g, ''))
-
-  const rows = []
-  for (let i = 1; i < lines.length; i += 1) {
-    const values = lines[i].split(',').map(v => v.trim().replace(/^"(.*)"$/, '$1'))
-    if (values.every(v => !v)) continue
-
-    const row = {}
-    headers.forEach((header, index) => {
-      row[header] = values[index] || ''
-    })
-    rows.push(row)
-  }
-
-  return rows
+  const result = Papa.parse(text, {
+    header: true,
+    skipEmptyLines: 'greedy',
+    transformHeader: (h) => h.trim().replace(/^"(.*)"$/, '$1').toLowerCase().replace(/\s+/g, '_').replace(/[^a-z_]/g, '')
+  })
+  return result.data
 }
 
 const BulkAdmissionPage = () => {
@@ -77,7 +66,10 @@ const BulkAdmissionPage = () => {
         const headerRow = columns.map(c => c.key)
         const exampleRow = columns.map(c => c.example ?? '')
 
-        const csv = [headerRow.join(','), exampleRow.join(',')].join('\n')
+        const csv = Papa.unparse({
+          fields: headerRow,
+          data: [exampleRow]
+        })
 
         const blob = new Blob([csv], { type: 'text/csv' })
         const url = URL.createObjectURL(blob)

@@ -6,6 +6,7 @@ const useParentStore = create((set, get) => ({
   wards: [],
   selectedWardId: null,
   attendance: [],
+  attendanceSummary: null,
   fees: [],
   results: [],
   homework: [],
@@ -45,8 +46,10 @@ const useParentStore = create((set, get) => ({
         api.getWardResults(studentId),
         api.getWardHomework(studentId)
       ])
+      const attData = attRes.data || {}
       set({ 
-        attendance: attRes.data || [],
+        attendance: attData.records || [],
+        attendanceSummary: attData.summary || null,
         fees: feeRes.data || [],
         results: resRes.data || [],
         homework: hwRes.data || [],

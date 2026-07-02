@@ -29,20 +29,40 @@ const StepProfile = ({ defaultValues, onNext, onBack }) => {
     mode: 'onBlur',
   })
 
+  const [parentWarnings, setParentWarnings] = useState({})
   const checkTimeouts = useRef({})
+
   const handleUniqueCheck = async (field, label, value) => {
     if (!value || value.trim() === '') {
       clearErrors(field)
+      setParentWarnings(prev => {
+        const next = { ...prev }
+        delete next[field]
+        return next
+      })
       return
     }
     try {
       const res = await api.get('/public/check-uniqueness', {
         params: { field, value }
       })
+      const isParentField = ['parent_email', 'father_phone', 'mother_phone', 'guardian_phone', 'mother_email', 'father_aadhar', 'mother_aadhar', 'guardian_aadhar'].includes(field);
       if (!res.data.isUnique) {
-        setError(field, { type: 'manual', message: `${label} is already taken` })
+        if (isParentField) {
+          setParentWarnings(prev => ({ ...prev, [field]: 'Matches an existing parent record. This student will be linked to that family account.' }))
+          clearErrors(field)
+        } else {
+          setError(field, { type: 'manual', message: `${label} is already taken` })
+        }
       } else {
         clearErrors(field)
+        if (isParentField) {
+          setParentWarnings(prev => {
+            const next = { ...prev }
+            delete next[field]
+            return next
+          })
+        }
       }
     } catch (err) {
       console.error(err)
@@ -88,6 +108,20 @@ const StepProfile = ({ defaultValues, onNext, onBack }) => {
     }
   }, [fatherPhone, emergencyContact, lastFatherPhone, setValue])
 
+  const fatherName = watch('father_name')
+  const parentEmail = watch('parent_email')
+
+  const guardianName = watch('guardian_name')
+  const guardianRelation = watch('guardian_relation')
+  const guardianPhone = watch('guardian_phone')
+  const guardianEmail = watch('guardian_email')
+
+  const hasFatherInfo = fatherName?.trim() || fatherPhone?.trim() || parentEmail?.trim()
+  const hasGuardianInfo = guardianName?.trim() || guardianRelation?.trim() || guardianPhone?.trim() || guardianEmail?.trim()
+
+  const isFatherRequired = !hasGuardianInfo
+  const isGuardianRequired = !hasFatherInfo
+
   const [checking, setChecking] = useState(false)
   const handleProceed = async (data) => {
     setChecking(true)
@@ -103,7 +137,7 @@ const StepProfile = ({ defaultValues, onNext, onBack }) => {
             params: { field: field.key, value: field.val }
           })
           if (!res.data.isUnique) {
-            setError(field.key, { type: 'manual', message: `${field.label} is already taken` })
+            setError(field.key, { type: 'manual', message: `${label} is already taken` })
             setChecking(false)
             return
           }
@@ -243,9 +277,21 @@ const StepProfile = ({ defaultValues, onNext, onBack }) => {
             type="text" 
             placeholder="9876543212" 
             error={errors.mother_phone?.message} 
-            {...register('mother_phone')} 
+            warning={parentWarnings.mother_phone}
+            {...register('mother_phone', {
+              onChange: (e) => handleUniqueCheckDebounced('mother_phone', "Mother's Phone", e.target.value)
+            })} 
           />
-          <Input label="Mother's Email (Optional)" type="email" placeholder="mother@email.com" error={errors.mother_email?.message} {...register('mother_email')} />
+          <Input 
+            label="Mother's Email (Optional)" 
+            type="email" 
+            placeholder="mother@email.com" 
+            error={errors.mother_email?.message} 
+            warning={parentWarnings.mother_email}
+            {...register('mother_email', {
+              onChange: (e) => handleUniqueCheckDebounced('mother_email', "Mother's Email", e.target.value)
+            })} 
+          />
           <Input 
             label="Mother's Occupation (Optional)" 
             placeholder="e.g. Doctor, Homemaker" 
@@ -258,32 +304,47 @@ const StepProfile = ({ defaultValues, onNext, onBack }) => {
             maxLength={12} 
             hint="12-digit Aadhaar number printed on the card (optional)"
             error={errors.mother_aadhar?.message}
-            {...register('mother_aadhar')} 
+            warning={parentWarnings.mother_aadhar}
+            {...register('mother_aadhar', {
+              onChange: (e) => handleUniqueCheckDebounced('mother_aadhar', "Mother's Aadhaar", e.target.value)
+            })} 
           />
           <Input label="Mother's Annual Income (Optional)" placeholder="e.g. 8,00,000" error={errors.mother_annual_income?.message} {...register('mother_annual_income')} />
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-6">
-          <Input label="Father's Name" required placeholder="Rajesh Sharma" error={errors.father_name?.message} {...register('father_name')} />
+          <Input 
+            label={isFatherRequired ? "Father's Name" : "Father's Name (Optional)"} 
+            required={isFatherRequired} 
+            placeholder="Rajesh Sharma" 
+            error={errors.father_name?.message} 
+            {...register('father_name')} 
+          />
           <Input label="Father's Occupation (Optional)" placeholder="e.g. Engineer, Farmer" {...register('father_occupation')} />
           <Input label="Father's Qualification (Optional)" placeholder="e.g. B.Tech, M.A." {...register('father_qualification')} />
           <Input 
-            label="Father's Phone" 
-            required 
+            label={isFatherRequired ? "Father's Phone" : "Father's Phone (Optional)"} 
+            required={isFatherRequired} 
             type="text" 
             placeholder="9876543211" 
             hint="10-digit mobile number"
             error={errors.father_phone?.message} 
-            {...register('father_phone')} 
+            warning={parentWarnings.father_phone}
+            {...register('father_phone', {
+              onChange: (e) => handleUniqueCheckDebounced('father_phone', "Father's Phone", e.target.value)
+            })} 
           />
           <Input 
-            label="Father's Email" 
+            label={isFatherRequired ? "Father's Email" : "Father's Email (Optional)"} 
             hint="This email becomes the parent's login ID for the portal"
-            required 
+            required={isFatherRequired} 
             type="email" 
             placeholder="father@email.com" 
             error={errors.parent_email?.message} 
-            {...register('parent_email')} 
+            warning={parentWarnings.parent_email}
+            {...register('parent_email', {
+              onChange: (e) => handleUniqueCheckDebounced('parent_email', "Parent Email Login", e.target.value)
+            })} 
           />
           <Input 
             label="Father's Aadhar (Optional)" 
@@ -292,7 +353,10 @@ const StepProfile = ({ defaultValues, onNext, onBack }) => {
             maxLength={12} 
             hint="12-digit Aadhaar number printed on the card (optional)"
             error={errors.father_aadhar?.message}
-            {...register('father_aadhar')} 
+            warning={parentWarnings.father_aadhar}
+            {...register('father_aadhar', {
+              onChange: (e) => handleUniqueCheckDebounced('father_aadhar', "Father's Aadhaar", e.target.value)
+            })} 
           />
           <Input 
             label="Father's Annual Income (Optional)" 
@@ -305,14 +369,30 @@ const StepProfile = ({ defaultValues, onNext, onBack }) => {
         {/* Guardian Expansion */}
         <SectionHeading title="Guardian Details" subtitle="If applicable, or secondary contact" />
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          <Input label="Guardian's Name (Optional)" placeholder="Guardian Name" {...register('guardian_name')} />
-          <Input label="Relation (Optional)" placeholder="Relation to student" {...register('guardian_relation')} />
           <Input 
-            label="Guardian's Phone (Optional)" 
+            label={isGuardianRequired ? "Guardian's Name" : "Guardian's Name (Optional)"} 
+            required={isGuardianRequired} 
+            placeholder="Guardian Name" 
+            error={errors.guardian_name?.message} 
+            {...register('guardian_name')} 
+          />
+          <Input 
+            label={isGuardianRequired ? "Relation" : "Relation (Optional)"} 
+            required={isGuardianRequired} 
+            placeholder="Relation to student" 
+            error={errors.guardian_relation?.message} 
+            {...register('guardian_relation')} 
+          />
+          <Input 
+            label={isGuardianRequired ? "Guardian's Phone" : "Guardian's Phone (Optional)"} 
+            required={isGuardianRequired} 
             type="text" 
             placeholder="9876543213" 
             error={errors.guardian_phone?.message}
-            {...register('guardian_phone')} 
+            warning={parentWarnings.guardian_phone}
+            {...register('guardian_phone', {
+              onChange: (e) => handleUniqueCheckDebounced('guardian_phone', "Guardian's Phone", e.target.value)
+            })} 
           />
           <Input label="Qualification (Optional)" placeholder="Qualification" {...register('guardian_qualification')} />
           <Input label="Occupation (Optional)" placeholder="Occupation" {...register('guardian_occupation')} />
@@ -323,14 +403,21 @@ const StepProfile = ({ defaultValues, onNext, onBack }) => {
             maxLength={12} 
             hint="12-digit Aadhaar number printed on the card (optional)"
             error={errors.guardian_aadhar?.message}
-            {...register('guardian_aadhar')} 
+            warning={parentWarnings.guardian_aadhar}
+            {...register('guardian_aadhar', {
+              onChange: (e) => handleUniqueCheckDebounced('guardian_aadhar', "Guardian's Aadhaar", e.target.value)
+            })} 
           />
           <Input 
-            label="Guardian's Email (Optional)" 
+            label={isGuardianRequired ? "Guardian's Email" : "Guardian's Email (Optional)"} 
+            required={isGuardianRequired} 
             type="email" 
             placeholder="guardian@email.com" 
             error={errors.guardian_email?.message}
-            {...register('guardian_email')} 
+            warning={parentWarnings.guardian_email}
+            {...register('guardian_email', {
+              onChange: (e) => handleUniqueCheckDebounced('guardian_email', "Guardian's Email", e.target.value)
+            })} 
           />
         </div>
 

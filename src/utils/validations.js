@@ -109,9 +109,9 @@ const baseStudentProfileSchema = z.object({
   perm_state: z.string().optional(),
   perm_pincode: pincodeSchema,
 
-  father_name: z.string().min(1, 'Father\'s name is missing — please enter the father\'s full name'),
-  father_phone: z.string().min(1, 'Father\'s phone number is missing').regex(/^[6-9]\d{9}$/, 'Phone number is invalid — enter a valid 10-digit mobile number starting with 6, 7, 8, or 9'),
-  parent_email: z.string().email('Parent login email is invalid — enter a valid email address to be used for parent portal login'),
+  father_name: z.string().optional().or(z.literal('')),
+  father_phone: z.string().regex(/^[6-9]\d{9}$/, 'Phone number is invalid — enter a valid 10-digit mobile number starting with 6, 7, 8, or 9').optional().or(z.literal('')),
+  parent_email: z.string().email('Parent login email is invalid — enter a valid email address to be used for parent portal login').optional().or(z.literal('')),
   father_occupation: z.string().optional(),
   father_qualification: z.string().optional(),
   father_aadhar: z
@@ -175,6 +175,29 @@ const applyProfileRefinements = (data, ctx) => {
     if (!data.perm_pincode || !/^\d{6}$/.test(data.perm_pincode)) ctx.addIssue({ code: 'custom', message: 'Permanent PIN code is invalid — please enter exactly 6 digits', path: ['perm_pincode'] });
   }
 
+  // Either complete Father details OR complete Guardian details must be provided
+  const hasFather = data.father_name?.trim() && data.father_phone?.trim() && data.parent_email?.trim();
+  const hasGuardian = data.guardian_name?.trim() && data.guardian_relation?.trim() && data.guardian_phone?.trim() && data.guardian_email?.trim();
+
+  if (!hasFather && !hasGuardian) {
+    if (!data.father_name?.trim()) ctx.addIssue({ code: 'custom', message: "Father's name is required when no guardian details are set", path: ['father_name'] });
+    if (!data.father_phone?.trim()) ctx.addIssue({ code: 'custom', message: "Father's phone number is required when no guardian details are set", path: ['father_phone'] });
+    if (!data.parent_email?.trim()) ctx.addIssue({ code: 'custom', message: "Parent login email is required when no guardian details are set", path: ['parent_email'] });
+  } else {
+    // If father fields are partially filled, validate them
+    if (data.father_name?.trim() || data.father_phone?.trim() || data.parent_email?.trim()) {
+      if (!data.father_name?.trim()) ctx.addIssue({ code: 'custom', message: "Father's name is required", path: ['father_name'] });
+      if (!data.father_phone?.trim()) ctx.addIssue({ code: 'custom', message: "Father's phone number is required", path: ['father_phone'] });
+      if (!data.parent_email?.trim()) ctx.addIssue({ code: 'custom', message: "Parent login email is required", path: ['parent_email'] });
+    }
+    // If guardian fields are partially filled, validate them
+    if (data.guardian_name?.trim() || data.guardian_relation?.trim() || data.guardian_phone?.trim() || data.guardian_email?.trim()) {
+      if (!data.guardian_name?.trim()) ctx.addIssue({ code: 'custom', message: "Guardian's name is required", path: ['guardian_name'] });
+      if (!data.guardian_relation?.trim()) ctx.addIssue({ code: 'custom', message: "Guardian's relation is required", path: ['guardian_relation'] });
+      if (!data.guardian_phone?.trim()) ctx.addIssue({ code: 'custom', message: "Guardian's phone number is required", path: ['guardian_phone'] });
+      if (!data.guardian_email?.trim()) ctx.addIssue({ code: 'custom', message: "Guardian's email is required", path: ['guardian_email'] });
+    }
+  }
 }
 
 export const studentProfileSchema = baseStudentProfileSchema.superRefine(applyProfileRefinements)
@@ -221,10 +244,7 @@ export const studentUpdateSchema = baseStudentProfileSchema.extend({
     .optional()
     .or(z.literal('')),
 
-  parent_email: z
-    .string().trim()
-    .min(1, 'Parent login email is missing — enter a valid email address for portal access')
-    .email('Email is invalid — please enter a valid email address to be used as the parent portal login'),
+
 
   change_reason: z
     .string().trim()

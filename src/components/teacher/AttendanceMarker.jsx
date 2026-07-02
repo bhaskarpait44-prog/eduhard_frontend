@@ -492,6 +492,13 @@ const AttendanceMarker = ({
             <br className="hidden sm:block" /> This will trigger automated reporting and notifications.
           </p>
 
+          <div className="mt-4 p-4 rounded-2xl bg-amber-50/50 border border-amber-100 flex items-start gap-3">
+            <Info className="text-amber-600 shrink-0 mt-0.5" size={16} />
+            <p className="text-xs font-semibold text-amber-900 leading-normal">
+              <strong>Notice:</strong> Eduhard operates on an exceptions-only marking pattern. Any student not explicitly marked Absent, Late, or Half Day will default to <strong>Present</strong>.
+            </p>
+          </div>
+
           <div className="mt-10 grid grid-cols-2 gap-4">
             <button
               type="button"

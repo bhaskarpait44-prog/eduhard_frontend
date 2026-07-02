@@ -10,7 +10,6 @@ export const getTeacherAttendanceStatus = () => api.get('/teacher/attendance/sta
 export const getTeacherAttendanceStudents = (params) => api.get('/teacher/attendance/students', { params })
 export const markTeacherAttendance = (data) => api.post('/teacher/attendance/mark', data)
 export const bulkMarkTeacherAttendance = (data) => api.post('/teacher/attendance/bulk-mark', data)
-export const updateTeacherAttendance = (id, data) => api.patch(`/teacher/attendance/${id}`, data)
 export const getTeacherAttendanceRegister = (params) => api.get('/teacher/attendance/register', { params })
 export const getTeacherAttendanceSummary = (params) => api.get('/teacher/attendance/reports/summary', { params })
 export const getTeacherAttendanceBelowThreshold = (params) => api.get('/teacher/attendance/reports/below-threshold', { params })

@@ -184,10 +184,6 @@ const useAttendance = () => {
     }
   }, [])
 
-  const overrideAttendance = useCallback((id, payload) => (
-    teacherApi.updateTeacherAttendance(id, payload).then((res) => res?.data)
-  ), [])
-
   const loadRegister = useCallback(async (params) => {
     setLoadingRegister(true)
     setRegisterData(null)
@@ -247,7 +243,6 @@ const useAttendance = () => {
     studentError,
     loadStudents,
     submitAttendance,
-    overrideAttendance,
     registerData,
     loadingRegister,
     loadRegister,

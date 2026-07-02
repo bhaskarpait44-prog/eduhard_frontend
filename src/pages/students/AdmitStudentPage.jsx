@@ -49,8 +49,9 @@ const AdmitStudentPage = () => {
   // Save wizard state to sessionStorage when partial success occurs
   useEffect(() => {
     if (admittedStudent) {
+      const { files, ...formDataWithoutFiles } = formData
       sessionStorage.setItem('partial_admission_state', JSON.stringify({
-        formData,
+        formData: formDataWithoutFiles,
         admittedStudent,
         admittedEnrollmentId,
         step
@@ -377,6 +378,7 @@ const AdmitStudentPage = () => {
           defaultValues={formData}
           onBack={goBack}
           onNext={goNext}
+          isResuming={!!admittedStudent}
         />
       )}
       {step === 5 && (

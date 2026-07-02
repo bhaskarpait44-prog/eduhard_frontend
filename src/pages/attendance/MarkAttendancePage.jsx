@@ -41,6 +41,7 @@ const MarkAttendancePage = () => {
   const [isHoliday, setIsHoliday] = useState(false)
   const [holidayName, setHolidayName] = useState('')
   const [isNonWorkingDay, setIsNonWorkingDay] = useState(false)
+  const [reason, setReason] = useState('')
 
   useEffect(() => {
     if (!currentSession?.id) {
@@ -89,6 +90,7 @@ const MarkAttendancePage = () => {
       setIsHoliday(false)
       setHolidayName('')
       setIsNonWorkingDay(false)
+      setReason('')
     }
 
     try {
@@ -144,6 +146,8 @@ const MarkAttendancePage = () => {
     setStatuses(nextStatuses)
   }
 
+  const requiresReason = date < today() || alreadyMarked
+
   const handleSubmit = async () => {
     if (students.length === 0 || !classId || !sectionId) return
 
@@ -158,6 +162,7 @@ const MarkAttendancePage = () => {
       section_id: sectionId,
       date,
       records,
+      reason: requiresReason ? reason : null,
     })
 
     if (result.success) {
@@ -264,12 +269,26 @@ const MarkAttendancePage = () => {
               <Button variant="outline" icon={RefreshCw} onClick={markAllPresent} disabled={isHoliday || isNonWorkingDay}>
                 Mark All Present
               </Button>
-              <Button icon={Send} onClick={handleSubmit} loading={isSaving} disabled={isHoliday || isNonWorkingDay}>
+              <Button icon={Send} onClick={handleSubmit} loading={isSaving} disabled={isHoliday || isNonWorkingDay || (requiresReason && reason.trim().length < 10)}>
                 Submit Attendance
               </Button>
             </>
           )}
         >
+          {requiresReason && (
+            <div className="mb-6 p-5 rounded-2xl border border-orange-200 bg-orange-50/20 max-w-2xl">
+              <label className="block text-xs font-bold text-orange-800 uppercase tracking-widest mb-2.5">
+                Modification Reason Required (minimum 10 characters)
+              </label>
+              <textarea
+                value={reason}
+                onChange={(e) => setReason(e.target.value)}
+                rows={2}
+                placeholder="Explain why you are editing or marking attendance for a past or pre-marked date..."
+                className="w-full rounded-2xl border border-orange-200 px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-orange-100 transition-all bg-white font-medium"
+              />
+            </div>
+          )}
           <div className="mb-4 flex flex-wrap gap-2">
             {STATUS_OPTIONS.map((status) => (
               <Badge key={status.key} variant={status.badge} size="md">

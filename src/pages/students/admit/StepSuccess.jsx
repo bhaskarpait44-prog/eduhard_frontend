@@ -13,7 +13,7 @@ const CredentialRow = ({ label, value, onCopy }) => (
       <p className="text-xs mb-0.5" style={{ color: 'var(--color-text-muted)' }}>{label}</p>
       <p className="text-sm font-semibold break-all" style={{ color: 'var(--color-text-primary)' }}>{value || '--'}</p>
     </div>
-    {value && (
+    {value && onCopy && (
       <button
         type="button"
         onClick={() => onCopy(value)}
@@ -117,8 +117,8 @@ const StepSuccess = ({ student, onViewStudent, onAdmitAnother }) => {
           />
           <CredentialRow
             label="Parent Portal Password"
-            value={credentials.parent?.password}
-            onCopy={(value) => handleCopy(value, 'parent password')}
+            value={credentials.parent?.is_new_account ? credentials.parent?.password : 'Existing parent account (use current password)'}
+            onCopy={credentials.parent?.is_new_account ? ((value) => handleCopy(value, 'parent password')) : undefined}
           />
           <div className="px-1 text-left">
             <span className={`text-[11px] font-bold uppercase px-2 py-0.5 rounded-md ${credentials.parent?.is_new_account ? 'bg-green-100 text-green-700' : 'bg-blue-100 text-blue-700'}`}>

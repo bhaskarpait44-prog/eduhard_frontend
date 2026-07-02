@@ -11,6 +11,7 @@ const STATUS_STYLE = {
   late: { label: 'L', bg: 'rgba(245, 158, 11, 0.12)', color: '#f59e0b' },
   half_day: { label: 'H', bg: 'rgba(59, 130, 246, 0.12)', color: '#3b82f6' },
   holiday: { label: '-', bg: 'var(--color-surface-raised)', color: 'var(--color-text-muted)' },
+  not_marked: { label: '·', bg: 'rgba(107, 114, 128, 0.06)', color: 'var(--color-text-muted)' },
   future: { label: '', bg: 'transparent', color: 'var(--color-text-muted)' },
 }
 
@@ -25,16 +26,17 @@ const AttendanceGrid = ({
     const count = new Date(year, month, 0).getDate()
     const now = new Date()
     const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`
+    const nonWorkingDays = registerData?.non_working_days || [0] // Sunday is 0
 
     return [...Array(count)].map((_, index) => {
       const day = index + 1
       const date = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`
       const dayDate = new Date(year, month - 1, day)
       const isFuture = date > todayStr
-      const weekend = dayDate.getDay() === 0
+      const weekend = nonWorkingDays.includes(dayDate.getDay())
       return { day, date, weekend, isFuture }
     })
-  }, [month, year])
+  }, [month, year, registerData?.non_working_days])
 
   const rows = registerData?.students || []
   const summary = useMemo(() => buildSummary(rows), [rows])
@@ -44,18 +46,18 @@ const AttendanceGrid = ({
     const headers = ['Roll No', 'Name', ...days.map((day) => day.day), 'Present', 'Absent', 'Attendance %']
     const csvRows = rows.map((student) => {
       const recordMap = new Map((student.records || []).map((record) => [record.date, record]))
-      const stats = computeStudentStats(student.records || [])
+      const stats = computeStudentStats(student)
       return [
         student.roll_number || '',
-        `${student.first_name} ${student.last_name}`,
+        student.student_name || `${student.first_name} ${student.last_name}`,
         ...days.map((day) => {
           if (day.isFuture) return ''
           const record = recordMap.get(day.date)
           if (record) return STATUS_STYLE[record.status]?.label || ''
           const isHoliday = (registerData?.holidays || []).includes(day.date)
-          const isSunday = day.weekend
-          if (isHoliday || isSunday) return '-'
-          return ''
+          const isWeekend = day.weekend
+          if (isHoliday || isWeekend) return '-'
+          return '·'
         }),
         stats.present,
         stats.absent,
@@ -132,14 +134,14 @@ const AttendanceGrid = ({
               <tbody className="divide-y divide-border/20">
                 {rows.map((student) => {
                   const recordMap = new Map((student.records || []).map((record) => [record.date, record]))
-                  const stats = computeStudentStats(student.records || [])
+                  const stats = computeStudentStats(student)
 
                   return (
                     <tr key={student.enrollment_id} className="group hover:bg-surface-raised/40 transition-colors duration-200">
                       <td className="sticky left-0 z-10 px-6 py-4 shadow-[2px_0_10px_rgba(0,0,0,0.03)] backdrop-blur-md bg-white/95" style={{ backgroundColor: 'inherit' }}>
                         <div className="flex flex-col min-w-0">
                           <p className="text-sm font-bold text-text-primary group-hover:text-primary transition-colors truncate uppercase tracking-tight leading-tight">
-                            {student.first_name} {student.last_name}
+                            {student.student_name || `${student.first_name} ${student.last_name}`}
                           </p>
                           <p className="mt-1 text-[10px] font-semibold text-text-muted uppercase tracking-[0.1em] opacity-60">
                             Roll: {student.roll_number || '--'}
@@ -150,14 +152,14 @@ const AttendanceGrid = ({
                       {days.map((day) => {
                         const record = recordMap.get(day.date)
                         const isHoliday = (registerData?.holidays || []).includes(day.date)
-                        const isSunday = day.weekend
+                        const isWeekend = day.weekend
                         const type = day.isFuture 
                           ? 'future' 
                           : record 
                             ? record.status 
-                            : (isHoliday || isSunday) 
+                            : (isHoliday || isWeekend) 
                               ? 'holiday' 
-                              : 'future'
+                              : 'not_marked'
                         const style = STATUS_STYLE[type] || STATUS_STYLE.future
 
                         return (
@@ -295,7 +297,18 @@ const SummaryCard = ({ icon: Icon, title, subtitle, items, tone }) => {
   )
 }
 
-const computeStudentStats = (records = []) => {
+const computeStudentStats = (student) => {
+  if (student.percentage !== undefined) {
+    return {
+      present: student.present_count ?? 0,
+      absent: student.absent_count ?? 0,
+      late: student.late_count ?? 0,
+      halfDay: student.half_day_count ?? 0,
+      total: student.working_days ?? 0,
+      percentage: student.percentage ?? 0
+    }
+  }
+  const records = student.records || student.attendance || []
   const filteredRecords = records.filter((item) => item.status !== 'holiday')
   const present = filteredRecords.filter((item) => item.status === 'present').length
   const absent = filteredRecords.filter((item) => item.status === 'absent').length
@@ -309,9 +322,9 @@ const computeStudentStats = (records = []) => {
 
 const buildSummary = (rows) => {
   const normalized = rows.map((row) => {
-    const stats = computeStudentStats(row.records || [])
+    const stats = computeStudentStats(row)
     return {
-      name: `${row.first_name} ${row.last_name}`,
+      name: row.student_name || `${row.first_name} ${row.last_name}`,
       absent: stats.absent,
       percentage: stats.percentage,
     }

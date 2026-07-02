@@ -27,7 +27,7 @@ const ALLOWED_MIME_TYPES = [
   'application/pdf',
 ]
 
-const StepDocuments = ({ defaultValues, onNext, onBack }) => {
+const StepDocuments = ({ defaultValues, onNext, onBack, isResuming = false }) => {
   const [files, setFiles] = useState(defaultValues.files || {})
   const [errors, setErrors] = useState({})
 
@@ -60,10 +60,10 @@ const StepDocuments = ({ defaultValues, onNext, onBack }) => {
     })
   }
 
-  const handleNext = (isSkipping = false) => {
-    const missingRequired = DOCUMENT_TYPES.filter(doc => doc.required && !files[doc.id])
+  const handleNext = () => {
+    const missingRequired = isResuming ? [] : DOCUMENT_TYPES.filter(doc => doc.required && !files[doc.id])
 
-    if (!isSkipping && missingRequired.length > 0) {
+    if (missingRequired.length > 0) {
       const newErrors = {}
       missingRequired.forEach(doc => {
         newErrors[doc.id] = 'This document is required'
@@ -72,19 +72,18 @@ const StepDocuments = ({ defaultValues, onNext, onBack }) => {
       return
     }
 
-    if (isSkipping && missingRequired.length > 0) {
-      if (!window.confirm(`You haven't uploaded ${missingRequired.length} required documents. Are you sure you want to skip this step? You can upload them later from the student profile.`)) {
-        return
-      }
-    }
-
     onNext({ files })
   }
 
-  const missingAnyRequired = DOCUMENT_TYPES.some(doc => doc.required && !files[doc.id])
+  const missingAnyRequired = !isResuming && DOCUMENT_TYPES.some(doc => doc.required && !files[doc.id])
 
   return (
     <div className="space-y-6">
+      {isResuming && (
+        <div className="bg-blue-50 text-blue-700 px-4 py-3 rounded-xl border border-blue-100 text-sm text-left">
+          <strong>Resuming Admission:</strong> The student record has already been created. Previously uploaded documents are saved. You can proceed without re-attaching them unless you want to replace them.
+        </div>
+      )}
       <div
         className="bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-3xl p-8 space-y-6 shadow-xl shadow-indigo-500/5"
       >
@@ -161,11 +160,8 @@ const StepDocuments = ({ defaultValues, onNext, onBack }) => {
       <div className="flex justify-between items-center bg-white dark:bg-gray-900 p-4 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm mt-6">
         <Button variant="secondary" type="button" onClick={onBack}>← Back</Button>
         <div className="flex gap-3">
-           {missingAnyRequired && (
-             <Button variant="ghost" onClick={() => handleNext(true)}>Skip for now</Button>
-           )}
-           <Button onClick={() => handleNext(false)} className="shadow-lg shadow-indigo-500/20">
-             {missingAnyRequired ? 'Upload & Continue →' : 'Continue to Access →'}
+           <Button onClick={handleNext} className="shadow-lg shadow-indigo-500/20">
+             {isResuming ? 'Continue to Access →' : missingAnyRequired ? 'Upload & Continue →' : 'Continue to Access →'}
            </Button>
         </div>
       </div>

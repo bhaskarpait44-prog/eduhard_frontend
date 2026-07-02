@@ -8,6 +8,7 @@ import dayjs from 'dayjs'
 const Input = forwardRef(({
   label,
   error,
+  warning,
   hint,
   icon  : Icon,
   suffix,
@@ -183,7 +184,12 @@ const Input = forwardRef(({
           <AlertCircle size={11} /> {error}
         </p>
       )}
-      {hint && !error && (
+      {warning && !error && (
+        <p className="flex items-center gap-1 text-xs text-blue-600 font-medium">
+          <AlertCircle size={11} /> {warning}
+        </p>
+      )}
+      {hint && !error && !warning && (
         <p className="text-xs" style={{ color: 'var(--color-text-muted)' }}>{hint}</p>
       )}
     </div>

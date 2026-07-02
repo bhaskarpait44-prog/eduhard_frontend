@@ -11,7 +11,7 @@ export default function ParentAttendance() {
   usePageTitle('Attendance')
   const { 
     wards, selectedWardId, fetchWards, 
-    isDetailsLoading, attendance 
+    isDetailsLoading, attendance, attendanceSummary
   } = useParentStore()
 
   useEffect(() => {
@@ -32,6 +32,50 @@ export default function ParentAttendance() {
         </div>
         <WardSelector />
       </div>
+
+      {/* ── Analytical Summary ── */}
+      {!isDetailsLoading && attendanceSummary && (
+        <section className="grid grid-cols-1 gap-5 sm:grid-cols-4">
+          <div className="rounded-3xl border border-gray-100 bg-white p-6 shadow-sm flex items-center gap-4">
+            <div className="h-12 w-12 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold text-lg">
+              %
+            </div>
+            <div>
+              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Attendance Rate</p>
+              <h3 className="text-xl font-black text-gray-900 mt-0.5">{attendanceSummary.percentage}%</h3>
+            </div>
+          </div>
+          <div className="rounded-3xl border border-gray-100 bg-white p-6 shadow-sm flex items-center gap-4">
+            <div className="h-12 w-12 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center font-bold text-lg">
+              G
+            </div>
+            <div>
+              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Letter Grade</p>
+              <h3 className="text-xl font-black text-gray-900 mt-0.5">{attendanceSummary.grade}</h3>
+            </div>
+          </div>
+          <div className="rounded-3xl border border-gray-100 bg-white p-6 shadow-sm flex items-center gap-4">
+            <div className="h-12 w-12 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center font-bold text-lg">
+              W
+            </div>
+            <div>
+              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Working Days</p>
+              <h3 className="text-xl font-black text-gray-900 mt-0.5">
+                {attendanceSummary.presentCount} / {attendanceSummary.workingDays} Days
+              </h3>
+            </div>
+          </div>
+          <div className="rounded-3xl border border-gray-100 bg-white p-6 shadow-sm flex items-center gap-4">
+            <div className="h-12 w-12 rounded-2xl bg-rose-50 text-rose-600 flex items-center justify-center font-bold text-lg">
+              A
+            </div>
+            <div>
+              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Total Absences</p>
+              <h3 className="text-xl font-black text-gray-900 mt-0.5">{attendanceSummary.absentCount} Days</h3>
+            </div>
+          </div>
+        </section>
+      )}
 
       <div className="bg-white rounded-[32px] border border-gray-100 overflow-hidden shadow-sm">
         {isDetailsLoading ? (
