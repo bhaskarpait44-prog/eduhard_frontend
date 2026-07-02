@@ -1,6 +1,6 @@
 // src/pages/subjects/SubjectsPage.jsx
 import { useEffect, useState } from 'react'
-import { BookOpen, AlertCircle, ArrowLeft, Download } from 'lucide-react'
+import { BookOpen, AlertCircle, ArrowLeft, Download, Search } from 'lucide-react'
 import * as subjectApi from '@/api/subjectApi'
 import * as classApi from '@/api/classApi'
 import usePageTitle from '@/hooks/usePageTitle'
@@ -156,7 +156,9 @@ const SubjectsPage = () => {
 
   const [classes, setClasses] = useState([])
   const [subjects, setSubjects] = useState([])
-  const [isLoading, setIsLoading] = useState(true)
+  // FIX #3: Separate loading states for classes grid and subjects table
+  const [isClassesLoading, setIsClassesLoading] = useState(true)
+  const [isSubjectsLoading, setIsSubjectsLoading] = useState(false)
   const [selectedClass, setSelectedClass] = useState(null)
   const [searchTerm, setSearchTerm] = useState('')
   const [downloadingPdf, setDownloadingPdf] = useState(false)
@@ -172,7 +174,7 @@ const SubjectsPage = () => {
   }, [selectedClass])
 
   const fetchClasses = async () => {
-    setIsLoading(true)
+    setIsClassesLoading(true)
     try {
       const res = await classApi.getClasses()
       console.log('Classes API response:', res)
@@ -184,7 +186,7 @@ const SubjectsPage = () => {
       console.error('Error fetching classes:', err)
       toastError(err.message || 'Failed to load classes')
     } finally {
-      setIsLoading(false)
+      setIsClassesLoading(false)
     }
   }
 
@@ -193,6 +195,8 @@ const SubjectsPage = () => {
       console.warn('fetchSubjectsForClass called with invalid classId:', classId)
       return
     }
+    // FIX #1: Set loading true so the subjects view shows a spinner
+    setIsSubjectsLoading(true)
     try {
       console.log('Fetching subjects for class:', classId)
       const res = await subjectApi.getSubjects(classId)
@@ -205,7 +209,7 @@ const SubjectsPage = () => {
       console.error('Error fetching subjects:', err)
       toastError(err.message || 'Failed to load subjects')
     } finally {
-      setIsLoading(false)
+      setIsSubjectsLoading(false)
     }
   }
 
@@ -234,16 +238,20 @@ const SubjectsPage = () => {
     }
   }
 
+  // FIX #2: Null-safe .toLowerCase() to prevent crash if name/code is null
   const filteredSubjects = subjects.filter(
     (s) =>
-      s.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      s.code.toLowerCase().includes(searchTerm.toLowerCase())
+      (s.name ?? '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (s.code ?? '').toLowerCase().includes(searchTerm.toLowerCase())
   )
 
   const handleClassClick = (classId) => {
     if (!classId) return
     const cls = classes.find(c => String(c.id) === String(classId))
-    setSelectedClass(cls || { id: classId, name: classId })
+    // FIX #6: If class not found in list, use a meaningful fallback name
+    setSelectedClass(cls || { id: classId, name: `Class #${classId}` })
+    // FIX #4: Clear stale subjects immediately so old data doesn't flash
+    setSubjects([])
     setSearchTerm('')
   }
 
@@ -288,7 +296,8 @@ const SubjectsPage = () => {
         {selectedClass && (
           <button
             onClick={handleDownloadPdf}
-            disabled={downloadingPdf || subjects.length === 0}
+            // FIX #5: Also disable while subjects are loading
+            disabled={downloadingPdf || isSubjectsLoading || subjects.length === 0}
             className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-indigo-600 dark:bg-indigo-500 rounded-lg hover:bg-indigo-700 transition-colors disabled:opacity-50"
           >
             <Download size={16} />
@@ -302,7 +311,7 @@ const SubjectsPage = () => {
         <>
           {/* Classes Grid */}
           <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
-            {isLoading ? (
+            {isClassesLoading ? (
               <div className="p-4">
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                   {[1,2,3,4,5,6].map(i => <ClassCardSkeleton key={i}/>)}
@@ -357,13 +366,28 @@ const SubjectsPage = () => {
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="w-full pl-10 pr-4 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 dark:text-gray-100"
               />
-              <BookOpen className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
+              {/* FIX #8: Use Search icon instead of BookOpen for the search input */}
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
             </div>
           </div>
 
           {/* Subjects Table */}
           <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
-            {filteredSubjects.length === 0 ? (
+            {/* FIX #1 & #3: Show skeleton rows while subjects are loading */}
+            {isSubjectsLoading ? (
+              <div className="divide-y divide-gray-100 dark:divide-gray-700/50">
+                {[1, 2, 3, 4].map(i => (
+                  <div key={i} className="flex gap-4 px-4 py-3 animate-pulse">
+                    <div className="h-4 w-40 bg-gray-200 dark:bg-gray-700 rounded" />
+                    <div className="h-4 w-16 bg-gray-200 dark:bg-gray-700 rounded" />
+                    <div className="h-4 w-20 bg-gray-200 dark:bg-gray-700 rounded" />
+                    <div className="h-4 w-14 bg-gray-200 dark:bg-gray-700 rounded" />
+                    <div className="h-4 w-20 bg-gray-200 dark:bg-gray-700 rounded" />
+                    <div className="h-4 w-14 bg-gray-200 dark:bg-gray-700 rounded" />
+                  </div>
+                ))}
+              </div>
+            ) : filteredSubjects.length === 0 ? (
               <div className="text-center py-12">
                 <BookOpen size={40} className="mx-auto text-gray-300 dark:text-gray-600 mb-3" />
                 <p className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">

@@ -225,7 +225,7 @@ const DashboardPage = () => {
           <StatCard
             label="Today's Attendance"
             value={formatPercent(stats?.attendanceToday?.percentage || 0)}
-            sub={stats?.attendanceToday?.forecast ? `AI Forecast: ${stats.attendanceToday.forecast}%` : `${stats?.attendanceToday?.present || 0} present`}
+            sub={stats?.attendanceToday ? `${stats.attendanceToday.present} present · ${stats.attendanceToday.total_marked}/${stats.attendanceToday.total_students} marked` : '0 present'}
             icon={CalendarCheck}
             color="#10b981"
           />

@@ -133,15 +133,18 @@ const getColor = (i) => CLASS_COLORS[i % CLASS_COLORS.length]
 /* ─────────────────────────────────────────────────────────────
    Group students → Map<className, Map<sectionName, student[]>>
 ───────────────────────────────────────────────────────────── */
+// FIX #10: Use class_id as Map key to prevent merging classes that share the same display name
 function groupByClass(students) {
   const map = new Map()
   students.forEach((student) => {
-    const en  = student.current_enrollment
-    const cls = en?.class   || 'Unassigned'
-    const sec = en?.section || 'N/A'
-    if (!map.has(cls)) map.set(cls, new Map())
-    if (!map.get(cls).has(sec)) map.get(cls).set(sec, [])
-    map.get(cls).get(sec).push(student)
+    const en      = student.current_enrollment
+    const clsKey  = en?.class_id != null ? String(en.class_id) : 'unassigned'
+    const clsName = en?.class    || 'Unassigned'
+    const sec     = en?.section  || 'N/A'
+    if (!map.has(clsKey)) map.set(clsKey, { name: clsName, sections: new Map() })
+    const entry = map.get(clsKey)
+    if (!entry.sections.has(sec)) entry.sections.set(sec, [])
+    entry.sections.get(sec).push(student)
   })
   return map
 }
@@ -167,7 +170,8 @@ export default function EnrollmentsPage() {
 
   /* fetch on mount */
   useEffect(() => {
-    fetchClasses().catch(() => toastError('Failed to load classes'))
+    // FIX #7: Removed duplicate toast — fetchClasses in useClasses already shows one on failure
+    fetchClasses().catch(() => {})
     fetchSessions().catch(() => toastError('Failed to load sessions'))
     fetchCurrentSession().catch(() => {})
   }, [fetchClasses, fetchSessions, fetchCurrentSession, toastError])
@@ -215,9 +219,10 @@ export default function EnrollmentsPage() {
     }))
   ), [sessions])
   const classOptions   = useMemo(() => classes.map((c)  => ({ value: String(c.id),  label: c.display_name || c.name })), [classes])
-  const activeCount    = students.filter((s) => s.current_enrollment?.id).length
-  const grouped        = useMemo(() => groupByClass(students), [students])
-  const classKeys      = [...grouped.keys()]
+  // FIX #4: Removed inaccurate activeCount (only counted current page slice of max 20).
+  // Now using classKeys.length — the number of distinct classes in the current filtered view.
+  const grouped   = useMemo(() => groupByClass(students), [students])
+  const classKeys = [...grouped.keys()]
 
   /* pagination derived */
   const totalStudents = pagination.total || 0
@@ -241,9 +246,10 @@ export default function EnrollmentsPage() {
 
       {/* ── Stats ── */}
       <div className="ep-stats">
-        <StatCard icon={Users}    label="Total Students"  value={totalStudents}                        color="#2563eb" />
-        <StatCard icon={BookOpen} label="With Enrollment" value={activeCount}                          color="#059669" />
-        <StatCard icon={BookOpen} label="Current Session" value={currentSession?.name || '—'}          color="#7c3aed" compact />
+        <StatCard icon={Users}    label="Total Students"  value={totalStudents}           color="#2563eb" />
+        {/* FIX #4: Replaced page-slice 'With Enrollment' count with accurate distinct-class count */}
+        <StatCard icon={BookOpen} label="Classes Found"   value={classKeys.length}        color="#059669" />
+        <StatCard icon={BookOpen} label="Current Session" value={currentSession?.name || '—'} color="#7c3aed" compact />
       </div>
 
       {/* ── Filters ── */}
@@ -253,7 +259,7 @@ export default function EnrollmentsPage() {
           value={filters.session_id}
           options={sessionOptions}
           placeholder="All sessions"
-          onChange={(e) => setFilters((p) => ({ ...p, session_id: e.target.value }))}
+          onChange={(e) => setFilters({ session_id: e.target.value, class_id: '', section_id: '' })}
         />
         <Select
           label="Class"
@@ -290,26 +296,32 @@ export default function EnrollmentsPage() {
       ) : (
         <>
           <div className="ep-card-list">
-            {classKeys.map((cls, idx) => (
-              <ClassCard
-                key={cls}
-                className={cls}
-                sectionsMap={grouped.get(cls)}
-                color={getColor(idx)}
-                onRowClick={(id) => navigate(`${ROUTES.STUDENTS}/${id}`)}
-              />
-            ))}
+            {/* FIX #10: Destructure name and sections from the refactored grouped map */}
+            {classKeys.map((clsKey, idx) => {
+              const { name, sections } = grouped.get(clsKey)
+              return (
+                <ClassCard
+                  key={clsKey}
+                  className={name}
+                  sectionsMap={sections}
+                  color={getColor(idx)}
+                  onRowClick={(id) => navigate(`${ROUTES.STUDENTS}/${id}`)}
+                />
+              )
+            })}
           </div>
 
-          {/* ── Pagination ── */}
-          <Pagination
-            currentPage={currentPage}
-            totalPages={totalPages}
-            pageStart={pageStart}
-            pageEnd={pageEnd}
-            total={totalStudents}
-            onChange={setCurrentPage}
-          />
+          {/* ── Pagination ── FIX #8: Only render when data spans multiple pages */}
+          {totalStudents > PER_PAGE && (
+            <Pagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              pageStart={pageStart}
+              pageEnd={pageEnd}
+              total={totalStudents}
+              onChange={setCurrentPage}
+            />
+          )}
         </>
       )}
     </div>

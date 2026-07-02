@@ -2,7 +2,8 @@ import { useEffect, useMemo, useState } from 'react'
 import {
   BookOpenText, CalendarRange, ChevronDown, ChevronRight, Clock,
   Grid3x3, School2, ShieldCheck, UserRoundCheck, Zap,
-  Pencil, Trash2, FileDown, Copy
+  Pencil, Trash2, FileDown, Copy, CheckCircle2, XCircle,
+  AlertTriangle, ArrowRight, TrendingUp, BarChart2, FileText
 } from 'lucide-react'
 import * as teacherControlApi from '@/api/adminTeacherControlApi'
 import { pdf } from '@react-pdf/renderer'
@@ -157,9 +158,11 @@ const AdminTeacherControlPage = () => {
     const lastPeriod = periodTimes[nextPeriod - 1]
     const defaultStart = lastPeriod ? lastPeriod.end : '08:00'
     const [h, m] = defaultStart.split(':')
-    const date = new Date()
-    date.setHours(parseInt(h, 10), parseInt(m, 10) + 45)
-    const defaultEnd = `${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`
+    // Bug #9 fix: guard midnight rollover by capping total minutes within a day
+    const totalMinutes = (parseInt(h, 10) * 60 + parseInt(m, 10) + 45) % (24 * 60)
+    const endH = Math.floor(totalMinutes / 60)
+    const endM = totalMinutes % 60
+    const defaultEnd = `${endH.toString().padStart(2, '0')}:${endM.toString().padStart(2, '0')}`
 
     const updated = {
       ...periodTimes,
@@ -193,10 +196,11 @@ const AdminTeacherControlPage = () => {
   const load = async () => {
     setLoading(true)
     try {
+      // Bug #4 fix: use Promise.allSettled so one failing API doesn't wipe all other data
       const [
         overviewRes, assignmentsRes, timetableRes, homeworkRes,
         leaveRes, correctionsRes, studentCorrectionsRes, teachersRes, classesRes,
-      ] = await Promise.all([
+      ] = await Promise.allSettled([
         teacherControlApi.getTeacherControlOverview(),
         teacherControlApi.getTeacherControlAssignments(),
         teacherControlApi.getTeacherControlTimetable(),
@@ -207,22 +211,28 @@ const AdminTeacherControlPage = () => {
         teacherControlApi.getTeacherControlTeachers(),
         getClasses(),
       ])
-      setSession(overviewRes?.data?.session || null)
-      setOverview(overviewRes?.data?.counts  || {})
-      setAssignments(assignmentsRes?.data?.assignments || [])
-      setTimetable(timetableRes?.data?.timetable || [])
-      setHomework(homeworkRes?.data?.homework || [])
-      setLeaves(leaveRes?.data?.applications || [])
-      setCorrections(correctionsRes?.data?.requests || [])
-      setStudentCorrections(studentCorrectionsRes?.data?.requests || [])
-      setTeachers(teachersRes?.data?.teachers || [])
-      setClasses(getClassList(classesRes))
+      const val = (r, path) => {
+        if (r.status !== 'fulfilled') return undefined
+        return path.split('.').reduce((o, k) => o?.[k], r.value)
+      }
+      if (overviewRes.status === 'fulfilled') {
+        setSession(overviewRes.value?.data?.session || null)
+        setOverview(overviewRes.value?.data?.counts  || {})
+      } else { toastError('Failed to load overview.') }
+      setAssignments(val(assignmentsRes,  'data.assignments') || [])
+      setTimetable(  val(timetableRes,    'data.timetable')   || [])
+      setHomework(   val(homeworkRes,     'data.homework')     || [])
+      setLeaves(     val(leaveRes,        'data.applications') || [])
+      setCorrections(val(correctionsRes,  'data.requests')     || [])
+      setStudentCorrections(val(studentCorrectionsRes, 'data.requests') || [])
+      setTeachers(   val(teachersRes,     'data.teachers')     || [])
+      if (classesRes.status === 'fulfilled') setClasses(getClassList(classesRes.value))
     } finally {
       setLoading(false)
     }
   }
 
-  useEffect(() => { load().catch(() => toastError('Failed to load.')) }, [])
+  useEffect(() => { load().catch(() => toastError('Failed to load teacher control data.')) }, [])
 
   /* ── lazy load sections/subjects ── */
   const ensureClassMeta = async (classId) => {
@@ -236,8 +246,9 @@ const AdminTeacherControlPage = () => {
       setSubjectsByClass((p) => ({ ...p, [classId]: Array.isArray(r?.data) ? r.data : (r?.data?.subjects || []) }))
     }
   }
-  useEffect(() => { ensureClassMeta(assignmentForm.class_id).catch(() => {}) }, [assignmentForm.class_id])
-  useEffect(() => { ensureClassMeta(slotForm.class_id).catch(() => {}) },       [slotForm.class_id])
+  // Bug #5 fix: only call ensureClassMeta when class_id is non-empty
+  useEffect(() => { if (assignmentForm.class_id) ensureClassMeta(assignmentForm.class_id).catch(() => {}) }, [assignmentForm.class_id])
+  useEffect(() => { if (slotForm.class_id)       ensureClassMeta(slotForm.class_id).catch(() => {}) },       [slotForm.class_id])
 
   /* ── derived options ── */
   const classOptions   = useMemo(() => classes.map((r) => ({
@@ -269,12 +280,23 @@ const AdminTeacherControlPage = () => {
   const aSubject = useMemo(() => (subjectsByClass[assignmentForm.class_id] || []).map((r) => ({ value: String(r.id), label: r.name })), [subjectsByClass, assignmentForm.class_id])
 
   const slotSectionOpts  = useMemo(() => (sectionsByClass[slotForm.class_id] || []).map((r) => ({ value: String(r.id), label: r.name })), [sectionsByClass, slotForm.class_id])
-  const slotSubjectOpts  = useMemo(() => assignments.filter((a) =>
-    !a.is_class_teacher && a.is_active &&
-    (!slotForm.teacher_id || String(a.teacher_id) === String(slotForm.teacher_id)) &&
-    (!slotForm.class_id   || String(a.class_id)   === String(slotForm.class_id))   &&
-    (!slotForm.section_id || String(a.section_id) === String(slotForm.section_id))
-  ).map((a) => ({ value: String(a.subject_id), label: a.subject_name })), [assignments, slotForm])
+  // Bug #6 fix: deduplicate by subject_id — same subject assigned across multiple sections
+  // would otherwise produce duplicate options in the slot form dropdown
+  const slotSubjectOpts = useMemo(() => {
+    const seen = new Set()
+    return assignments
+      .filter((a) =>
+        !a.is_class_teacher && a.is_active &&
+        (!slotForm.teacher_id || String(a.teacher_id) === String(slotForm.teacher_id)) &&
+        (!slotForm.class_id   || String(a.class_id)   === String(slotForm.class_id))   &&
+        (!slotForm.section_id || String(a.section_id) === String(slotForm.section_id))
+      )
+      .reduce((acc, a) => {
+        const key = String(a.subject_id)
+        if (!seen.has(key)) { seen.add(key); acc.push({ value: key, label: a.subject_name }) }
+        return acc
+      }, [])
+  }, [assignments, slotForm])
 
   /* ── assignment groups ── */
   const assignmentsByClass = useMemo(() => {
@@ -294,9 +316,14 @@ const AdminTeacherControlPage = () => {
         inactiveCount: 0 
       })
       const g = groups.get(key)
-      if (!item.is_active) g.inactiveCount++
+      if (!item.is_active) g.inactiveCount++  // kept: counts all inactives incl. classTeacher for total badge
       if (item.is_class_teacher) g.classTeacher = item
-      else g.subjectTeachers.push(item)
+      else {
+        g.subjectTeachers.push(item)
+        // Bug #7 fix: only count inactive SUBJECT teachers — class teacher being inactive
+        // shouldn't inflate the "X inactive" subjects badge on the card
+        if (!item.is_active) g.inactiveCount++
+      }
     })
     return Array.from(groups.values())
       .map((g) => ({ ...g, subjectTeachers: g.subjectTeachers.sort((a, b) => (a.subject_name || '').localeCompare(b.subject_name || '')) }))
@@ -995,39 +1022,87 @@ const AdminTeacherControlPage = () => {
       {/* ════════════════════════════════════════
           TAB: WORKFLOWS
       ════════════════════════════════════════ */}
-      {tab === 'workflows' && (
-        <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-          <WorkflowSection title="Leave Approval Queue" icon={UserRoundCheck} items={leaves} loading={loading}
-            emptyTitle="No leave requests" emptyDesc="Teacher leave applications will appear here."
-          >
-            <LeaveRequestList items={leaves} onClickItem={setSelectedLeave} />
-          </WorkflowSection>
-          <WorkflowSection title="Profile Correction Requests" icon={ShieldCheck} items={corrections} loading={loading}
-            renderItem={(item) => (
-              <CorrectionRequestCard key={item.id} item={item} isStudent={false}
-                onApprove={item.status === 'pending' ? () => reviewCorrection(item, 'approved') : null}
-                onReject={item.status  === 'pending' ? () => reviewCorrection(item, 'rejected') : null}
+      {tab === 'workflows' && (() => {
+        const pendingLeaves  = (leaves  ?? []).filter(l => l.status === 'pending').length
+        const pendingTeacher = (corrections ?? []).filter(c => c.status === 'pending').length
+        const pendingStudent = (studentCorrections ?? []).filter(c => c.status === 'pending').length
+        const totalPending   = pendingLeaves + pendingTeacher + pendingStudent
+        return (
+          <div className="space-y-6">
+
+            {/* ── Workflow Summary Bar ── */}
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+              {[
+                { label: 'Total Pending', value: totalPending, icon: AlertTriangle,
+                  bg: totalPending > 0 ? 'linear-gradient(135deg,#f59e0b,#d97706)' : 'linear-gradient(135deg,#6b7280,#4b5563)', urgent: totalPending > 0 },
+                { label: 'Leave Requests', value: pendingLeaves, sub: `${(leaves??[]).length} total`, icon: CalendarRange,
+                  bg: 'linear-gradient(135deg,#6366f1,#4f46e5)' },
+                { label: 'Teacher Corrections', value: pendingTeacher, sub: `${(corrections??[]).length} total`, icon: ShieldCheck,
+                  bg: 'linear-gradient(135deg,#0ea5e9,#0284c7)' },
+                { label: 'Student Corrections', value: pendingStudent, sub: `${(studentCorrections??[]).length} total`, icon: FileText,
+                  bg: 'linear-gradient(135deg,#8b5cf6,#7c3aed)' },
+              ].map(({ label, value, sub, icon: Ic, bg, urgent }) => (
+                <div key={label} className="relative overflow-hidden rounded-2xl p-4 text-white"
+                  style={{ background: bg, boxShadow: urgent ? '0 4px 20px rgba(245,158,11,0.35)' : undefined }}>
+                  {urgent && <div className="absolute inset-0 animate-pulse" style={{ background: 'rgba(255,255,255,0.04)' }} />}
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <p className="text-[10px] font-semibold uppercase tracking-widest opacity-80">{label}</p>
+                      <p className="mt-1 text-3xl font-black">{value ?? 0}</p>
+                      {sub && <p className="mt-0.5 text-[10px] opacity-60">{sub}</p>}
+                    </div>
+                    <div className="flex h-9 w-9 items-center justify-center rounded-xl" style={{ background: 'rgba(255,255,255,0.2)' }}>
+                      <Ic size={16} />
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* ── Workflow Sections Grid ── */}
+            <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+              <WorkflowSection title="Leave Approval" icon={CalendarRange}
+                items={leaves} loading={loading}
+                pendingCount={pendingLeaves}
+                renderItem={(item) => (
+                  <LeaveRequestCard key={item.id} item={item}
+                    onApprove={item.status === 'pending' ? async () => { await reviewLeave(item, 'approved'); setSelectedLeave(null) } : null}
+                    onReject={item.status  === 'pending' ? async () => { await reviewLeave(item, 'rejected'); setSelectedLeave(null) } : null}
+                  />
+                )}
+                emptyTitle="No leave requests" emptyDesc="Teacher leave applications will appear here."
               />
-            )}
-            emptyTitle="No correction requests" emptyDesc="Correction requests will appear here."
-          />
-          <WorkflowSection title="Student Correction Requests" icon={ShieldCheck} items={studentCorrections} loading={loading}
-            renderItem={(item) => (
-              <CorrectionRequestCard key={item.id} item={item} isStudent={true}
-                onApprove={item.status === 'pending' ? () => reviewStudentCorrection(item, 'approved') : null}
-                onReject={item.status  === 'pending' ? () => reviewStudentCorrection(item, 'rejected') : null}
+              <WorkflowSection title="Teacher Profile Corrections" icon={ShieldCheck}
+                items={corrections} loading={loading}
+                pendingCount={pendingTeacher}
+                renderItem={(item) => (
+                  <CorrectionRequestCard key={item.id} item={item} isStudent={false}
+                    onApprove={item.status === 'pending' ? () => reviewCorrection(item, 'approved') : null}
+                    onReject={item.status  === 'pending' ? () => reviewCorrection(item, 'rejected') : null}
+                  />
+                )}
+                emptyTitle="No correction requests" emptyDesc="Teacher profile correction requests will appear here."
               />
-            )}
-            emptyTitle="No student correction requests" emptyDesc="Student correction requests will appear here."
-          />
-          <WorkflowSection title="Homework Oversight" icon={BookOpenText} items={homework} loading={loading}
-            renderItem={(item) => (
-              <HomeworkCard key={item.id} item={item} />
-            )}
-            emptyTitle="No homework" emptyDesc="Homework assigned by teachers will appear here."
-          />
-        </div>
-      )}
+              <WorkflowSection title="Student Profile Corrections" icon={FileText}
+                items={studentCorrections} loading={loading}
+                pendingCount={pendingStudent}
+                renderItem={(item) => (
+                  <CorrectionRequestCard key={item.id} item={item} isStudent={true}
+                    onApprove={item.status === 'pending' ? () => reviewStudentCorrection(item, 'approved') : null}
+                    onReject={item.status  === 'pending' ? () => reviewStudentCorrection(item, 'rejected') : null}
+                  />
+                )}
+                emptyTitle="No student correction requests" emptyDesc="Student correction requests will appear here."
+              />
+              <WorkflowSection title="Homework Oversight" icon={BookOpenText}
+                items={homework} loading={loading}
+                renderItem={(item) => <HomeworkCard key={item.id} item={item} />}
+                emptyTitle="No homework" emptyDesc="Homework assigned by teachers will appear here."
+              />
+            </div>
+          </div>
+        )
+      })()}
 
       {selectedLeave && (
         <Modal 
@@ -1456,225 +1531,240 @@ const TimetableListRow = ({ slot, onToggle, onEdit, onDelete, onDuplicate }) => 
 /* ════════════════════════════════════════════════════════════════════════════
    Workflow helpers
 ════════════════════════════════════════════════════════════════════════════ */
-const WorkflowSection = ({ title, icon: Icon, items, loading, renderItem, emptyTitle, emptyDesc, children }) => (
-  <section className="rounded-3xl border p-6 transition-all duration-300 hover:shadow-md" style={{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface)' }}>
-    <div className="mb-5 flex items-center justify-between border-b pb-4" style={{ borderColor: 'var(--color-border)' }}>
-      <div className="flex items-center gap-2.5">
-        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-teal-500/10 text-[#0f766e]">
-          <Icon size={16} />
-        </div>
-        <h2 className="text-base font-bold" style={{ color: 'var(--color-text-primary)' }}>{title}</h2>
-      </div>
-      {items.length > 0 && (
-        <span className="rounded-full bg-teal-50 px-2.5 py-0.5 text-xs font-bold text-teal-700">{items.length}</span>
-      )}
-    </div>
-    {loading ? <GridSkeleton rows={2} /> : !items.length ? (
-      <EmptyState icon={Icon} title={emptyTitle} description={emptyDesc} />
-    ) : (
-      children || <div className="space-y-4">{items.map(renderItem)}</div>
-    )}
-  </section>
-)
-
-const LeaveRequestList = ({ items, onClickItem }) => {
-  return (
-    <div className="overflow-x-auto rounded-2xl border" style={{ borderColor: 'var(--color-border)' }}>
-      <table className="w-full min-w-[500px] border-collapse text-left text-xs">
-        <thead>
-          <tr style={{ backgroundColor: 'var(--color-surface-raised)', borderBottom: '1px solid var(--color-border)' }}>
-            <th className="p-3 font-semibold text-gray-500 uppercase tracking-wider">Teacher</th>
-            <th className="p-3 font-semibold text-gray-500 uppercase tracking-wider">Type</th>
-            <th className="p-3 font-semibold text-gray-500 uppercase tracking-wider">Duration</th>
-            <th className="p-3 font-semibold text-gray-500 uppercase tracking-wider text-center">Days</th>
-            <th className="p-3 font-semibold text-gray-500 uppercase tracking-wider">Status</th>
-          </tr>
-        </thead>
-        <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
-          {items.map((item) => {
-            const statusColors = {
-              approved: { bg: 'rgba(16, 185, 129, 0.1)', text: '#10b981' },
-              rejected: { bg: 'rgba(239, 68, 68, 0.1)', text: '#ef4444' },
-              pending: { bg: 'rgba(245, 158, 11, 0.1)', text: '#f59e0b' }
-            }[item.status] || { bg: '#f3f4f6', text: '#6b7280' };
-
-            return (
-              <tr 
-                key={item.id} 
-                onClick={() => onClickItem(item)}
-                className="cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/20 transition-colors"
-              >
-                <td className="p-3 font-semibold text-gray-900 dark:text-gray-100">{item.teacher_name}</td>
-                <td className="p-3 capitalize" style={{ color: 'var(--color-text-secondary)' }}>
-                  {(item.leave_type || '').replace('_', ' ')}
-                </td>
-                <td className="p-3" style={{ color: 'var(--color-text-secondary)' }}>
-                  {item.from_date} to {item.to_date}
-                </td>
-                <td className="p-3 text-center font-semibold text-gray-900 dark:text-gray-100">{Number(item.days_count || 0)}</td>
-                <td className="p-3">
-                  <span className="inline-flex rounded-full px-2.5 py-0.5 text-[10px] font-bold capitalize"
-                    style={{ backgroundColor: statusColors.bg, color: statusColors.text }}>
-                    {item.status}
-                  </span>
-                </td>
-              </tr>
-            );
-          })}
-        </tbody>
-      </table>
-    </div>
-  );
+const STATUS_META = {
+  approved: { bg: 'rgba(16,185,129,0.1)', text: '#059669', border: 'rgba(16,185,129,0.25)', strip: '#10b981', icon: CheckCircle2, label: 'Approved' },
+  rejected: { bg: 'rgba(239,68,68,0.1)',  text: '#dc2626', border: 'rgba(239,68,68,0.25)',  strip: '#ef4444', icon: XCircle,      label: 'Rejected' },
+  pending:  { bg: 'rgba(245,158,11,0.1)', text: '#b45309', border: 'rgba(245,158,11,0.25)', strip: '#f59e0b', icon: AlertTriangle, label: 'Pending'  },
 }
 
-const LeaveRequestCard = ({ item, onApprove, onReject }) => {
-  const statusColors = {
-    approved: { bg: 'rgba(16, 185, 129, 0.1)', text: '#10b981', border: 'rgba(16, 185, 129, 0.2)' },
-    rejected: { bg: 'rgba(239, 68, 68, 0.1)', text: '#ef4444', border: 'rgba(239, 68, 68, 0.2)' },
-    pending: { bg: 'rgba(245, 158, 11, 0.1)', text: '#f59e0b', border: 'rgba(245, 158, 11, 0.2)' }
-  }[item.status] || { bg: '#f3f4f6', text: '#6b7280', border: '#e5e7eb' };
-
-  const initials = item.teacher_name ? item.teacher_name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase() : 'T';
-
+const WorkflowSection = ({ title, icon: Icon, items, loading, renderItem, emptyTitle, emptyDesc, pendingCount, children }) => {
+  const list  = items ?? []
+  const total   = list.length
+  const pending = pendingCount ?? list.filter(i => i.status === 'pending').length
   return (
-    <article className="group relative overflow-hidden rounded-3xl border p-5 transition-all duration-300 hover:shadow-lg hover:border-teal-500/30" 
-      style={{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface)' }}>
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
-        {/* Avatar */}
-        <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-2xl font-bold text-sm"
-          style={{ background: 'linear-gradient(135deg, #0f766e, #0d9488)', color: '#fff' }}>
-          {initials}
+    <section className="flex flex-col overflow-hidden rounded-3xl border transition-all duration-300"
+      style={{ borderColor: pending > 0 ? 'rgba(245,158,11,0.4)' : 'var(--color-border)', backgroundColor: 'var(--color-surface)',
+               boxShadow: pending > 0 ? '0 0 0 1px rgba(245,158,11,0.15), 0 4px 24px rgba(245,158,11,0.08)' : undefined }}>
+      {/* Section header */}
+      <div className="flex items-center justify-between px-5 py-4 border-b" style={{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface-raised)' }}>
+        <div className="flex items-center gap-3">
+          <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-xl"
+            style={{ background: 'linear-gradient(135deg,#0f766e,#0d9488)', color: '#fff' }}>
+            <Icon size={15} />
+          </div>
+          <div>
+            <h2 className="text-sm font-bold" style={{ color: 'var(--color-text-primary)' }}>{title}</h2>
+            <p className="text-[10px]" style={{ color: 'var(--color-text-secondary)' }}>{total} total record{total !== 1 ? 's' : ''}</p>
+          </div>
         </div>
-        
-        {/* Info */}
-        <div className="min-w-0 flex-1">
-          <div className="flex flex-wrap items-center gap-2">
-            <h3 className="text-sm font-semibold" style={{ color: 'var(--color-text-primary)' }}>{item.teacher_name}</h3>
-            <span className="rounded-lg px-2.5 py-0.5 text-[10px] font-bold capitalize border"
-              style={{ backgroundColor: statusColors.bg, color: statusColors.text, borderColor: statusColors.border }}>
-              {item.status}
+        <div className="flex items-center gap-2">
+          {pending > 0 && (
+            <span className="flex items-center gap-1 rounded-full px-2.5 py-1 text-[10px] font-bold"
+              style={{ backgroundColor: 'rgba(245,158,11,0.15)', color: '#b45309', border: '1px solid rgba(245,158,11,0.3)' }}>
+              <AlertTriangle size={10} />{pending} pending
             </span>
-          </div>
-          <p className="mt-1 text-xs font-medium" style={{ color: '#0d9488' }}>
-            {(item.leave_type || '').replace('_', ' ').toUpperCase()} LEAVE
-          </p>
-          
-          {/* Date details */}
-          <div className="mt-3 flex flex-wrap items-center gap-3 text-xs" style={{ color: 'var(--color-text-secondary)' }}>
-            <span className="flex items-center gap-1">
-              <CalendarRange size={13} /> {item.from_date}
+          )}
+          {total > 0 && pending === 0 && (
+            <span className="flex items-center gap-1 rounded-full px-2.5 py-1 text-[10px] font-bold"
+              style={{ backgroundColor: 'rgba(16,185,129,0.1)', color: '#059669', border: '1px solid rgba(16,185,129,0.2)' }}>
+              <CheckCircle2 size={10} />All clear
             </span>
-            <ChevronRight size={12} className="text-gray-400" />
-            <span className="flex items-center gap-1">
-              <CalendarRange size={13} /> {item.to_date}
-            </span>
-            <span className="inline-flex items-center rounded-lg bg-teal-50 px-2 py-0.5 font-semibold text-teal-700 text-[10px]">
-              {Number(item.days_count || 0)} day(s)
-            </span>
-          </div>
-
-          {/* Reason */}
-          {item.reason && (
-            <div className="mt-3 rounded-2xl p-3 text-xs italic" style={{ backgroundColor: 'var(--color-surface-raised)', color: 'var(--color-text-secondary)', borderLeft: '3px solid #0f766e' }}>
-              "{item.reason}"
-            </div>
           )}
         </div>
-
-        {/* Actions */}
-        {item.status === 'pending' && (
-          <div className="flex flex-row sm:flex-col justify-end gap-2 sm:self-center">
-            <button
-              onClick={onReject}
-              className="px-4 py-2 rounded-xl text-xs font-semibold border transition-all hover:bg-red-50 hover:text-red-600 hover:border-red-200"
-              style={{ color: 'var(--color-text-primary)', borderColor: 'var(--color-border)' }}
-            >
-              Reject
-            </button>
-            <button
-              onClick={onApprove}
-              className="px-4 py-2 rounded-xl text-xs font-semibold text-white transition-all hover:bg-teal-700"
-              style={{ backgroundColor: '#0f766e' }}
-            >
-              Approve
-            </button>
-          </div>
+      </div>
+      {/* Section body */}
+      <div className="flex-1 overflow-y-auto p-4" style={{ maxHeight: 480 }}>
+        {loading ? <GridSkeleton rows={2} /> : !list.length ? (
+          <EmptyState icon={Icon} title={emptyTitle} description={emptyDesc} />
+        ) : (
+          children || <div className="space-y-3">{list.map(renderItem)}</div>
         )}
+      </div>
+    </section>
+  )
+}
+
+
+const LeaveRequestCard = ({ item, onApprove, onReject }) => {
+  const sm = STATUS_META[item.status] || STATUS_META.pending
+  const StatusIcon = sm.icon
+  const initials = item.teacher_name
+    ? item.teacher_name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase() : 'T'
+  const leaveTypeLabel = (item.leave_type || '').replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())
+
+  const LEAVE_COLORS = { casual: '#6366f1', sick: '#0ea5e9', emergency: '#ef4444', earned: '#10b981', without_pay: '#6b7280' }
+  const leaveColor = LEAVE_COLORS[item.leave_type] || '#0f766e'
+
+  return (
+    <article className="relative overflow-hidden rounded-2xl border transition-all duration-200 hover:shadow-md"
+      style={{ borderColor: sm.border, backgroundColor: 'var(--color-surface)' }}>
+      {/* Status strip */}
+      <div className="absolute left-0 top-0 bottom-0 w-1 rounded-l-2xl" style={{ backgroundColor: sm.strip }} />
+
+      <div className="pl-4 pr-4 py-4 flex gap-3">
+        {/* Avatar */}
+        <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl text-xs font-black text-white"
+          style={{ background: `linear-gradient(135deg, ${leaveColor}, ${leaveColor}cc)` }}>
+          {initials}
+        </div>
+
+        {/* Body */}
+        <div className="min-w-0 flex-1">
+          {/* Row 1: Name + status */}
+          <div className="flex items-center justify-between gap-2 flex-wrap">
+            <div>
+              <span className="text-sm font-bold" style={{ color: 'var(--color-text-primary)' }}>{item.teacher_name}</span>
+              <span className="ml-2 text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full"
+                style={{ backgroundColor: `${leaveColor}18`, color: leaveColor }}>
+                {leaveTypeLabel} Leave
+              </span>
+            </div>
+            <span className="flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full border"
+              style={{ backgroundColor: sm.bg, color: sm.text, borderColor: sm.border }}>
+              <StatusIcon size={10} />{sm.label}
+            </span>
+          </div>
+
+          {/* Row 2: Date timeline */}
+          <div className="mt-2 flex items-center gap-2 text-[11px]" style={{ color: 'var(--color-text-secondary)' }}>
+            <span className="flex items-center gap-1 rounded-lg px-2 py-0.5 font-medium"
+              style={{ backgroundColor: 'var(--color-surface-raised)' }}>
+              <CalendarRange size={11} />{item.from_date}
+            </span>
+            <ArrowRight size={12} className="flex-shrink-0 opacity-40" />
+            <span className="flex items-center gap-1 rounded-lg px-2 py-0.5 font-medium"
+              style={{ backgroundColor: 'var(--color-surface-raised)' }}>
+              <CalendarRange size={11} />{item.to_date}
+            </span>
+            <span className="ml-auto flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-black"
+              style={{ backgroundColor: `${leaveColor}15`, color: leaveColor }}>
+              {Number(item.days_count || 0)}d
+            </span>
+          </div>
+
+          {/* Row 3: Reason */}
+          {item.reason && (
+            <div className="mt-2.5 rounded-xl px-3 py-2 text-[11px] italic leading-relaxed"
+              style={{ backgroundColor: 'var(--color-surface-raised)', color: 'var(--color-text-secondary)', borderLeft: `3px solid ${sm.strip}` }}>
+              “{item.reason}”
+            </div>
+          )}
+
+          {/* Row 4: Actions */}
+          {item.status === 'pending' && (
+            <div className="mt-3 flex items-center justify-end gap-2">
+              <button onClick={onReject}
+                className="flex items-center gap-1.5 rounded-xl border px-3 py-1.5 text-xs font-semibold transition-all hover:bg-red-50 hover:text-red-600 hover:border-red-300 active:scale-95"
+                style={{ color: 'var(--color-text-primary)', borderColor: 'var(--color-border)' }}>
+                <XCircle size={13} />Reject
+              </button>
+              <button onClick={onApprove}
+                className="flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-bold text-white transition-all hover:opacity-90 active:scale-95"
+                style={{ background: 'linear-gradient(135deg,#0f766e,#0d9488)', boxShadow: '0 2px 8px rgba(15,118,110,0.4)' }}>
+                <CheckCircle2 size={13} />Approve
+              </button>
+            </div>
+          )}
+          {item.status !== 'pending' && item.reviewed_by_name && (
+            <p className="mt-2 text-[10px]" style={{ color: 'var(--color-text-secondary)' }}>
+              Reviewed by <span className="font-semibold">{item.reviewed_by_name}</span>
+            </p>
+          )}
+        </div>
       </div>
     </article>
   )
 }
 
 const CorrectionRequestCard = ({ item, isStudent = false, onApprove, onReject }) => {
-  const statusColors = {
-    approved: { bg: 'rgba(16, 185, 129, 0.1)', text: '#10b981', border: 'rgba(16, 185, 129, 0.2)' },
-    rejected: { bg: 'rgba(239, 68, 68, 0.1)', text: '#ef4444', border: 'rgba(239, 68, 68, 0.2)' },
-    pending: { bg: 'rgba(245, 158, 11, 0.1)', text: '#f59e0b', border: 'rgba(245, 158, 11, 0.2)' }
-  }[item.status] || { bg: '#f3f4f6', text: '#6b7280', border: '#e5e7eb' };
-
-  const name = isStudent ? item.student_name : item.teacher_name;
-  const subInfo = isStudent ? `Admission No: ${item.admission_no || 'N/A'}` : 'Teacher Account';
+  const sm = STATUS_META[item.status] || STATUS_META.pending
+  const StatusIcon = sm.icon
+  const name    = isStudent ? item.student_name  : item.teacher_name
+  const role    = isStudent ? 'Student' : 'Teacher'
+  const admInfo = isStudent ? (item.admission_no ? `#${item.admission_no}` : '') : ''
+  const fieldLabel = (item.field_name || '').replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())
+  const initials = name ? name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase() : role[0]
+  const avatarColor = isStudent ? 'linear-gradient(135deg,#6366f1,#4f46e5)' : 'linear-gradient(135deg,#0ea5e9,#0284c7)'
 
   return (
-    <article className="group relative overflow-hidden rounded-3xl border p-5 transition-all duration-300 hover:shadow-lg hover:border-teal-500/30" 
-      style={{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface)' }}>
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
-        <div className="min-w-0 flex-1">
-          <div className="flex flex-wrap items-center gap-2">
-            <h3 className="text-sm font-semibold" style={{ color: 'var(--color-text-primary)' }}>{name}</h3>
-            <span className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>• {subInfo}</span>
-            <span className="rounded-lg px-2.5 py-0.5 text-[10px] font-bold capitalize border ml-auto sm:ml-0"
-              style={{ backgroundColor: statusColors.bg, color: statusColors.text, borderColor: statusColors.border }}>
-              {item.status}
-            </span>
-          </div>
+    <article className="relative overflow-hidden rounded-2xl border transition-all duration-200 hover:shadow-md"
+      style={{ borderColor: sm.border, backgroundColor: 'var(--color-surface)' }}>
+      {/* Status strip */}
+      <div className="absolute left-0 top-0 bottom-0 w-1 rounded-l-2xl" style={{ backgroundColor: sm.strip }} />
 
-          <p className="mt-2 text-xs font-semibold uppercase tracking-wider" style={{ color: '#0369a1' }}>
-            Correction Field: {item.field_name?.replace('_', ' ')}
-          </p>
-
-          {/* Comparison */}
-          <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-3 rounded-2xl p-3 border" style={{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface-raised)' }}>
+      <div className="pl-4 pr-4 py-4">
+        {/* Header */}
+        <div className="flex items-center justify-between gap-2 flex-wrap">
+          <div className="flex items-center gap-2.5">
+            <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl text-xs font-black text-white"
+              style={{ background: avatarColor }}>{initials}</div>
             <div>
-              <p className="text-[10px] uppercase font-bold tracking-wider" style={{ color: 'var(--color-text-secondary)' }}>Current Value</p>
-              <p className="mt-0.5 text-xs font-medium line-through decoration-red-500/50" style={{ color: 'var(--color-text-primary)' }}>
-                {item.current_value || '—'}
-              </p>
-            </div>
-            <div className="border-t sm:border-t-0 sm:border-l pt-2 sm:pt-0 sm:pl-3" style={{ borderColor: 'var(--color-border)' }}>
-              <p className="text-[10px] uppercase font-bold tracking-wider text-teal-600">Requested Value</p>
-              <p className="mt-0.5 text-xs font-bold text-teal-600">
-                {item.requested_value}
+              <p className="text-sm font-bold" style={{ color: 'var(--color-text-primary)' }}>{name}</p>
+              <p className="text-[10px]" style={{ color: 'var(--color-text-secondary)' }}>
+                {role}{admInfo ? ` · ${admInfo}` : ''}
               </p>
             </div>
           </div>
-
-          {/* Reason */}
-          {item.reason && (
-            <p className="mt-3 text-xs" style={{ color: 'var(--color-text-secondary)' }}>
-              <span className="font-semibold text-gray-500">Reason:</span> "{item.reason}"
-            </p>
-          )}
+          <span className="flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full border"
+            style={{ backgroundColor: sm.bg, color: sm.text, borderColor: sm.border }}>
+            <StatusIcon size={10} />{sm.label}
+          </span>
         </div>
+
+        {/* Field label */}
+        <div className="mt-3 flex items-center gap-2">
+          <span className="text-[10px] uppercase font-black tracking-widest" style={{ color: 'var(--color-text-secondary)' }}>Field</span>
+          <span className="rounded-lg px-2.5 py-0.5 text-xs font-bold"
+            style={{ backgroundColor: 'rgba(3,105,161,0.08)', color: '#0369a1', border: '1px solid rgba(3,105,161,0.15)' }}>
+            {fieldLabel}
+          </span>
+        </div>
+
+        {/* Diff comparison */}
+        <div className="mt-3 grid grid-cols-[1fr_auto_1fr] items-center gap-2">
+          <div className="rounded-xl p-3 border" style={{ borderColor: 'rgba(239,68,68,0.2)', backgroundColor: 'rgba(239,68,68,0.04)' }}>
+            <p className="text-[9px] uppercase font-black tracking-wider mb-1" style={{ color: '#dc2626' }}>Current</p>
+            <p className="text-xs font-medium line-through decoration-red-400/60" style={{ color: 'var(--color-text-primary)' }}>
+              {item.current_value || <span style={{ opacity: 0.4 }}>— empty —</span>}
+            </p>
+          </div>
+          <div className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full"
+            style={{ background: 'linear-gradient(135deg,#0f766e,#0d9488)', color: '#fff' }}>
+            <ArrowRight size={13} />
+          </div>
+          <div className="rounded-xl p-3 border" style={{ borderColor: 'rgba(16,185,129,0.25)', backgroundColor: 'rgba(16,185,129,0.06)' }}>
+            <p className="text-[9px] uppercase font-black tracking-wider mb-1 text-emerald-600">Requested</p>
+            <p className="text-xs font-bold text-emerald-600">{item.requested_value}</p>
+          </div>
+        </div>
+
+        {/* Reason */}
+        {item.reason && (
+          <div className="mt-3 rounded-xl px-3 py-2 text-[11px] italic leading-relaxed"
+            style={{ backgroundColor: 'var(--color-surface-raised)', color: 'var(--color-text-secondary)', borderLeft: `3px solid ${sm.strip}` }}>
+            “{item.reason}”
+          </div>
+        )}
 
         {/* Actions */}
         {item.status === 'pending' && (
-          <div className="flex flex-row sm:flex-col justify-end gap-2 sm:self-center">
-            <button
-              onClick={onReject}
-              className="px-4 py-2 rounded-xl text-xs font-semibold border transition-all hover:bg-red-50 hover:text-red-600 hover:border-red-200"
-              style={{ color: 'var(--color-text-primary)', borderColor: 'var(--color-border)' }}
-            >
-              Reject
+          <div className="mt-3 flex items-center justify-end gap-2">
+            <button onClick={onReject}
+              className="flex items-center gap-1.5 rounded-xl border px-3 py-1.5 text-xs font-semibold transition-all hover:bg-red-50 hover:text-red-600 hover:border-red-300 active:scale-95"
+              style={{ color: 'var(--color-text-primary)', borderColor: 'var(--color-border)' }}>
+              <XCircle size={13} />Reject
             </button>
-            <button
-              onClick={onApprove}
-              className="px-4 py-2 rounded-xl text-xs font-semibold text-white transition-all hover:bg-teal-700"
-              style={{ backgroundColor: '#0f766e' }}
-            >
-              Approve
+            <button onClick={onApprove}
+              className="flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-bold text-white transition-all hover:opacity-90 active:scale-95"
+              style={{ background: 'linear-gradient(135deg,#0f766e,#0d9488)', boxShadow: '0 2px 8px rgba(15,118,110,0.4)' }}>
+              <CheckCircle2 size={13} />Approve
             </button>
           </div>
+        )}
+        {item.status !== 'pending' && item.reviewed_by_name && (
+          <p className="mt-2 text-[10px]" style={{ color: 'var(--color-text-secondary)' }}>
+            Reviewed by <span className="font-semibold">{item.reviewed_by_name}</span>
+          </p>
         )}
       </div>
     </article>
@@ -1682,43 +1772,81 @@ const CorrectionRequestCard = ({ item, isStudent = false, onApprove, onReject })
 }
 
 const HomeworkCard = ({ item }) => {
-  const statusColors = item.status === 'active' 
-    ? { bg: 'rgba(16, 185, 129, 0.1)', text: '#10b981', border: 'rgba(16, 185, 129, 0.2)' }
-    : { bg: '#f3f4f6', text: '#6b7280', border: '#e5e7eb' };
+  const total     = Number(item.student_count   || 0)
+  const submitted = Number(item.submitted_count || 0)
+  const pct       = total > 0 ? Math.round((submitted / total) * 100) : 0
+  const subjectColor = SUBJECT_COLORS[(item.subject_id || 0) % SUBJECT_COLORS.length]
+
+  const today    = new Date().toISOString().slice(0, 10)
+  const due      = item.due_date || ''
+  const daysLeft = due ? Math.ceil((new Date(due) - new Date(today)) / 86400000) : null
+  const urgency  = daysLeft === null ? null : daysLeft < 0 ? 'overdue' : daysLeft <= 2 ? 'soon' : 'ok'
+  const urgencyStyle = {
+    overdue: { bg: 'rgba(239,68,68,0.1)',   text: '#dc2626', label: `Overdue by ${Math.abs(daysLeft)}d` },
+    soon:    { bg: 'rgba(245,158,11,0.1)',  text: '#b45309', label: daysLeft === 0 ? 'Due today' : `${daysLeft}d left` },
+    ok:      { bg: 'rgba(16,185,129,0.1)',  text: '#059669', label: `${daysLeft}d left` },
+  }[urgency] || { bg: 'transparent', text: 'inherit', label: due }
+
+  const statusMeta = item.status === 'active'
+    ? { bg: 'rgba(16,185,129,0.1)', text: '#059669', border: 'rgba(16,185,129,0.25)', label: 'Active' }
+    : item.status === 'completed'
+    ? { bg: 'rgba(99,102,241,0.1)', text: '#4f46e5', border: 'rgba(99,102,241,0.25)', label: 'Completed' }
+    : { bg: '#f3f4f6', text: '#6b7280', border: '#e5e7eb', label: item.status }
 
   return (
-    <article className="group relative overflow-hidden rounded-3xl border p-5 transition-all duration-300 hover:shadow-lg hover:border-teal-500/30" 
+    <article className="relative overflow-hidden rounded-2xl border transition-all duration-200 hover:shadow-md"
       style={{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface)' }}>
-      <div className="flex items-start gap-4">
-        <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl"
-          style={{ backgroundColor: 'rgba(15, 118, 110, 0.1)', color: '#0f766e' }}>
-          <BookOpenText size={18} />
-        </div>
-        <div className="min-w-0 flex-1">
-          <div className="flex flex-wrap items-center gap-2">
-            <h3 className="text-sm font-semibold" style={{ color: 'var(--color-text-primary)' }}>{item.title}</h3>
-            <span className="rounded-lg px-2 py-0.5 text-[10px] font-bold capitalize border"
-              style={{ backgroundColor: statusColors.bg, color: statusColors.text, borderColor: statusColors.border }}>
-              {item.status}
-            </span>
-          </div>
-          
-          <p className="mt-1 text-xs" style={{ color: 'var(--color-text-secondary)' }}>
-            Assigned by <span className="font-medium" style={{ color: 'var(--color-text-primary)' }}>{item.teacher_name}</span>
-          </p>
+      {/* Subject color strip */}
+      <div className="absolute left-0 top-0 bottom-0 w-1 rounded-l-2xl" style={{ backgroundColor: subjectColor }} />
 
-          <div className="mt-3 flex flex-wrap gap-2 text-[11px]" style={{ color: 'var(--color-text-secondary)' }}>
-            <span className="rounded-lg bg-gray-100 px-2 py-0.5 font-medium">
-              {item.class_name}{item.class_stream ? ` (${item.class_stream.toUpperCase()})` : ''} — {item.section_name}
-            </span>
-            <span className="rounded-lg bg-teal-50 px-2 py-0.5 font-semibold text-teal-700">
-              {item.subject_name}
-            </span>
-            <span className="flex items-center gap-1 ml-auto font-medium text-amber-600">
-              <Clock size={11} /> Due {item.due_date}
-            </span>
+      <div className="pl-4 pr-4 py-3">
+        {/* Header */}
+        <div className="flex items-start justify-between gap-2">
+          <div className="min-w-0 flex-1">
+            <p className="text-sm font-bold truncate" style={{ color: 'var(--color-text-primary)' }}>{item.title}</p>
+            <p className="text-[11px] mt-0.5" style={{ color: 'var(--color-text-secondary)' }}>
+              by <span className="font-semibold">{item.teacher_name}</span>
+            </p>
           </div>
+          <span className="flex-shrink-0 rounded-lg px-2 py-0.5 text-[10px] font-bold border"
+            style={{ backgroundColor: statusMeta.bg, color: statusMeta.text, borderColor: statusMeta.border }}>
+            {statusMeta.label}
+          </span>
         </div>
+
+        {/* Chips row */}
+        <div className="mt-2 flex flex-wrap items-center gap-1.5">
+          <span className="rounded-lg px-2 py-0.5 text-[10px] font-semibold"
+            style={{ backgroundColor: 'var(--color-surface-raised)', color: 'var(--color-text-secondary)' }}>
+            {item.class_name}{item.class_stream ? ` (${item.class_stream[0].toUpperCase()})` : ''} – {item.section_name}
+          </span>
+          <span className="rounded-lg px-2 py-0.5 text-[10px] font-bold"
+            style={{ backgroundColor: `${subjectColor}15`, color: subjectColor, border: `1px solid ${subjectColor}30` }}>
+            {item.subject_name}
+          </span>
+          {due && (
+            <span className="ml-auto flex items-center gap-1 rounded-lg px-2 py-0.5 text-[10px] font-bold"
+              style={{ backgroundColor: urgencyStyle.bg, color: urgencyStyle.text }}>
+              <Clock size={9} />{urgencyStyle.label}
+            </span>
+          )}
+        </div>
+
+        {/* Submission progress */}
+        {total > 0 && (
+          <div className="mt-3">
+            <div className="mb-1 flex items-center justify-between text-[10px]">
+              <span style={{ color: 'var(--color-text-secondary)' }}>Submissions</span>
+              <span className="font-bold" style={{ color: 'var(--color-text-primary)' }}>
+                {submitted} / {total} students ({pct}%)
+              </span>
+            </div>
+            <div className="h-1.5 w-full overflow-hidden rounded-full" style={{ backgroundColor: 'var(--color-surface-raised)' }}>
+              <div className="h-full rounded-full transition-all duration-500"
+                style={{ width: `${pct}%`, backgroundColor: pct >= 80 ? '#10b981' : pct >= 40 ? '#f59e0b' : subjectColor }} />
+            </div>
+          </div>
+        )}
       </div>
     </article>
   )

@@ -94,8 +94,12 @@ const useClasses = () => {
       return { success: true }
     } catch (err) {
       const msg = err.message || 'Failed to delete class'
-      toastError(msg)
-      return { success: false, message: msg }
+      const errors = err.errors || []
+      const activeEnrollmentsErr = errors.find(e => e.code === 'ACTIVE_ENROLLMENTS')
+      if (!activeEnrollmentsErr) {
+        toastError(msg)
+      }
+      return { success: false, message: msg, errors }
     } finally {
       store.setSaving(false)
     }

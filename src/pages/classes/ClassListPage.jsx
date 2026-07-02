@@ -323,6 +323,11 @@ const ClassListPage = () => {
   const [createModal, setCreateModal] = useState(false)
   const [editTarget,  setEditTarget]  = useState(null)
   const [deleteTarget,setDeleteTarget]= useState(null)
+  const [deleteReason, setDeleteReason] = useState('')
+  const [deleteError, setDeleteError] = useState('')
+  const [showForceDelete, setShowForceDelete] = useState(false)
+  const [forceDeleteChecked, setForceDeleteChecked] = useState(false)
+  const [enrolledCount, setEnrolledCount] = useState(0)
   const [toggleTarget,setToggleTarget]= useState(null)
   const [downloadModal,setDownloadModal]=useState(false)
   const [downloadClassId,setDownloadClassId]=useState('')
@@ -374,9 +379,38 @@ const ClassListPage = () => {
     if (result.success) setEditTarget(null)
   }
 
-  const handleDelete = async () => {
-    const result = await deleteClass(deleteTarget.id, 'Deleted from class management', { force: true })
-    if (result.success) setDeleteTarget(null)
+  const handleDeleteSubmit = async () => {
+    setDeleteError('')
+
+    if (deleteReason.trim().length > 0 && deleteReason.trim().length < 10) {
+      setDeleteError('Audit reason must be at least 10 characters.')
+      return
+    }
+
+    const payload = showForceDelete ? { force: true } : {}
+    const result = await deleteClass(deleteTarget.id, deleteReason.trim() || undefined, payload)
+    
+    if (result.success) {
+      closeDeleteModal()
+    } else {
+      const activeEnrollmentsErr = result.errors?.find(e => e.code === 'ACTIVE_ENROLLMENTS')
+      if (activeEnrollmentsErr) {
+        setShowForceDelete(true)
+        setEnrolledCount(activeEnrollmentsErr.count)
+        setDeleteError(result.message)
+      } else {
+        setDeleteError(result.message || 'Failed to delete class')
+      }
+    }
+  }
+
+  const closeDeleteModal = () => {
+    setDeleteTarget(null)
+    setDeleteReason('')
+    setDeleteError('')
+    setShowForceDelete(false)
+    setForceDeleteChecked(false)
+    setEnrolledCount(0)
   }
 
   const handleToggle = async () => {
@@ -645,16 +679,81 @@ const ClassListPage = () => {
       </Modal>
 
       {/* ── Delete confirm ─────────────────────────────────────────────── */}
-      <ConfirmDialog
-        open={!!deleteTarget}
-        onClose={() => setDeleteTarget(null)}
-        onConfirm={handleDelete}
-        title="Delete Class"
-        description={`Delete "${deleteTarget?.name}"? This will soft-delete the class, sections, and subjects. If students are currently enrolled, their active enrollments will be closed as withdrawn.`}
-        loading={isSaving}
-        confirmLabel="Delete Class"
-        variant="danger"
-      />
+      <Modal open={!!deleteTarget} onClose={closeDeleteModal} title="Delete Class" size="md">
+        <div className="space-y-4">
+          <p className="text-sm text-gray-600 dark:text-gray-400">
+            Are you sure you want to delete the class <span className="font-semibold text-gray-900 dark:text-gray-100">"{deleteTarget?.name}"</span>?
+            This will soft-delete the class, sections, and subjects.
+          </p>
+
+          <div className="space-y-1">
+            <label className="block text-xs font-semibold uppercase text-gray-400 dark:text-gray-500">Reason for deletion (Optional)</label>
+            <input
+              type="text"
+              placeholder="E.g., Curriculum restructuring (minimum 10 characters)"
+              value={deleteReason}
+              onChange={(e) => {
+                setDeleteReason(e.target.value)
+                if (e.target.value.trim().length > 0 && e.target.value.trim().length < 10) {
+                  setDeleteError('Audit reason must be at least 10 characters.')
+                } else {
+                  setDeleteError('')
+                }
+              }}
+              className="w-full px-3 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-sm dark:text-gray-100 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
+            />
+          </div>
+
+          {deleteError && (
+            <div className="p-3 rounded-lg bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-900/50 text-xs text-red-700 dark:text-red-400 flex items-start gap-2">
+              <AlertCircle size={14} className="shrink-0 mt-0.5" />
+              <div>{deleteError}</div>
+            </div>
+          )}
+
+          {showForceDelete && (
+            <div className="p-4 rounded-xl bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-900/50 space-y-3">
+              <div className="flex gap-2">
+                <AlertCircle size={16} className="text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
+                <div className="text-xs font-medium text-amber-800 dark:text-amber-300">
+                  This class has {enrolledCount} active student enrollment(s).
+                  Deleting it will immediately withdraw all of them!
+                </div>
+              </div>
+              <label className="flex items-start gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={forceDeleteChecked}
+                  onChange={(e) => setForceDeleteChecked(e.target.checked)}
+                  className="mt-0.5 h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                />
+                <span className="text-xs text-gray-600 dark:text-gray-400 font-medium">
+                  Yes, I understand the impact and confirm I want to withdraw all {enrolledCount} students and delete the class.
+                </span>
+              </label>
+            </div>
+          )}
+
+          <div className="flex justify-end gap-3 pt-2">
+            <button
+              type="button"
+              onClick={closeDeleteModal}
+              disabled={isSaving}
+              className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors disabled:opacity-50"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              onClick={handleDeleteSubmit}
+              disabled={(deleteReason.trim().length > 0 && deleteReason.trim().length < 10) || isSaving || (showForceDelete && !forceDeleteChecked)}
+              className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50"
+            >
+              {isSaving ? 'Deleting...' : showForceDelete ? 'Force Delete Class' : 'Delete Class'}
+            </button>
+          </div>
+        </div>
+      </Modal>
 
       {/* ── Toggle active confirm ──────────────────────────────────────── */}
       <ConfirmDialog
