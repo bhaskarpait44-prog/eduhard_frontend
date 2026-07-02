@@ -1,5 +1,5 @@
 import { useMemo, useState, useEffect } from 'react'
-import { CheckCircle2, RefreshCw, Send, Users } from 'lucide-react'
+import { CheckCircle2, RefreshCw, Send, Users, Info } from 'lucide-react'
 import { getClasses, getClassOptions, getSections } from '@/api/classApi'
 import { getClassAttendance } from '@/api/attendanceApi'
 import useAttendanceStore from '@/store/attendanceStore'
@@ -289,6 +289,14 @@ const MarkAttendancePage = () => {
               />
             </div>
           )}
+
+          <div className="mb-6 p-4 rounded-2xl bg-amber-50/50 border border-amber-100 flex items-start gap-3 max-w-2xl">
+            <Info className="text-amber-600 shrink-0 mt-0.5" size={16} />
+            <p className="text-xs font-semibold text-amber-900 leading-normal">
+              <strong>Notice:</strong> Eduhard operates on an exceptions-only marking pattern. Any student not explicitly marked Absent, Late, or Half Day will default to <strong>Present</strong>.
+            </p>
+          </div>
+
           <div className="mb-4 flex flex-wrap gap-2">
             {STATUS_OPTIONS.map((status) => (
               <Badge key={status.key} variant={status.badge} size="md">
