@@ -4,8 +4,8 @@ import Button from '@/components/ui/Button'
 import { SectionHeading } from './StepIdentity'
 
 const DOCUMENT_TYPES = [
-  { id: 'photo', label: 'Passport Photo', required: true },
-  { id: 'birth_certificate', label: 'Birth Certificate', required: true },
+  { id: 'photo', label: 'Passport Photo', required: false },
+  { id: 'birth_certificate', label: 'Birth Certificate', required: false },
   { id: 'transfer_certificate', label: 'Transfer Certificate', required: false },
   { id: 'marksheet', label: 'HSLC Mark Sheet', required: false },
   { id: 'admit_card', label: 'HSLC Admit Card', required: false },

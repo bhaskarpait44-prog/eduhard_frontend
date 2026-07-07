@@ -89,6 +89,13 @@ const EventFormModal = ({ isOpen, onClose, event, sessionId }) => {
   const isPublished = watch('is_published')
   const currentColor = watch('color')
 
+  // Reset target class if audience changes from students
+  useEffect(() => {
+    if (audience !== 'students') {
+      setValue('target_class_id', '')
+    }
+  }, [audience, setValue])
+
   useEffect(() => {
     if (isOpen) {
       fetchClasses()
@@ -118,7 +125,7 @@ const EventFormModal = ({ isOpen, onClose, event, sessionId }) => {
     const payload = {
       ...data,
       session_id: sessionId,
-      target_class_id: data.target_class_id === '' ? null : Number(data.target_class_id),
+      target_class_id: data.audience === 'students' && data.target_class_id !== '' ? Number(data.target_class_id) : null,
       start_time: data.is_all_day ? null : data.start_time,
       end_time: data.is_all_day ? null : data.end_time,
     }
