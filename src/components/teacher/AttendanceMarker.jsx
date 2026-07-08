@@ -322,28 +322,28 @@ const AttendanceMarker = ({
                   disabled={isDisableMarking}
                   onClick={() => bulkSet('present')}
                   className={cn(
-                    "h-10 px-5 rounded-2xl bg-emerald-500 text-white text-[11px] font-bold uppercase tracking-wider flex items-center gap-2 shadow-lg shadow-emerald-500/20 transition-all",
-                    isDisableMarking ? "opacity-30 cursor-not-allowed" : "active:scale-95 hover:bg-emerald-600"
+                    "h-10 px-5 rounded-2xl bg-emerald-50 text-emerald-700 border border-emerald-200 text-[11px] font-bold uppercase tracking-wider flex items-center gap-2 shadow-sm transition-all duration-200",
+                    isDisableMarking ? "opacity-30 cursor-not-allowed" : "active:scale-95 hover:bg-emerald-100 hover:border-emerald-300"
                   )}
                 >
-                  <CheckCircle2 size={16} /> Mark All Present
+                  <CheckCircle2 size={15} /> Mark All Present
                 </button>
                 <button
                   disabled={isDisableMarking}
                   onClick={() => bulkSet('absent')}
                   className={cn(
-                    "h-10 px-5 rounded-2xl bg-rose-500 text-white text-[11px] font-bold uppercase tracking-wider flex items-center gap-2 shadow-lg shadow-rose-500/20 transition-all",
-                    isDisableMarking ? "opacity-30 cursor-not-allowed" : "active:scale-95 hover:bg-rose-600"
+                    "h-10 px-5 rounded-2xl bg-rose-50 text-rose-700 border border-rose-200 text-[11px] font-bold uppercase tracking-wider flex items-center gap-2 shadow-sm transition-all duration-200",
+                    isDisableMarking ? "opacity-30 cursor-not-allowed" : "active:scale-95 hover:bg-rose-100 hover:border-rose-300"
                   )}
                 >
-                  <AlertTriangle size={16} /> Mark All Absent
+                  <AlertTriangle size={15} /> Mark All Absent
                 </button>
                 <button 
                   disabled={isDisableMarking}
                   onClick={resetToDefaults}
                   className={cn(
-                    "h-10 px-5 rounded-2xl text-[11px] font-bold uppercase tracking-wider text-text-muted transition-all border border-transparent",
-                    isDisableMarking ? "opacity-30 cursor-not-allowed" : "hover:bg-surface-raised hover:border-border active:scale-95"
+                    "h-10 px-5 rounded-2xl bg-surface-raised border border-border text-[11px] font-bold uppercase tracking-wider text-text-secondary transition-all duration-200",
+                    isDisableMarking ? "opacity-30 cursor-not-allowed" : "hover:bg-border/20 active:scale-95"
                   )}
                 >
                   Reset Defaults
@@ -371,10 +371,10 @@ const AttendanceMarker = ({
                 return (
                   <div
                     key={student.enrollment_id}
-                    className="rounded-[24px] border bg-surface p-5 transition-all hover:shadow-md"
+                    className="rounded-[24px] border bg-surface p-5 transition-all duration-300 hover:translate-y-[-2px] hover:shadow-md"
                     style={{
-                      borderColor: currentStatus === 'present' ? 'var(--color-border)' : `${config.tone}44`,
-                      backgroundColor: currentStatus === 'present' ? 'var(--color-surface)' : `${config.tone}05`
+                      borderColor: currentStatus === 'present' ? 'var(--color-border)' : `${config.tone}55`,
+                      backgroundColor: currentStatus === 'present' ? 'var(--color-surface)' : `${config.tone}0a`
                     }}
                   >
                     <div className="flex items-center gap-4">
@@ -415,13 +415,13 @@ const AttendanceMarker = ({
                             className={cn(
                               'h-11 rounded-[14px] border text-xs font-bold transition-all flex items-center justify-center',
                               !isDisableMarking && 'active:scale-90',
-                              selected ? 'shadow-lg text-white' : (isDisableMarking ? 'opacity-30 cursor-not-allowed' : 'opacity-60 hover:opacity-100 hover:bg-surface-raised')
+                              selected ? 'shadow-md text-white' : (isDisableMarking ? 'opacity-30 cursor-not-allowed' : 'opacity-85 hover:opacity-100')
                             )}
                             style={{
-                              borderColor: selected ? option.tone : 'var(--color-border)',
-                              backgroundColor: selected ? option.tone : (isDisableMarking ? 'var(--color-surface-raised)' : 'transparent'),
+                              borderColor: selected ? option.tone : `${option.tone}22`,
+                              backgroundColor: selected ? option.tone : (isDisableMarking ? 'var(--color-surface-raised)' : `${option.tone}0e`),
                               color: selected ? '#fff' : (isDisableMarking ? 'var(--color-text-muted)' : option.tone),
-                              boxShadow: selected ? `0 8px 16px ${option.tone}33` : 'none',
+                              boxShadow: selected ? `0 6px 12px ${option.tone}33` : 'none',
                               cursor: isDisableMarking ? 'not-allowed' : 'pointer'
                             }}
                             title={option.full}
