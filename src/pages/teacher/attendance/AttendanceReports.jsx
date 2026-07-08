@@ -1,13 +1,15 @@
 import { useEffect, useMemo, useState } from 'react'
-import { BellRing, Download, PhoneCall, TriangleAlert, TrendingUp, Users, AlertCircle, Activity, ChevronRight, RefreshCw, CalendarDays, FilterX, Search, CheckCircle2, Layout, FileText, FileSpreadsheet } from 'lucide-react'
+import { BellRing, Download, PhoneCall, TriangleAlert, TrendingUp, Users, AlertCircle, Activity, ChevronRight, RefreshCw, CalendarDays, FilterX, Search, CheckCircle2, Layout, FileText, FileSpreadsheet, History } from 'lucide-react'
 import usePageTitle from '@/hooks/usePageTitle'
 import useToast from '@/hooks/useToast'
 import useAttendance from '@/hooks/useAttendance'
 import Select from '@/components/ui/Select'
 import Button from '@/components/ui/Button'
 import Input from '@/components/ui/Input'
+import EmptyState from '@/components/ui/EmptyState'
 import { cn } from '@/utils/helpers'
 import { downloadAttendanceSummaryPdf } from '@/api/attendanceApi'
+import useSessionStore from '@/store/sessionStore'
 
 // ─────────────────────────────────────────────────────────────────────────────
 //  STRUCTURAL COMPONENTS
@@ -15,25 +17,25 @@ import { downloadAttendanceSummaryPdf } from '@/api/attendanceApi'
 
 const StatCard = ({ label, value, sub, color, icon: Icon }) => (
   <div 
-    className="bg-surface border rounded-[28px] p-5 flex flex-col shadow-sm transition-all hover:shadow-md group"
+    className="bg-surface border rounded-[var(--radius-lg)] p-5 flex flex-col shadow-sm transition-all hover:shadow-md group"
     style={{ borderColor: 'var(--color-border)' }}
   >
     <div className="flex items-center justify-between mb-5">
-      <div className="flex h-10 w-10 items-center justify-center rounded-[18px] bg-surface-raised shadow-inner" style={{ color }}>
+      <div className="flex h-10 w-10 items-center justify-center rounded-[var(--radius-lg)] bg-surface-raised shadow-inner" style={{ color }}>
         <Icon size={20} />
       </div>
-      <span className="text-[10px] font-bold tracking-[0.12em] uppercase text-text-muted group-hover:text-text-primary transition-colors">{label}</span>
+      <span className="text-[11px] font-bold tracking-wider uppercase text-text-muted group-hover:text-text-primary transition-colors">{label}</span>
     </div>
     <div>
       <span className="text-3xl font-bold text-text-primary leading-none tracking-tight">{value}</span>
-      {sub && <p className="text-[10px] font-semibold text-text-muted uppercase mt-2 tracking-tighter opacity-70">{sub}</p>}
+      {sub && <p className="text-[11px] font-semibold text-text-muted uppercase mt-2 tracking-wide opacity-70">{sub}</p>}
     </div>
   </div>
 )
 
 const ReportCard = ({ title, subtitle, onExport, onExportPdf, accent = 'var(--color-primary)', children }) => (
   <div 
-    className="bg-surface border rounded-[28px] overflow-hidden flex flex-col shadow-sm h-full"
+    className="bg-surface border rounded-[var(--radius-lg)] overflow-hidden flex flex-col shadow-sm h-full"
     style={{ borderColor: 'var(--color-border)' }}
   >
     <div className="p-5 sm:px-6 sm:py-5 border-b bg-surface-raised/20 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4" style={{ borderColor: 'var(--color-border)' }}>
@@ -51,7 +53,7 @@ const ReportCard = ({ title, subtitle, onExport, onExportPdf, accent = 'var(--co
             size="sm"
             icon={Download}
             onClick={onExportPdf}
-            className="h-9 rounded-2xl px-4 text-[10px] font-bold uppercase tracking-widest shadow-sm hover:shadow active:scale-95 transition-all"
+            className="h-9 rounded-xl px-4 text-[11px] font-bold uppercase tracking-wider shadow-sm hover:shadow active:scale-95 transition-all"
           >
             PDF
           </Button>
@@ -61,7 +63,7 @@ const ReportCard = ({ title, subtitle, onExport, onExportPdf, accent = 'var(--co
           size="sm"
           icon={FileSpreadsheet}
           onClick={onExport}
-          className="h-9 rounded-2xl px-4 text-[10px] font-bold uppercase tracking-widest shadow-sm hover:shadow active:scale-95 transition-all"
+          className="h-9 rounded-xl px-4 text-[11px] font-bold uppercase tracking-wider shadow-sm hover:shadow active:scale-95 transition-all"
         >
           CSV
         </Button>
@@ -74,14 +76,14 @@ const ReportCard = ({ title, subtitle, onExport, onExportPdf, accent = 'var(--co
 const PanelSkeleton = () => (
   <div className="flex flex-col gap-4 h-full">
     {[...Array(5)].map((_, i) => (
-      <div key={i} className="h-14 rounded-2xl bg-surface-raised animate-pulse" />
+      <div key={i} className="h-14 rounded-xl bg-surface-raised animate-pulse" />
     ))}
   </div>
 )
 
 const EmptyPanel = ({ text, icon: Icon = TriangleAlert }) => (
-  <div className="border border-dashed rounded-[24px] p-12 text-center flex flex-col items-center gap-5 bg-surface-raised/10" style={{ borderColor: 'var(--color-border)' }}>
-    <div className="h-14 w-14 rounded-[22px] bg-surface-raised flex items-center justify-center text-text-muted/40 shadow-inner">
+  <div className="border border-dashed rounded-[var(--radius-lg)] p-12 text-center flex flex-col items-center gap-5 bg-surface-raised/10" style={{ borderColor: 'var(--color-border)' }}>
+    <div className="h-14 w-14 rounded-xl bg-surface-raised flex items-center justify-center text-text-muted/40 shadow-inner">
       <Icon size={28} />
     </div>
     <p className="text-sm font-semibold text-text-secondary italic opacity-80">{text}</p>
@@ -112,7 +114,7 @@ const SummaryTable = ({ rows, threshold }) => {
               <th 
                 key={col.label} 
                 className={cn(
-                  "px-4 py-4 text-[10px] font-bold uppercase tracking-[0.15em] text-text-muted",
+                  "px-4 py-4 text-[11px] font-bold uppercase tracking-wider text-text-muted",
                   col.align === 'center' ? 'text-center' : 'text-left'
                 )}
                 style={{ width: col.width }}
@@ -136,7 +138,7 @@ const SummaryTable = ({ rows, threshold }) => {
                     <span className="text-sm font-bold text-text-primary group-hover:text-primary transition-colors truncate">
                       {row.first_name} {row.last_name}
                     </span>
-                    <span className="text-[10px] text-text-muted font-semibold uppercase tracking-widest mt-0.5 opacity-60">ID: {row.student_id}</span>
+                    <span className="text-[11px] text-text-muted font-semibold uppercase tracking-wide mt-0.5 opacity-60">ID: {row.student_id}</span>
                   </div>
                 </td>
                 <td className="px-4 py-4 text-center text-sm font-bold text-text-secondary">{row.total_days || 0}</td>
@@ -151,7 +153,7 @@ const SummaryTable = ({ rows, threshold }) => {
                   </div>
                 </td>
                 <td className="px-4 py-4 text-center">
-                  <span className={cn("text-[9px] font-bold px-3 py-1 rounded-full uppercase tracking-widest shadow-sm", sBg)}>{sLabel}</span>
+                  <span className={cn("text-[11px] font-bold px-3 py-1 rounded-full uppercase tracking-wide shadow-sm", sBg)}>{sLabel}</span>
                 </td>
               </tr>
             )
@@ -173,7 +175,7 @@ const DailySummaryPanel = ({ rows }) => {
         return (
           <div key={row.date} className="group">
             <div className="flex justify-between items-end mb-2 px-1">
-              <span className="text-[10px] font-bold text-text-muted uppercase tracking-[0.15em] bg-surface-raised px-3 py-1 rounded-lg shadow-sm">{row.date}</span>
+              <span className="text-[11px] font-bold text-text-muted uppercase tracking-wide bg-surface-raised px-3 py-1 rounded-lg shadow-sm">{row.date}</span>
               <span className={cn("text-xs font-bold", textColor)}>
                 {row.present}/{row.total}
                 <span className="text-text-muted/30 font-normal mx-2">|</span>
@@ -204,13 +206,13 @@ const BelowThresholdTable = ({ rows, threshold }) => {
         const effectivePresentDays = percentage * totalDays / 100
         const daysShort = percentage >= threshold ? 0 : Math.ceil((threshold * totalDays / 100) - effectivePresentDays)
         return (
-          <div key={row.enrollment_id} className="bg-surface-raised/20 border rounded-[22px] p-5 relative overflow-hidden group hover:border-rose-200 transition-all shadow-sm" style={{ borderColor: 'var(--color-border)' }}>
+          <div key={row.enrollment_id} className="bg-surface-raised/20 border rounded-xl p-5 relative overflow-hidden group hover:border-rose-200 transition-all shadow-sm" style={{ borderColor: 'var(--color-border)' }}>
             <div className="absolute top-0 left-0 bottom-0 pointer-events-none opacity-[0.04] bg-rose-600 transition-all duration-1000" style={{ width: `${percentage}%` }} />
             <div className="flex items-center justify-between gap-4 relative z-10">
               <div className="min-w-0">
                 <p className="text-base font-bold text-text-primary truncate">{row.first_name} {row.last_name}</p>
-                <p className="text-[10px] font-semibold text-text-muted mt-1 uppercase tracking-widest opacity-70">Roll {row.roll_number || '--'} · {totalDays} Working Days</p>
-                <div className="mt-4 flex items-center gap-2 text-[10px] text-rose-600 font-bold uppercase tracking-widest bg-rose-50 w-fit px-3 py-1 rounded-lg border border-rose-100">
+                <p className="text-[11px] font-semibold text-text-muted mt-1 uppercase tracking-wide opacity-70">Roll {row.roll_number || '--'} · {totalDays} Working Days</p>
+                <div className="mt-4 flex items-center gap-2 text-[11px] text-rose-600 font-bold uppercase tracking-wide bg-rose-50 w-fit px-3 py-1 rounded-lg border border-rose-100">
                   <TriangleAlert size={14} strokeWidth={2.5} />
                   <span>{Math.max(0, daysShort)} days short of {threshold}%</span>
                 </div>
@@ -231,12 +233,12 @@ const ChronicAbsentees = ({ rows, onAlert }) => {
   return (
     <div className="grid grid-cols-1 gap-4">
       {rows.map((row) => (
-        <div key={row.enrollment_id} className="bg-surface-raised/20 border rounded-[22px] p-5 transition-all hover:border-amber-200 shadow-sm" style={{ borderColor: 'var(--color-border)' }}>
+        <div key={row.enrollment_id} className="bg-surface-raised/20 border rounded-xl p-5 transition-all hover:border-amber-200 shadow-sm" style={{ borderColor: 'var(--color-border)' }}>
           <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-5">
             <div className="min-w-0 flex-1">
               <div className="flex flex-wrap items-center gap-3 mb-4">
                 <p className="text-base font-bold text-text-primary truncate">{row.first_name} {row.last_name}</p>
-                <span className="text-[10px] font-bold px-3 py-1 rounded-full bg-rose-100 text-rose-700 uppercase tracking-widest shadow-sm border border-rose-200">
+                <span className="text-[11px] font-bold px-3 py-1 rounded-full bg-rose-100 text-rose-700 uppercase tracking-wide shadow-sm border border-rose-200">
                   {row.consecutive_absent_days} Days Consecutive
                 </span>
               </div>
@@ -258,18 +260,27 @@ const ChronicAbsentees = ({ rows, onAlert }) => {
             </div>
             
             <div className="flex gap-2 shrink-0">
-               <button 
+              <Button 
+                variant="primary"
+                size="sm"
+                disabled={!(row.father_phone || row.mother_phone)}
                 onClick={() => (row.father_phone || row.mother_phone) && window.open(`tel:${row.father_phone || row.mother_phone}`, '_self')}
-                className="flex-1 sm:flex-none h-11 px-6 rounded-2xl bg-emerald-500 text-white text-[11px] font-bold uppercase tracking-widest hover:bg-emerald-600 active:scale-95 transition-all flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/20"
+                icon={PhoneCall}
+                className="flex-1 sm:flex-none h-11 px-6 rounded-xl text-[11px] font-bold uppercase tracking-wider shadow-sm"
               >
-                <PhoneCall size={16} /> Call
-              </button>
-              <button 
+                Call
+              </Button>
+              <Button 
+                variant="secondary"
+                size="sm"
+                disabled
+                title="Coming soon"
+                icon={BellRing}
                 onClick={onAlert}
-                className="flex-1 sm:flex-none h-11 px-6 rounded-2xl bg-amber-500 text-white text-[11px] font-bold uppercase tracking-widest hover:bg-amber-600 active:scale-95 transition-all flex items-center justify-center gap-2 shadow-lg shadow-amber-500/20"
+                className="flex-1 sm:flex-none h-11 px-6 rounded-xl text-[11px] font-bold uppercase tracking-wider shadow-sm"
               >
-                <BellRing size={16} /> Alert
-              </button>
+                Notify
+              </Button>
             </div>
           </div>
         </div>
@@ -295,17 +306,24 @@ const AttendanceReports = () => {
   const [threshold,     setThreshold]     = useState('75')
   const [downloading,   setDownloading]   = useState(false)
 
+  const { currentSession, fetchCurrentSession } = useSessionStore()
+
+  useEffect(() => {
+    fetchCurrentSession().catch(() => {})
+  }, [fetchCurrentSession])
+
   const reportAssignments = useMemo(
-    () => dedupeAssignments(assignmentOptions),
+    () => dedupeAssignmentsForReports(assignmentOptions),
     [assignmentOptions]
   )
 
   useEffect(() => {
     if (loadingAssignments || !reportAssignments.length) return
 
-    const exists = reportAssignments.some((o) => o.value === assignmentKey)
+    const flatOptions = reportAssignments.flatMap(g => g.options || [g])
+    const exists = flatOptions.some((o) => o.value === assignmentKey)
     if (!assignmentKey || !exists) {
-      setAssignmentKey(reportAssignments[0].value)
+      setAssignmentKey(flatOptions[0]?.value || '')
     }
   }, [loadingAssignments, reportAssignments, assignmentKey])
 
@@ -317,6 +335,13 @@ const AttendanceReports = () => {
       String(assignment.section_id) === String(sectionId)
     ) || null
   }, [assignmentKey, assignmentOptions])
+
+  const isMultiMonth = useMemo(() => {
+    if (!fromDate || !toDate) return false
+    const start = new Date(fromDate)
+    const end = new Date(toDate)
+    return (start.getFullYear() !== end.getFullYear()) || (start.getMonth() !== end.getMonth())
+  }, [fromDate, toDate])
 
   useEffect(() => {
     if (!selectedSection || !fromDate || !toDate) return
@@ -356,16 +381,19 @@ const AttendanceReports = () => {
   const dailySummary = useMemo(() => buildDailySummary(registerData?.students || []), [registerData])
 
   // derived counts for stat strip
-  const avgAtt = reportData.summary.length
-    ? (reportData.summary.reduce((a, r) => a + Number(r.percentage), 0) / reportData.summary.length).toFixed(1)
-    : '—'
+  const avgAtt = useMemo(() => {
+    if (!reportData.summary.length) return '—'
+    const val = reportData.summary.reduce((a, r) => a + Number(r.percentage), 0) / reportData.summary.length
+    return val.toFixed(0)
+  }, [reportData.summary])
 
   const handleDownloadSummary = async () => {
-    if (!registerData?.session_id || !selectedSection) return
+    const sessionId = registerData?.session_id || currentSession?.id
+    if (!sessionId || !selectedSection) return
     setDownloading(true)
     try {
       const response = await downloadAttendanceSummaryPdf({
-        session_id: registerData.session_id,
+        session_id: sessionId,
         class_id: selectedSection.class_id,
         section_id: selectedSection.section_id,
         from_date: fromDate,
@@ -395,6 +423,18 @@ const AttendanceReports = () => {
     }
   }
 
+  // ── Empty State for Reports page ──
+  if (!loadingAssignments && reportAssignments.length === 0) {
+    return (
+      <div className="max-w-[1400px] mx-auto space-y-6 pb-12">
+        <EmptyState
+          title="No assigned classes"
+          description="You can view attendance reports once assigned."
+        />
+      </div>
+    )
+  }
+
   return (
     <div className="max-w-[1400px] mx-auto space-y-6 pb-12">
       {/* Page Header */}
@@ -405,7 +445,7 @@ const AttendanceReports = () => {
           icon={Download} 
           onClick={handleDownloadSummary}
           loading={downloading}
-          disabled={!registerData || loadingReports}
+          disabled={!(registerData?.session_id || currentSession?.id) || loadingReports}
         >
           Export PDF
         </Button>
@@ -413,7 +453,7 @@ const AttendanceReports = () => {
 
       {/* ── Filters ── */}
       <div 
-        className="rounded-2xl border p-6"
+        className="rounded-[var(--radius-lg)] border p-6"
         style={{
           borderColor: 'var(--color-border)',
           backgroundColor: 'var(--color-surface)',
@@ -452,15 +492,15 @@ const AttendanceReports = () => {
           </div>
           <div className="space-y-2 xl:col-span-2">
             <label className="text-sm font-semibold ml-1" style={{ color: 'var(--color-text-primary)' }}>Threshold (%)</label>
-            <Select
+            <Input
+              type="number"
+              min="50"
+              max="100"
+              step="5"
               value={threshold}
               onChange={(e) => setThreshold(e.target.value)}
-              options={[
-                { value: '75', label: '75%' },
-                { value: '80', label: '80%' },
-                { value: '85', label: '85%' },
-              ]}
-              className="h-11 px-4 rounded-xl bg-surface-raised border border-border/50 text-sm font-semibold focus:border-primary transition-all"
+              className="w-full h-11 bg-surface-raised border border-border/50 rounded-xl px-4 text-sm text-text-primary outline-none focus:border-primary font-semibold transition-all"
+              style={{ height: '44px' }}
             />
           </div>
         </div>
@@ -490,14 +530,24 @@ const AttendanceReports = () => {
         </ReportCard>
 
         <ReportCard
-          title="Daily Activity Heatmap"
-          subtitle="Day-wise class attendance trends"
+          title="Daily Attendance Trend"
+          subtitle={isMultiMonth ? "Day-wise trends (start month only)" : "Day-wise class attendance trends"}
           accent="#10b981"
-          onExport={() => exportDailyCsv(dailySummary)}
+          onExport={isMultiMonth ? undefined : () => exportDailyCsv(dailySummary)}
         >
-          {loadingAssignments || loadingReports
-            ? <PanelSkeleton />
-            : <DailySummaryPanel rows={dailySummary} />}
+          {loadingAssignments || loadingReports ? (
+            <PanelSkeleton />
+          ) : isMultiMonth ? (
+            <div className="flex flex-col items-center justify-center p-8 text-center h-[260px] bg-orange-50/20 border border-orange-100 rounded-2xl">
+              <History size={36} className="text-orange-500 mb-3 animate-pulse" />
+              <p className="text-sm font-bold text-orange-950">Multi-Month Range Selected</p>
+              <p className="text-xs text-orange-700/80 mt-1 max-w-sm leading-relaxed">
+                The Daily Attendance Trend displays data for a single calendar month. Choose a date range within the same calendar month to view exact daily activity trends.
+              </p>
+            </div>
+          ) : (
+            <DailySummaryPanel rows={dailySummary} />
+          )}
         </ReportCard>
 
         <ReportCard
@@ -544,7 +594,7 @@ const firstOfMonth = () => {
 }
 const today = () => new Date().toISOString().slice(0, 10)
 
-const dedupeAssignments = (assignments) => {
+const dedupeAssignmentsForReports = (assignments) => {
   const grouped = {}
   assignments.forEach((a) => {
     const key = `${a.class_id}:${a.section_id}`
@@ -562,7 +612,10 @@ const dedupeAssignments = (assignments) => {
     }
   })
 
-  return Object.entries(grouped).map(([key, info]) => {
+  const classTeacherOptions = []
+  const subjectTeacherOptions = []
+
+  Object.entries(grouped).forEach(([key, info]) => {
     let label = `${info.class_name} ${info.section_name}`
     const details = []
     if (info.is_class_teacher) details.push('Class Teacher')
@@ -572,8 +625,29 @@ const dedupeAssignments = (assignments) => {
       label += ` | ${details.join(', ')}`
     }
 
-    return { value: key, label }
+    const option = { value: key, label }
+    if (info.is_class_teacher) {
+      classTeacherOptions.push(option)
+    } else {
+      subjectTeacherOptions.push(option)
+    }
   })
+
+  const result = []
+  if (classTeacherOptions.length > 0) {
+    result.push({
+      label: 'Class Teacher Sections',
+      options: classTeacherOptions,
+    })
+  }
+  if (subjectTeacherOptions.length > 0) {
+    result.push({
+      label: 'Subject Teacher Sections',
+      options: subjectTeacherOptions,
+    })
+  }
+
+  return result
 }
 
 const buildDailySummary = (students) => {

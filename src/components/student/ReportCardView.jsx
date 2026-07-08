@@ -6,7 +6,7 @@ const ReportCardView = ({ data, examName }) => {
   const marks = data?.marks || []
   const attendance = data?.attendance || {}
   const totals = data?.totals || {}
-  const remarks = data?.remarks || {}
+  const remarks = data?.remarks
 
   return (
     <article className="student-report-print-root mx-auto w-full max-w-[210mm] rounded-[20px] border bg-white text-slate-900 shadow-[0_24px_60px_rgba(15,23,42,0.10)] print:max-w-none print:rounded-none print:border-0 print:shadow-none">
@@ -85,28 +85,15 @@ const ReportCardView = ({ data, examName }) => {
         </div>
       </div>
 
-      <div className="grid gap-4 border-t px-5 py-5 sm:grid-cols-3 sm:px-8" style={{ borderColor: '#cbd5e1' }}>
-        <SummaryBlock label="Total Working Days" value={attendance.working_days} />
-        <SummaryBlock label="Days Present" value={attendance.present_days} />
-        <SummaryBlock label="Attendance %" value={formatPercent(attendance.percentage || 0, 0)} />
-      </div>
-
       <div className="grid gap-4 border-t px-5 py-5 sm:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] sm:px-8" style={{ borderColor: '#cbd5e1' }}>
         <div className="rounded-[16px] border px-4 py-4" style={{ borderColor: '#cbd5e1', backgroundColor: '#f8fafc' }}>
           <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">Result</p>
           <p className="mt-2 text-2xl font-bold uppercase" style={{ color: resultTone(data?.result) }}>{data?.result || '--'}</p>
-          <p className="mt-2 text-sm text-slate-600">
-            {data?.result === 'pass' ? 'Promoted to next class subject to school rules.' : 'Requires academic follow-up.'}
-          </p>
         </div>
 
         <div className="rounded-[16px] border px-4 py-4" style={{ borderColor: '#cbd5e1' }}>
           <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">Remarks</p>
-          <p className="mt-3 min-h-[56px] text-sm leading-6 text-slate-700">{remarks.teacher || 'No remarks provided.'}</p>
-          <div className="mt-10 grid grid-cols-2 gap-6">
-            <SignatureLine label={remarks.class_teacher_name || 'Class Teacher'} />
-            <SignatureLine label="Principal" />
-          </div>
+          <p className="mt-3 min-h-[56px] text-sm leading-6 text-slate-700">{typeof remarks === 'string' ? remarks : remarks?.teacher || 'No remarks provided.'}</p>
         </div>
       </div>
     </article>

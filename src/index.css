@@ -75,6 +75,12 @@
   --color-danger:        #dc2626;
   --color-info:          #0284c7;
 
+  /* Attendance status */
+  --color-status-present:   #10b981;
+  --color-status-absent:    #ef4444;
+  --color-status-late:      #f59e0b;
+  --color-status-half-day:  #3b82f6;
+
   /* Layout */
   --sidebar-width:       256px;
   --sidebar-collapsed:   72px;

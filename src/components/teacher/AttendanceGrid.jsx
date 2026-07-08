@@ -341,6 +341,7 @@ const buildDailyTotals = (rows) => {
   const totals = {}
   rows.forEach((row) => {
     ;(row.records || []).forEach((record) => {
+      if (record.status === 'holiday') return
       if (!totals[record.date]) totals[record.date] = { present: 0, total: 0 }
       totals[record.date].total += 1
       if (record.status === 'present' || record.status === 'late') totals[record.date].present += 1

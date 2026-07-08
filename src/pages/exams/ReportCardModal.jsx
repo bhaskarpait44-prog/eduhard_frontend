@@ -77,7 +77,7 @@ const ReportCardModal = ({ open, student, examId, onClose }) => {
       open={open}
       onClose={onClose}
       title="Student Report Card"
-      size="lg"
+      size="xl"
       footer={
         <div className="flex gap-3 w-full">
           <Button variant="secondary" onClick={onClose} className="flex-1">Close</Button>
@@ -118,7 +118,7 @@ const ReportCardModal = ({ open, student, examId, onClose }) => {
 
         {/* ── Student details ─────────────────────────────────────────── */}
         <div
-          className="grid grid-cols-2 gap-4 p-4 rounded-xl mb-5"
+          className="grid grid-cols-2 sm:grid-cols-3 gap-4 p-4 rounded-xl mb-5"
           style={{ backgroundColor: 'var(--color-surface-raised)' }}
         >
           {[
@@ -201,7 +201,17 @@ const ReportCardModal = ({ open, student, examId, onClose }) => {
               });
 
               return (
-                <table className="w-full">
+                <table className="w-full border-collapse table-layout-fixed" style={{ tableLayout: 'fixed' }}>
+                  <colgroup>
+                    <col style={{ width: '22%' }} />
+                    <col style={{ width: '10%' }} />
+                    <col style={{ width: '11%' }} />
+                    <col style={{ width: '11%' }} />
+                    <col style={{ width: '10%' }} />
+                    <col style={{ width: '10%' }} />
+                    <col style={{ width: '14%' }} />
+                    <col style={{ width: '12%' }} />
+                  </colgroup>
                   <thead>
                     <tr style={{ borderBottom: '1px solid var(--color-border)', backgroundColor: 'var(--color-surface-raised)' }}>
                       {['Subject / Exam Name', 'Weightage', 'Theory', 'Practical', 'Total', 'Obtained', '% / Grade', 'Status'].map(h => (
@@ -214,19 +224,31 @@ const ReportCardModal = ({ open, student, examId, onClose }) => {
                   </thead>
                   <tbody>
                     {groupedSubjects.map((sub, sIdx) => (
-                      <tr key={sub.subject_id || sIdx} className="border-b border-border/40 last:border-b-0">
+                      <tr key={sub.subject_id || sIdx} className="border-b border-border/40 last:border-b-0 p-0">
                         <td colSpan={8} className="p-0">
-                          <table className="w-full border-collapse">
+                          <table className="w-full border-collapse table-layout-fixed" style={{ tableLayout: 'fixed' }}>
+                            <colgroup>
+                              <col style={{ width: '22%' }} />
+                              <col style={{ width: '10%' }} />
+                              <col style={{ width: '11%' }} />
+                              <col style={{ width: '11%' }} />
+                              <col style={{ width: '10%' }} />
+                              <col style={{ width: '10%' }} />
+                              <col style={{ width: '14%' }} />
+                              <col style={{ width: '12%' }} />
+                            </colgroup>
                             <tbody>
                               {/* Subject Header Row */}
                               <tr className="bg-surface-raised/40">
-                                <td colSpan={8} className="px-4 py-2.5 font-bold text-sm text-text-primary flex items-center justify-between">
-                                  <span>
-                                    {sub.subject_name.toUpperCase()} {sub.subject_code ? `(${sub.subject_code})` : ''}
-                                  </span>
-                                  {sub.is_core && (
-                                    <span className="text-[10px] bg-brand/10 text-brand px-2 py-0.5 rounded-full font-semibold">Core Subject</span>
-                                  )}
+                                <td colSpan={8} className="px-4 py-2.5 font-bold text-sm text-text-primary">
+                                  <div className="flex items-center justify-between w-full">
+                                    <span>
+                                      {sub.subject_name.toUpperCase()} {sub.subject_code ? `(${sub.subject_code})` : ''}
+                                    </span>
+                                    {sub.is_core && (
+                                      <span className="text-[10px] bg-brand/10 text-brand px-2 py-0.5 rounded-full font-semibold">Core Subject</span>
+                                    )}
+                                  </div>
                                 </td>
                               </tr>
                               
@@ -236,13 +258,27 @@ const ReportCardModal = ({ open, student, examId, onClose }) => {
                                 const passed = !exam.is_absent && exam.is_pass;
                                 return (
                                   <tr key={eIdx} className="text-xs border-b border-border/20 last:border-0 hover:bg-surface-raised/20">
-                                    <td className="px-6 py-2 text-text-secondary">{exam.exam_name}</td>
+                                    <td className="px-6 py-2 text-text-secondary truncate">{exam.exam_name}</td>
                                     <td className="px-4 py-2 text-text-secondary">{parseFloat(exam.exam_weightage || 100)}%</td>
                                     <td className="px-4 py-2 text-text-secondary">
-                                      {exam.theory_marks_obtained !== null ? `${exam.theory_marks_obtained}/${exam.theory_total_marks}` : '—'}
+                                      {(() => {
+                                        const tTotal = exam.theory_total ? parseFloat(exam.theory_total) : 0;
+                                        const pTotal = exam.practical_total ? parseFloat(exam.practical_total) : 0;
+                                        if (exam.is_absent) return tTotal > 0 ? 'AB' : '—';
+                                        if (tTotal > 0 && pTotal > 0) return exam.theory_marks_obtained !== null ? `${exam.theory_marks_obtained}/${exam.theory_total}` : '—';
+                                        if (tTotal > 0) return exam.marks_obtained !== null ? `${exam.marks_obtained}/${exam.theory_total}` : '—';
+                                        return '—';
+                                      })()}
                                     </td>
                                     <td className="px-4 py-2 text-text-secondary">
-                                      {exam.practical_marks_obtained !== null ? `${exam.practical_marks_obtained}/${exam.practical_total_marks}` : '—'}
+                                      {(() => {
+                                        const tTotal = exam.theory_total ? parseFloat(exam.theory_total) : 0;
+                                        const pTotal = exam.practical_total ? parseFloat(exam.practical_total) : 0;
+                                        if (exam.is_absent) return pTotal > 0 ? 'AB' : '—';
+                                        if (tTotal > 0 && pTotal > 0) return exam.practical_marks_obtained !== null ? `${exam.practical_marks_obtained}/${exam.practical_total}` : '—';
+                                        if (pTotal > 0) return exam.marks_obtained !== null ? `${exam.marks_obtained}/${exam.practical_total}` : '—';
+                                        return '—';
+                                      })()}
                                     </td>
                                     <td className="px-4 py-2 text-text-secondary">{exam.combined_total_marks}</td>
                                     <td className="px-4 py-2 font-medium">
@@ -270,14 +306,19 @@ const ReportCardModal = ({ open, student, examId, onClose }) => {
                                   let weightedPracMax = 0, weightedPracObt = 0, hasPrac = false;
                                   sub.exams.forEach(e => {
                                     const w = parseFloat(e.exam_weightage || 100) / 100;
-                                    if (e.theory_total_marks !== null) {
-                                      weightedTheoryMax += parseFloat(e.theory_total_marks) * w;
-                                      weightedTheoryObt += (e.is_absent ? 0 : parseFloat(e.theory_marks_obtained || 0)) * w;
+                                    const tTotal = e.theory_total ? parseFloat(e.theory_total) : 0;
+                                    const pTotal = e.practical_total ? parseFloat(e.practical_total) : 0;
+                                    
+                                    if (tTotal > 0) {
+                                      weightedTheoryMax += tTotal * w;
+                                      const obt = (tTotal > 0 && pTotal > 0) ? (e.theory_marks_obtained || 0) : (e.marks_obtained || 0);
+                                      weightedTheoryObt += (e.is_absent ? 0 : parseFloat(obt)) * w;
                                       hasTheory = true;
                                     }
-                                    if (e.practical_total_marks !== null) {
-                                      weightedPracMax += parseFloat(e.practical_total_marks) * w;
-                                      weightedPracObt += (e.is_absent ? 0 : parseFloat(e.practical_marks_obtained || 0)) * w;
+                                    if (pTotal > 0) {
+                                      weightedPracMax += pTotal * w;
+                                      const obt = (tTotal > 0 && pTotal > 0) ? (e.practical_marks_obtained || 0) : (e.marks_obtained || 0);
+                                      weightedPracObt += (e.is_absent ? 0 : parseFloat(obt)) * w;
                                       hasPrac = true;
                                     }
                                   });
@@ -363,23 +404,22 @@ const ReportCardModal = ({ open, student, examId, onClose }) => {
           </>
         )}
 
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-5">
-          {[
-            { label: 'Total Marks',     value: finalResult?.total_marks   || '—' },
-            { label: 'Marks Obtained',  value: finalResult?.marks_obtained || '—' },
-            { label: 'Percentage',      value: finalResult?.percentage ? formatPercent(finalResult.percentage) : '—' },
-            { label: 'Attendance',      value: student?.attendance_pct ? formatPercent(student.attendance_pct) : '—' },
-          ].map(c => (
-            <div
-              key={c.label}
-              className="p-3 rounded-xl text-center"
-              style={{ backgroundColor: 'var(--color-surface-raised)' }}
-            >
-              <p className="text-xs mb-1" style={{ color: 'var(--color-text-muted)' }}>{c.label}</p>
-              <p className="text-lg font-bold" style={{ color: 'var(--color-text-primary)' }}>{c.value}</p>
-            </div>
-          ))}
-        </div>
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 mb-5">
+            {[
+              { label: 'Total Marks',     value: finalResult?.total_marks   || '—' },
+              { label: 'Marks Obtained',  value: finalResult?.marks_obtained || '—' },
+              { label: 'Percentage',      value: finalResult?.percentage ? formatPercent(finalResult.percentage) : '—' },
+            ].map(c => (
+              <div
+                key={c.label}
+                className="p-3 rounded-xl text-center"
+                style={{ backgroundColor: 'var(--color-surface-raised)' }}
+              >
+                <p className="text-xs mb-1" style={{ color: 'var(--color-text-muted)' }}>{c.label}</p>
+                <p className="text-lg font-bold" style={{ color: 'var(--color-text-primary)' }}>{c.value}</p>
+              </div>
+            ))}
+          </div>
 
         {/* Grade + Result */}
         <div className="flex items-center justify-center gap-6 p-5 rounded-xl mb-5"
@@ -403,7 +443,6 @@ const ReportCardModal = ({ open, student, examId, onClose }) => {
           </div>
         </div>
 
-        {/* Teacher remarks */}
         <div
           className="p-4 rounded-xl"
           style={{ border: '1px solid var(--color-border)' }}
@@ -411,17 +450,9 @@ const ReportCardModal = ({ open, student, examId, onClose }) => {
           <p className="text-xs font-semibold mb-2" style={{ color: 'var(--color-text-muted)' }}>
             CLASS TEACHER REMARKS
           </p>
-          <div className="h-10 w-full rounded" style={{ backgroundColor: 'var(--color-surface-raised)' }} />
-          <div className="flex justify-between mt-8">
-            <div className="text-center">
-              <div className="w-32 h-px mb-1" style={{ backgroundColor: 'var(--color-text-muted)' }} />
-              <p className="text-xs" style={{ color: 'var(--color-text-muted)' }}>Class Teacher</p>
-            </div>
-            <div className="text-center">
-              <div className="w-32 h-px mb-1" style={{ backgroundColor: 'var(--color-text-muted)' }} />
-              <p className="text-xs" style={{ color: 'var(--color-text-muted)' }}>Principal</p>
-            </div>
-          </div>
+          <p className="text-sm font-medium p-3 rounded-lg w-full min-h-[40px]" style={{ backgroundColor: 'var(--color-surface-raised)', color: 'var(--color-text-primary)' }}>
+            {reportData?.remarks || 'Satisfactory performance. Keep it up.'}
+          </p>
         </div>
       </div>
     </Modal>

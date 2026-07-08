@@ -215,7 +215,6 @@ const styles = StyleSheet.create({
     marginBottom: 15,
   },
   resultCard: {
-    flex: 1.2,
     padding: 10,
     borderWidth: 0.5,
     borderColor: BORDER,
@@ -223,7 +222,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#F8FAFC',
   },
   attendanceCard: {
-    flex: 1,
     padding: 10,
     borderWidth: 0.5,
     borderColor: BORDER,
@@ -421,12 +419,26 @@ const ReportCardPDF = ({ data }) => {
                   </View>
                   <View style={styles.colTheory}>
                     <Text style={styles.tableCell}>
-                      {res.is_absent ? 'ABS' : (res.theory_marks_obtained ?? '—')}
+                      {(() => {
+                        const tTotal = res.theory_total ? parseFloat(res.theory_total) : 0;
+                        const pTotal = res.practical_total ? parseFloat(res.practical_total) : 0;
+                        if (res.is_absent) return tTotal > 0 ? 'ABS' : '—';
+                        if (tTotal > 0 && pTotal > 0) return res.theory_marks_obtained !== null ? res.theory_marks_obtained : '—';
+                        if (tTotal > 0) return res.marks_obtained !== null ? res.marks_obtained : '—';
+                        return '—';
+                      })()}
                     </Text>
                   </View>
                   <View style={styles.colPractical}>
                     <Text style={styles.tableCell}>
-                      {res.is_absent ? 'ABS' : (res.practical_marks_obtained ?? '—')}
+                      {(() => {
+                        const tTotal = res.theory_total ? parseFloat(res.theory_total) : 0;
+                        const pTotal = res.practical_total ? parseFloat(res.practical_total) : 0;
+                        if (res.is_absent) return pTotal > 0 ? 'ABS' : '—';
+                        if (tTotal > 0 && pTotal > 0) return res.practical_marks_obtained !== null ? res.practical_marks_obtained : '—';
+                        if (pTotal > 0) return res.marks_obtained !== null ? res.marks_obtained : '—';
+                        return '—';
+                      })()}
                     </Text>
                   </View>
                   <View style={styles.colTotal}>
@@ -466,48 +478,21 @@ const ReportCardPDF = ({ data }) => {
             </View>
           </View>
 
-          {/* Result & Attendance Summary */}
-          <View style={styles.summaryGrid}>
-            <View style={styles.resultCard}>
-              <Text style={styles.summaryTitle}>Final Result Summary</Text>
-              <View style={styles.summaryRow}>
-                <Text style={styles.summaryText}>Grade Obtained:</Text>
-                <Text style={styles.summaryValue}>{finalResult.grade || '—'}</Text>
-              </View>
-              <View style={styles.summaryRow}>
-                <Text style={styles.summaryText}>Status:</Text>
-                <Text style={[
-                  styles.resultBadge, 
-                  { color: finalResult.result === 'pass' ? '#16A34A' : '#DC2626' }
-                ]}>
-                  {finalResult.result ? finalResult.result.toUpperCase() : '—'}
-                </Text>
-              </View>
-              <View style={[styles.summaryRow, { marginTop: 4 }]}>
-                <Text style={{ fontSize: 7.5, color: '#64748B', fontStyle: 'italic' }}>
-                  {finalResult.result === 'pass' 
-                    ? 'Promoted to next class subject to school rules.' 
-                    : 'Requires academic follow-up.'}
-                </Text>
-              </View>
+          {/* Final Result Summary */}
+          <View style={[styles.resultCard, { marginBottom: 15 }]}>
+            <Text style={styles.summaryTitle}>Final Result Summary</Text>
+            <View style={styles.summaryRow}>
+              <Text style={styles.summaryText}>Grade Obtained:</Text>
+              <Text style={styles.summaryValue}>{finalResult.grade || '—'}</Text>
             </View>
-
-            <View style={styles.attendanceCard}>
-              <Text style={styles.summaryTitle}>Attendance</Text>
-              <View style={styles.summaryRow}>
-                <Text style={styles.summaryText}>Working Days:</Text>
-                <Text style={styles.summaryValue}>{attendance.workingDays || '—'}</Text>
-              </View>
-              <View style={styles.summaryRow}>
-                <Text style={styles.summaryText}>Days Present:</Text>
-                <Text style={styles.summaryValue}>{attendance.presentCount || '—'}</Text>
-              </View>
-              <View style={[styles.summaryRow, { borderTopWidth: 0.5, borderTopColor: '#E2E8F0', marginTop: 3, paddingTop: 2 }]}>
-                <Text style={[styles.summaryText, { fontFamily: 'Helvetica-Bold' }]}>Percentage:</Text>
-                <Text style={[styles.summaryValue, { color: accentColor }]}>
-                  {attendance.percentage ? `${attendance.percentage}%` : '0%'}
-                </Text>
-              </View>
+            <View style={styles.summaryRow}>
+              <Text style={styles.summaryText}>Status:</Text>
+              <Text style={[
+                styles.resultBadge, 
+                { color: finalResult.result === 'pass' ? '#16A34A' : '#DC2626' }
+              ]}>
+                {finalResult.result ? finalResult.result.toUpperCase() : '—'}
+              </Text>
             </View>
           </View>
 
@@ -515,25 +500,6 @@ const ReportCardPDF = ({ data }) => {
           <View style={styles.remarksCard}>
             <Text style={styles.summaryTitle}>Class Teacher's Remarks</Text>
             <Text style={styles.remarksText}>{remarksText || 'No remarks provided.'}</Text>
-          </View>
-
-          {/* Signatures */}
-          <View style={styles.signaturesContainer}>
-            <View style={styles.signatureBox}>
-              <View style={styles.signatureLine} />
-              <Text style={styles.signatureLabel}>Class Teacher</Text>
-            </View>
-            <View style={styles.signatureBox}>
-              <View style={styles.signatureLine} />
-              <Text style={styles.signatureLabel}>Principal</Text>
-              {school.principal_name && (
-                <Text style={{ fontSize: 6, color: MUTED, marginTop: 2 }}>{school.principal_name}</Text>
-              )}
-            </View>
-            <View style={styles.signatureBox}>
-              <View style={styles.signatureLine} />
-              <Text style={styles.signatureLabel}>Parent/Guardian</Text>
-            </View>
           </View>
 
           <Text style={{ position: 'absolute', bottom: 10, left: 20, right: 20, textAlign: 'center', fontSize: 6.5, color: '#94A3B8' }}>

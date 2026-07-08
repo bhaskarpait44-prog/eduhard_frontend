@@ -9,11 +9,12 @@ import EmptyState from '@/components/ui/EmptyState'
 import Modal from '@/components/ui/Modal'
 import { cn } from '@/utils/helpers'
 
+// Status options — colours reference CSS tokens defined in index.css
 const STATUS_OPTIONS = [
-  { key: 'present', label: 'P', full: 'Present', tone: '#10b981', bg: 'rgba(16, 185, 129, 0.14)' },
-  { key: 'absent', label: 'A', full: 'Absent', tone: '#ef4444', bg: 'rgba(239, 68, 68, 0.14)' },
-  { key: 'late', label: 'L', full: 'Late', tone: '#f59e0b', bg: 'rgba(245, 158, 11, 0.14)' },
-  { key: 'half_day', label: 'H', full: 'Half Day', tone: '#3b82f6', bg: 'rgba(59, 130, 246, 0.14)' },
+  { key: 'present',  label: 'P', full: 'Present',  tone: 'var(--color-status-present)',  bg: 'color-mix(in srgb, var(--color-status-present) 14%, transparent)' },
+  { key: 'absent',   label: 'A', full: 'Absent',   tone: 'var(--color-status-absent)',   bg: 'color-mix(in srgb, var(--color-status-absent) 14%, transparent)' },
+  { key: 'late',     label: 'L', full: 'Late',     tone: 'var(--color-status-late)',     bg: 'color-mix(in srgb, var(--color-status-late) 14%, transparent)' },
+  { key: 'half_day', label: 'H', full: 'Half Day', tone: 'var(--color-status-half-day)', bg: 'color-mix(in srgb, var(--color-status-half-day) 14%, transparent)' },
 ]
 
 const AttendanceMarker = ({
@@ -87,7 +88,7 @@ const AttendanceMarker = ({
   const hasLoadedPayload = !!payload
   const needsReason = !!payload?.requires_reason
   const isDisableMarking = !!payload?.is_holiday || !!payload?.is_non_working_day || !!payload?.is_on_leave
-  const canSubmit = hasStudents && (!needsReason || reason.trim()) && !isDisableMarking
+  const canSubmit = hasStudents && (!needsReason || (reason.trim() && reason.trim().length >= 10)) && !isDisableMarking
 
   const handleAssignmentChange = (value) => {
     const [role, classId, sectionId, subjectId] = value.split(':')
@@ -115,19 +116,14 @@ const AttendanceMarker = ({
   const setStatusForStudent = (enrollmentId, status) => {
     setRecords((prev) => ({
       ...prev,
-      [enrollmentId]: {
-        ...prev[enrollmentId],
-        status,
-      },
+      [enrollmentId]: { ...prev[enrollmentId], status },
     }))
   }
 
   const bulkSet = (status) => {
     setRecords((prev) => {
       const next = { ...prev }
-      Object.keys(next).forEach((id) => {
-        next[id] = { ...next[id], status }
-      })
+      Object.keys(next).forEach((id) => { next[id] = { ...next[id], status } })
       return next
     })
   }
@@ -160,8 +156,8 @@ const AttendanceMarker = ({
   return (
     <div className="space-y-6">
       {/* ── Selection Panel ── */}
-      <section 
-        className="rounded-[28px] border bg-surface p-6 shadow-sm" 
+      <section
+        className="rounded-[var(--radius-lg)] border bg-surface p-6 shadow-sm"
         style={{ borderColor: 'var(--color-border)' }}
       >
         <div className="grid grid-cols-1 gap-5 xl:grid-cols-6 items-end">
@@ -171,7 +167,7 @@ const AttendanceMarker = ({
               value={`${context.assignment_role}:${context.class_id}:${context.section_id}:${context.subject_id || ''}`}
               onChange={(e) => handleAssignmentChange(e.target.value)}
               options={assignmentChoices}
-              className="h-11 px-4 rounded-2xl bg-surface-raised border border-border/50 text-sm font-semibold focus:border-primary transition-all"
+              className="h-11 px-4 rounded-xl bg-surface-raised border border-border/50 text-sm font-semibold focus:border-primary transition-all"
             />
           </div>
 
@@ -181,6 +177,7 @@ const AttendanceMarker = ({
               label="Attendance Date"
               value={context.date}
               onChange={(e) => setContext((prev) => ({ ...prev, date: e.target.value }))}
+              max={new Date().toISOString().slice(0, 10)}
               required
             />
           </div>
@@ -192,7 +189,7 @@ const AttendanceMarker = ({
               loading={loadingStudents}
               disabled={!context.class_id || !context.section_id || (context.assignment_role !== 'class_teacher' && !context.subject_id)}
               onClick={handleLoad}
-              className="h-11 rounded-2xl font-semibold uppercase tracking-[0.12em] text-xs shadow-sm shadow-primary/10"
+              className="h-11 rounded-xl font-semibold uppercase tracking-wider text-xs shadow-sm shadow-primary/10"
             >
               Fetch Students
             </Button>
@@ -203,20 +200,20 @@ const AttendanceMarker = ({
           <div className="mt-8 flex flex-wrap gap-3 pt-6 border-t border-dashed border-border">
             <div className="flex items-center gap-2.5 px-4 py-2 rounded-full bg-teal-50 border border-teal-100 text-teal-700">
               <div className="h-2 w-2 rounded-full bg-teal-500 animate-pulse shadow-[0_0_8px_rgba(20,184,166,0.5)]" />
-              <span className="text-[10px] font-bold uppercase tracking-wider">
+              <span className="text-[11px] font-bold uppercase tracking-wider">
                 {selectedAssignment.is_class_teacher ? 'Full Day Attendance' : 'Subject Attendance'}
               </span>
             </div>
             <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-surface-raised border border-border text-text-secondary shadow-sm">
               <Users size={13} className="text-text-muted" />
-              <span className="text-[10px] font-bold uppercase tracking-wider">
+              <span className="text-[11px] font-bold uppercase tracking-wider">
                 {selectedAssignment.student_count || 0} Students
               </span>
             </div>
             {selectedAssignment.subject_name && !selectedAssignment.is_class_teacher && (
               <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-surface-raised border border-border text-text-secondary shadow-sm">
                 <BookOpen size={13} className="text-text-muted" />
-                <span className="text-[10px] font-bold uppercase tracking-wider">
+                <span className="text-[11px] font-bold uppercase tracking-wider">
                   {selectedAssignment.subject_name}
                 </span>
               </div>
@@ -226,63 +223,46 @@ const AttendanceMarker = ({
       </section>
 
       {error && (
-        <Banner
-          tone="error"
-          icon={AlertTriangle}
-          title="Access Restricted"
-          message={error}
-        />
+        <Banner tone="error" icon={AlertTriangle} title="Access Restricted" message={error} />
       )}
 
       {payload?.already_marked && (
-        <Banner
-          tone="warning"
-          icon={AlertTriangle}
-          title="Records Found"
-          message="Attendance has already been marked for this selection. Updating will log an audit trail entry."
-        />
+        <Banner tone="warning" icon={AlertTriangle} title="Records Found" message="Attendance has already been marked for this selection. Updating will log an audit trail entry." />
       )}
 
       {payload?.is_holiday && (
-        <Banner
-          tone="error"
-          icon={CalendarDays}
-          title={`Holiday: ${payload?.holiday?.name || 'School Holiday'}`}
-          message="Cannot mark attendance on a holiday."
-        />
+        <Banner tone="error" icon={CalendarDays} title={`Holiday: ${payload?.holiday?.name || 'School Holiday'}`} message="Cannot mark attendance on a holiday." />
       )}
 
       {payload?.is_non_working_day && (
-        <Banner
-          tone="error"
-          icon={CalendarDays}
-          title="Non-Working Day"
-          message={`Cannot mark attendance. Selected date (${payload?.date}) is not a working day.`}
-        />
+        <Banner tone="error" icon={CalendarDays} title="Non-Working Day" message={`Cannot mark attendance. Selected date (${payload?.date}) is not a working day.`} />
       )}
 
       {payload?.is_on_leave && (
-        <Banner
-          tone="error"
-          icon={CalendarDays}
-          title="On Approved Leave"
-          message="You are on approved leave for this date. Attendance marking is disabled."
-        />
+        <Banner tone="error" icon={CalendarDays} title="On Approved Leave" message="You are on approved leave for this date. Attendance marking is disabled." />
       )}
 
       {needsReason && (
-        <section className="rounded-[28px] border p-6 shadow-sm border-orange-200 bg-orange-50/20">
+        <section className="rounded-[var(--radius-lg)] border p-6 shadow-sm border-orange-200 bg-orange-50/20">
           <div className="flex items-center gap-2 mb-4 text-orange-700">
             <Info size={18} />
-            <label className="text-xs font-bold uppercase tracking-widest">Modification Reason Required</label>
+            <label className="text-[11px] font-bold uppercase tracking-wider">Modification Reason Required</label>
           </div>
           <textarea
             value={reason}
             onChange={(e) => setReason(e.target.value)}
             rows={2}
             placeholder="Explain why you are editing or marking attendance for a past date..."
-            className="w-full rounded-[20px] px-5 py-4 text-sm outline-none border border-orange-200 focus:ring-2 focus:ring-orange-200 transition-all bg-white shadow-inner font-medium"
+            className="w-full rounded-xl px-5 py-4 text-sm outline-none border border-orange-200 focus:ring-2 focus:ring-orange-200 transition-all bg-white shadow-inner font-medium"
           />
+          <div className="mt-2 text-[11px] font-semibold text-orange-700 flex justify-between px-2">
+            <span>Minimum 10 characters required</span>
+            <span>
+              {reason.trim().length < 10
+                ? `${10 - reason.trim().length} characters remaining`
+                : 'Reason accepted ✓'}
+            </span>
+          </div>
         </section>
       )}
 
@@ -301,10 +281,10 @@ const AttendanceMarker = ({
             {STATUS_OPTIONS.map((option) => (
               <div
                 key={option.key}
-                className="rounded-[28px] border bg-surface p-5 shadow-sm flex flex-col items-center text-center transition-all hover:shadow-md group"
+                className="rounded-[var(--radius-lg)] border bg-surface p-5 shadow-sm flex flex-col items-center text-center transition-all hover:shadow-md group"
                 style={{ borderColor: 'var(--color-border)' }}
               >
-                <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-text-muted mb-2 group-hover:text-text-primary transition-colors">
+                <p className="text-[11px] font-semibold uppercase tracking-wider text-text-muted mb-2 group-hover:text-text-primary transition-colors">
                   {option.full}
                 </p>
                 <p className="text-4xl font-bold tracking-tighter" style={{ color: option.tone }}>
@@ -314,40 +294,40 @@ const AttendanceMarker = ({
             ))}
           </section>
 
-          <section className="rounded-[28px] border bg-surface p-6 shadow-sm" style={{ borderColor: 'var(--color-border)' }}>
+          <section className="rounded-[var(--radius-lg)] border bg-surface p-6 shadow-sm" style={{ borderColor: 'var(--color-border)' }}>
             {/* ── Toolbar ── */}
             <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between pb-8 border-b border-dashed border-border mb-8">
               <div className="flex flex-wrap gap-3">
-                <button
+                <Button
+                  variant="ghost"
                   disabled={isDisableMarking}
                   onClick={() => bulkSet('present')}
                   className={cn(
-                    "h-10 px-5 rounded-2xl bg-emerald-50 text-emerald-700 border border-emerald-200 text-[11px] font-bold uppercase tracking-wider flex items-center gap-2 shadow-sm transition-all duration-200",
-                    isDisableMarking ? "opacity-30 cursor-not-allowed" : "active:scale-95 hover:bg-emerald-100 hover:border-emerald-300"
+                    "h-10 px-5 rounded-xl bg-emerald-50 text-emerald-700 border border-emerald-200 text-[11px] font-bold uppercase tracking-wider flex items-center gap-2",
+                    !isDisableMarking && "hover:bg-emerald-100 hover:border-emerald-300"
                   )}
                 >
                   <CheckCircle2 size={15} /> Mark All Present
-                </button>
-                <button
+                </Button>
+                <Button
+                  variant="ghost"
                   disabled={isDisableMarking}
                   onClick={() => bulkSet('absent')}
                   className={cn(
-                    "h-10 px-5 rounded-2xl bg-rose-50 text-rose-700 border border-rose-200 text-[11px] font-bold uppercase tracking-wider flex items-center gap-2 shadow-sm transition-all duration-200",
-                    isDisableMarking ? "opacity-30 cursor-not-allowed" : "active:scale-95 hover:bg-rose-100 hover:border-rose-300"
+                    "h-10 px-5 rounded-xl bg-rose-50 text-rose-700 border border-rose-200 text-[11px] font-bold uppercase tracking-wider flex items-center gap-2",
+                    !isDisableMarking && "hover:bg-rose-100 hover:border-rose-300"
                   )}
                 >
                   <AlertTriangle size={15} /> Mark All Absent
-                </button>
-                <button 
+                </Button>
+                <Button
+                  variant="ghost"
                   disabled={isDisableMarking}
                   onClick={resetToDefaults}
-                  className={cn(
-                    "h-10 px-5 rounded-2xl bg-surface-raised border border-border text-[11px] font-bold uppercase tracking-wider text-text-secondary transition-all duration-200",
-                    isDisableMarking ? "opacity-30 cursor-not-allowed" : "hover:bg-border/20 active:scale-95"
-                  )}
+                  className="h-10 px-5 rounded-xl text-[11px] font-bold uppercase tracking-wider text-text-secondary"
                 >
                   Reset Defaults
-                </button>
+                </Button>
               </div>
 
               <div className="relative w-full lg:max-w-xs group">
@@ -357,7 +337,7 @@ const AttendanceMarker = ({
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
                   placeholder="Filter by name or roll..."
-                  className="h-11 w-full rounded-2xl pl-11 pr-5 text-sm font-semibold bg-surface-raised border border-border/50 outline-none focus:border-primary transition-all shadow-inner"
+                  className="h-11 w-full rounded-xl pl-11 pr-5 text-sm font-semibold bg-surface-raised border border-border/50 outline-none focus:border-primary transition-all shadow-inner"
                 />
               </div>
             </div>
@@ -371,15 +351,15 @@ const AttendanceMarker = ({
                 return (
                   <div
                     key={student.enrollment_id}
-                    className="rounded-[24px] border bg-surface p-5 transition-all duration-300 hover:translate-y-[-2px] hover:shadow-md"
+                    className="rounded-[var(--radius-lg)] border bg-surface p-5 transition-all duration-300 hover:translate-y-[-2px] hover:shadow-md"
                     style={{
-                      borderColor: currentStatus === 'present' ? 'var(--color-border)' : `${config.tone}55`,
-                      backgroundColor: currentStatus === 'present' ? 'var(--color-surface)' : `${config.tone}0a`
+                      borderColor: currentStatus === 'present' ? 'var(--color-border)' : `color-mix(in srgb, ${config.tone} 33%, transparent)`,
+                      backgroundColor: currentStatus === 'present' ? 'var(--color-surface)' : `color-mix(in srgb, ${config.tone} 6%, transparent)`,
                     }}
                   >
                     <div className="flex items-center gap-4">
                       <div
-                        className="flex h-14 w-14 shrink-0 items-center justify-center rounded-[20px] text-xs font-bold font-mono shadow-inner border border-border/50"
+                        className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl text-xs font-bold font-mono shadow-inner border border-border/50"
                         style={{ backgroundColor: 'var(--color-surface-raised)', color: 'var(--color-text-primary)' }}
                       >
                         {student.roll_number ? `#${student.roll_number}` : '--'}
@@ -389,12 +369,12 @@ const AttendanceMarker = ({
                           {student.first_name} {student.last_name}
                         </p>
                         <div className="flex items-center gap-2 mt-1.5">
-                           <span className="text-[10px] font-semibold text-text-muted uppercase tracking-[0.1em]">
+                          <span className="text-[11px] font-semibold text-text-muted uppercase tracking-wide">
                             ID: {student.student_id}
                           </span>
                           <span className="h-1 w-1 rounded-full bg-border" />
                           <span className={cn(
-                            "text-[10px] font-bold uppercase tracking-wider",
+                            "text-[11px] font-bold uppercase tracking-wide",
                             student.attendance_id ? 'text-primary' : 'text-text-muted/40'
                           )}>
                             {student.attendance_id ? 'Modified' : 'New'}
@@ -413,20 +393,23 @@ const AttendanceMarker = ({
                             disabled={isDisableMarking}
                             onClick={() => !isDisableMarking && setStatusForStudent(student.enrollment_id, option.key)}
                             className={cn(
-                              'h-11 rounded-[14px] border text-xs font-bold transition-all flex items-center justify-center',
+                              'h-11 rounded-lg border text-xs font-bold transition-all flex flex-col items-center justify-center gap-0.5',
+                              'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-1',
                               !isDisableMarking && 'active:scale-90',
                               selected ? 'shadow-md text-white' : (isDisableMarking ? 'opacity-30 cursor-not-allowed' : 'opacity-85 hover:opacity-100')
                             )}
                             style={{
-                              borderColor: selected ? option.tone : `${option.tone}22`,
-                              backgroundColor: selected ? option.tone : (isDisableMarking ? 'var(--color-surface-raised)' : `${option.tone}0e`),
+                              borderColor: selected ? option.tone : `color-mix(in srgb, ${option.tone} 13%, transparent)`,
+                              backgroundColor: selected ? option.tone : (isDisableMarking ? 'var(--color-surface-raised)' : `color-mix(in srgb, ${option.tone} 9%, transparent)`),
                               color: selected ? '#fff' : (isDisableMarking ? 'var(--color-text-muted)' : option.tone),
-                              boxShadow: selected ? `0 6px 12px ${option.tone}33` : 'none',
-                              cursor: isDisableMarking ? 'not-allowed' : 'pointer'
+                              boxShadow: selected ? `0 4px 10px color-mix(in srgb, ${option.tone} 30%, transparent)` : 'none',
+                              cursor: isDisableMarking ? 'not-allowed' : 'pointer',
                             }}
                             title={option.full}
+                            aria-label={option.full}
                           >
-                            {option.label}
+                            <span className="text-xs font-bold leading-none">{option.label}</span>
+                            <span className="hidden sm:block text-[9px] font-semibold leading-none opacity-80">{option.full}</span>
                           </button>
                         )
                       })}
@@ -437,13 +420,13 @@ const AttendanceMarker = ({
             </div>
 
             {!filteredStudents.length && (
-              <div className="rounded-[28px] border border-dashed p-16 text-center flex flex-col items-center gap-5 bg-surface-raised/10" style={{ borderColor: 'var(--color-border)' }}>
-                <div className="h-14 w-14 rounded-[22px] bg-surface-raised flex items-center justify-center text-text-muted/40 shadow-inner">
+              <div className="rounded-[var(--radius-lg)] border border-dashed p-16 text-center flex flex-col items-center gap-5 bg-surface-raised/10" style={{ borderColor: 'var(--color-border)' }}>
+                <div className="h-14 w-14 rounded-[var(--radius-lg)] bg-surface-raised flex items-center justify-center text-text-muted/40 shadow-inner">
                   <Search size={28} />
                 </div>
                 <div>
                   <p className="text-base font-bold text-text-primary tracking-tight">No match found</p>
-                  <p className="mt-1 text-sm font-medium text-text-muted uppercase tracking-[0.15em]">Refine your search parameters</p>
+                  <p className="mt-1 text-sm font-medium text-text-muted uppercase tracking-wider">Refine your search parameters</p>
                 </div>
               </div>
             )}
@@ -454,16 +437,13 @@ const AttendanceMarker = ({
       {/* ── Sticky Submission Bar ── */}
       {hasStudents && (
         <div className="sticky bottom-4 z-20">
-          <div
-            className="rounded-[28px] border bg-surface/80 p-5 shadow-2xl backdrop-blur-xl border-white/50"
-            style={{ boxShadow: '0 -20px 40px -15px rgba(0,0,0,0.1), 0 25px 50px -12px rgba(0,0,0,0.25)' }}
-          >
+          <div className="rounded-[var(--radius-lg)] border bg-surface/80 p-5 shadow-xl backdrop-blur-xl border-white/50">
             <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between max-w-7xl mx-auto">
               <div className="flex flex-wrap items-center gap-x-8 gap-y-2 px-2">
-                <Counter label="Present" count={counts.present} color="#10b981" />
-                <Counter label="Absent" count={counts.absent} color="#ef4444" />
-                <Counter label="Late" count={counts.late} color="#f59e0b" className="hidden md:flex" />
-                <Counter label="Half Day" count={counts.half_day} color="#3b82f6" className="hidden md:flex" />
+                <Counter label="Present"  count={counts.present}   color="var(--color-status-present)" />
+                <Counter label="Absent"   count={counts.absent}    color="var(--color-status-absent)" />
+                <Counter label="Late"     count={counts.late}      color="var(--color-status-late)"    className="hidden md:flex" />
+                <Counter label="Half Day" count={counts.half_day}  color="var(--color-status-half-day)" className="hidden md:flex" />
               </div>
 
               <Button
@@ -471,7 +451,7 @@ const AttendanceMarker = ({
                 loading={savingAttendance}
                 disabled={!canSubmit}
                 onClick={() => setConfirmOpen(true)}
-                className="h-12 px-12 text-sm font-bold uppercase tracking-[0.15em] shadow-xl shadow-primary/30 transition-all hover:scale-[1.02] active:scale-95 rounded-[20px]"
+                className="h-12 px-12 text-sm font-bold uppercase tracking-wider shadow-lg shadow-primary/25 transition-all hover:scale-[1.02] active:scale-95 rounded-xl"
               >
                 File Attendance
               </Button>
@@ -480,35 +460,40 @@ const AttendanceMarker = ({
         </div>
       )}
 
-      {/* ── Confirmation Overlay ── */}
+      {/* ── Confirmation Modal ── */}
       <Modal open={confirmOpen} onClose={() => setConfirmOpen(false)} size="md">
         <div className="p-1">
-          <div className="flex h-16 w-16 items-center justify-center rounded-[22px] bg-primary/10 text-primary mb-8 shadow-inner border border-primary/10">
+          <div className="flex h-16 w-16 items-center justify-center rounded-[var(--radius-lg)] bg-primary/10 text-primary mb-8 shadow-inner border border-primary/10">
             <ClipboardCheck size={32} />
           </div>
           <h3 className="text-3xl font-bold text-text-primary tracking-tight leading-tight">Ready to File?</h3>
           <p className="mt-4 text-base font-medium text-text-muted leading-relaxed">
-            You are submitting attendance for <span className="font-bold text-text-primary decoration-primary/30 underline underline-offset-4">{selectedAssignment?.class_name} {selectedAssignment?.section_name}</span>. 
-            <br className="hidden sm:block" /> This will trigger automated reporting and notifications.
+            You are submitting attendance for{' '}
+            <span className="font-bold text-text-primary decoration-primary/30 underline underline-offset-4">
+              {selectedAssignment?.class_name} {selectedAssignment?.section_name}
+            </span>.{' '}
+            <br className="hidden sm:block" />
+            Saves attendance and sends absence notifications to parents.
           </p>
 
-          <div className="mt-4 p-4 rounded-2xl bg-amber-50/50 border border-amber-100 flex items-start gap-3">
+          <div className="mt-4 p-4 rounded-xl bg-amber-50/50 border border-amber-100 flex items-start gap-3">
             <Info className="text-amber-600 shrink-0 mt-0.5" size={16} />
-            <p className="text-xs font-semibold text-amber-900 leading-normal">
-              <strong>Notice:</strong> Eduhard operates on an exceptions-only marking pattern. Any student not explicitly marked Absent, Late, or Half Day will default to <strong>Present</strong>.
+            <p className="text-[11px] font-semibold text-amber-900 leading-normal">
+              <strong>Note:</strong> Unmarked students default to Present — only exceptions (Absent / Late / Half Day) need to be recorded.
             </p>
           </div>
 
           <div className="mt-10 grid grid-cols-2 gap-4">
-            <button
-              type="button"
+            <Button
+              variant="secondary"
               onClick={() => setConfirmOpen(false)}
-              className="h-14 rounded-[22px] bg-surface-raised text-xs font-bold uppercase tracking-widest text-text-primary border border-border hover:bg-border/20 transition-all active:scale-95 shadow-sm"
+              className="h-14 rounded-xl text-[11px] font-bold uppercase tracking-wider"
             >
-              Wait, Review
-            </button>
-            <button
-              type="button"
+              Cancel
+            </Button>
+            <Button
+              variant="primary"
+              loading={submittingConfirm}
               onClick={async () => {
                 setSubmittingConfirm(true)
                 try {
@@ -518,11 +503,10 @@ const AttendanceMarker = ({
                   setSubmittingConfirm(false)
                 }
               }}
-              disabled={submittingConfirm}
-              className="h-14 rounded-[22px] bg-primary text-xs font-bold uppercase tracking-widest text-white shadow-2xl shadow-primary/40 hover:opacity-95 transition-all flex items-center justify-center gap-2 active:scale-95"
+              className="h-14 rounded-xl text-[11px] font-bold uppercase tracking-wider shadow-lg shadow-primary/30"
             >
               {submittingConfirm ? <Loader2 size={20} className="animate-spin" /> : 'Confirm & File'}
-            </button>
+            </Button>
           </div>
         </div>
       </Modal>
@@ -532,8 +516,8 @@ const AttendanceMarker = ({
 
 const Counter = ({ label, count, color, className }) => (
   <div className={cn("flex items-center gap-2.5", className)}>
-    <div className="h-2.5 w-2.5 rounded-full shadow-sm" style={{ backgroundColor: color, boxShadow: `0 0 8px ${color}66` }} />
-    <span className="text-[11px] font-bold uppercase tracking-widest" style={{ color }}>{count || 0} {label}</span>
+    <div className="h-2.5 w-2.5 rounded-full shadow-sm" style={{ backgroundColor: color }} />
+    <span className="text-[11px] font-bold uppercase tracking-wider" style={{ color }}>{count || 0} {label}</span>
   </div>
 )
 
@@ -541,21 +525,20 @@ const Banner = ({ tone, icon: Icon, title, message }) => {
   const styles = {
     warning: 'bg-orange-50 border-orange-200 text-orange-800',
     error: 'bg-rose-50 border-rose-200 text-rose-800',
-    success: 'bg-emerald-50 border-emerald-200 text-emerald-800'
+    success: 'bg-emerald-50 border-emerald-200 text-emerald-800',
   }
   const iconStyles = {
     warning: 'bg-white text-orange-600 shadow-sm border border-orange-100',
     error: 'bg-white text-rose-600 shadow-sm border border-rose-100',
-    success: 'bg-white text-emerald-600 shadow-sm border border-emerald-100'
+    success: 'bg-white text-emerald-600 shadow-sm border border-emerald-100',
   }
-  
   return (
-    <div className={cn("rounded-[28px] border p-5 flex items-start gap-5 shadow-sm", styles[tone])}>
-      <div className={cn("h-12 w-12 shrink-0 rounded-2xl flex items-center justify-center", iconStyles[tone])}>
+    <div className={cn("rounded-[var(--radius-lg)] border p-5 flex items-start gap-5 shadow-sm", styles[tone])}>
+      <div className={cn("h-12 w-12 shrink-0 rounded-xl flex items-center justify-center", iconStyles[tone])}>
         <Icon size={24} />
       </div>
       <div className="min-w-0 flex-1 py-1">
-        <p className="text-sm font-bold tracking-tight uppercase tracking-[0.05em]">{title}</p>
+        <p className="text-sm font-bold uppercase tracking-wide">{title}</p>
         <p className="text-sm font-medium opacity-90 mt-1 leading-relaxed">{message}</p>
       </div>
     </div>
