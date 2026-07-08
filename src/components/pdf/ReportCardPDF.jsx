@@ -15,7 +15,9 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
   },
   borderContainer: {
-    border: '1.5pt solid #6D28D9',
+    borderWidth: 1.5,
+    borderStyle: 'solid',
+    borderColor: '#6D28D9',
     height: '100%',
     padding: 20,
     position: 'relative',
@@ -168,14 +170,14 @@ const styles = StyleSheet.create({
     fontFamily: 'Helvetica-Bold',
     color: DARK,
   },
-  colSr: { width: '25pt', textAlign: 'center' },
-  colSubject: { width: '150pt' },
-  colMax: { width: '50pt', textAlign: 'center' },
+  colSubject: { width: '160pt' },
+  colWeightage: { width: '50pt', textAlign: 'center' },
   colTheory: { width: '55pt', textAlign: 'center' },
   colPractical: { width: '55pt', textAlign: 'center' },
-  colTotal: { width: '55pt', textAlign: 'center' },
-  colGrade: { width: '45pt', textAlign: 'center' },
-  colRemarks: { width: '75pt' },
+  colMax: { width: '55pt', textAlign: 'center' },
+  colObtained: { width: '55pt', textAlign: 'center' },
+  colGrade: { width: '40pt', textAlign: 'center' },
+  colStatus: { width: '45pt', textAlign: 'center' },
 
   tableFooter: {
     flexDirection: 'row',
@@ -185,7 +187,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   colFooterLabel: {
-    width: '280pt',
+    width: '265pt',
     fontSize: 8,
     fontWeight: 'bold',
     fontFamily: 'Helvetica-Bold',
@@ -201,7 +203,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   colFooterGrade: {
-    width: '120pt',
+    width: '140pt',
     fontSize: 8.5,
     fontWeight: 'bold',
     fontFamily: 'Helvetica-Bold',
@@ -329,6 +331,61 @@ const ReportCardPDF = ({ data }) => {
     ? `${student.first_name} ${student.last_name || ''}`.trim() 
     : (student.name || '');
 
+  // Group results by subject
+  const subjectsMap = {};
+  results.forEach(row => {
+    const subKey = row.subject_id || row.subject;
+    if (!subjectsMap[subKey]) {
+      subjectsMap[subKey] = {
+        subject_id: row.subject_id,
+        subject_name: row.subject,
+        subject_code: row.code,
+        exams: [],
+        weighted_max: 0,
+        weighted_obtained: 0,
+        weighted_passing: 0,
+        is_absent: true,
+      };
+    }
+    const sub = subjectsMap[subKey];
+    sub.exams.push(row);
+
+    const weight = parseFloat(row.exam_weightage || 100) / 100;
+    const totalMarks = parseFloat(row.total_marks || 0);
+    sub.weighted_max += totalMarks * weight;
+    sub.weighted_obtained += (row.is_absent ? 0 : parseFloat(row.marks_obtained || 0)) * weight;
+    sub.weighted_passing += parseFloat(row.passing_marks || 0) * weight;
+
+    if (!row.is_absent) {
+      sub.is_absent = false;
+    }
+  });
+
+  const gradingScale = data.gradingScale || [
+    { min: 90, grade: 'A+' },
+    { min: 80, grade: 'A' },
+    { min: 70, grade: 'B+' },
+    { min: 60, grade: 'B' },
+    { min: 50, grade: 'C' },
+    { min: 40, grade: 'D' },
+  ];
+
+  const percentageToGrade = (pct, scale) => {
+    for (const band of scale) {
+      if (pct >= band.min) return band.grade;
+    }
+    return 'F';
+  };
+
+  Object.values(subjectsMap).forEach(sub => {
+    const pct = sub.weighted_max > 0 ? parseFloat(((sub.weighted_obtained / sub.weighted_max) * 100).toFixed(2)) : 0.00;
+    sub.final_percentage = pct;
+    sub.final_grade = percentageToGrade(pct, gradingScale);
+    sub.final_is_pass = sub.weighted_obtained >= sub.weighted_passing;
+  });
+
+  const groupedSubjects = Object.values(subjectsMap);
+
   return (
     <Document>
       <Page size="A4" style={styles.page}>
@@ -390,71 +447,166 @@ const ReportCardPDF = ({ data }) => {
           {/* Marks Table */}
           <View style={styles.table}>
             <View style={styles.tableHeader}>
-              <View style={styles.colSr}><Text style={styles.tableHeaderCell}>Sr</Text></View>
-              <View style={styles.colSubject}><Text style={styles.tableHeaderCell}>Subject</Text></View>
-              <View style={styles.colMax}><Text style={styles.tableHeaderCell}>Max</Text></View>
+              <View style={styles.colSubject}><Text style={styles.tableHeaderCell}>Subject / Exam Name</Text></View>
+              <View style={styles.colWeightage}><Text style={styles.tableHeaderCell}>Weightage</Text></View>
               <View style={styles.colTheory}><Text style={styles.tableHeaderCell}>Theory</Text></View>
               <View style={styles.colPractical}><Text style={styles.tableHeaderCell}>Practical</Text></View>
-              <View style={styles.colTotal}><Text style={styles.tableHeaderCell}>Total</Text></View>
+              <View style={styles.colMax}><Text style={styles.tableHeaderCell}>Total</Text></View>
+              <View style={styles.colObtained}><Text style={styles.tableHeaderCell}>Obt.</Text></View>
               <View style={styles.colGrade}><Text style={styles.tableHeaderCell}>Grade</Text></View>
-              <View style={styles.colRemarks}><Text style={styles.tableHeaderCell}>Remarks</Text></View>
+              <View style={styles.colStatus}><Text style={styles.tableHeaderCell}>Status</Text></View>
             </View>
 
-            {results.map((res, idx) => {
-              const isEven = idx % 2 === 1;
-              const rowStyle = [styles.tableRow, isEven ? styles.tableRowEven : styles.tableRowOdd];
-
+            {groupedSubjects.map((sub, sIdx) => {
               return (
-                <View key={idx} style={rowStyle} wrap={false}>
-                  <View style={styles.colSr}>
-                    <Text style={styles.tableCell}>{idx + 1}</Text>
+                <View key={sIdx} wrap={false}>
+                  {/* Subject Header Row */}
+                  <View style={[styles.tableRow, { backgroundColor: '#F1F5F9' }]}>
+                    <View style={styles.colSubject}>
+                      <Text style={[styles.tableCellBold, { color: '#1E3A8A' }]}>
+                        {sub.subject_name.toUpperCase()} {sub.subject_code ? `(${sub.subject_code})` : ''}
+                      </Text>
+                    </View>
+                    <View style={styles.colWeightage} />
+                    <View style={styles.colTheory} />
+                    <View style={styles.colPractical} />
+                    <View style={styles.colMax} />
+                    <View style={styles.colObtained} />
+                    <View style={styles.colGrade} />
+                    <View style={styles.colStatus} />
                   </View>
-                  <View style={styles.colSubject}>
-                    <Text style={styles.tableCellBold}>{res.subject}</Text>
-                  </View>
-                  <View style={styles.colMax}>
-                    <Text style={styles.tableCell}>
-                      {res.total_marks ? parseFloat(res.total_marks).toFixed(0) : '—'}
-                    </Text>
-                  </View>
-                  <View style={styles.colTheory}>
-                    <Text style={styles.tableCell}>
-                      {(() => {
-                        const tTotal = res.theory_total ? parseFloat(res.theory_total) : 0;
-                        const pTotal = res.practical_total ? parseFloat(res.practical_total) : 0;
-                        if (res.is_absent) return tTotal > 0 ? 'ABS' : '—';
-                        if (tTotal > 0 && pTotal > 0) return res.theory_marks_obtained !== null ? res.theory_marks_obtained : '—';
-                        if (tTotal > 0) return res.marks_obtained !== null ? res.marks_obtained : '—';
-                        return '—';
-                      })()}
-                    </Text>
-                  </View>
-                  <View style={styles.colPractical}>
-                    <Text style={styles.tableCell}>
-                      {(() => {
-                        const tTotal = res.theory_total ? parseFloat(res.theory_total) : 0;
-                        const pTotal = res.practical_total ? parseFloat(res.practical_total) : 0;
-                        if (res.is_absent) return pTotal > 0 ? 'ABS' : '—';
-                        if (tTotal > 0 && pTotal > 0) return res.practical_marks_obtained !== null ? res.practical_marks_obtained : '—';
-                        if (pTotal > 0) return res.marks_obtained !== null ? res.marks_obtained : '—';
-                        return '—';
-                      })()}
-                    </Text>
-                  </View>
-                  <View style={styles.colTotal}>
-                    <Text style={styles.tableCellBold}>
-                      {res.is_absent ? 'ABS' : (res.marks_obtained ? parseFloat(res.marks_obtained).toFixed(1) : '—')}
-                    </Text>
-                  </View>
-                  <View style={styles.colGrade}>
-                    <Text style={[styles.tableCellBold, { color: getGradeColor(res.grade) }]}>
-                      {res.grade || '—'}
-                    </Text>
-                  </View>
-                  <View style={styles.colRemarks}>
-                    <Text style={[styles.tableCell, { fontSize: 7, color: '#475569' }]}>
-                      {res.grade ? gradeRemark(res.grade) : '—'}
-                    </Text>
+
+                  {/* Exam Rows */}
+                  {sub.exams.map((exam, eIdx) => {
+                    const rowStyle = [styles.tableRow, eIdx % 2 === 1 ? styles.tableRowEven : styles.tableRowOdd];
+                    return (
+                      <View key={eIdx} style={rowStyle}>
+                        <View style={styles.colSubject}>
+                          <Text style={[styles.tableCell, { paddingLeft: 12, color: '#475569' }]}>
+                            {exam.exam_name || 'Exam'}
+                          </Text>
+                        </View>
+                        <View style={styles.colWeightage}>
+                          <Text style={styles.tableCell}>
+                            {parseFloat(exam.exam_weightage || 100)}%
+                          </Text>
+                        </View>
+                        <View style={styles.colTheory}>
+                          <Text style={styles.tableCell}>
+                            {(() => {
+                              const tTotal = exam.theory_total ? parseFloat(exam.theory_total) : 0;
+                              const pTotal = exam.practical_total ? parseFloat(exam.practical_total) : 0;
+                              if (exam.is_absent) return tTotal > 0 ? 'ABS' : '—';
+                              if (tTotal > 0 && pTotal > 0) return exam.theory_marks_obtained !== null ? exam.theory_marks_obtained : '—';
+                              if (tTotal > 0) return exam.marks_obtained !== null ? exam.marks_obtained : '—';
+                              return '—';
+                            })()}
+                          </Text>
+                        </View>
+                        <View style={styles.colPractical}>
+                          <Text style={styles.tableCell}>
+                            {(() => {
+                              const tTotal = exam.theory_total ? parseFloat(exam.theory_total) : 0;
+                              const pTotal = exam.practical_total ? parseFloat(exam.practical_total) : 0;
+                              if (exam.is_absent) return pTotal > 0 ? 'ABS' : '—';
+                              if (tTotal > 0 && pTotal > 0) return exam.practical_marks_obtained !== null ? exam.practical_marks_obtained : '—';
+                              if (pTotal > 0) return exam.marks_obtained !== null ? exam.marks_obtained : '—';
+                              return '—';
+                            })()}
+                          </Text>
+                        </View>
+                        <View style={styles.colMax}>
+                          <Text style={styles.tableCell}>
+                            {exam.total_marks ? parseFloat(exam.total_marks).toFixed(0) : '—'}
+                          </Text>
+                        </View>
+                        <View style={styles.colObtained}>
+                          <Text style={styles.tableCellBold}>
+                            {exam.is_absent ? 'ABS' : (exam.marks_obtained ? parseFloat(exam.marks_obtained).toFixed(1) : '—')}
+                          </Text>
+                        </View>
+                        <View style={styles.colGrade}>
+                          <Text style={[styles.tableCellBold, { color: getGradeColor(exam.grade) }]}>
+                            {exam.grade || '—'}
+                          </Text>
+                        </View>
+                        <View style={styles.colStatus}>
+                          <Text style={[styles.tableCellBold, { color: exam.is_pass ? '#16A34A' : '#DC2626', fontSize: 7.5 }]}>
+                            {exam.is_absent ? 'ABS' : (exam.is_pass ? 'PASS' : 'FAIL')}
+                          </Text>
+                        </View>
+                      </View>
+                    );
+                  })}
+
+                  {/* Subject Weighted Total Row */}
+                  <View style={[styles.tableRow, { borderTopWidth: 0.5, borderTopColor: '#CBD5E1', backgroundColor: '#F8FAFC' }]}>
+                    <View style={styles.colSubject}>
+                      <Text style={[styles.tableCellBold, { paddingLeft: 12 }]}>
+                        Weighted Total
+                      </Text>
+                    </View>
+                    <View style={styles.colWeightage}>
+                      <Text style={styles.tableCellBold}>100%</Text>
+                    </View>
+                    
+                    {(() => {
+                      let weightedTheoryMax = 0, weightedTheoryObt = 0, hasTheory = false;
+                      let weightedPracMax = 0, weightedPracObt = 0, hasPrac = false;
+                      sub.exams.forEach(e => {
+                        const w = parseFloat(e.exam_weightage || 100) / 100;
+                        const tTotal = e.theory_total ? parseFloat(e.theory_total) : 0;
+                        const pTotal = e.practical_total ? parseFloat(e.practical_total) : 0;
+                        
+                        if (tTotal > 0) {
+                          weightedTheoryMax += tTotal * w;
+                          const obt = (tTotal > 0 && pTotal > 0) ? (e.theory_marks_obtained || 0) : (e.marks_obtained || 0);
+                          weightedTheoryObt += (e.is_absent ? 0 : parseFloat(obt)) * w;
+                          hasTheory = true;
+                        }
+                        if (pTotal > 0) {
+                          weightedPracMax += pTotal * w;
+                          const obt = (tTotal > 0 && pTotal > 0) ? (e.practical_marks_obtained || 0) : (e.marks_obtained || 0);
+                          weightedPracObt += (e.is_absent ? 0 : parseFloat(obt)) * w;
+                          hasPrac = true;
+                        }
+                      });
+                      return (
+                        <>
+                          <View style={styles.colTheory}>
+                            <Text style={styles.tableCell}>
+                              {hasTheory ? `${weightedTheoryObt.toFixed(1)}/${weightedTheoryMax.toFixed(1)}` : '—'}
+                            </Text>
+                          </View>
+                          <View style={styles.colPractical}>
+                            <Text style={styles.tableCell}>
+                              {hasPrac ? `${weightedPracObt.toFixed(1)}/${weightedPracMax.toFixed(1)}` : '—'}
+                            </Text>
+                          </View>
+                        </>
+                      );
+                    })()}
+
+                    <View style={styles.colMax}>
+                      <Text style={styles.tableCellBold}>
+                        {sub.weighted_max.toFixed(0)}
+                      </Text>
+                    </View>
+                    <View style={styles.colObtained}>
+                      <Text style={styles.tableCellBold}>
+                        {sub.is_absent ? 'ABS' : sub.weighted_obtained.toFixed(1)}
+                      </Text>
+                    </View>
+                    <View style={styles.colGrade}>
+                      <Text style={[styles.tableCellBold, { color: getGradeColor(sub.final_grade) }]}>
+                        {sub.is_absent ? '—' : sub.final_grade}
+                      </Text>
+                    </View>
+                    <View style={styles.colStatus}>
+                      <Text style={[styles.tableCellBold, { color: sub.final_is_pass ? '#16A34A' : '#DC2626', fontSize: 7.5 }]}>
+                        {sub.is_absent ? 'ABS' : (sub.final_is_pass ? 'PASS' : 'FAIL')}
+                      </Text>
+                    </View>
                   </View>
                 </View>
               );
