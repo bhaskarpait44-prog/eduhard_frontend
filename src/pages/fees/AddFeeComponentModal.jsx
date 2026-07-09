@@ -102,7 +102,15 @@ const AddFeeComponentModal = ({ open, onClose, sessionId, classId: preSelectedCl
     return amount
   }, [amount, frequency])
 
-  useEffect(() => {
+  const [prevOpen, setPrevOpen] = useState(open)
+  const [prevEditTarget, setPrevEditTarget] = useState(editTarget)
+  const [prevPreSelectedClass, setPrevPreSelectedClass] = useState(preSelectedClass)
+
+  if (open !== prevOpen || editTarget !== prevEditTarget || preSelectedClass !== prevPreSelectedClass) {
+    setPrevOpen(open)
+    setPrevEditTarget(editTarget)
+    setPrevPreSelectedClass(preSelectedClass)
+
     if (open) {
       setSubmitSuccess(false)
       setIsBulk(false)
@@ -130,7 +138,7 @@ const AddFeeComponentModal = ({ open, onClose, sessionId, classId: preSelectedCl
         })
       }
     }
-  }, [open, editTarget, preSelectedClass, reset])
+  }
 
   const onSubmit = async (data) => {
     const targetClassIds = isBulk ? selectedClasses : [data.class_id]

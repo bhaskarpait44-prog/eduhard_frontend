@@ -31,6 +31,14 @@ const BAR_COLORS = [
   '#7c3aed','#db2777','#0891b2','#65a30d',
 ]
 
+const formatTs = (ts) => {
+  if (!ts) return '—'
+  return new Date(ts).toLocaleString('en-IN', {
+    day: '2-digit', month: 'short', year: 'numeric',
+    hour: '2-digit', minute: '2-digit',
+  })
+}
+
 const AdminActivityPage = () => {
   const { toastError } = useToast()
   const { admins, adminActivity, isLoading, fetchAdmins, fetchAdminActivity } = useAuditStore()
@@ -73,13 +81,7 @@ const AdminActivityPage = () => {
 
   const maxCount = Math.max(...Object.values(byTable), 1)
 
-  const formatTs = (ts) => {
-    if (!ts) return '—'
-    return new Date(ts).toLocaleString('en-IN', {
-      day: '2-digit', month: 'short', year: 'numeric',
-      hour: '2-digit', minute: '2-digit',
-    })
-  }
+
 
   const handleAdminChange = (e) => {
     setAdminId(e.target.value)

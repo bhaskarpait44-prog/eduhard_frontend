@@ -1,4 +1,4 @@
-import { useEffect, useCallback, useState } from 'react'
+import { useEffect, useCallback, useState, lazy, Suspense } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
 
@@ -44,7 +44,20 @@ import Badge from '@/components/ui/Badge'
 import AIInsightsCard from '@/components/dashboard/AIInsightsCard'
 import AIBriefingPanel from '@/components/dashboard/AIBriefingPanel'
 import RiskScoreWidget from '@/components/dashboard/RiskScoreWidget'
-import { AttendanceTrendChart, FeeStatusChart } from '@/components/admin/DashboardCharts'
+
+const AttendanceTrendChart = lazy(() =>
+  import('@/components/admin/DashboardCharts').then(module => ({ default: module.AttendanceTrendChart }))
+)
+const FeeStatusChart = lazy(() =>
+  import('@/components/admin/DashboardCharts').then(module => ({ default: module.FeeStatusChart }))
+)
+
+const greeting = () => {
+  const h = new Date().getHours()
+  if (h < 12) return 'Good Morning'
+  if (h < 17) return 'Good Afternoon'
+  return 'Good Evening'
+}
 
 const AUTO_REFRESH_MS = 10 * 60 * 1000 // 10 minutes
 
@@ -106,13 +119,6 @@ const DashboardPage = () => {
       clearDashboard()
     }
   }, [loadData, clearDashboard])
-
-  const greeting = () => {
-    const h = new Date().getHours()
-    if (h < 12) return 'Good Morning'
-    if (h < 17) return 'Good Afternoon'
-    return 'Good Evening'
-  }
 
   if (error) {
     return (
@@ -257,7 +263,9 @@ const DashboardPage = () => {
             <TrendingUp size={18} className="text-brand" /> Attendance Trends (Last 7 Days)
           </h3>
           <div className="h-[240px]">
-            <AttendanceTrendChart data={attendanceChart} />
+            <Suspense fallback={<div className="h-full flex items-center justify-center text-xs text-text-muted">Loading chart...</div>}>
+              <AttendanceTrendChart data={attendanceChart} />
+            </Suspense>
           </div>
         </div>
         <div className="bg-surface border border-border-base rounded-2xl p-6 text-center">
@@ -265,10 +273,12 @@ const DashboardPage = () => {
             <IndianRupee size={18} className="text-amber-500" /> Fee Target Progress
           </h3>
           <div className="h-[200px]">
-            <FeeStatusChart 
-              collected={stats?.feeCollection?.collected || 0} 
-              pending={Math.max(0, (stats?.feeCollection?.total_expected || 0) - (stats?.feeCollection?.collected || 0))} 
-            />
+            <Suspense fallback={<div className="h-full flex items-center justify-center text-xs text-text-muted">Loading chart...</div>}>
+              <FeeStatusChart 
+                collected={stats?.feeCollection?.collected || 0} 
+                pending={Math.max(0, (stats?.feeCollection?.total_expected || 0) - (stats?.feeCollection?.collected || 0))} 
+              />
+            </Suspense>
           </div>
           <p className="text-[10px] text-text-muted mt-4">Based on current month's expected invoices</p>
         </div>

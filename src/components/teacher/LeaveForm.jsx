@@ -47,11 +47,7 @@ const LeaveForm = ({ workingDays, holidays, onSubmit, saving }) => {
     return count
   }, [form.from_date, form.to_date, holidaySet, workingDays])
 
-  useEffect(() => {
-    if (form.to_date < form.from_date) {
-      setForm((prev) => ({ ...prev, to_date: prev.from_date }))
-    }
-  }, [form.from_date, form.to_date])
+
 
   const handleSubmit = async (event) => {
     event.preventDefault()
@@ -93,7 +89,16 @@ const LeaveForm = ({ workingDays, holidays, onSubmit, saving }) => {
           type="date"
           label="From Date"
           value={form.from_date}
-          onChange={(event) => setForm((prev) => ({ ...prev, from_date: event.target.value }))}
+          onChange={(event) => {
+            const val = event.target.value
+            setForm((prev) => {
+              const next = { ...prev, from_date: val }
+              if (prev.to_date && prev.to_date < val) {
+                next.to_date = val
+              }
+              return next
+            })
+          }}
           required
         />
         <Input
@@ -101,7 +106,13 @@ const LeaveForm = ({ workingDays, holidays, onSubmit, saving }) => {
           label="To Date"
           value={form.to_date}
           min={form.from_date}
-          onChange={(event) => setForm((prev) => ({ ...prev, to_date: event.target.value }))}
+          onChange={(event) => {
+            const val = event.target.value
+            setForm((prev) => ({
+              ...prev,
+              to_date: val < prev.from_date ? prev.from_date : val
+            }))
+          }}
           required
         />
       </div>

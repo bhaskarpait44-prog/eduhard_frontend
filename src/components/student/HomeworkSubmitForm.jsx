@@ -2,13 +2,15 @@ import { useEffect, useState } from 'react'
 import Button from '@/components/ui/Button'
 
 const HomeworkSubmitForm = ({ homework, loading, onSubmit }) => {
-  const [submissionContent, setSubmissionContent] = useState('')
-  const [attachmentPath, setAttachmentPath] = useState('')
+  const [prevId, setPrevId] = useState(homework?.id)
+  const [submissionContent, setSubmissionContent] = useState(homework?.submission_content || '')
+  const [attachmentPath, setAttachmentPath] = useState(homework?.submission_attachment_path || '')
 
-  useEffect(() => {
+  if (homework?.id !== prevId) {
+    setPrevId(homework?.id)
     setSubmissionContent(homework?.submission_content || '')
     setAttachmentPath(homework?.submission_attachment_path || '')
-  }, [homework?.id, homework?.submission_content, homework?.submission_attachment_path])
+  }
 
   const handleSubmit = async (event) => {
     event.preventDefault()

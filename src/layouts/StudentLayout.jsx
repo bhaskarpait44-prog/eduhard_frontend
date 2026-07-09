@@ -107,9 +107,11 @@ const StudentLayout = () => {
   const [isOffline, setIsOffline] = useState(typeof navigator !== 'undefined' ? !navigator.onLine : false)
   const [unreadNotices, setUnreadNotices] = useState(0)
 
-  useEffect(() => {
+  const [prevPathname, setPrevPathname] = useState(location.pathname)
+  if (location.pathname !== prevPathname) {
+    setPrevPathname(location.pathname)
     setMobileMenuOpen(false)
-  }, [location.pathname])
+  }
 
   useEffect(() => {
     const handleOnline = () => setIsOffline(false)

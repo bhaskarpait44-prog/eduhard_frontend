@@ -27,9 +27,11 @@ const AppLayout = () => {
     if (isAuthenticated) fetchCurrentSession()
   }, [isAuthenticated])
 
-  useEffect(() => {
+  const [prevPathname, setPrevPathname] = useState(location.pathname)
+  if (location.pathname !== prevPathname) {
+    setPrevPathname(location.pathname)
     setMobileOpen(false)
-  }, [location.pathname])
+  }
 
   useEffect(() => {
     document.body.style.overflow = mobileOpen ? 'hidden' : ''

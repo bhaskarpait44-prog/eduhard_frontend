@@ -182,10 +182,11 @@ export default function EnrollmentsPage() {
       setFilters((p) => ({ ...p, session_id: String(currentSession.id) }))
   }, [currentSession, filters.session_id])
 
-  /* reset to page 1 whenever filters change */
-  useEffect(() => {
+  const [prevFilters, setPrevFilters] = useState(filters)
+  if (filters !== prevFilters) {
+    setPrevFilters(filters)
     setCurrentPage(1)
-  }, [filters])
+  }
 
   /* fetch students on filter or page change */
   useEffect(() => {
@@ -332,8 +333,6 @@ export default function EnrollmentsPage() {
    Pagination
 ═══════════════════════════════════════════════════════════ */
 function Pagination({ currentPage, totalPages, pageStart, pageEnd, total, onChange }) {
-  if (totalPages <= 1) return null
-
   /* Build page number buttons — show at most 5 around current page */
   const pages = useMemo(() => {
     const range = []
@@ -343,6 +342,8 @@ function Pagination({ currentPage, totalPages, pageStart, pageEnd, total, onChan
     for (let i = left; i <= right; i++) range.push(i)
     return range
   }, [currentPage, totalPages])
+
+  if (totalPages <= 1) return null
 
   return (
     <div className="ep-pagination">

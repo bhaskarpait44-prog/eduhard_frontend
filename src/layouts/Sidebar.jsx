@@ -297,21 +297,26 @@ const NavIcon = ({ name, size = 17 }) => {
 
 const NavItem = ({ item, collapsed }) => {
   const [isOpen, setIsOpen] = useState(false)
-  const [isClicked, setIsClicked] = useState(false)
-  const [coords, setCoords] = useState({ top: 0, left: 0, bottom: 'auto' })
-  const itemRef = useRef(null)
   const hasChildren = item.children && item.children.length > 0
   const location = useLocation()
   
   // Check if any child is active
   const isChildActive = hasChildren && item.children.some(child => location.pathname === child.path)
 
-  // Auto-open accordion when a child is active in expanded mode
-  useEffect(() => {
+  const [isClicked, setIsClicked] = useState(isChildActive && !collapsed)
+  const [prevIsChildActive, setPrevIsChildActive] = useState(isChildActive)
+  const [prevCollapsed, setPrevCollapsed] = useState(collapsed)
+
+  if (isChildActive !== prevIsChildActive || collapsed !== prevCollapsed) {
+    setPrevIsChildActive(isChildActive)
+    setPrevCollapsed(collapsed)
     if (isChildActive && !collapsed) {
       setIsClicked(true)
     }
-  }, [isChildActive, collapsed])
+  }
+
+  const [coords, setCoords] = useState({ top: 0, left: 0, bottom: 'auto' })
+  const itemRef = useRef(null)
 
   const updateCoords = () => {
     if (itemRef.current) {

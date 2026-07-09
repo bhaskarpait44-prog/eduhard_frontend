@@ -40,7 +40,12 @@ const RecordPaymentModal = ({ open, invoice, onClose, onSuccess }) => {
 
   const paymentMode = watch('payment_mode')
 
-  useEffect(() => {
+  const [prevOpen, setPrevOpen] = useState(open)
+  const [prevInvoice, setPrevInvoice] = useState(invoice)
+
+  if (open !== prevOpen || invoice !== prevInvoice) {
+    setPrevOpen(open)
+    setPrevInvoice(invoice)
     if (open && invoice) {
       reset({
         amount          : balance.toFixed(2),
@@ -50,7 +55,7 @@ const RecordPaymentModal = ({ open, invoice, onClose, onSuccess }) => {
       })
       setReceipt(null)
     }
-  }, [open, invoice])
+  }
 
   const onSubmit = async (data) => {
     const result = await recordPayment({

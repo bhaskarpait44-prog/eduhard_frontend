@@ -61,9 +61,14 @@ const ResultsPage = () => {
     fetchExams({ session_id: sessionId }).catch(() => {})
   }, [sessionId, fetchExams])
 
-  useEffect(() => {
+  const [prevSessionId, setPrevSessionId] = useState(sessionId)
+  const [prevClassId, setPrevClassId] = useState(classId)
+
+  if (sessionId !== prevSessionId || classId !== prevClassId) {
+    setPrevSessionId(sessionId)
+    setPrevClassId(classId)
     setExamId('')
-  }, [sessionId, classId])
+  }
 
   useEffect(() => {
     if (!sessionId || !classId || !examId) {

@@ -35,6 +35,9 @@ const BookFormModal = ({ open, onClose, onSubmit, book, loading }) => {
     digital_url: '',
   });
 
+  const [prevBook, setPrevBook] = useState(null);
+  const [prevOpen, setPrevOpen] = useState(false);
+
   const { toastSuccess, toastWarning, toastError } = useToast();
   const [lookupLoading, setLookupLoading] = useState(false);
 
@@ -73,37 +76,35 @@ const BookFormModal = ({ open, onClose, onSubmit, book, loading }) => {
     }
   };
 
-  useEffect(() => {
-    if (book) {
-      setFormData({
-        title: book.title || '',
-        author: book.author || '',
-        publisher: book.publisher || '',
-        isbn: book.isbn || '',
-        category: book.category || 'other',
-        total_copies: book.total_copies || 0,
-        shelf_location: book.shelf_location || '',
-        publication_year: book.publication_year || new Date().getFullYear(),
-        description: book.description || '',
-        cover_image_url: book.cover_image_url || '',
-        digital_url: book.digital_url || '',
-      });
-    } else {
-      setFormData({
-        title: '',
-        author: '',
-        publisher: '',
-        isbn: '',
-        category: 'other',
-        total_copies: 1,
-        shelf_location: '',
-        publication_year: new Date().getFullYear(),
-        description: '',
-        cover_image_url: '',
-        digital_url: '',
-      });
-    }
-  }, [book, open]);
+  if (book !== prevBook || open !== prevOpen) {
+    setPrevBook(book);
+    setPrevOpen(open);
+    setFormData(book ? {
+      title: book.title || '',
+      author: book.author || '',
+      publisher: book.publisher || '',
+      isbn: book.isbn || '',
+      category: book.category || 'other',
+      total_copies: book.total_copies || 0,
+      shelf_location: book.shelf_location || '',
+      publication_year: book.publication_year || new Date().getFullYear(),
+      description: book.description || '',
+      cover_image_url: book.cover_image_url || '',
+      digital_url: book.digital_url || '',
+    } : {
+      title: '',
+      author: '',
+      publisher: '',
+      isbn: '',
+      category: 'other',
+      total_copies: 1,
+      shelf_location: '',
+      publication_year: new Date().getFullYear(),
+      description: '',
+      cover_image_url: '',
+      digital_url: '',
+    });
+  }
 
   const handleChange = (e) => {
     const { name, value } = e.target;

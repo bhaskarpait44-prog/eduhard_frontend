@@ -21,12 +21,21 @@ const LightningLoader = () => {
 
   // Public method to trigger manually (for the button click)
   useEffect(() => {
+    let timer
     window.triggerLightning = () => {
       setVisible(true)
       sessionStorage.setItem('show_lightning', 'true')
-      setTimeout(() => {
+      timer = setTimeout(() => {
         window.location.reload()
       }, 800)
+    }
+    return () => {
+      if (timer) clearTimeout(timer)
+      try {
+        delete window.triggerLightning
+      } catch (e) {
+        window.triggerLightning = undefined
+      }
     }
   }, [])
 

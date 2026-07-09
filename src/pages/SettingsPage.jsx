@@ -36,7 +36,7 @@ import useSessionStore from '@/store/sessionStore'
 import { APP_NAME, APP_VERSION, ROUTES } from '@/constants/app'
 import api from '@/api/axios'
 
-const SETTINGS_STORAGE_KEY = 'educore_settings'
+const SETTINGS_STORAGE_KEY = 'educore_settings:v1'
 
 const DEFAULT_SETTINGS = {
   schoolName: 'EduCore Academy',

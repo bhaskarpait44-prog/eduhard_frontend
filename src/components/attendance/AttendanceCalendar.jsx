@@ -2,6 +2,17 @@ import React from 'react'
 
 const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
 
+const getStatusColor = (status) => {
+  switch (status) {
+    case 'present': return 'bg-emerald-500 text-white shadow-emerald-200'
+    case 'absent':  return 'bg-red-500 text-white shadow-red-200'
+    case 'late':    return 'bg-amber-500 text-white shadow-amber-200'
+    case 'half_day': return 'bg-blue-500 text-white shadow-blue-200'
+    case 'holiday': return 'bg-gray-100 text-gray-400'
+    default:        return 'bg-white text-gray-400 border border-gray-100'
+  }
+}
+
 export default function AttendanceCalendar({ year, month, records = [] }) {
   const firstDay = new Date(year, month, 1).getDay()
   const daysInMonth = new Date(year, month + 1, 0).getDate()
@@ -11,17 +22,6 @@ export default function AttendanceCalendar({ year, month, records = [] }) {
     acc[day] = r.status
     return acc
   }, {})
-
-  const getStatusColor = (status) => {
-    switch (status) {
-      case 'present': return 'bg-emerald-500 text-white shadow-emerald-200'
-      case 'absent':  return 'bg-red-500 text-white shadow-red-200'
-      case 'late':    return 'bg-amber-500 text-white shadow-amber-200'
-      case 'half_day': return 'bg-blue-500 text-white shadow-blue-200'
-      case 'holiday': return 'bg-gray-100 text-gray-400'
-      default:        return 'bg-white text-gray-400 border border-gray-100'
-    }
-  }
 
   const blanks = Array(firstDay).fill(null)
   const days = Array.from({ length: daysInMonth }, (_, i) => i + 1)

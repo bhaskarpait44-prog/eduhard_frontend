@@ -7,4 +7,4 @@ export const getRiskStudents = (page = 1, limit = 50, sessionId) =>
   api.get(`/ai-insights-module/dashboard/ai-risk-students`, { 
     params: { page, limit, session_id: sessionId } 
   });
-export const getExamInsights = (examId) => api.get(`/ai-insights-module/analytics/exams/${examId}/ai-insights`);
+const getExamInsights = (examId) => api.get(`/ai-insights-module/analytics/exams/${examId}/ai-insights`);

@@ -31,7 +31,7 @@ export const NewValue = ({ value, className }) => {
   )
 }
 
-export const ValueDiff = ({ oldValue, newValue, inline = false }) => (
+const ValueDiff = ({ oldValue, newValue, inline = false }) => (
   <div className={cn('flex items-center gap-2 flex-wrap', inline && 'inline-flex')}>
     <OldValue value={oldValue} />
     <ArrowRight size={12} style={{ color: '#94a3b8', flexShrink: 0 }} />
@@ -39,4 +39,4 @@ export const ValueDiff = ({ oldValue, newValue, inline = false }) => (
   </div>
 )
 
-export default ValueDiff
+// export default ValueDiff

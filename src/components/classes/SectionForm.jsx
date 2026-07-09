@@ -6,6 +6,17 @@ import { z } from 'zod'
 import { AlertCircle } from 'lucide-react'
 import { getClassTeachers } from '@/api/classApi'
 
+const inputCls = (hasError) => `
+  w-full px-3 py-2.5 rounded-lg text-sm border outline-none transition-all
+  bg-white dark:bg-gray-800
+  text-gray-900 dark:text-gray-100
+  placeholder:text-gray-400 dark:placeholder:text-gray-500
+  ${hasError
+    ? 'border-red-400 dark:border-red-500 focus:ring-2 focus:ring-red-400/30'
+    : 'border-gray-300 dark:border-gray-600 focus:border-indigo-500 dark:focus:border-indigo-400 focus:ring-2 focus:ring-indigo-500/20'
+  }
+`
+
 const SectionForm = ({
   defaultValues = {},
   onSubmit,
@@ -62,16 +73,7 @@ const SectionForm = ({
     onSubmit(formattedData)
   }
 
-  const inputCls = (hasError) => `
-    w-full px-3 py-2.5 rounded-lg text-sm border outline-none transition-all
-    bg-white dark:bg-gray-800
-    text-gray-900 dark:text-gray-100
-    placeholder:text-gray-400 dark:placeholder:text-gray-500
-    ${hasError
-      ? 'border-red-400 dark:border-red-500 focus:ring-2 focus:ring-red-400/30'
-      : 'border-gray-300 dark:border-gray-600 focus:border-indigo-500 dark:focus:border-indigo-400 focus:ring-2 focus:ring-indigo-500/20'
-    }
-  `
+
 
   return (
     <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-4">

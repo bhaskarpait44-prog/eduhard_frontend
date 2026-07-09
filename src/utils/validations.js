@@ -335,7 +335,7 @@ export const paymentSchema = z.object({
 })
 
 // ── Session ───────────────────────────────────────────────────────────────
-export const sessionSchema = z.object({
+const sessionSchema = z.object({
   name      : z.string().min(1, 'Session name is missing — please enter a name for the session'),
   start_date: z.string().min(1, 'Start date is missing — please enter the session start date'),
   end_date  : z.string().min(1, 'End date is missing — please enter the session end date'),

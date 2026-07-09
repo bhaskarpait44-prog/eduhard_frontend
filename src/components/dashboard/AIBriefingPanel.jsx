@@ -8,18 +8,11 @@ import Button from '../ui/Button';
 import { cn } from '@/utils/helpers';
 
 const AIBriefingPanel = ({ sessionId }) => {
-  const { summary, loading, error, fetchDashboardSummary } = useAiAnalysis(sessionId);
-  const [lastUpdated, setLastUpdated] = useState(null);
+  const { summary, loading, error, lastUpdated, fetchDashboardSummary } = useAiAnalysis(sessionId);
 
   useEffect(() => {
     if (sessionId) fetchDashboardSummary();
   }, [fetchDashboardSummary, sessionId]);
-
-  useEffect(() => {
-    if (summary && !loading) {
-      setLastUpdated(new Date());
-    }
-  }, [summary, loading]);
 
   const sentences = useMemo(() => {
     if (!summary) return [];

@@ -6,7 +6,7 @@ export const getSubjects = (classId) =>
 export const downloadSubjectsPdf = (classId) =>
   api.get(`/classes/${classId}/subjects/pdf`, { responseType: 'blob' })
 
-export const getSubjectById = (classId, subjectId) =>
+const getSubjectById = (classId, subjectId) =>
   api.get(`/classes/${classId}/subjects/${subjectId}`)
 
 export const createSubject = (classId, data) =>

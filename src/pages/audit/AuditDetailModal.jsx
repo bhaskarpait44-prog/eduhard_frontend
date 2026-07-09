@@ -12,20 +12,20 @@ const TABLE_ROUTE_MAP = {
   student_results  : ROUTES.STUDENTS,
 }
 
+const formatTs = (ts) => {
+  if (!ts) return '—'
+  return new Date(ts).toLocaleString('en-IN', {
+    weekday  : 'long',
+    day      : '2-digit', month    : 'long', year: 'numeric',
+    hour     : '2-digit', minute   : '2-digit', second: '2-digit',
+    timeZoneName: 'long',
+  })
+}
+
 const AuditDetailModal = ({ open, log, onClose }) => {
   const navigate = useNavigate()
 
   if (!log) return null
-
-  const formatTs = (ts) => {
-    if (!ts) return '—'
-    return new Date(ts).toLocaleString('en-IN', {
-      weekday  : 'long',
-      day      : '2-digit', month    : 'long', year: 'numeric',
-      hour     : '2-digit', minute   : '2-digit', second: '2-digit',
-      timeZoneName: 'long',
-    })
-  }
 
   const linkedRoute = TABLE_ROUTE_MAP[log.table_name]
 

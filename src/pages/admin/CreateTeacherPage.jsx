@@ -327,13 +327,9 @@ const CreateTeacherPage = () => {
 
   const [isSaving, setIsSaving]         = useState(false)
   const [createdTeacher, setCreated]    = useState(null)
-  const [showForm, setShowForm]         = useState(location.pathname.includes('/new'))
   const [step, setStep]                 = useState(1)
 
-  // Sync state with URL
-  useEffect(() => {
-    setShowForm(location.pathname.includes('/new'))
-  }, [location.pathname])
+  const showForm = location.pathname.includes('/new')
 
   const defaultPermissions = useMemo(() => getDefaultPermissionsForRole('teacher'), [])
 

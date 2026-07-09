@@ -112,18 +112,37 @@ const FeeStructurePage = ({ apiMode = 'default' }) => {
   const { theme: storeTheme } = useUiStore()
   const { sessions, currentSession, fetchSessions } = useSessionStore()
   
+  const [sessionId,    setSessionId]    = useState('')
+  const selectedSessionId = sessionId || (currentSession ? String(currentSession.id) : '')
+
   const [structures, setStructures] = useState([])
-  const [isLoading, setIsLoading] = useState(false)
+  const [isLoading, setIsLoading] = useState(!!selectedSessionId)
   const [isSaving, setIsSaving] = useState(false)
 
   const [classes,      setClasses]      = useState([])
-  const [sessionId,    setSessionId]    = useState('')
   const [classId,      setClassId]      = useState('')
   const [search,       setSearch]       = useState('')
   const [addModal,     setAddModal]     = useState(false)
   const [editTarget,   setEditTarget]   = useState(null)
   const [deleteTarget, setDeleteTarget] = useState(null)
   const [isDownloading, setIsDownloading] = useState(false)
+
+  const [prevApiMode, setPrevApiMode] = useState(apiMode)
+  const [prevSelectedSessionId, setPrevSelectedSessionId] = useState(selectedSessionId)
+  const [prevClassId, setPrevClassId] = useState(classId)
+
+  if (apiMode !== prevApiMode || selectedSessionId !== prevSelectedSessionId || classId !== prevClassId) {
+    setPrevApiMode(apiMode)
+    setPrevSelectedSessionId(selectedSessionId)
+    setPrevClassId(classId)
+    if (selectedSessionId) {
+      setStructures([])
+      setIsLoading(true)
+    } else {
+      setStructures([])
+      setIsLoading(false)
+    }
+  }
 
   const isDark = storeTheme === 'dark' || (storeTheme === 'system' && window.matchMedia?.('(prefers-color-scheme: dark)').matches)
   const apiClient = apiMode === 'accountant' ? accountantApi : feesApi
@@ -135,23 +154,24 @@ const FeeStructurePage = ({ apiMode = 'default' }) => {
       .catch(() => {})
   }, [])
 
-  useEffect(() => {
-    if (currentSession && !sessionId) setSessionId(String(currentSession.id))
-  }, [currentSession])
-
   const fetchStructures = () => {
-    if (!sessionId) return
-    setIsLoading(true)
+    if (!selectedSessionId) {
+      setIsLoading(false)
+      return
+    }
     const fetcher = apiMode === 'accountant' ? accountantApi.getFeeStructure : feesApi.getFeeStructures
-    fetcher({ session_id: sessionId, class_id: classId || undefined })
+    fetcher({ session_id: selectedSessionId, class_id: classId || undefined })
       .then((response) => setStructures(response.data?.structures || []))
       .catch(() => toastError('Failed to load fee structures'))
       .finally(() => setIsLoading(false))
   }
 
   useEffect(() => {
-    fetchStructures()
-  }, [sessionId, classId, apiMode])
+    if (isLoading) {
+      fetchStructures()
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isLoading])
 
   const handleDelete = async () => {
     if (!deleteTarget) return
@@ -189,11 +209,11 @@ const FeeStructurePage = ({ apiMode = 'default' }) => {
   }
 
   const handleDownload = async () => {
-    if (!sessionId) return
+    if (!selectedSessionId) return
     setIsDownloading(true)
     try {
       const response = await apiClient.downloadFeeStructurePdf({
-        session_id: sessionId,
+        session_id: selectedSessionId,
         class_id: classId || undefined,
       })
       
@@ -207,7 +227,7 @@ const FeeStructurePage = ({ apiMode = 'default' }) => {
         throw new Error(errorData.message || 'Failed to generate PDF')
       }
 
-      const sessionName = sessions.find(s => String(s.id) === sessionId)?.name || 'Session'
+      const sessionName = sessions.find(s => String(s.id) === selectedSessionId)?.name || 'Session'
       const className = classId ? (classes.find(c => c.value === classId)?.label || 'Class') : 'All_Classes'
       const fileName = `Fee_Structure_${className.replace(/\s+/g, '_')}_${sessionName.replace(/\s+/g, '_')}.pdf`
 
@@ -412,7 +432,7 @@ const FeeStructurePage = ({ apiMode = 'default' }) => {
             <div className="md:col-span-3">
               <label className="block text-[10px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-1.5">Academic Session</label>
               <AntSelect
-                value={sessionId || undefined}
+                value={selectedSessionId || undefined}
                 onChange={val => setSessionId(val || '')}
                 options={(sessions || []).map(s => ({ 
                   value: String(s.id), 
@@ -452,7 +472,7 @@ const FeeStructurePage = ({ apiMode = 'default' }) => {
                 icon={<DownloadOutlined />}
                 onClick={handleDownload}
                 loading={isDownloading}
-                disabled={!sessionId || structures.length === 0}
+                disabled={!selectedSessionId || structures.length === 0}
                 title={structures.length === 0 ? "No components to export" : "Download PDF"}
                 className="rounded-xl font-bold flex items-center justify-center border-gray-200 dark:border-gray-800 text-gray-700 dark:text-gray-200"
                 style={{ height: '38px', width: '45px', padding: 0 }}
@@ -462,7 +482,7 @@ const FeeStructurePage = ({ apiMode = 'default' }) => {
                 size="large"
                 icon={<PlusOutlined />} 
                 onClick={() => setAddModal(true)}
-                disabled={!sessionId}
+                disabled={!selectedSessionId}
                 className="rounded-xl font-bold flex items-center justify-center flex-1 border-0"
                 style={{ height: '38px', background: 'linear-gradient(90deg, #4cc0d4 0%, #0891b2 100%)' }}
               >
@@ -484,8 +504,8 @@ const FeeStructurePage = ({ apiMode = 'default' }) => {
               description={search ? "No matches found in this selection" : "No fee components found for this session"} 
             />
             <div className="flex justify-center gap-3 mt-4">
-              <Button type="default" disabled={!sessionId || structures.length === 0} onClick={handleDownload} icon={<DownloadOutlined />} className="rounded-full font-bold">Download PDF</Button>
-              <Button type="primary" icon={<PlusOutlined />} onClick={() => setAddModal(true)} disabled={!sessionId} className="rounded-full font-bold border-0" style={{ backgroundColor: '#4CC0D4' }}>Add Component</Button>
+              <Button type="default" disabled={!selectedSessionId || structures.length === 0} onClick={handleDownload} icon={<DownloadOutlined />} className="rounded-full font-bold">Download PDF</Button>
+              <Button type="primary" icon={<PlusOutlined />} onClick={() => setAddModal(true)} disabled={!selectedSessionId} className="rounded-full font-bold border-0" style={{ backgroundColor: '#4CC0D4' }}>Add Component</Button>
             </div>
           </Card>
         ) : (
@@ -533,7 +553,7 @@ const FeeStructurePage = ({ apiMode = 'default' }) => {
         <AddFeeComponentModal
           open={addModal || !!editTarget}
           onClose={() => { setAddModal(false); setEditTarget(null) }}
-          sessionId={sessionId}
+          sessionId={selectedSessionId}
           classId={classId}
           apiMode={apiMode}
           editTarget={editTarget}

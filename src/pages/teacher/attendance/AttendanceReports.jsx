@@ -148,7 +148,7 @@ const SummaryTable = ({ rows, threshold }) => {
                   <div className="flex flex-col items-center gap-1.5">
                     <span className={cn("text-xs font-bold", sColor)}>{pct.toFixed(0)}%</span>
                     <div className="h-1.5 w-14 rounded-full bg-surface-raised overflow-hidden shadow-inner">
-                      <div className="h-full rounded-full transition-all duration-1000 ease-out" style={{ width: `${Math.min(pct, 100)}%`, background: 'currentColor' }} className={sColor} />
+                      <div className={cn("h-full rounded-full transition-all duration-1000 ease-out", sColor)} style={{ width: `${Math.min(pct, 100)}%`, background: 'currentColor' }} />
                     </div>
                   </div>
                 </td>

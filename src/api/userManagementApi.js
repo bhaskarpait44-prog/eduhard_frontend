@@ -14,7 +14,7 @@ export const getPermissionTemplates= ()    => api.get('/admin/users/permission-t
 export const createTemplate       = d      => api.post('/admin/users/permission-templates', d)
 export const updateTemplate       = (id,d) => api.patch(`/admin/users/permission-templates/${id}`, d)
 export const deleteTemplate       = id     => api.delete(`/admin/users/permission-templates/${id}`)
-export const getImportTemplate    = ()     => api.get('/admin/users/import/template')
+const getImportTemplate    = ()     => api.get('/admin/users/import/template')
 export const previewImport        = d      => api.post('/admin/users/import/preview', d)
 export const confirmImport        = d      => api.post('/admin/users/import/confirm', d)
 export const getImportStatus      = id     => api.get(`/admin/users/import/${id}/status`)

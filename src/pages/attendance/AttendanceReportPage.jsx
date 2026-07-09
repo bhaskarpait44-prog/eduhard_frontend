@@ -91,9 +91,7 @@ const AttendanceReportPage = () => {
     [],
   )
 
-  useEffect(() => {
-    doSearch(search)
-  }, [search, doSearch])
+
 
   useEffect(() => {
     if (selected?.current_enrollment?.id) {
@@ -226,11 +224,13 @@ const AttendanceReportPage = () => {
               type="text"
               value={search}
               onChange={(event) => {
-                setSearch(event.target.value)
-                if (!event.target.value) {
+                const val = event.target.value
+                setSearch(val)
+                if (!val) {
                   setSelected(null)
                   clearStudentData()
                 }
+                doSearch(val)
               }}
               placeholder="Search by name or admission no"
               icon={Search}

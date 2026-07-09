@@ -5,25 +5,26 @@ import { useState, useEffect, useCallback } from 'react'
  * Uses internal state to allow typing partial values.
  */
 const TimePicker12h = ({ label, value, onChange, required = false }) => {
+  const [prevValue, setPrevValue] = useState(value)
   const [localH, setLocalH] = useState('')
   const [localM, setLocalM] = useState('')
   const [localP, setLocalP] = useState('AM')
 
-  // Sync internal state when the value prop changes externally
-  useEffect(() => {
+  if (value !== prevValue) {
+    setPrevValue(value)
     if (!value) {
       setLocalH('')
       setLocalM('')
-      return
+    } else {
+      const [H, M] = value.split(':')
+      let h = parseInt(H, 10)
+      const p = h >= 12 ? 'PM' : 'AM'
+      h = h % 12 || 12
+      setLocalH(String(h))
+      setLocalM(M.slice(0, 2))
+      setLocalP(p)
     }
-    const [H, M] = value.split(':')
-    let h = parseInt(H, 10)
-    const p = h >= 12 ? 'PM' : 'AM'
-    h = h % 12 || 12
-    setLocalH(String(h))
-    setLocalM(M.slice(0, 2))
-    setLocalP(p)
-  }, [value])
+  }
 
   const pushUpdate = useCallback((h, m, p) => {
     if (h === '' || m === '') {

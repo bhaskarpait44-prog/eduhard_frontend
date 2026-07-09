@@ -26,9 +26,12 @@ const CarryForwardModal = ({ open, onClose, student, pendingInvoices, onSuccess 
     fetchSessions().catch(() => {})
   }, [])
 
-  useEffect(() => {
+  const [prevOpen, setPrevOpen] = useState(open)
+
+  if (open !== prevOpen) {
+    setPrevOpen(open)
     if (open) setToSessionId('')
-  }, [open])
+  }
 
   // Sessions that could be the "to" session
   const availableSessions = (sessions || []).filter(s =>

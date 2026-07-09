@@ -170,17 +170,7 @@ const SubjectForm = ({
     return t + p > 0 ? (t + p).toFixed(0) : '—'
   }, [subjectType, theoryPassing, practicalPassing])
 
-  // Auto-generate code from name (only for new subjects)
-  const nameValue = watch('name')
-  useEffect(() => {
-    if (!isEdit && nameValue && !defaultValues.code) {
-      const parts = nameValue.trim().split(/\s+/)
-      const auto  = parts.length === 1
-        ? nameValue.substring(0, 4).toUpperCase()
-        : parts.map(w => w[0]).join('').toUpperCase()
-      setValue('code', auto, { shouldValidate: false })
-    }
-  }, [nameValue, isEdit, defaultValues.code, setValue])
+
 
   const handleFormSubmit = (data) => {
     // Clear unused mark fields based on type
@@ -218,7 +208,18 @@ const SubjectForm = ({
         <div className="grid grid-cols-2 gap-4">
           <Field label="Subject Name" error={errors.name?.message} required>
             <input
-              {...register('name')}
+              {...register('name', {
+                onChange: (e) => {
+                  const val = e.target.value
+                  if (!isEdit && val && !defaultValues.code) {
+                    const parts = val.trim().split(/\s+/)
+                    const auto  = parts.length === 1
+                      ? val.substring(0, 4).toUpperCase()
+                      : parts.map(w => w[0]).join('').toUpperCase()
+                    setValue('code', auto, { shouldValidate: false })
+                  }
+                }
+              })}
               placeholder="Mathematics"
               className={inputCls(!!errors.name)}
             />

@@ -1,6 +1,6 @@
 // src/pages/exams/OverrideResultModal.jsx
-import { useEffect } from 'react'
-import { useForm } from 'react-hook-form'
+import { useEffect, useState } from 'react'
+import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { AlertTriangle } from 'lucide-react'
@@ -27,29 +27,57 @@ const RESULT_CFG = {
 }
 
 const schema = z.object({
-  new_result : z.enum(['pass','fail','compartment','detained'], { required_error: 'Select a result' }),
-  reason     : z.string().min(10, 'Reason must be at least 10 characters'),
-})
+  new_result           : z.enum(['pass','fail','compartment','detained'], { required_error: 'Select a result' }),
+  reason               : z.string().min(10, 'Reason must be at least 10 characters'),
+  compartment_subjects : z.array(z.number()).optional(),
+}).refine(
+  (d) => d.new_result !== 'compartment' || (d.compartment_subjects?.length ?? 0) > 0,
+  {
+    message : 'Select at least one compartment subject',
+    path    : ['compartment_subjects'],
+  }
+)
 
-const OverrideResultModal = ({ open, student, onClose, onSuccess }) => {
+/**
+ * Props:
+ *  - open: boolean
+ *  - student: row object from classResults (includes compartment_subjects, enrollment_id, etc.)
+ *  - subjects: array of { id, name } for the exam's subjects (used for compartment picker)
+ *  - onClose: fn
+ *  - onSuccess: fn
+ */
+const OverrideResultModal = ({ open, student, subjects = [], onClose, onSuccess }) => {
   const { toastSuccess, toastError } = useToast()
   const { overrideResult, isSaving } = useExamStore()
 
-  const { register, handleSubmit, reset, formState: { errors } } = useForm({
+  const { register, handleSubmit, reset, watch, control, formState: { errors } } = useForm({
     resolver     : zodResolver(schema),
-    defaultValues: { new_result: '', reason: '' },
+    defaultValues: { new_result: '', reason: '', compartment_subjects: [] },
   })
 
+  const selectedResult = watch('new_result')
+
   useEffect(() => {
-    if (open) reset({ new_result: student?.result || '', reason: '' })
+    if (open) {
+      // Pre-populate compartment_subjects from the student's current compartment data if available
+      const preselected = Array.isArray(student?.compartment_subjects)
+        ? student.compartment_subjects.map(Number).filter(Boolean)
+        : []
+      reset({ new_result: student?.result || '', reason: '', compartment_subjects: preselected })
+    }
   }, [open, student])
 
   const onSubmit = async (data) => {
-    const result = await overrideResult({
-      enrollment_id: student.enrollment_id,
-      new_result   : data.new_result,
-      reason       : data.reason,
-    })
+    const payload = {
+      enrollment_id       : student.enrollment_id,
+      new_result          : data.new_result,
+      reason              : data.reason,
+    }
+    if (data.new_result === 'compartment') {
+      payload.compartment_subjects = data.compartment_subjects
+    }
+
+    const result = await overrideResult(payload)
     if (result.success) {
       toastSuccess(`Result overridden for ${student.student_name || student.name}`)
       onSuccess?.()
@@ -107,6 +135,63 @@ const OverrideResultModal = ({ open, student, onClose, onSuccess }) => {
           error={errors.new_result?.message}
           {...register('new_result')}
         />
+
+        {/* Compartment subjects picker — only visible when 'compartment' is selected */}
+        {selectedResult === 'compartment' && (
+          <div>
+            <p
+              className="text-sm font-semibold mb-2"
+              style={{ color: 'var(--color-text-primary)' }}
+            >
+              Compartment Subjects <span style={{ color: '#ef4444' }}>*</span>
+            </p>
+            <p className="text-xs mb-3" style={{ color: 'var(--color-text-muted)' }}>
+              Select the subjects the student must re-sit (required by the backend).
+            </p>
+            {subjects.length === 0 ? (
+              <p className="text-xs" style={{ color: 'var(--color-text-muted)' }}>
+                No subjects available. Ensure the exam has subjects configured.
+              </p>
+            ) : (
+              <Controller
+                name="compartment_subjects"
+                control={control}
+                render={({ field }) => (
+                  <div className="space-y-2 max-h-40 overflow-y-auto pr-1">
+                    {subjects.map((sub) => {
+                      const checked = (field.value || []).includes(sub.id)
+                      return (
+                        <label
+                          key={sub.id}
+                          className="flex items-center gap-2 cursor-pointer text-sm"
+                          style={{ color: 'var(--color-text-primary)' }}
+                        >
+                          <input
+                            type="checkbox"
+                            checked={checked}
+                            onChange={(e) => {
+                              const next = e.target.checked
+                                ? [...(field.value || []), sub.id]
+                                : (field.value || []).filter((id) => id !== sub.id)
+                              field.onChange(next)
+                            }}
+                            className="rounded"
+                          />
+                          {sub.name}
+                        </label>
+                      )
+                    })}
+                  </div>
+                )}
+              />
+            )}
+            {errors.compartment_subjects && (
+              <p className="text-xs mt-1" style={{ color: '#ef4444' }}>
+                {errors.compartment_subjects.message}
+              </p>
+            )}
+          </div>
+        )}
 
         <Textarea
           label="Reason for override"

@@ -176,10 +176,11 @@ function subjectRowTone(subject) {
 
 function gradeBadgeStyle(grade) {
   if (grade === 'A+') return { backgroundColor: '#14532d', color: '#dcfce7' }
-  if (grade === 'A') return { backgroundColor: '#dcfce7', color: '#15803d' }
-  if (grade === 'B') return { backgroundColor: '#ccfbf1', color: '#0f766e' }
-  if (grade === 'C') return { backgroundColor: '#dbeafe', color: '#1d4ed8' }
-  if (grade === 'D') return { backgroundColor: '#fef3c7', color: '#b45309' }
+  if (grade === 'A')  return { backgroundColor: '#dcfce7', color: '#15803d' }
+  if (grade === 'B+') return { backgroundColor: '#ede9fe', color: '#6d28d9' }
+  if (grade === 'B')  return { backgroundColor: '#ccfbf1', color: '#0f766e' }
+  if (grade === 'C')  return { backgroundColor: '#dbeafe', color: '#1d4ed8' }
+  if (grade === 'D')  return { backgroundColor: '#fef3c7', color: '#b45309' }
   return { backgroundColor: '#fee2e2', color: '#dc2626' }
 }
 

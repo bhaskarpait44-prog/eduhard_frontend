@@ -121,7 +121,7 @@ const AdminTeacherControlPage = () => {
   const [showSlotForm,   setShowSlotForm]   = useState(false)
 
   const [periodTimes, setPeriodTimes] = useState(() => {
-    const saved = localStorage.getItem('timetable_period_times')
+    const saved = localStorage.getItem('timetable_period_times:v1')
     if (saved) {
       try {
         return JSON.parse(saved)
@@ -150,7 +150,7 @@ const AdminTeacherControlPage = () => {
       }
     }
     setPeriodTimes(updated)
-    localStorage.setItem('timetable_period_times', JSON.stringify(updated))
+    localStorage.setItem('timetable_period_times:v1', JSON.stringify(updated))
   }
 
   const handleAddPeriod = () => {
@@ -169,7 +169,7 @@ const AdminTeacherControlPage = () => {
       [nextPeriod]: { start: defaultStart, end: defaultEnd }
     }
     setPeriodTimes(updated)
-    localStorage.setItem('timetable_period_times', JSON.stringify(updated))
+    localStorage.setItem('timetable_period_times:v1', JSON.stringify(updated))
   }
 
   const handleDeleteLastPeriod = () => {
@@ -179,7 +179,7 @@ const AdminTeacherControlPage = () => {
     const updated = { ...periodTimes }
     delete updated[lastKey]
     setPeriodTimes(updated)
-    localStorage.setItem('timetable_period_times', JSON.stringify(updated))
+    localStorage.setItem('timetable_period_times:v1', JSON.stringify(updated))
   }
 
   const handlePeriodNumberChange = (num) => {

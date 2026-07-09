@@ -175,6 +175,34 @@ const TeacherAuditTab = ({ userId }) => {
   )
 }
 
+const AssignmentRow = ({ item, type, isSaving, handleToggle }) => (
+  <div className="flex flex-col gap-3 rounded-xl p-4 sm:flex-row sm:items-center sm:justify-between" style={css.raised}>
+    <div className="min-w-0">
+      <div className="mb-1 flex flex-wrap items-center gap-2">
+        <p className="text-sm font-semibold" style={css.primary}>
+          {type === 'class_teacher' ? 'Class Teacher' : item.subject_name || 'Subject'}
+        </p>
+        <Badge variant={item.is_active ? 'green' : 'grey'} dot>
+          {item.is_active ? 'Active' : 'Inactive'}
+        </Badge>
+      </div>
+      <p className="text-xs" style={css.secondary}>
+        {[item.class_name, item.section_name].filter(Boolean).join(' - ')}
+        {!item.is_class_teacher && item.subject_code ? ` · ${item.subject_code}` : ''}
+      </p>
+    </div>
+    <Button
+      type="button"
+      variant={item.is_active ? 'secondary' : 'primary'}
+      size="sm"
+      onClick={() => handleToggle(item)}
+      disabled={isSaving}
+    >
+      {item.is_active ? 'Deactivate' : 'Activate'}
+    </Button>
+  </div>
+)
+
 /* ─── Assignments tab ────────────────────────────────────── */
 const TeacherAssignmentsTab = ({ teacherId }) => {
   const { toastError, toastSuccess } = useToast()
@@ -292,34 +320,6 @@ const TeacherAssignmentsTab = ({ teacherId }) => {
     }
   }
 
-  const AssignmentRow = ({ item, type }) => (
-    <div className="flex flex-col gap-3 rounded-xl p-4 sm:flex-row sm:items-center sm:justify-between" style={css.raised}>
-      <div className="min-w-0">
-        <div className="mb-1 flex flex-wrap items-center gap-2">
-          <p className="text-sm font-semibold" style={css.primary}>
-            {type === 'class_teacher' ? 'Class Teacher' : item.subject_name || 'Subject'}
-          </p>
-          <Badge variant={item.is_active ? 'green' : 'grey'} dot>
-            {item.is_active ? 'Active' : 'Inactive'}
-          </Badge>
-        </div>
-        <p className="text-xs" style={css.secondary}>
-          {[item.class_name, item.section_name].filter(Boolean).join(' - ')}
-          {!item.is_class_teacher && item.subject_code ? ` · ${item.subject_code}` : ''}
-        </p>
-      </div>
-      <Button
-        type="button"
-        variant={item.is_active ? 'secondary' : 'primary'}
-        size="sm"
-        onClick={() => handleToggle(item)}
-        disabled={isSaving}
-      >
-        {item.is_active ? 'Deactivate' : 'Activate'}
-      </Button>
-    </div>
-  )
-
   if (isLoading) return (
     <div className="space-y-3 animate-pulse">
       {[...Array(3)].map((_, i) => (
@@ -385,7 +385,7 @@ const TeacherAssignmentsTab = ({ teacherId }) => {
         {classTeacherAssignments.length ? (
           <div className="space-y-2">
             {classTeacherAssignments.map(item => (
-              <AssignmentRow key={item.id} item={item} type="class_teacher" />
+              <AssignmentRow key={item.id} item={item} type="class_teacher" isSaving={isSaving} handleToggle={handleToggle} />
             ))}
           </div>
         ) : (
@@ -400,7 +400,7 @@ const TeacherAssignmentsTab = ({ teacherId }) => {
         {subjectAssignments.length ? (
           <div className="space-y-2">
             {subjectAssignments.map(item => (
-              <AssignmentRow key={item.id} item={item} type="subject" />
+              <AssignmentRow key={item.id} item={item} type="subject" isSaving={isSaving} handleToggle={handleToggle} />
             ))}
           </div>
         ) : (

@@ -2,7 +2,7 @@ import api from './axios'
 
 export const getCertificates    = (params) => api.get('/certificates', { params })
 export const generateCertificate = (data)   => api.post('/certificates/generate', data)
-export const getCertificateById  = (id)     => api.get(`/certificates/${id}`)
+const getCertificateById  = (id)     => api.get(`/certificates/${id}`)
 export const revokeCertificate   = (id)     => api.patch(`/certificates/${id}/revoke`)
 export const getSettings         = ()       => api.get('/certificates/settings')
 export const updateSettings      = (data)   => api.patch('/certificates/settings', data)

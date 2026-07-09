@@ -8,43 +8,51 @@ import libraryApi from '../../api/libraryApi';
 
 const ReturnBookModal = ({ open, onClose, onSubmit, issue, loading }) => {
   const [returnDate, setReturnDate] = useState(new Date().toISOString().split('T')[0]);
-  const [fineAmount, setFineAmount] = useState(0);
   const [fineStatus, setFineStatus] = useState('pending');
   const [remarks, setRemarks] = useState('');
   const [settings, setSettings] = useState(null);
 
+  const [prevOpen, setPrevOpen] = useState(false);
+  const [prevIssueId, setPrevIssueId] = useState(null);
+
+  const issueId = issue ? issue.id : null;
+
+  if (open && (!prevOpen || issueId !== prevIssueId)) {
+    setPrevOpen(true);
+    setPrevIssueId(issueId);
+    setReturnDate(new Date().toISOString().split('T')[0]);
+    setFineStatus('pending');
+    setRemarks('');
+  } else if (!open && prevOpen) {
+    setPrevOpen(false);
+  }
+
   useEffect(() => {
+    let active = true;
     if (open) {
-      fetchSettings();
-      setReturnDate(new Date().toISOString().split('T')[0]);
-      setFineAmount(0);
-      setFineStatus('pending');
-      setRemarks('');
+      libraryApi.getSettings().then(({ data }) => {
+        if (active) {
+          setSettings(data);
+        }
+      }).catch((err) => {
+        console.error('Failed to fetch library settings', err);
+      });
     }
-  }, [open, issue]);
+    return () => {
+      active = false;
+    };
+  }, [open]);
 
-  const fetchSettings = async () => {
-    try {
-      const { data } = await libraryApi.getSettings();
-      setSettings(data);
-    } catch (err) {
-      console.error('Failed to fetch library settings', err);
+  let fineAmount = 0;
+  if (issue && settings) {
+    const dueDate = new Date(issue.due_date);
+    const retDate = new Date(returnDate);
+    if (retDate > dueDate) {
+      const diffTime = Math.abs(retDate - dueDate);
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+      fineAmount = diffDays * settings.fine_per_day;
     }
-  };
-
-  useEffect(() => {
-    if (issue && settings) {
-      const dueDate = new Date(issue.due_date);
-      const retDate = new Date(returnDate);
-      if (retDate > dueDate) {
-        const diffTime = Math.abs(retDate - dueDate);
-        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-        setFineAmount(diffDays * settings.fine_per_day);
-      } else {
-        setFineAmount(0);
-      }
-    }
-  }, [returnDate, issue, settings]);
+  }
 
   const handleSubmit = (e) => {
     e.preventDefault();

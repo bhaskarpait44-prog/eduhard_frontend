@@ -71,10 +71,18 @@ const CreateExamModal = ({ open, onClose, sessionId, onCreated, prefillClassId, 
     },
   })
 
-  useEffect(() => {
+  const [prevOpen, setPrevOpen] = useState(open)
+  const [prevEditingExam, setPrevEditingExam] = useState(editingExam)
+  const [prevPrefillClassId, setPrevPrefillClassId] = useState(prefillClassId)
+
+  if (open !== prevOpen || editingExam !== prevEditingExam || prefillClassId !== prevPrefillClassId) {
+    setPrevOpen(open)
+    setPrevEditingExam(editingExam)
+    setPrevPrefillClassId(prefillClassId)
+
     if (open) {
       setIsBulk(false)
-      if (isEditing) {
+      if (isEditing && editingExam) {
         reset({
           name: editingExam.name,
           class_id: String(editingExam.class_id),
@@ -86,22 +94,7 @@ const CreateExamModal = ({ open, onClose, sessionId, onCreated, prefillClassId, 
       } else if (prefillClassId) {
         setValue('class_id', String(prefillClassId))
       }
-    }
-  }, [open, isEditing, editingExam, prefillClassId, reset, setValue])
-
-  const classId = watch('class_id')
-
-  useEffect(() => {
-    if (open) {
-      getClasses().then((response) => setClasses(getClassOptions(response))).catch(() => {})
-      getUsers({ role: 'teacher', status: 'active', page: 1, perPage: 200 })
-        .then((response) => setTeachers(response.data?.users || []))
-        .catch(() => setTeachers([]))
-    }
-  }, [open])
-
-  useEffect(() => {
-    if (!open) {
+    } else {
       setIsBulk(false)
       if (!isEditing) {
         reset({
@@ -121,7 +114,18 @@ const CreateExamModal = ({ open, onClose, sessionId, onCreated, prefillClassId, 
       setBulkPracticalPassing('')
       setShowBulkPanel(false)
     }
-  }, [open, isEditing, reset])
+  }
+
+  const classId = watch('class_id')
+
+  useEffect(() => {
+    if (open) {
+      getClasses().then((response) => setClasses(getClassOptions(response))).catch(() => {})
+      getUsers({ role: 'teacher', status: 'active', page: 1, perPage: 200 })
+        .then((response) => setTeachers(response.data?.users || []))
+        .catch(() => setTeachers([]))
+    }
+  }, [open])
 
   useEffect(() => {
     if (!classId || !open || isBulk) {

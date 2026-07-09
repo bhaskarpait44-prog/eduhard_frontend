@@ -172,7 +172,7 @@ export const ROUTES = {
   TEACHER_MARKS_SUMMARY: '/teacher/marks/summary',
   TEACHER_STUDENTS: '/teacher/students',
   TEACHER_STUDENT_DETAIL: '/teacher/students/:id',
-  TEACHER_STUDENT_REMARKS: '/teacher/students/:id/remarks',
+  TEACHER_STUDENT_REMARKS: '/teacher/students/remarks',
   TEACHER_TIMETABLE: '/teacher/timetable',
   TEACHER_HOMEWORK: '/teacher/homework',
   TEACHER_CHAT: '/teacher/chat',
@@ -223,7 +223,7 @@ export const ROUTES = {
 }
 
 // ── API response status ───────────────────────────────────────────────────
-export const API_STATUS = {
+const API_STATUS = {
   IDLE: 'idle',
   LOADING: 'loading',
   SUCCESS: 'success',
@@ -231,7 +231,7 @@ export const API_STATUS = {
 }
 
 // ── Pagination defaults ───────────────────────────────────────────────────
-export const PAGINATION = {
+const PAGINATION = {
   DEFAULT_PAGE: 1,
   DEFAULT_PER_PAGE: 20,
   PER_PAGE_OPTIONS: [10, 20, 50, 100],

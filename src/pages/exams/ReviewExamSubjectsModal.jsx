@@ -35,12 +35,15 @@ const ReviewExamSubjectsModal = ({ exam, open, onClose }) => {
     fetchExamSubjects(exam.id).catch(() => {})
   }, [open, exam?.id, fetchExamSubjects])
 
-  useEffect(() => {
+  const [prevOpen, setPrevOpen] = useState(open)
+
+  if (open !== prevOpen) {
+    setPrevOpen(open)
     if (!open) {
       setExpandedSubjectId(null)
       setOverrideTarget(null)
     }
-  }, [open])
+  }
 
   const rows = exam?.id ? (examSubjects[exam.id] || []) : []
 

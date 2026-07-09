@@ -1106,10 +1106,11 @@ function resultTone(status) {
 
 function gradeTone(grade) {
   if (grade === 'A+') return '#14532d'
-  if (grade === 'A') return '#15803d'
-  if (grade === 'B') return '#0f766e'
-  if (grade === 'C') return '#1d4ed8'
-  if (grade === 'D') return '#b45309'
+  if (grade === 'A')  return '#15803d'
+  if (grade === 'B+') return '#6d28d9'
+  if (grade === 'B')  return '#0f766e'
+  if (grade === 'C')  return '#1d4ed8'
+  if (grade === 'D')  return '#b45309'
   return '#dc2626'
 }
 

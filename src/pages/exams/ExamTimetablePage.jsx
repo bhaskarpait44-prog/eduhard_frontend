@@ -230,7 +230,7 @@ const ExamTimetablePage = () => {
           }
         })
         setRows(mapped)
-        initialRowsRef.current = JSON.parse(JSON.stringify(mapped))
+        initialRowsRef.current = structuredClone(mapped)
         setTeachers(teacherResponse.data?.users || [])
 
         if (examData?.session_id) {

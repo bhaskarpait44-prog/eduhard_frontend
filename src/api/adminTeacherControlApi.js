@@ -13,20 +13,20 @@ export const updateTeacherControlTimetableSlot = (id, data) => api.patch(`/admin
 export const deleteTeacherControlTimetableSlot = (id) => api.delete(`/admin/teacher-control/timetable/${id}`)
 
 export const getTeacherControlHomework = () => api.get('/admin/teacher-control/homework')
-export const updateTeacherControlHomework = (id, data) => api.patch(`/admin/teacher-control/homework/${id}`, data)
+const updateTeacherControlHomework = (id, data) => api.patch(`/admin/teacher-control/homework/${id}`, data)
 
-export const getTeacherControlNotices = (params) => api.get('/admin/teacher-control/notices', { params })
-export const createTeacherControlNotice = (data) => api.post('/admin/teacher-control/notices', data)
-export const updateTeacherControlNotice = (id, data) => api.patch(`/admin/teacher-control/notices/${id}`, data)
+const getTeacherControlNotices = (params) => api.get('/admin/teacher-control/notices', { params })
+const createTeacherControlNotice = (data) => api.post('/admin/teacher-control/notices', data)
+const updateTeacherControlNotice = (id, data) => api.patch(`/admin/teacher-control/notices/${id}`, data)
 
-export const getTeacherControlAttendance = () => api.get('/admin/teacher-control/attendance')
-export const updateTeacherControlAttendance = (id, data) => api.patch(`/admin/teacher-control/attendance/${id}`, data)
+const getTeacherControlAttendance = () => api.get('/admin/teacher-control/attendance')
+const updateTeacherControlAttendance = (id, data) => api.patch(`/admin/teacher-control/attendance/${id}`, data)
 
-export const getTeacherControlMarks = () => api.get('/admin/teacher-control/marks')
-export const updateTeacherControlMark = (id, data) => api.patch(`/admin/teacher-control/marks/${id}`, data)
+const getTeacherControlMarks = () => api.get('/admin/teacher-control/marks')
+const updateTeacherControlMark = (id, data) => api.patch(`/admin/teacher-control/marks/${id}`, data)
 
-export const getTeacherControlRemarks = () => api.get('/admin/teacher-control/remarks')
-export const updateTeacherControlRemark = (id, data) => api.patch(`/admin/teacher-control/remarks/${id}`, data)
+const getTeacherControlRemarks = () => api.get('/admin/teacher-control/remarks')
+const updateTeacherControlRemark = (id, data) => api.patch(`/admin/teacher-control/remarks/${id}`, data)
 
 export const getTeacherControlLeave = () => api.get('/admin/teacher-control/leave')
 export const reviewTeacherControlLeave = (id, data) => api.patch(`/admin/teacher-control/leave/${id}/review`, data)
@@ -37,6 +37,6 @@ export const reviewTeacherControlCorrection = (id, data) => api.patch(`/admin/te
 export const getStudentControlCorrections = () => api.get('/admin/teacher-control/student-correction-requests')
 export const reviewStudentControlCorrection = (id, data) => api.patch(`/admin/teacher-control/student-correction-requests/${id}/review`, data)
 
-export const revokeTeacherControlLeave = (id) => api.patch(`/admin/teacher-control/leave/${id}/revoke`)
-export const getTeacherControlLeaveBalances = () => api.get('/admin/teacher-control/leave/balances')
-export const updateTeacherControlLeaveBalance = (teacher_id, data) => api.patch(`/admin/teacher-control/leave/balances/${teacher_id}`, data)
+const revokeTeacherControlLeave = (id) => api.patch(`/admin/teacher-control/leave/${id}/revoke`)
+const getTeacherControlLeaveBalances = () => api.get('/admin/teacher-control/leave/balances')
+const updateTeacherControlLeaveBalance = (teacher_id, data) => api.patch(`/admin/teacher-control/leave/balances/${teacher_id}`, data)

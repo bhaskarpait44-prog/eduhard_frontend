@@ -1,7 +1,6 @@
 // src/pages/exams/AdmitCardModal.jsx
-import { useEffect, useState, useMemo } from 'react'
+import { useEffect, useState, useMemo, lazy, Suspense } from 'react'
 import { Download, AlertTriangle, CheckSquare, Square, Search } from 'lucide-react'
-import { PDFDownloadLink } from '@react-pdf/renderer'
 import Modal from '@/components/ui/Modal'
 import Button from '@/components/ui/Button'
 import Input from '@/components/ui/Input'
@@ -10,7 +9,8 @@ import { getStudents } from '@/api/studentsApi'
 import { getExamSubjects } from '@/api/examsApi'
 import useSessionStore from '@/store/sessionStore'
 import { formatCurrency } from '@/utils/helpers'
-import AdmitCardPDF from '@/components/pdf/AdmitCardPDF'
+
+const DownloadAdmitCardButton = lazy(() => import('@/components/pdf/DownloadAdmitCardButton'))
 
 const AdmitCardModal = ({ exam, open, onClose }) => {
   const { currentSession } = useSessionStore()
@@ -30,10 +30,14 @@ const AdmitCardModal = ({ exam, open, onClose }) => {
     }
   }, [exam?.id, open])
 
-  // Reset preparation state when selection changes or modal opens
-  useEffect(() => {
+  const [prevSelectedIds, setPrevSelectedIds] = useState(selectedIds)
+  const [prevOpen, setPrevOpen] = useState(open)
+
+  if (selectedIds !== prevSelectedIds || open !== prevOpen) {
+    setPrevSelectedIds(selectedIds)
+    setPrevOpen(open)
     setIsPreparing(false)
-  }, [selectedIds, open])
+  }
 
   const markAsPrinted = () => {
     const newPrinted = Array.from(new Set([...printedIds, ...selectedIds]))
@@ -120,30 +124,21 @@ const AdmitCardModal = ({ exam, open, onClose }) => {
             
             {selectedIds.length > 0 && (
               isPreparing ? (
-                <PDFDownloadLink
-                  document={
-                    <AdmitCardPDF 
-                      students={selectedStudents} 
-                      exam={{ ...exam, session_name: currentSession?.name }}
-                      subjects={subjects}
-                      schoolName={currentSession?.school_name || 'School Name'}
-                      balances={balances}
-                    />
-                  }
-                  fileName={pdfFileName}
-                >
-                  {({ loading: pdfLoading }) => (
-                    <Button 
-                      variant="primary" 
-                      icon={Download} 
-                      loading={pdfLoading}
-                      onClick={() => setTimeout(markAsPrinted, 1000)}
-                      style={!pdfLoading ? { backgroundColor: '#16a34a' } : undefined}
-                    >
-                      {pdfLoading ? 'Generating...' : 'Download PDF'}
-                    </Button>
-                  )}
-                </PDFDownloadLink>
+                <Suspense fallback={
+                  <Button variant="primary" icon={Download} loading>
+                    Generating...
+                  </Button>
+                }>
+                  <DownloadAdmitCardButton
+                    selectedStudents={selectedStudents}
+                    exam={{ ...exam, session_name: currentSession?.name }}
+                    subjects={subjects}
+                    schoolName={currentSession?.school_name || 'School Name'}
+                    balances={balances}
+                    pdfFileName={pdfFileName}
+                    markAsPrinted={markAsPrinted}
+                  />
+                </Suspense>
               ) : (
                 <Button 
                   variant="primary" 

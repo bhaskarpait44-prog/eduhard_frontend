@@ -18,42 +18,52 @@ const IssueBookModal = ({ open, onClose, onSubmit, preSelectedBook = null, loadi
   
   const [bookSearch, setBookSearch] = useState('');
   const [books, setBooks] = useState([]);
-  const [selectedBookId, setSelectedBookId] = useState(preSelectedBook?.id || '');
+  const [selectedBookId, setSelectedBookId] = useState('');
   
+  const effectiveBookId = preSelectedBook ? preSelectedBook.id : selectedBookId;
+  const effectiveBookSearch = preSelectedBook ? preSelectedBook.title : bookSearch;
+
   const [dueDate, setDueDate] = useState('');
   const [searchingBorrowers, setSearchingBorrowers] = useState(false);
   const [searchingBooks, setSearchingBooks] = useState(false);
+  const [prevOpen, setPrevOpen] = useState(false);
 
-  const fetchSettings = async () => {
-    try {
-      const { data } = await libraryApi.getSettings();
-      const defaultDays = data.max_issue_days || 14;
-      const d = new Date();
-      d.setDate(d.getDate() + defaultDays);
-      setDueDate(d.toISOString().split('T')[0]);
-    } catch (err) {
-      console.error('Failed to fetch library settings', err);
-      const d = new Date();
-      d.setDate(d.getDate() + 14);
-      setDueDate(d.toISOString().split('T')[0]);
-    }
-  };
+
+
+  if (open && !prevOpen) {
+    setPrevOpen(true);
+    setSelectedBookId('');
+    setBookSearch('');
+    setSelectedBorrowerId('');
+    setBorrowerSearch('');
+    setBorrowers([]);
+  } else if (!open && prevOpen) {
+    setPrevOpen(false);
+  }
 
   useEffect(() => {
+    let active = true;
     if (open) {
-      fetchSettings();
-      if (preSelectedBook) {
-        setSelectedBookId(preSelectedBook.id);
-        setBookSearch(preSelectedBook.title);
-      } else {
-        setSelectedBookId('');
-        setBookSearch('');
-      }
-      setSelectedBorrowerId('');
-      setBorrowerSearch('');
-      setBorrowers([]);
+      libraryApi.getSettings().then(({ data }) => {
+        if (active) {
+          const defaultDays = data.max_issue_days || 14;
+          const d = new Date();
+          d.setDate(d.getDate() + defaultDays);
+          setDueDate(d.toISOString().split('T')[0]);
+        }
+      }).catch((err) => {
+        console.error('Failed to fetch library settings', err);
+        if (active) {
+          const d = new Date();
+          d.setDate(d.getDate() + 14);
+          setDueDate(d.toISOString().split('T')[0]);
+        }
+      });
     }
-  }, [open, preSelectedBook]);
+    return () => {
+      active = false;
+    };
+  }, [open]);
 
   useEffect(() => {
     const delayDebounceFn = setTimeout(() => {
@@ -114,7 +124,7 @@ const IssueBookModal = ({ open, onClose, onSubmit, preSelectedBook = null, loadi
 
   const handleIssue = (e) => {
     e.preventDefault();
-    if (!selectedBookId) return toastWarning('Please select a book');
+    if (!effectiveBookId) return toastWarning('Please select a book');
     if (!selectedBorrowerId) return toastWarning('Please select a borrower');
     if (!dueDate) return toastWarning('Please select a due date');
 
@@ -123,7 +133,7 @@ const IssueBookModal = ({ open, onClose, onSubmit, preSelectedBook = null, loadi
       : (selectedBorrowerRole === 'teacher' ? 'teacher' : 'staff');
 
     onSubmit({
-      book_id: parseInt(selectedBookId, 10),
+      book_id: parseInt(effectiveBookId, 10),
       borrower_type: finalBorrowerType,
       borrower_id: parseInt(selectedBorrowerId, 10),
       due_date: dueDate

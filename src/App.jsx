@@ -5,6 +5,7 @@ import router from '@/router'
 import useUiStore from '@/store/uiStore'
 import ToastContainer from '@/components/ui/ToastContainer'
 import LightningLoader from '@/components/ui/LightningLoader'
+import { Agentation } from 'agentation'
 
 const App = () => {
   const initTheme = useUiStore((state) => state.initTheme)
@@ -21,6 +22,7 @@ const App = () => {
       <LightningLoader />
       <RouterProvider router={router} />
       <ToastContainer />
+      {import.meta.env.DEV && <Agentation />}
     </>
   )
 }

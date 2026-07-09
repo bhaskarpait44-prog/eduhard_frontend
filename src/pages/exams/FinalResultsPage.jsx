@@ -14,6 +14,7 @@ import Modal from '@/components/ui/Modal'
 import OverrideResultModal from './OverrideResultModal'
 import ReportCardModal from './ReportCardModal'
 import { getClasses, getClassOptions } from '@/api/classApi'
+import { getSubjects } from '@/api/subjectApi'
 import { downloadClassResultSheetPdf } from '@/api/examsApi'
 import { formatPercent, formatCurrency, formatDate } from '@/utils/helpers'
 import { downloadBlob } from '@/utils/downloadBlob'
@@ -46,6 +47,7 @@ const FinalResultsPage = () => {
   const [calcConfirm,  setCalcConfirm]  = useState(false)
   const [releaseConfirm, setReleaseConfirm] = useState(false)
   const [downloading,  setDownloading]  = useState(false)
+  const [classSubjects, setClassSubjects] = useState([]) // for compartment picker in modal
 
   useEffect(() => {
     fetchSessions().catch(() => {})
@@ -61,10 +63,15 @@ const FinalResultsPage = () => {
   useEffect(() => {
     if (!sessionId || !classId) {
       useExamStore.setState({ classResults: [], classResultsMeta: null })
+      setClassSubjects([])
       return
     }
     fetchClassResults({ session_id: sessionId, class_id: classId })
       .catch(() => toastError('Failed to load results'))
+    // Fetch subjects for compartment override picker
+    getSubjects(classId)
+      .then(res => setClassSubjects((res?.data || res || []).map(s => ({ id: s.id, name: s.name }))))
+      .catch(() => setClassSubjects([]))
   }, [sessionId, classId, fetchClassResults, toastError])
 
   const handleCalculate = async () => {
@@ -380,7 +387,7 @@ const FinalResultsPage = () => {
                           <td className="px-4 py-3.5">
                             <span
                               className="text-sm font-bold"
-                              style={{ color: parseFloat(row.percentage) >= 40 ? '#16a34a' : '#dc2626' }}
+                              style={{ color: parseFloat(row.percentage) >= 30 ? '#16a34a' : '#dc2626' }}
                             >
                               {formatPercent(row.percentage)}
                             </span>
@@ -481,6 +488,7 @@ const FinalResultsPage = () => {
       <OverrideResultModal
         open={!!overrideTarget}
         student={overrideTarget}
+        subjects={classSubjects}
         onClose={() => setOverrideTarget(null)}
         onSuccess={() => {
           setOverrideTarget(null)

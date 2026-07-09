@@ -21,13 +21,13 @@ export const teacherDeleteNotice = (id) =>
   api.delete(`/notices/teacher/${id}`)
 
 // Accountant
-export const accountantListNotices = (params) => 
+const accountantListNotices = (params) => 
   api.get('/notices/accountant', { params })
 export const getAccountantPortalNotices = (params) => 
   api.get('/notices/accountant-portal', { params })
 export const markAccountantNoticeRead = (id, source = 'unified') => 
   api.post(`/notices/accountant-portal/${id}/read?source=${source}`)
-export const accountantCreateNotice = (data) => 
+const accountantCreateNotice = (data) => 
   api.post('/notices/accountant', data)
 
 // Receptionist
@@ -59,5 +59,5 @@ export const markLibrarianNoticeRead = (id, source = 'unified') =>
   api.post(`/notices/librarian/${id}/read?source=${source}`)
 
 // Shared
-export const getNoticeById = (id) => 
+const getNoticeById = (id) => 
   api.get(`/notices/${id}`)

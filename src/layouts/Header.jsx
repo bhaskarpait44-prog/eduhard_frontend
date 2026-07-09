@@ -35,7 +35,7 @@ const Header = ({ onMenuClick }) => {
   })
   const [dismissedUpiRequestIds, setDismissedUpiRequestIds] = useState(() => {
     try {
-      const val = localStorage.getItem('dismissed_upi_request_ids')
+      const val = localStorage.getItem('dismissed_upi_request_ids:v1')
       return val ? JSON.parse(val) : []
     } catch {
       return []
@@ -47,7 +47,7 @@ const Header = ({ onMenuClick }) => {
     setDismissedUpiRequestIds(prev => {
       if (prev.includes(id)) return prev
       const next = [...prev, id]
-      localStorage.setItem('dismissed_upi_request_ids', JSON.stringify(next))
+      localStorage.setItem('dismissed_upi_request_ids:v1', JSON.stringify(next))
       return next
     })
   }

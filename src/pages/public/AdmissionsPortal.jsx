@@ -201,16 +201,16 @@ const AdmissionsPortal = () => {
 
   const fatherPhone = watch('father_phone')
   const emergencyContact = watch('emergency_contact')
-  const [lastFatherPhone, setLastFatherPhone] = useState('')
+  const [lastFatherPhone, setLastFatherPhone] = useState(fatherPhone || '')
 
-  useEffect(() => {
-    if (fatherPhone !== lastFatherPhone) {
-      if (!emergencyContact || emergencyContact === lastFatherPhone) {
+  if (fatherPhone !== lastFatherPhone) {
+    setLastFatherPhone(fatherPhone || '')
+    if (!emergencyContact || emergencyContact === lastFatherPhone) {
+      Promise.resolve().then(() => {
         setValue('emergency_contact', fatherPhone)
-      }
-      setLastFatherPhone(fatherPhone)
+      })
     }
-  }, [fatherPhone, emergencyContact, lastFatherPhone, setValue])
+  }
 
   useEffect(() => {
     const fetchData = async () => {

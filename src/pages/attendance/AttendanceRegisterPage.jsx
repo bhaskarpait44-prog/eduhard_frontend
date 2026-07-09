@@ -135,8 +135,7 @@ const AttendanceRegisterPage = ({ mode = 'register' }) => {
     }
   }, [selectedSessionData])
 
-  useEffect(() => {
-    if (!sessionLimits) return
+  if (sessionLimits) {
     const current = new Date(year, month, 1)
     const start = new Date(sessionLimits.startYear, sessionLimits.startMonth, 1)
     const end = new Date(sessionLimits.endYear, sessionLimits.endMonth, 1)
@@ -144,7 +143,7 @@ const AttendanceRegisterPage = ({ mode = 'register' }) => {
       setMonth(sessionLimits.startMonth)
       setYear(sessionLimits.startYear)
     }
-  }, [sessionLimits, month, year])
+  }
 
   const isPrevDisabled = useMemo(() => {
     if (!sessionLimits) return false

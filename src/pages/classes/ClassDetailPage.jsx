@@ -99,10 +99,14 @@ const SectionsTab=({classId,sections,isSaving,onCreate,onUpdate,onDelete,onToggl
 const SubjectsTab=({classId,subjects,isSaving,onCreate,onUpdate,onDelete,onReorder,addOpen,setAddOpen})=>{
   const [editT,setEditT]=useState(null)
   const [delT,setDelT]=useState(null)
+  const [prevSubjects,setPrevSubjects]=useState(subjects)
   const [local,setLocal]=useState(subjects)
   const [dragId,setDragId]=useState(null)
 
-  useEffect(()=>setLocal(subjects),[subjects])
+  if (subjects !== prevSubjects) {
+    setPrevSubjects(subjects)
+    setLocal(subjects)
+  }
 
   const nextOrder=local.length>0?Math.max(...local.map(s=>s.order_number))+1:1
 

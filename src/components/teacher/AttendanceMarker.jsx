@@ -33,8 +33,10 @@ const AttendanceMarker = ({
   const [reason, setReason] = useState('')
   const [confirmOpen, setConfirmOpen] = useState(false)
   const [submittingConfirm, setSubmittingConfirm] = useState(false)
+  const [prevPayload, setPrevPayload] = useState(null)
 
-  useEffect(() => {
+  if (payload !== prevPayload) {
+    setPrevPayload(payload)
     const next = {}
     ;(payload?.students || []).forEach((student) => {
       next[student.enrollment_id] = {
@@ -48,7 +50,7 @@ const AttendanceMarker = ({
     setReason('')
     setQuery('')
     setSubmittingConfirm(false)
-  }, [payload])
+  }
 
   const selectedAssignment = useMemo(() => (
     assignments.find((assignment) =>

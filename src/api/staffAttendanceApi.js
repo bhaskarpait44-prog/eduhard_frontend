@@ -10,5 +10,5 @@ export const markStaffAttendanceBulk = (data) =>
 export const getStaffMonthlyRegister = (month, year) => 
   api.get('/staff-attendance/register', { params: { month, year } })
 
-export const getStaffAttendanceStats = (userId, params) => 
+const getStaffAttendanceStats = (userId, params) => 
   api.get(`/staff-attendance/stats/${userId}`, { params })

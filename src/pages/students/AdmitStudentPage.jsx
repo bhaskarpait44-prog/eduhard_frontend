@@ -50,20 +50,20 @@ const AdmitStudentPage = () => {
   useEffect(() => {
     if (admittedStudent) {
       const { files, ...formDataWithoutFiles } = formData
-      sessionStorage.setItem('partial_admission_state', JSON.stringify({
+      sessionStorage.setItem('partial_admission_state:v1', JSON.stringify({
         formData: formDataWithoutFiles,
         admittedStudent,
         admittedEnrollmentId,
         step
       }))
     } else {
-      sessionStorage.removeItem('partial_admission_state')
+      sessionStorage.removeItem('partial_admission_state:v1')
     }
   }, [admittedStudent, formData, admittedEnrollmentId, step])
 
   // Restore wizard state on load if present
   useEffect(() => {
-    const saved = sessionStorage.getItem('partial_admission_state')
+    const saved = sessionStorage.getItem('partial_admission_state:v1')
     if (saved) {
       try {
         const parsed = JSON.parse(saved)

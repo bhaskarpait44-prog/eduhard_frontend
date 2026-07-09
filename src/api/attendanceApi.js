@@ -24,7 +24,7 @@ export const markBulk = (data = {}) => api.post('/attendance/bulk', {
     : [],
 })
 
-export const markSingle = (data = {}) => api.post('/attendance/mark', {
+const markSingle = (data = {}) => api.post('/attendance/mark', {
   ...data,
   enrollment_id: toInt(data.enrollment_id),
 })

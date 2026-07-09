@@ -5,6 +5,7 @@ const useAiAnalysis = (sessionId) => {
   const [summary, setSummary] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [lastUpdated, setLastUpdated] = useState(null);
 
   const fetchDashboardSummary = useCallback(async () => {
     setLoading(true);
@@ -13,6 +14,7 @@ const useAiAnalysis = (sessionId) => {
       const response = await aiAnalysisApi.getDashboardSummary(sessionId);
       if (response.success) {
         setSummary(response.data.summary);
+        setLastUpdated(new Date());
       } else {
         setError(response.message || 'Failed to fetch AI analysis');
       }
@@ -31,6 +33,7 @@ const useAiAnalysis = (sessionId) => {
     summary,
     loading,
     error,
+    lastUpdated,
     fetchDashboardSummary
   };
 };
