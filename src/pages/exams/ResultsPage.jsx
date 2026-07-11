@@ -32,7 +32,7 @@ const ResultsPage = () => {
   const { toastSuccess, toastError } = useToast()
   const { 
     exams, classResults, classResultsMeta, examSummary, isLoading, isSaving, 
-    fetchExams, fetchClassResults, calculateResults, bulkCalculateResults, releaseResult, changeExamStatus
+    fetchExams, fetchClassResults, releaseResult, changeExamStatus
   } = useExamStore()
   const { sessions, currentSession, fetchSessions } = useSessionStore()
 
@@ -43,6 +43,7 @@ const ResultsPage = () => {
   const [overrideTarget, setOverrideTarget] = useState(null)
   const [reportTarget, setReportTarget] = useState(null)
   const [downloading,  setDownloading]  = useState(false)
+  // eslint-disable-next-line no-unused-vars
   const [downloadingTimetable, setDownloadingTimetable] = useState(false)
 
   useEffect(() => {
@@ -53,7 +54,10 @@ const ResultsPage = () => {
   }, [fetchSessions])
 
   useEffect(() => {
-    if (currentSession && !sessionId) setSessionId(String(currentSession.id))
+    if (currentSession && !sessionId) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setSessionId(String(currentSession.id))
+    }
   }, [currentSession, sessionId])
 
   useEffect(() => {
@@ -107,6 +111,7 @@ const ResultsPage = () => {
     }
   }
 
+  // eslint-disable-next-line no-unused-vars
   const handleDownloadTimetable = async () => {
     if (!examId) return
     setDownloadingTimetable(true)
@@ -114,11 +119,12 @@ const ResultsPage = () => {
       const res = await downloadExamTimetablePdf(examId)
       const examName = exams.find(e => String(e.id) === examId)?.name || 'Exam'
       downloadBlob(res, `${examName.replace(/\s+/g, '_')}_Timetable.pdf`)
-    } catch (err) {
+    } catch {
       toastError('Failed to download exam timetable')
     } finally { setDownloadingTimetable(false) }
   }
 
+  // eslint-disable-next-line no-unused-vars
   const handleDownloadClassTimetable = async () => {
     if (!classId || !sessionId) return
     setDownloadingTimetable(true)
@@ -126,7 +132,7 @@ const ResultsPage = () => {
       const res = await downloadClassTimetablePdf({ class_id: classId, session_id: sessionId })
       const className = classes.find(c => String(c.value) === String(classId))?.label || 'Class'
       downloadBlob(res, `${className.replace(/\s+/g, '_')}_Class_Exam_Timetable.pdf`)
-    } catch (err) {
+    } catch {
       toastError('Failed to download class exam timetable')
     } finally { setDownloadingTimetable(false) }
   }
@@ -158,7 +164,7 @@ const ResultsPage = () => {
         ? `Result_Sheet_${className.replace(/\s+/g, '_')}_${examName.replace(/\s+/g, '_')}.pdf`
         : `Result_Sheet_${className.replace(/\s+/g, '_')}.pdf`
       downloadBlob(res, fileName)
-    } catch (err) {
+    } catch {
       toastError('Failed to download result sheet')
     } finally { setDownloading(false) }
   }

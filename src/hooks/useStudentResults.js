@@ -4,7 +4,11 @@ import { isStudentPortalSetupError } from '@/utils/studentPortal'
 
 const getDefaultSelection = (exams) => {
   if (!Array.isArray(exams) || exams.length === 0) return null
-  return exams.find((exam) => exam.student_status === 'published')?.id || exams[0]?.id || null
+  return (
+    exams.find((exam) => exam.student_status === 'published')?.id ||
+    exams[0]?.id ||
+    null
+  )
 }
 
 const useStudentResults = () => {
@@ -100,6 +104,7 @@ const useStudentResults = () => {
   }, [selectedExamId])
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     load().catch(() => {})
   }, [load])
 

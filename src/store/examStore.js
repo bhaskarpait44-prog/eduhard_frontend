@@ -3,7 +3,7 @@ import { create } from 'zustand'
 import * as api from '@/api/examsApi'
 import { downloadBlob } from '@/utils/downloadBlob'
 
-const useExamStore = create((set, get) => ({
+const useExamStore = create((set) => ({
   exams        : [],
   subjects     : [],
   examSubjects : {},
@@ -78,7 +78,7 @@ const useExamStore = create((set, get) => ({
       set(s => ({
         exams: s.exams.map(exam =>
           exam.id === Number(id)
-            ? { ...exam, status: res.data?.status || data.status }
+            ? { ...exam, ...res.data }
             : exam
         ),
         isSaving: false,
@@ -156,12 +156,8 @@ const useExamStore = create((set, get) => ({
   },
 
   fetchReportCardData: async (enrollmentId, params) => {
-    try {
-      const res = await api.getReportCardData(enrollmentId, params)
-      return res.data
-    } catch (err) {
-      throw err
-    }
+    const res = await api.getReportCardData(enrollmentId, params)
+    return res.data
   },
 
   calculateResults: async (data) => {
@@ -191,7 +187,7 @@ const useExamStore = create((set, get) => ({
   overrideResult: async (data) => {
     set({ isSaving: true })
     try {
-      const res = await api.overrideResult(data)
+      await api.overrideResult(data)
       // Update in classResults list
       set(s => ({
         isSaving    : false,

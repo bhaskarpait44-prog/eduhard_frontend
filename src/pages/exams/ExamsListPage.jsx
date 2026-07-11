@@ -48,6 +48,7 @@ const TypePill = ({ examType, examName }) => {
   )
 }
 
+// eslint-disable-next-line no-unused-vars
 const ActionBtn = ({ icon: Icon, onClick, children, danger = false, title }) => (
   <button
     onClick={onClick}
@@ -128,9 +129,9 @@ const ExamRow = ({ exam, isLast, onEdit, onReview, onMarks, onTimetable, onAdmit
           <ActionBtn
             icon={Send}
             onClick={() => onToggleStatus(exam)}
-            title={exam.status === 'published' ? 'Move to draft' : 'Publish'}
+            title={exam.status === 'published' ? 'Unschedule exam' : 'Schedule exam (timetable & invigilator)'}
           >
-            {exam.status === 'published' ? 'Unpublish' : 'Publish'}
+            {exam.status === 'published' ? 'Unschedule' : 'Schedule'}
           </ActionBtn>
         )}
         {!isTeacher && (
@@ -313,6 +314,7 @@ const ExamsListPage = ({ onNavigate }) => {
 
   useEffect(() => {
     if (currentSession && !sessionId) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setSessionId(String(currentSession.id))
     }
   }, [currentSession, sessionId])
@@ -355,9 +357,11 @@ const ExamsListPage = ({ onNavigate }) => {
 
   const handleToggleStatus = async (exam) => {
     const next = exam.status === 'published' ? 'draft' : 'published'
-    const result = await changeExamStatus(exam.id, { status: next })
+    const result = await changeExamStatus(exam.id, { 
+      status: next
+    })
     if (result.success) {
-      toastSuccess(next === 'published' ? 'Exam published' : 'Exam moved to draft')
+      toastSuccess(next === 'published' ? 'Exam scheduled for timetable & invigilator.' : 'Exam unscheduled and moved to draft.')
     } else {
       toastError(result.message || 'Failed to update status')
     }
@@ -385,7 +389,7 @@ const ExamsListPage = ({ onNavigate }) => {
         session_id: sessionId 
       })
       downloadBlob(res, `${groupKey.replace(/\s+/g, '_')}_Class_Exam_Timetable.pdf`)
-    } catch (err) {
+    } catch {
       toastError('Failed to download class exam timetable')
     }
   }
@@ -397,6 +401,7 @@ const ExamsListPage = ({ onNavigate }) => {
 
   useEffect(() => {
     if (downloadAllOpen && uniqueExamNames.length > 0 && !selectedExamName) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setSelectedExamName(uniqueExamNames[0])
     }
   }, [downloadAllOpen, uniqueExamNames, selectedExamName])

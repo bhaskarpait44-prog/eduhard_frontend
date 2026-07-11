@@ -1,8 +1,10 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+// eslint-disable-next-line no-unused-vars
+import { motion } from 'framer-motion'
 import {
   AlarmClock, ArrowRight, BellPlus, BookMarked, BookOpenCheck, CalendarDays, CheckCheck,
-  CircleAlert, ClipboardCheck, LayoutGrid, RefreshCw, Users, WifiOff,
+  CircleAlert, ClipboardCheck, LayoutGrid, RefreshCw, Users, WifiOff, Sparkles, GraduationCap, Clock,
 } from 'lucide-react'
 import useAuthStore from '@/store/authStore'
 import usePageTitle from '@/hooks/usePageTitle'
@@ -10,7 +12,30 @@ import useTeacherDashboard from '@/hooks/useTeacherDashboard'
 import useToast from '@/hooks/useToast'
 import Button from '@/components/ui/Button'
 import { ROUTES } from '@/constants/app'
-import { formatPercent, titleCase } from '@/utils/helpers'
+import { titleCase } from '@/utils/helpers'
+
+const containerVariants = {
+  hidden: { opacity: 0 },
+  show: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.05,
+    },
+  },
+}
+
+const itemVariants = {
+  hidden: { opacity: 0, y: 15 },
+  show: {
+    opacity: 1,
+    y: 0,
+    transition: {
+      type: 'spring',
+      stiffness: 100,
+      damping: 15,
+    },
+  },
+}
 
 const TeacherDashboard = () => {
   usePageTitle('Teacher Dashboard')
@@ -30,7 +55,7 @@ const TeacherDashboard = () => {
     refresh,
   } = useTeacherDashboard()
 
-  const [now, setNow] = useState(Date.now())
+  const [now, setNow] = useState(() => Date.now())
 
   useEffect(() => {
     const timer = window.setInterval(() => setNow(Date.now()), 1000)
@@ -63,6 +88,8 @@ const TeacherDashboard = () => {
       icon: CalendarDays,
       tone: unmarkedCount === 0 ? '#10b981' : '#f59e0b',
       route: ROUTES.TEACHER_TIMETABLE,
+      metric: String(glance?.todays_classes?.total_periods || 0),
+      metricLabel: 'Periods Scheduled',
       description: Number(glance?.todays_classes?.total_periods || 0) === 0
         ? 'No classes scheduled today'
         : (nextPeriod
@@ -75,6 +102,8 @@ const TeacherDashboard = () => {
       icon: ClipboardCheck,
       tone: unmarkedCount === 0 ? '#10b981' : '#ef4444',
       route: ROUTES.TEACHER_ATTENDANCE_MARK,
+      metric: `${glance?.attendance_status?.marked || 0}/${glance?.attendance_status?.total || 0}`,
+      metricLabel: 'Sections Marked',
       description: Number(glance?.attendance_status?.total || 0) === 0
         ? 'No classes scheduled today'
         : (Number(glance?.attendance_status?.marked || 0) === 0
@@ -87,8 +116,10 @@ const TeacherDashboard = () => {
       key: 'marks',
       title: 'Pending Marks Entry',
       icon: BookOpenCheck,
-      tone: Number(glance?.pending_marks?.pending_exams || 0) > 0 ? '#ef4444' : '#00bc7d',
+      tone: Number(glance?.pending_marks?.pending_exams || 0) > 0 ? '#ef4444' : '#10b981',
       route: ROUTES.TEACHER_MARKS_ENTER,
+      metric: String(glance?.pending_marks?.pending_exams || 0),
+      metricLabel: 'Exams Pending',
       description: Number(glance?.pending_marks?.pending_exams || 0) === 0
         ? 'All exam marks submitted'
         : `Marks pending for ${glance.pending_marks.pending_exams} exam(s)`,
@@ -99,6 +130,8 @@ const TeacherDashboard = () => {
       icon: Users,
       tone: '#00bc7d',
       route: ROUTES.TEACHER_STUDENTS,
+      metric: `${Number(glance?.my_students_today?.percentage || 0).toFixed(0)}%`,
+      metricLabel: 'Attendance Rate',
       description: Number(glance?.attendance_status?.total || 0) === 0
         ? 'No classes scheduled today'
         : (Number(glance?.attendance_status?.marked || 0) === 0
@@ -108,25 +141,57 @@ const TeacherDashboard = () => {
   ]
 
   const quickActions = [
-    { label: 'Mark Attendance', icon: ClipboardCheck, route: ROUTES.TEACHER_ATTENDANCE_MARK, tone: '#10b981' },
-    { label: 'Enter Marks', icon: BookMarked, route: ROUTES.TEACHER_MARKS_ENTER, tone: '#00897b' },
-    { label: 'Post Notice', icon: BellPlus, route: ROUTES.TEACHER_NOTICE_NEW, tone: '#00bc7d' },
-    { label: 'View Timetable', icon: LayoutGrid, route: ROUTES.TEACHER_TIMETABLE, tone: '#f59e0b' },
+    { 
+      label: 'Mark Attendance', 
+      desc: 'Submit daily student attendance for your sections.', 
+      icon: ClipboardCheck, 
+      route: ROUTES.TEACHER_ATTENDANCE_MARK, 
+      tone: '#10b981' 
+    },
+    { 
+      label: 'Enter Marks', 
+      desc: 'Record exam and class test scores for subjects.', 
+      icon: BookMarked, 
+      route: ROUTES.TEACHER_MARKS_ENTER, 
+      tone: '#00897b' 
+    },
+    { 
+      label: 'Post Notice', 
+      desc: 'Send general announcements directly to students.', 
+      icon: BellPlus, 
+      route: ROUTES.TEACHER_NOTICE_NEW, 
+      tone: '#00bc7d' 
+    },
+    { 
+      label: 'View Timetable', 
+      desc: 'Check your scheduled classes and room slots.', 
+      icon: LayoutGrid, 
+      route: ROUTES.TEACHER_TIMETABLE, 
+      tone: '#f59e0b' 
+    },
   ]
 
   const handleRefresh = async () => {
     toastInfo('Refreshing dashboard')
     try {
       await refresh()
-    } catch {}
+    } catch (err) {
+      console.error('Refresh error:', err)
+    }
   }
 
   return (
-    <div className="max-w-[1400px] mx-auto space-y-6 pb-12">
+    <motion.div 
+      variants={containerVariants}
+      initial="hidden"
+      animate="show"
+      className="max-w-[1400px] mx-auto space-y-6 pb-12 px-4 sm:px-6 lg:px-8"
+    >
       {offline && (
-        <div
-          className="flex items-center gap-3 rounded-xl border px-4 py-3"
-          style={{ borderColor: '#f59e0b55', backgroundColor: 'rgba(245, 158, 11, 0.12)', color: 'var(--color-text-primary)' }}
+        <motion.div
+          variants={itemVariants}
+          className="flex items-center gap-3 rounded-2xl border px-4 py-3 shadow-sm"
+          style={{ borderColor: '#f59e0b55', backgroundColor: 'rgba(245, 158, 11, 0.08)', color: 'var(--color-text-primary)' }}
         >
           <WifiOff size={18} style={{ color: '#f59e0b' }} />
           <div className="min-w-0">
@@ -135,20 +200,35 @@ const TeacherDashboard = () => {
               Changes will sync when connection returns. Pull to refresh once you are back online.
             </p>
           </div>
-        </div>
+        </motion.div>
       )}
 
       {/* Page Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <motion.div 
+        variants={itemVariants}
+        className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border pb-4"
+      >
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-            {greeting}, {dashboard?.teacher?.name || user?.name || 'Teacher'}
+          <h1 className="text-2xl font-bold text-text-primary">
+            {greeting}, <span className="text-brand">{dashboard?.teacher?.name || user?.name || 'Teacher'}</span>!
           </h1>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
-            Today is {formatLongDate(dashboard?.date)}. Current session: {dashboard?.current_session?.name || 'Not available'}.
+          <p className="text-sm text-text-secondary mt-0.5">
+            Here is your classroom overview and schedule for today.
           </p>
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 pt-1 text-xs text-text-muted">
+            <span className="flex items-center gap-1">
+              <CalendarDays size={13} />
+              {formatLongDate(dashboard?.date)}
+            </span>
+            <span>&bull;</span>
+            <span className="flex items-center gap-1">
+              <GraduationCap size={13} />
+              Session: <strong className="font-semibold text-text-secondary">{dashboard?.current_session?.name || 'Not available'}</strong>
+            </span>
+          </div>
         </div>
-        <div className="flex items-center gap-2">
+        
+        <div className="flex items-center gap-3 shrink-0">
           <Button 
             variant="secondary" 
             icon={RefreshCw} 
@@ -159,49 +239,58 @@ const TeacherDashboard = () => {
             {lastLoadedAt ? `Updated ${formatTime(lastLoadedAt)}` : 'Refresh'}
           </Button>
         </div>
-      </div>
+      </motion.div>
 
-      <section className="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-4">
+      {/* Stats Cards Section */}
+      <motion.section 
+        variants={containerVariants}
+        className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4"
+      >
         {statsCards.map((card) => (
-          <button
+          <motion.button
+            variants={itemVariants}
             key={card.key}
             type="button"
             onClick={() => navigate(card.route)}
-            className="relative overflow-hidden rounded-xl border p-6 text-left transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_8px_30px_rgb(0,0,0,0.04)]"
+            className="p-5 rounded-2xl flex items-start gap-4 border text-left transition-all duration-200 hover:-translate-y-0.5 hover:shadow-sm focus:outline-none w-full"
             style={{
+              backgroundColor: 'var(--color-surface)',
               borderColor: 'var(--color-border)',
-              background: `linear-gradient(135deg, ${card.tone}08 0%, var(--color-surface) 100%)`,
             }}
           >
             {loading && !dashboard ? (
               <DashboardCardSkeleton />
             ) : (
-              <div>
-                <div className="flex items-center justify-between">
-                  <div
-                    className="flex h-12 w-12 items-center justify-center rounded-lg transition-transform duration-300"
-                    style={{ backgroundColor: `${card.tone}12`, color: card.tone }}
-                  >
-                    <card.icon size={22} />
-                  </div>
-                  <div className="rounded-full bg-surface-raised p-1.5 text-text-muted transition-colors hover:text-text-primary">
-                    <ArrowRight size={14} />
-                  </div>
+              <>
+                <div
+                  className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
+                  style={{ backgroundColor: `${card.tone}12` }}
+                >
+                  <card.icon size={18} style={{ color: card.tone }} />
                 </div>
-
-                <p className="mt-5 text-[10px] font-bold uppercase tracking-[0.2em]" style={{ color: 'var(--color-text-muted)' }}>
-                  {card.title}
-                </p>
-
-                <p className="mt-3 text-base font-semibold leading-relaxed" style={{ color: 'var(--color-text-primary)' }}>
-                  {card.description}
-                </p>
-              </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs mb-0.5 uppercase tracking-wide font-medium" style={{ color: 'var(--color-text-muted)' }}>
+                    {card.title}
+                  </p>
+                  <div className="flex items-baseline gap-1.5">
+                    <p className="text-xl font-bold truncate" style={{ color: card.tone }}>
+                      {card.metric}
+                    </p>
+                    <span className="text-[10px] font-semibold text-text-muted">
+                      {card.metricLabel}
+                    </span>
+                  </div>
+                  <p className="text-xs mt-1.5 text-text-secondary leading-normal truncate" title={card.description}>
+                    {card.description}
+                  </p>
+                </div>
+              </>
             )}
-          </button>
+          </motion.button>
         ))}
-      </section>
+      </motion.section>
 
+      {/* Main Grid Content */}
       <div className="grid grid-cols-1 gap-5 xl:grid-cols-[minmax(0,1.65fr)_minmax(320px,0.95fr)]">
         <div className="space-y-5">
           <SectionShell
@@ -218,84 +307,115 @@ const TeacherDashboard = () => {
               />
             ) : (
               <div className="space-y-4">
-                {scheduleRows.map((item, index) => (
-                  <div key={item.id || `${item.class_id}-${item.period_number}-${index}`} className="flex gap-3">
-                    <div className="flex w-12 flex-col items-center">
+                {scheduleRows.map((item, index) => {
+                  const isCurrent = item.status === 'current';
+                  const isDone = item.status === 'done';
+                  const pillBg = isCurrent ? 'var(--color-brand)' : (isDone ? '#00bc7d' : 'var(--color-surface-raised)');
+                  const pillColor = isCurrent || isDone ? '#ffffff' : 'var(--color-text-muted)';
+                  const cardBorderColor = isCurrent ? 'var(--color-brand)' : 'var(--color-border)';
+                  const cardBg = 'var(--color-surface)';
+                  const cardShadow = 'none';
+
+                  return (
+                    <motion.div 
+                      variants={itemVariants}
+                      key={item.id || `${item.class_id}-${item.period_number}-${index}`} 
+                      className="flex gap-4"
+                    >
+                      <div className="flex w-10 flex-col items-center shrink-0">
+                        <div
+                          className={`flex h-10 w-10 items-center justify-center rounded-full text-xs font-black transition-all duration-300 ${isCurrent ? 'ring-2 ring-offset-2 ring-brand' : ''}`}
+                          style={{
+                            backgroundColor: pillBg,
+                            color: pillColor,
+                            border: !isCurrent && !isDone ? '1px solid var(--color-border)' : 'none',
+                          }}
+                        >
+                          P{item.period_number}
+                        </div>
+                        {index !== scheduleRows.length - 1 && (
+                          <div className="my-2 h-full w-0.5 rounded-full" style={{ backgroundColor: 'var(--color-border)' }} />
+                        )}
+                      </div>
+
                       <div
-                        className="flex h-10 w-10 items-center justify-center rounded-xl text-xs font-bold"
-                        style={{
-                          backgroundColor: `${statusTone(item.status)}18`,
-                          color: statusTone(item.status),
-                          boxShadow: item.status === 'current' ? '0 0 0 6px rgba(16, 185, 129, 0.10)' : 'none',
+                        className="flex-1 rounded-2xl border p-5 transition-all duration-300 hover:shadow-sm"
+                        style={{ 
+                          borderColor: cardBorderColor, 
+                          background: cardBg,
+                          boxShadow: cardShadow,
+                          borderLeft: `3px solid ${statusTone(item.status)}`
                         }}
                       >
-                        P{item.period_number}
-                      </div>
-                      {index !== scheduleRows.length - 1 && (
-                        <div className="mt-2 h-full w-px" style={{ backgroundColor: 'var(--color-border)' }} />
-                      )}
-                    </div>
-
-                    <div
-                      className="flex-1 rounded-xl border p-4"
-                      style={{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface)' }}
-                    >
-                      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                        <div className="min-w-0">
-                          <div className="flex flex-wrap items-center gap-2">
-                            <h3 className="text-base font-semibold" style={{ color: 'var(--color-text-primary)' }}>
-                              {item.subject_name}
-                            </h3>
-                            <StatusBadge status={item.status} />
+                        <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+                          <div className="min-w-0 space-y-1">
+                            <div className="flex flex-wrap items-center gap-2">
+                              <h3 className="text-base font-bold text-text-primary">
+                                {item.subject_name}
+                              </h3>
+                              <StatusBadge status={item.status} />
+                            </div>
+                            
+                            <p className="text-sm font-semibold text-text-secondary">
+                              {item.class_name} {item.section_name} &bull; {formatTimeRange(item.start_time, item.end_time)}
+                            </p>
+                            
+                            <div className="flex flex-wrap items-center gap-3 pt-0.5 text-xs text-text-muted">
+                              <span className="flex items-center gap-1 font-medium">
+                                <Clock size={12} className="text-brand/50" />
+                                {item.room_number ? `Room ${item.room_number}` : 'Room not configured'}
+                              </span>
+                              <span>&bull;</span>
+                              <span className={`font-semibold ${isCurrent ? 'text-brand' : ''}`}>
+                                {scheduleDetail(item, now)}
+                              </span>
+                            </div>
                           </div>
-                          <p className="mt-1 text-sm" style={{ color: 'var(--color-text-secondary)' }}>
-                            {item.class_name} {item.section_name} | {formatTimeRange(item.start_time, item.end_time)}
-                          </p>
-                          <p className="mt-1 text-xs" style={{ color: 'var(--color-text-muted)' }}>
-                            {item.room_number ? `Room ${item.room_number}` : 'Room not configured'} | {scheduleDetail(item, now)}
-                          </p>
-                        </div>
 
-                        <div className="grid grid-cols-1 gap-2 sm:min-w-[180px]">
-                          <QuickActionButton
-                            label="Mark Attendance"
-                            tone="#10b981"
-                            onClick={() => navigate(ROUTES.TEACHER_ATTENDANCE_MARK, {
-                              state: {
-                                class_id: String(item.class_id),
-                                section_id: String(item.section_id),
-                                subject_id: String(item.subject_id || ''),
-                                assignment_role: 'class_teacher',
-                              },
-                            })}
-                          />
-                          <QuickActionButton
-                            label="Enter Marks"
-                            tone="#00897b"
-                            onClick={() => navigate(ROUTES.TEACHER_MARKS_ENTER, {
-                              state: {
-                                class_id: String(item.class_id),
-                                section_id: String(item.section_id),
-                                subject_id: String(item.subject_id || ''),
-                                assignment_role: 'subject_teacher',
-                              },
-                            })}
-                          />
-                          <QuickActionButton
-                            label="View Students"
-                            tone="#00bc7d"
-                            onClick={() => navigate(ROUTES.TEACHER_STUDENTS, {
-                              state: {
-                                class_id: String(item.class_id),
-                                section_id: String(item.section_id),
-                              },
-                            })}
-                          />
+                          <div className="flex flex-wrap gap-2 w-full lg:w-auto">
+                            <QuickActionButton
+                              label="Attendance"
+                              icon={ClipboardCheck}
+                              tone="#10b981"
+                              onClick={() => navigate(ROUTES.TEACHER_ATTENDANCE_MARK, {
+                                state: {
+                                  class_id: String(item.class_id),
+                                  section_id: String(item.section_id),
+                                  subject_id: String(item.subject_id || ''),
+                                  assignment_role: 'class_teacher',
+                                },
+                              })}
+                            />
+                            <QuickActionButton
+                              label="Marks"
+                              icon={BookMarked}
+                              tone="#00897b"
+                              onClick={() => navigate(ROUTES.TEACHER_MARKS_ENTER, {
+                                state: {
+                                  class_id: String(item.class_id),
+                                  section_id: String(item.section_id),
+                                  subject_id: String(item.subject_id || ''),
+                                  assignment_role: 'subject_teacher',
+                                },
+                              })}
+                            />
+                            <QuickActionButton
+                              label="Students"
+                              icon={Users}
+                              tone="#00bc7d"
+                              onClick={() => navigate(ROUTES.TEACHER_STUDENTS, {
+                                state: {
+                                  class_id: String(item.class_id),
+                                  section_id: String(item.section_id),
+                                },
+                              })}
+                            />
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  </div>
-                ))}
+                    </motion.div>
+                  );
+                })}
               </div>
             )}
           </SectionShell>
@@ -319,24 +439,31 @@ const TeacherDashboard = () => {
                     key={item.id || index}
                     type="button"
                     onClick={() => navigate(activityRoute(item))}
-                    className="flex w-full items-start gap-3 rounded-xl border p-4 text-left transition hover:-translate-y-0.5"
-                    style={{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface)' }}
+                    className="flex w-full items-center gap-4 rounded-2xl border p-4 text-left transition-all duration-300 group hover:-translate-y-0.5 hover:shadow-sm focus:outline-none"
+                    style={{ 
+                      borderColor: 'var(--color-border)', 
+                      backgroundColor: 'var(--color-surface)' 
+                    }}
                   >
                     <div
-                      className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg"
-                      style={{ backgroundColor: `${activityTone(item.table_name)}18`, color: activityTone(item.table_name) }}
+                      className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl transition-transform duration-300 group-hover:scale-105"
+                      style={{ backgroundColor: `${activityTone(item.table_name)}12`, color: activityTone(item.table_name) }}
                     >
                       <ActivityIcon tableName={item.table_name} />
                     </div>
-                    <div className="min-w-0 flex-1">
-                      <p className="text-sm font-semibold" style={{ color: 'var(--color-text-primary)' }}>
+                    <div className="min-w-0 flex-1 space-y-0.5">
+                      <p className="text-sm font-bold text-text-primary truncate">
                         {activityMessage(item)}
                       </p>
-                      <p className="mt-1 text-xs" style={{ color: 'var(--color-text-muted)' }}>
-                        {timeAgo(item.created_at, now)}
-                      </p>
+                      <div className="flex items-center gap-1.5 text-xs text-text-muted">
+                        <Clock size={12} className="text-text-muted/60" />
+                        <span>{timeAgo(item.created_at, now)}</span>
+                      </div>
                     </div>
-                    <ArrowRight size={16} style={{ color: 'var(--color-text-muted)' }} />
+                    <ArrowRight 
+                      size={16} 
+                      className="text-text-muted transition-transform duration-300 group-hover:translate-x-1" 
+                    />
                   </button>
                 ))}
               </div>
@@ -349,33 +476,52 @@ const TeacherDashboard = () => {
             title="Quick Actions"
             caption="Shortcuts for the actions teachers repeat most during the day."
           >
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {quickActions.map((action) => (
                 <button
                   key={action.label}
                   type="button"
                   onClick={() => navigate(action.route)}
-                  className="flex min-h-24 flex-col items-start justify-between rounded-xl border p-4 text-left transition hover:-translate-y-0.5"
-                  style={{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface)' }}
+                  className="flex flex-col justify-between rounded-2xl border p-5 text-left transition-all duration-300 group hover:-translate-y-1 hover:shadow-md focus:outline-none"
+                  style={{ 
+                    borderColor: 'var(--color-border)', 
+                    backgroundColor: 'var(--color-surface)',
+                  }}
                 >
                   <div
-                    className="flex h-11 w-11 items-center justify-center rounded-lg"
-                    style={{ backgroundColor: `${action.tone}18`, color: action.tone }}
+                    className="flex h-11 w-11 items-center justify-center rounded-xl transition-transform duration-300 group-hover:scale-105"
+                    style={{ backgroundColor: `${action.tone}12`, color: action.tone }}
                   >
-                    <action.icon size={18} />
+                    <action.icon size={20} />
                   </div>
-                  <p className="text-sm font-semibold leading-5" style={{ color: 'var(--color-text-primary)' }}>
-                    {action.label}
-                  </p>
+                  
+                  <div className="mt-4">
+                    <h3 className="text-sm font-bold text-text-primary">
+                      {action.label}
+                    </h3>
+                    <p className="mt-1 text-xs text-text-muted leading-relaxed">
+                      {action.desc}
+                    </p>
+                  </div>
+                  
+                  <div className="mt-4 flex items-center justify-end w-full">
+                    <span 
+                      className="inline-flex h-6 w-6 items-center justify-center rounded-full transition-transform duration-300 group-hover:translate-x-1"
+                      style={{ color: action.tone }}
+                    >
+                      <ArrowRight size={16} />
+                    </span>
+                  </div>
                 </button>
               ))}
             </div>
           </SectionShell>
 
           {error && (
-            <div
-              className="rounded-xl border px-4 py-3"
-              style={{ borderColor: '#ef444455', backgroundColor: 'rgba(239, 68, 68, 0.10)' }}
+            <motion.div
+              variants={itemVariants}
+              className="rounded-2xl border px-4 py-3"
+              style={{ borderColor: '#ef444455', backgroundColor: 'rgba(239, 68, 68, 0.08)' }}
             >
               <div className="flex items-start gap-3">
                 <CircleAlert size={18} style={{ color: '#ef4444' }} />
@@ -383,19 +529,19 @@ const TeacherDashboard = () => {
                   <p className="text-sm font-semibold" style={{ color: 'var(--color-text-primary)' }}>
                     Some dashboard data could not be refreshed
                   </p>
-                  <p className="mt-1 text-xs" style={{ color: 'var(--color-text-secondary)' }}>
+                  <p className="mt-1 text-xs opacity-90" style={{ color: 'var(--color-text-secondary)' }}>
                     {error}
                   </p>
                 </div>
               </div>
-            </div>
+            </motion.div>
           )}
         </div>
       </div>
 
       <div className="fixed inset-x-3 bottom-3 z-30 lg:hidden">
         <div
-          className="grid grid-cols-4 gap-2 rounded-2xl border p-2 shadow-2xl backdrop-blur"
+          className="grid grid-cols-4 gap-2 rounded-2xl border p-2 shadow-2xl backdrop-blur-md"
           style={{
             borderColor: 'var(--color-border)',
             backgroundColor: 'color-mix(in srgb, var(--color-surface) 88%, transparent)',
@@ -406,12 +552,12 @@ const TeacherDashboard = () => {
               key={action.label}
               type="button"
               onClick={() => navigate(action.route)}
-              className="flex min-h-14 flex-col items-center justify-center gap-1 rounded-xl px-1 text-center text-[11px] font-semibold"
+              className="flex min-h-14 flex-col items-center justify-center gap-1 rounded-xl px-1 text-center text-[11px] font-bold"
               style={{ color: 'var(--color-text-primary)' }}
             >
               <div
                 className="flex h-8 w-8 items-center justify-center rounded-lg"
-                style={{ backgroundColor: `${action.tone}18`, color: action.tone }}
+                style={{ backgroundColor: `${action.tone}12`, color: action.tone }}
               >
                 <action.icon size={16} />
               </div>
@@ -420,47 +566,71 @@ const TeacherDashboard = () => {
           ))}
         </div>
       </div>
-    </div>
+    </motion.div>
   )
 }
 
 const SectionShell = ({ title, caption, children }) => (
   <section
-    className="rounded-xl border p-5 sm:p-6"
-    style={{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface)' }}
+    className="rounded-2xl border p-5 sm:p-6 shadow-sm transition-all duration-300"
+    style={{ 
+      borderColor: 'var(--color-border)', 
+      backgroundColor: 'var(--color-surface)',
+    }}
   >
-    <div className="mb-4">
-      <h2 className="text-lg font-semibold" style={{ color: 'var(--color-text-primary)' }}>
-        {title}
-      </h2>
-      <p className="mt-1 text-sm" style={{ color: 'var(--color-text-secondary)' }}>
-        {caption}
-      </p>
+    <div className="mb-5 flex items-start justify-between border-b border-border-base/50 pb-3">
+      <div>
+        <h2 className="text-lg font-bold text-text-primary">
+          {title}
+        </h2>
+        <p className="mt-0.5 text-xs text-text-muted">
+          {caption}
+        </p>
+      </div>
     </div>
     {children}
   </section>
 )
 
-const StatusBadge = ({ status }) => (
-  <span
-    className="inline-flex min-h-7 items-center rounded-full px-2.5 text-xs font-semibold capitalize"
-    style={{ backgroundColor: `${statusTone(status)}18`, color: statusTone(status) }}
-  >
-    {status === 'done' ? 'Done' : status === 'current' ? 'Current' : 'Upcoming'}
-  </span>
-)
+const StatusBadge = ({ status }) => {
+  const isCurrent = status === 'current'
+  return (
+    <span
+      className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-bold capitalize border"
+      style={{ 
+        backgroundColor: `${statusTone(status)}12`, 
+        color: statusTone(status),
+        borderColor: `${statusTone(status)}25`
+      }}
+    >
+      {isCurrent && (
+        <span className="relative flex h-2 w-2">
+          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+          <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
+        </span>
+      )}
+      {status === 'done' ? 'Done' : status === 'current' ? 'Live Now' : 'Upcoming'}
+    </span>
+  )
+}
 
-const QuickActionButton = ({ label, tone, onClick }) => (
+const QuickActionButton = ({ label, icon: Icon, tone, onClick }) => (
   <button
     type="button"
     onClick={onClick}
-    className="flex min-h-11 items-center justify-center rounded-xl px-3 text-sm font-semibold transition hover:-translate-y-0.5"
-    style={{ backgroundColor: `${tone}18`, color: tone }}
+    className="flex items-center justify-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-semibold border transition-all duration-150 hover:bg-surface-raised active:scale-[0.98] focus:outline-none"
+    style={{ 
+      borderColor: 'var(--color-border)', 
+      backgroundColor: 'var(--color-surface)',
+      color: 'var(--color-text-secondary)'
+    }}
   >
-    {label}
+    {Icon && <Icon size={13} style={{ color: tone }} />}
+    <span>{label}</span>
   </button>
 )
 
+// eslint-disable-next-line no-unused-vars
 const EmptyState = ({ icon: Icon, title, message }) => (
   <div className="rounded-xl border border-dashed p-8 text-center" style={{ borderColor: 'var(--color-border)' }}>
     <div

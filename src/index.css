@@ -27,7 +27,39 @@
   --radius-md: var(--radius-md);
   --radius-lg: var(--radius-lg);
 
-  --font-sans: 'Geist', 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+  --font-sans: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-display: 'Sora', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+
+  --radius-xl: var(--radius-xl);
+  --radius-2xl: var(--radius-2xl);
+  --radius-3xl: var(--radius-3xl);
+  --radius-4xl: var(--radius-4xl);
+
+  --color-present: var(--present);
+  --color-present-foreground: var(--present-foreground);
+  --color-present-soft: var(--present-soft);
+  --color-absent: var(--absent);
+  --color-absent-foreground: var(--absent-foreground);
+  --color-absent-soft: var(--absent-soft);
+  --color-late: var(--late);
+  --color-late-foreground: var(--late-foreground);
+  --color-late-soft: var(--late-soft);
+  --color-halfday: var(--halfday);
+  --color-halfday-foreground: var(--halfday-foreground);
+  --color-halfday-soft: var(--halfday-soft);
+  --color-holiday: var(--holiday);
+  --color-holiday-foreground: var(--holiday-foreground);
+  --color-holiday-soft: var(--holiday-soft);
+
+  --color-card-foreground: var(--card-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-ring: var(--ring);
+
+  --shadow-soft: var(--shadow-soft);
+  --shadow-card: var(--shadow-card);
 }
 
 /* ── Tailwind v4: dark mode via class strategy ───────────────────────────── */
@@ -94,6 +126,38 @@
   --transition-fast:     150ms ease;
   --transition-base:     250ms ease;
   --transition-slow:     400ms ease;
+
+  --radius-xl:           20px;
+  --radius-2xl:          24px;
+  --radius-3xl:          28px;
+  --radius-4xl:          32px;
+
+  --present: oklch(0.62 0.17 150);
+  --present-foreground: oklch(0.99 0.01 150);
+  --present-soft: oklch(0.96 0.04 150);
+  --absent: oklch(0.6 0.21 22);
+  --absent-foreground: oklch(0.99 0.01 22);
+  --absent-soft: oklch(0.96 0.03 22);
+  --late: oklch(0.72 0.16 68);
+  --late-foreground: oklch(0.28 0.08 68);
+  --late-soft: oklch(0.96 0.05 80);
+  --halfday: oklch(0.6 0.16 240);
+  --halfday-foreground: oklch(0.99 0.01 240);
+  --halfday-soft: oklch(0.96 0.03 240);
+  --holiday: oklch(0.6 0.02 258);
+  --holiday-foreground: oklch(0.99 0.003 250);
+  --holiday-soft: oklch(0.95 0.008 258);
+
+  --card-foreground: oklch(0.21 0.04 265);
+  --muted: oklch(0.96 0.008 250);
+  --muted-foreground: oklch(0.55 0.03 258);
+  --accent: oklch(0.95 0.02 277);
+  --accent-foreground: oklch(0.4 0.15 277);
+  --ring: oklch(0.51 0.23 277);
+
+  --shadow-soft: 0 1px 2px oklch(0.21 0.04 265 / 0.04), 0 8px 24px -12px oklch(0.21 0.04 265 / 0.12);
+  --shadow-card: 0 1px 3px oklch(0.21 0.04 265 / 0.05), 0 20px 40px -24px oklch(0.21 0.04 265 / 0.18);
+  --gradient-primary: linear-gradient(135deg, oklch(0.55 0.23 277), oklch(0.62 0.19 300));
 }
 
 /* ✅ Mobile responsive sidebar behavior */
@@ -127,6 +191,33 @@
   --color-accent-muted:  #92400e;
   --color-accent-emphasis:#fbbf24;
   --color-accent-heading: #fcd34d;
+
+  --present: oklch(0.68 0.16 150);
+  --present-foreground: oklch(0.15 0.03 150);
+  --present-soft: oklch(0.28 0.06 150);
+  --absent: oklch(0.66 0.2 22);
+  --absent-foreground: oklch(0.15 0.03 22);
+  --absent-soft: oklch(0.3 0.08 22);
+  --late: oklch(0.78 0.15 75);
+  --late-foreground: oklch(0.2 0.05 75);
+  --late-soft: oklch(0.32 0.07 75);
+  --halfday: oklch(0.66 0.15 240);
+  --halfday-foreground: oklch(0.15 0.03 240);
+  --halfday-soft: oklch(0.3 0.06 240);
+  --holiday: oklch(0.7 0.02 258);
+  --holiday-foreground: oklch(0.15 0.01 258);
+  --holiday-soft: oklch(0.3 0.02 258);
+
+  --card-foreground: oklch(0.97 0.005 247);
+  --muted: oklch(0.27 0.03 260);
+  --muted-foreground: oklch(0.7 0.03 257);
+  --accent: oklch(0.3 0.06 277);
+  --accent-foreground: oklch(0.9 0.05 277);
+  --ring: oklch(0.62 0.2 280);
+
+  --shadow-soft: 0 1px 2px oklch(0 0 0 / 0.3), 0 8px 24px -12px oklch(0 0 0 / 0.5);
+  --shadow-card: 0 1px 3px oklch(0 0 0 / 0.3), 0 20px 40px -24px oklch(0 0 0 / 0.6);
+  --gradient-primary: linear-gradient(135deg, oklch(0.6 0.2 280), oklch(0.66 0.18 300));
 }
 
 /* ── Base resets ────────────────────────────────────────────────────────── */
@@ -136,9 +227,13 @@
 }
 
 html {
-  font-family: 'Geist', 'DM Sans', system-ui, sans-serif;
+  font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-display);
 }
 
 body {
@@ -1137,4 +1232,24 @@ html[data-portal="accountant"] .fixed.top-0.right-0 {
     transition-duration: 0s !important;
     transition-delay: 0s !important;
   }
+}
+
+@utility shadow-soft {
+  box-shadow: var(--shadow-soft);
+}
+
+@utility shadow-card {
+  box-shadow: var(--shadow-card);
+}
+
+@utility bg-gradient-primary {
+  background-image: var(--gradient-primary);
+}
+
+@utility no-scrollbar {
+  &::-webkit-scrollbar {
+    display: none;
+  }
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }

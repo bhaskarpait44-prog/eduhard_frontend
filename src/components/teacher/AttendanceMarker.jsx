@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import {
   AlertTriangle, CalendarDays, CheckCircle2, Clock3, Loader2, Search, Send, Users, ChevronDown, Activity, RefreshCw, ClipboardCheck, Info, BookOpen
 } from 'lucide-react'
@@ -88,9 +88,9 @@ const AttendanceMarker = ({
 
   const hasStudents = (payload?.students || []).length > 0
   const hasLoadedPayload = !!payload
-  const needsReason = !!payload?.requires_reason
+  const needsReason = !!payload?.requires_reason && !!payload?.already_marked
   const isDisableMarking = !!payload?.is_holiday || !!payload?.is_non_working_day || !!payload?.is_on_leave
-  const canSubmit = hasStudents && (!needsReason || (reason.trim() && reason.trim().length >= 10)) && !isDisableMarking
+  const canSubmit = hasStudents && !isDisableMarking
 
   const handleAssignmentChange = (value) => {
     const [role, classId, sectionId, subjectId] = value.split(':')
@@ -244,29 +244,6 @@ const AttendanceMarker = ({
         <Banner tone="error" icon={CalendarDays} title="On Approved Leave" message="You are on approved leave for this date. Attendance marking is disabled." />
       )}
 
-      {needsReason && (
-        <section className="rounded-[var(--radius-lg)] border p-6 shadow-sm border-orange-200 bg-orange-50/20">
-          <div className="flex items-center gap-2 mb-4 text-orange-700">
-            <Info size={18} />
-            <label className="text-[11px] font-bold uppercase tracking-wider">Modification Reason Required</label>
-          </div>
-          <textarea
-            value={reason}
-            onChange={(e) => setReason(e.target.value)}
-            rows={2}
-            placeholder="Explain why you are editing or marking attendance for a past date..."
-            className="w-full rounded-xl px-5 py-4 text-sm outline-none border border-orange-200 focus:ring-2 focus:ring-orange-200 transition-all bg-white shadow-inner font-medium"
-          />
-          <div className="mt-2 text-[11px] font-semibold text-orange-700 flex justify-between px-2">
-            <span>Minimum 10 characters required</span>
-            <span>
-              {reason.trim().length < 10
-                ? `${10 - reason.trim().length} characters remaining`
-                : 'Reason accepted ✓'}
-            </span>
-          </div>
-        </section>
-      )}
 
       {!loadingStudents && hasLoadedPayload && !hasStudents && (
         <EmptyState
@@ -278,23 +255,6 @@ const AttendanceMarker = ({
 
       {hasStudents && (
         <>
-          {/* ── Summary Counters ── */}
-          <section className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-            {STATUS_OPTIONS.map((option) => (
-              <div
-                key={option.key}
-                className="rounded-[var(--radius-lg)] border bg-surface p-5 shadow-sm flex flex-col items-center text-center transition-all hover:shadow-md group"
-                style={{ borderColor: 'var(--color-border)' }}
-              >
-                <p className="text-[11px] font-semibold uppercase tracking-wider text-text-muted mb-2 group-hover:text-text-primary transition-colors">
-                  {option.full}
-                </p>
-                <p className="text-4xl font-bold tracking-tighter" style={{ color: option.tone }}>
-                  {counts[option.key] || 0}
-                </p>
-              </div>
-            ))}
-          </section>
 
           <section className="rounded-[var(--radius-lg)] border bg-surface p-6 shadow-sm" style={{ borderColor: 'var(--color-border)' }}>
             {/* ── Toolbar ── */}
@@ -463,53 +423,73 @@ const AttendanceMarker = ({
       )}
 
       {/* ── Confirmation Modal ── */}
-      <Modal open={confirmOpen} onClose={() => setConfirmOpen(false)} size="md">
-        <div className="p-1">
-          <div className="flex h-16 w-16 items-center justify-center rounded-[var(--radius-lg)] bg-primary/10 text-primary mb-8 shadow-inner border border-primary/10">
-            <ClipboardCheck size={32} />
-          </div>
-          <h3 className="text-3xl font-bold text-text-primary tracking-tight leading-tight">Ready to File?</h3>
-          <p className="mt-4 text-base font-medium text-text-muted leading-relaxed">
-            You are submitting attendance for{' '}
-            <span className="font-bold text-text-primary decoration-primary/30 underline underline-offset-4">
-              {selectedAssignment?.class_name} {selectedAssignment?.section_name}
-            </span>.{' '}
-            <br className="hidden sm:block" />
-            Saves attendance and sends absence notifications to parents.
-          </p>
-
-          <div className="mt-4 p-4 rounded-xl bg-amber-50/50 border border-amber-100 flex items-start gap-3">
-            <Info className="text-amber-600 shrink-0 mt-0.5" size={16} />
-            <p className="text-[11px] font-semibold text-amber-900 leading-normal">
-              <strong>Note:</strong> Unmarked students default to Present — only exceptions (Absent / Late / Half Day) need to be recorded.
-            </p>
-          </div>
-
-          <div className="mt-10 grid grid-cols-2 gap-4">
+      <Modal 
+        open={confirmOpen} 
+        onClose={() => setConfirmOpen(false)} 
+        title={needsReason ? "Modify Attendance" : "File Attendance"} 
+        size="md"
+        footer={(
+          <>
             <Button
               variant="secondary"
               onClick={() => setConfirmOpen(false)}
-              className="h-14 rounded-xl text-[11px] font-bold uppercase tracking-wider"
+              className="h-11 px-5 rounded-xl font-bold uppercase tracking-wider text-xs"
             >
               Cancel
             </Button>
             <Button
               variant="primary"
               loading={submittingConfirm}
+              disabled={needsReason && (!reason.trim() || reason.trim().length < 10)}
               onClick={async () => {
                 setSubmittingConfirm(true)
                 try {
                   await onSubmit(submitPayload())
                   setConfirmOpen(false)
-                } catch (error) {
+                } catch (err) {
+                  console.error('File attendance error:', err)
                   setSubmittingConfirm(false)
                 }
               }}
-              className="h-14 rounded-xl text-[11px] font-bold uppercase tracking-wider shadow-lg shadow-primary/30"
+              className="h-11 px-5 rounded-xl font-bold uppercase tracking-wider text-xs shadow-md shadow-primary/20"
             >
-              {submittingConfirm ? <Loader2 size={20} className="animate-spin" /> : 'Confirm & File'}
+              {submittingConfirm ? <Loader2 size={16} className="animate-spin" /> : 'Confirm & File'}
             </Button>
-          </div>
+          </>
+        )}
+      >
+        <div className="space-y-5">
+          <p className="text-sm font-medium text-text-secondary leading-relaxed">
+            You are submitting attendance for{' '}
+            <span className="font-bold text-text-primary">
+              {selectedAssignment?.class_name} {selectedAssignment?.section_name}
+            </span>.
+            This will record the students' attendance records and send absence notifications to parents.
+          </p>
+
+          {needsReason && (
+            <div className="space-y-2.5 rounded-2xl border p-4 border-orange-200 bg-orange-50/20">
+              <div className="flex items-center gap-2 text-orange-700">
+                <Info size={15} />
+                <span className="text-[11px] font-bold uppercase tracking-wider">Modification Reason Required</span>
+              </div>
+              <textarea
+                value={reason}
+                onChange={(e) => setReason(e.target.value)}
+                rows={3}
+                placeholder="Explain why you are editing or marking attendance for a past date..."
+                className="w-full rounded-xl px-4 py-3 text-sm outline-none border border-orange-200 focus:ring-2 focus:ring-orange-200 transition-all bg-white shadow-inner font-medium"
+              />
+              <div className="text-[10px] font-semibold text-orange-700 flex justify-between px-1">
+                <span>Minimum 10 characters required</span>
+                <span>
+                  {reason.trim().length < 10
+                    ? `${10 - reason.trim().length} characters remaining`
+                    : 'Reason accepted ✓'}
+                </span>
+              </div>
+            </div>
+          )}
         </div>
       </Modal>
     </div>
@@ -523,6 +503,7 @@ const Counter = ({ label, count, color, className }) => (
   </div>
 )
 
+// eslint-disable-next-line no-unused-vars
 const Banner = ({ tone, icon: Icon, title, message }) => {
   const styles = {
     warning: 'bg-orange-50 border-orange-200 text-orange-800',

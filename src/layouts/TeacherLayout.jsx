@@ -11,23 +11,23 @@ const TEACHER_THEME_LIGHT = {
   '--color-brand-light': '#05d68f',
   '--color-brand-dark':  '#009e68',
 
-  // Sidebar
-  '--color-sidebar-bg':     '#f5fdf9',
+  // Sidebar — clean design aligned with admin defaults
+  '--color-sidebar-bg':     '#f8fbff',
   '--color-sidebar-active': '#00bc7d',
-  '--color-sidebar-hover':  'rgba(0,188,125,0.09)',
-  '--color-sidebar-border': '#d6f0e5',
-  '--color-sidebar-text':   '#1a3329',
-  '--color-sidebar-muted':  '#5a7a6b',
+  '--color-sidebar-hover':  'rgba(0,188,125,0.08)',
+  '--color-sidebar-border': '#dbe7f5',
+  '--color-sidebar-text':   '#334155',
+  '--color-sidebar-muted':  '#64748b',
   '--color-sidebar-card':   '#ffffff',
 
-  // Content area
-  '--color-bg':            '#f0faf6',
+  // Content area — clean slate defaults matching Admin UI
+  '--color-bg':            '#f8fafc',
   '--color-surface':       '#ffffff',
-  '--color-surface-raised':'#e6f7ef',
-  '--color-border':        '#e2f2ea',
-  '--color-text-primary':  '#0f2d1e',
-  '--color-text-secondary':'#3a6651',
-  '--color-text-muted':    '#8aad9b',
+  '--color-surface-raised':'#f1f5f9',
+  '--color-border':        '#f3f4f6',
+  '--color-text-primary':  '#0f172a',
+  '--color-text-secondary':'#475569',
+  '--color-text-muted':    '#94a3b8',
 }
 
 const TEACHER_THEME_DARK = {
@@ -36,22 +36,22 @@ const TEACHER_THEME_DARK = {
   '--color-brand-light': '#05d68f',
   '--color-brand-dark':  '#009e68',
 
-  // Sidebar — deep forest navy
-  '--color-sidebar-bg':     '#0a1f15',
+  // Sidebar — clean dark design matching admin defaults
+  '--color-sidebar-bg':     '#0f172a',
   '--color-sidebar-active': '#00bc7d',
-  '--color-sidebar-hover':  'rgba(0,188,125,0.10)',
-  '--color-sidebar-border': 'rgba(0,188,125,0.12)',
-  '--color-sidebar-text':   '#ccf0e0',
-  '--color-sidebar-muted':  '#7bb89a',
-  '--color-sidebar-card':   '#102a1c',
+  '--color-sidebar-hover':  'rgba(0,188,125,0.12)',
+  '--color-sidebar-border': '#1e293b',
+  '--color-sidebar-text':   '#cbd5e1',
+  '--color-sidebar-muted':  '#94a3b8',
+  '--color-sidebar-card':   '#1e293b',
 
-  // Content area — keep existing global dark tokens
+  // Content area — clean dark slate defaults matching Admin UI
   '--color-bg':            '#0f172a',
   '--color-surface':       '#1e293b',
   '--color-surface-raised':'#334155',
   '--color-border':        '#1e293b',
-  '--color-text-primary':  '#f0fdf9',
-  '--color-text-secondary':'#6ee7b7',
+  '--color-text-primary':  '#f1f5f9',
+  '--color-text-secondary':'#94a3b8',
   '--color-text-muted':    '#475569',
 }
 

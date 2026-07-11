@@ -80,6 +80,7 @@ const MarksSummary = () => {
     )
     const first = matched || uniqueSections[0]
     if (first) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setSectionKey(`${first.class_id}:${first.section_id}:${first.is_class_teacher ? 'class_teacher' : 'subject_teacher'}`)
     }
   }, [preferredAssignment.assignment_role, preferredAssignment.class_id, preferredAssignment.section_id, uniqueSections, sectionKey])
@@ -90,11 +91,13 @@ const MarksSummary = () => {
     if (hasCurrentExam) return
 
     const preferredExam = exams.find((exam) => String(exam.id) === String(preferredAssignment.exam_id || ''))
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setExamId(String((preferredExam || exams[0]).id))
   }, [examId, exams, preferredAssignment.exam_id])
 
   useEffect(() => {
     if (!visibleSections.length) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       if (sectionKey) setSectionKey('')
       return
     }
@@ -114,6 +117,7 @@ const MarksSummary = () => {
 
   useEffect(() => {
     if (!selectedSection || !examId) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setSubjectOptions([])
       setSubjectId('')
       return
@@ -158,7 +162,10 @@ const MarksSummary = () => {
     })
   }, [examId, selectedSection, subjectId, loadSummary, toastError, selectionMismatch])
 
-  const distribution = useMemo(() => buildDistribution(summaryPayload?.students || []), [summaryPayload])
+  const distribution = useMemo(
+    () => buildDistribution(summaryPayload?.students || [], summaryPayload?.summary?.combined_total_marks ?? 100),
+    [summaryPayload]
+  )
   const gradeDistribution = useMemo(() => buildGradeDistribution(summaryPayload?.students || []), [summaryPayload])
 
   return (
@@ -265,16 +272,10 @@ const MarksSummary = () => {
               </div>
             </div>
 
-            {summaryPayload?.review_status?.status !== 'approved' ? (
-              <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed bg-surface-raised/20 py-24 px-6 text-center">
-                <div className="flex h-16 w-16 items-center justify-center rounded-full bg-amber-50 text-amber-600 mb-4 ring-8 ring-amber-50/50 dark:bg-amber-950/20 dark:text-amber-400 dark:ring-amber-950/10">
-                  <Lock size={30} />
-                </div>
-                <h3 className="text-xl font-bold text-text-primary">Summary Pending Approval</h3>
-                <p className="mt-2 text-sm text-text-muted max-w-md mx-auto leading-relaxed">
-                  The performance summary, analytics dashboard, and student-wise records are locked until the marks for this exam subject have been approved by the administrator.
-                </p>
-              </div>
+            {selectedExam?.publish_controls?.results_published !== true ? (
+              <LockScreen status="results_not_published" />
+            ) : summaryPayload?.review_status?.status !== 'approved' ? (
+              <LockScreen status={summaryPayload?.review_status?.status} />
             ) : (
               <>
                 {/* ── Analytics Grid ── */}
@@ -289,14 +290,14 @@ const MarksSummary = () => {
 
                 {/* ── Visual Distributions ── */}
                 <section className="grid grid-cols-1 gap-6 xl:grid-cols-2">
-                  <ChartCard title="Marks Distribution" icon={BarChart3} onExport={() => exportStudents(summaryPayload?.students || [])}>
+                  <ChartCard title="Marks Distribution" icon={BarChart3}>
                     <div className="space-y-4">
                       {distribution.map((item) => (
                         <BarRow key={item.label} label={item.label} value={item.count} max={Math.max(...distribution.map((row) => row.count), 1)} tone="var(--color-primary)" />
                       ))}
                     </div>
                   </ChartCard>
-                  <ChartCard title="Grade Distribution" icon={GraduationCap} onExport={() => exportStudents(summaryPayload?.students || [])}>
+                  <ChartCard title="Grade Distribution" icon={GraduationCap}>
                     <div className="space-y-4">
                       {gradeDistribution.map((item) => (
                         <BarRow key={item.label} label={item.label} value={item.count} max={Math.max(...gradeDistribution.map((row) => row.count), 1)} tone="var(--color-success)" />
@@ -416,6 +417,33 @@ const MarksSummary = () => {
   )
 }
 
+const LOCK_CFG = {
+  null:          { icon: '📝', iconBg: 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400', ring: 'ring-slate-100/50',  title: 'Marks Not Yet Entered',           body: 'The teacher has not yet entered or submitted marks for this exam subject. The performance summary will be available once marks are entered, submitted, and approved by the administrator.' },
+  draft:         { icon: '📝', iconBg: 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400', ring: 'ring-slate-100/50',  title: 'Marks Not Yet Submitted',         body: 'Marks have been saved as a draft but not yet submitted for review. The performance summary will be available after the administrator approves the submitted marks.' },
+  submitted:     { icon: '⏳', iconBg: 'bg-amber-50 text-amber-600 dark:bg-amber-950/20 dark:text-amber-400',  ring: 'ring-amber-50/50',  title: 'Awaiting Administrator Approval', body: 'Marks have been submitted and are currently under review by the administrator. The performance summary will be unlocked once they are approved.' },
+  under_review:  { icon: '🔍', iconBg: 'bg-blue-50 text-blue-600 dark:bg-blue-950/20 dark:text-blue-400',    ring: 'ring-blue-50/50',   title: 'Under Administrator Review',      body: 'The administrator is currently reviewing the submitted marks. The performance summary will be available after approval.' },
+  rejected:      { icon: '↩️', iconBg: 'bg-red-50 text-red-600 dark:bg-red-950/20 dark:text-red-400',       ring: 'ring-red-50/50',    title: 'Marks Sent Back for Correction',  body: 'The submitted marks were rejected and sent back to the teacher for correction. The performance summary will be unlocked after re-submission and approval.' },
+  results_not_published: { icon: '⏳', iconBg: 'bg-amber-50 text-amber-600 dark:bg-amber-950/20 dark:text-amber-400',  ring: 'ring-amber-50/50',  title: 'Results Not Yet Published',       body: 'The performance summary is locked until the administrator publishes the results for this exam in the Results section.' },
+}
+
+const LockScreen = ({ status }) => {
+  const cfg = LOCK_CFG[status] || LOCK_CFG.null
+  return (
+    <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed bg-surface-raised/20 py-24 px-6 text-center">
+      <div className={`flex h-16 w-16 items-center justify-center rounded-full mb-5 text-2xl ring-8 ${cfg.iconBg} ${cfg.ring}`}>
+        {cfg.icon}
+      </div>
+      <h3 className="text-xl font-bold text-text-primary">{cfg.title}</h3>
+      <p className="mt-2 text-sm text-text-muted max-w-md mx-auto leading-relaxed">{cfg.body}</p>
+      <div className="mt-6 inline-flex items-center gap-2 rounded-full bg-surface-raised px-4 py-1.5 text-[10px] font-black uppercase tracking-widest text-text-muted">
+        <Lock size={11} />
+        Summary locked
+      </div>
+    </div>
+  )
+}
+
+// eslint-disable-next-line no-unused-vars
 const Stat = ({ icon: Icon, title, value, sub, tone }) => (
   <div
     className="rounded-2xl border bg-surface p-4 sm:p-5 shadow-sm transition-all hover:shadow-md"
@@ -434,19 +462,17 @@ const Stat = ({ icon: Icon, title, value, sub, tone }) => (
   </div>
 )
 
-const ChartCard = ({ title, icon: Icon, children, onExport }) => (
+// eslint-disable-next-line no-unused-vars
+const ChartCard = ({ title, icon: Icon, children }) => (
   <section
     className="rounded-2xl border bg-surface p-5 sm:p-6 shadow-sm"
     style={{ borderColor: 'var(--color-border)' }}
   >
-    <div className="flex items-center justify-between border-b border-dashed pb-4 mb-5" style={{ borderColor: 'var(--color-border)' }}>
-      <div className="flex items-center gap-3">
-        <div className="h-9 w-9 rounded-xl bg-primary/10 text-primary flex items-center justify-center">
-          <Icon size={18} />
-        </div>
-        <h2 className="text-sm font-bold text-text-primary tracking-tight">{title}</h2>
+    <div className="flex items-center gap-3 border-b border-dashed pb-4 mb-5" style={{ borderColor: 'var(--color-border)' }}>
+      <div className="h-9 w-9 rounded-xl bg-primary/10 text-primary flex items-center justify-center">
+        <Icon size={18} />
       </div>
-      <Button variant="ghost" onClick={onExport} className="h-8 text-[10px] font-black uppercase tracking-widest text-primary hover:bg-primary/5">Export</Button>
+      <h2 className="text-sm font-bold text-text-primary tracking-tight">{title}</h2>
     </div>
     <div>{children}</div>
   </section>
@@ -467,18 +493,18 @@ const BarRow = ({ label, value, max, tone }) => (
   </div>
 )
 
-const buildDistribution = (students) => {
+const buildDistribution = (students, totalMarks = 100) => {
   const buckets = [
-    { label: '0-20%', min: 0, max: 20, count: 0 },
-    { label: '21-40%', min: 21, max: 40, count: 0 },
-    { label: '41-60%', min: 41, max: 60, count: 0 },
-    { label: '61-80%', min: 61, max: 80, count: 0 },
-    { label: '81-100%', min: 81, max: 1000, count: 0 },
+    { label: '0–20%',  min: 0,  max: 20,  count: 0 },
+    { label: '21–40%', min: 21, max: 40,  count: 0 },
+    { label: '41–60%', min: 41, max: 60,  count: 0 },
+    { label: '61–80%', min: 61, max: 80,  count: 0 },
+    { label: '81–100%',min: 81, max: 1000,count: 0 },
   ]
   students.forEach((student) => {
     if (student.is_absent || student.marks_obtained == null) return
-    const mark = Number(student.marks_obtained)
-    const bucket = buckets.find((item) => mark >= item.min && mark <= item.max)
+    const pct = totalMarks > 0 ? Math.round((Number(student.marks_obtained) / totalMarks) * 100) : 0
+    const bucket = buckets.find((item) => pct >= item.min && pct <= item.max)
     if (bucket) bucket.count += 1
   })
   return buckets

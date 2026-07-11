@@ -8,7 +8,6 @@ const MarksEntryTable = ({
   subject,
   state,
   locked = false,
-  reviewStatus = null,
   saving = false,
   lastSavedAt,
   onChange,
@@ -145,7 +144,13 @@ const MarksEntryTable = ({
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-3">
+            {lastSavedAt && (
+              <span className="hidden sm:flex items-center gap-1.5 text-[10px] font-bold text-text-muted uppercase tracking-wider">
+                <Clock size={11} />
+                Saved {lastSavedAt}
+              </span>
+            )}
             <Button
               variant="outline"
               icon={saving ? Loader2 : Save}
@@ -191,7 +196,7 @@ const MarksEntryTable = ({
                     ]
                   ),
                   { label: 'Status', width: '90px', align: 'center' },
-                  { label: 'AB', width: '60px', align: 'center' },
+                  { label: 'Absent', width: '70px', align: 'center' },
                 ].map((col) => (
                   <th
                     key={col.label}
@@ -354,6 +359,7 @@ const MarksEntryTable = ({
 const MarkInput = ({ refKey, inputRefs, disabled, value, max, tone, onChange, onKeyDown }) => (
   <div className="flex justify-center">
     <input
+      // eslint-disable-next-line react-hooks/immutability
       ref={(element) => { inputRefs.current[refKey] = element }}
       type="number"
       min="0"

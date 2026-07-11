@@ -19,7 +19,7 @@ import {
 } from '@ant-design/icons'
 import usePageTitle from '@/hooks/usePageTitle'
 import useTeacherStudents from '@/hooks/useTeacherStudents'
-import { formatCurrency, formatDate, getInitials } from '@/utils/helpers'
+import { getInitials } from '@/utils/helpers'
 import useUiStore from '@/store/uiStore'
 import { ROUTES } from '@/constants/app'
 
@@ -44,6 +44,7 @@ const StudentList = () => {
     const classId = location.state?.class_id
     const sectionId = location.state?.section_id
     if (!classId || !sectionId) return
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setSectionKey(`${classId}:${sectionId}`)
   }, [location.state?.class_id, location.state?.section_id])
 
@@ -134,10 +135,14 @@ const StudentList = () => {
       key: 'status',
       render: (_, record) => {
         const attendance = Number(record.attendance_percentage || 0)
-        const isWarning = attendance < 75
+        const result = Number(record.last_result_percentage || 0)
+        const isCritical = attendance < 75 || result < 40
+        const isWarning = !isCritical && (attendance < 85 || result < 60)
+        const color = isCritical ? 'red' : isWarning ? 'orange' : 'green'
+        const label = isCritical ? 'Critical' : isWarning ? 'Warning' : 'Good'
         return (
-          <Tag color={isWarning ? 'red' : 'green'} className="rounded-full font-black text-[10px] uppercase border-0 px-2.5 py-0.5">
-            {isWarning ? 'Warning' : 'Good'}
+          <Tag color={color} className="rounded-full font-black text-[10px] uppercase border-0 px-2.5 py-0.5">
+            {label}
           </Tag>
         )
       }
@@ -177,8 +182,11 @@ const StudentList = () => {
           className="rounded-2xl shadow-sm border-gray-100 dark:border-gray-800"
           styles={{ body: { padding: '24px' } }}
         >
-
-          <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-6">
+          <div className="flex items-center gap-3 mb-2">
+            <SlidersOutlined className="text-gray-400 text-base" />
+            <span className="text-sm font-black text-gray-700 dark:text-gray-200 tracking-tight">Filter Students</span>
+          </div>
+          <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-6">
             <div>
               <label className="block text-[10px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-1.5">Search</label>
               <AntInput
@@ -277,9 +285,11 @@ const StudentList = () => {
                   {filteredStudents.length} student(s) match current filter criteria.
                 </span>
               </div>
-              <Tag icon={<SlidersOutlined />} color="default" className="font-extrabold uppercase text-[10px] rounded-full px-3 py-0.5">
-                Filtered View
-              </Tag>
+              {(search || sectionKey || subjectId || gender || attendanceRange || resultStatus) && (
+                <Tag icon={<SlidersOutlined />} color="blue" className="font-extrabold uppercase text-[10px] rounded-full px-3 py-0.5">
+                  Filtered View
+                </Tag>
+              )}
             </div>
           }
         >
@@ -294,7 +304,7 @@ const StudentList = () => {
               dataSource={filteredStudents}
               columns={tableColumns}
               rowKey="enrollment_id"
-              pagination={false}
+              pagination={{ pageSize: 50, showSizeChanger: true, pageSizeOptions: ['25', '50', '100'], showTotal: (total) => `${total} students` }}
               size="middle"
               className="premium-table"
               rowClassName="hover:bg-blue-50/10 dark:hover:bg-blue-950/10 transition-colors"

@@ -29,6 +29,9 @@ const ReportCard = () => {
 
     try {
       const resultsResponse = await studentApi.getStudentResults()
+      // Only show exams where the admin has explicitly published results
+      // (Results tab → Publish Results button sets release_result = true)
+      // Exam scheduling (Exams tab → Schedule button) only enables timetable/invigilator
       const exams = (resultsResponse?.data?.exams || []).filter(
         (exam) => exam.student_status === 'published'
       )
@@ -67,6 +70,7 @@ const ReportCard = () => {
   }, [queryExamId, selectedExamId, setSearchParams])
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     loadReportCard().catch(() => {})
   }, [loadReportCard])
 
@@ -103,7 +107,7 @@ const ReportCard = () => {
       a.click()
       URL.revokeObjectURL(url)
       toastSuccess('Report card downloaded successfully.')
-    } catch (err) {
+    } catch {
       toastError('Failed to download report card PDF.')
     } finally {
       setDownloading(false)
@@ -191,8 +195,8 @@ const ReportCard = () => {
       ) : (
         <EmptyState
           icon={FileBarChart2}
-          title="No published report card yet"
-          description="Once at least one exam result is published, the official report card will appear here."
+          title="Results not yet published"
+          description="Your exams are scheduled, but the administrator has not published the results yet. Report cards will appear here once results are officially released."
         />
       )}
 

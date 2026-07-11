@@ -2,6 +2,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { NavLink, useLocation } from 'react-router-dom'
 import * as Icons from 'lucide-react'
+// eslint-disable-next-line no-unused-vars
 import { motion, AnimatePresence } from 'framer-motion'
 import useUiStore from '@/store/uiStore'
 import useAuth from '@/hooks/useAuth'
@@ -54,7 +55,6 @@ const getNavGroups = (user) => {
         label: 'Account',
         items: [
           { label: 'Leave Application', icon: 'PlaneTakeoff', path: ROUTES.TEACHER_LEAVE },
-          { label: 'My Library',        icon: 'Library',      path: ROUTES.LIBRARY_MY_BOOKS },
           { label: 'My Profile',        icon: 'UserRound',    path: ROUTES.TEACHER_PROFILE },
         ],
       },
@@ -233,7 +233,7 @@ const getNavGroups = (user) => {
     {
       label: 'Library Portal',
       items: [
-        { label: 'Enter Library',      icon: 'Library', path: ROUTES.LIBRARY_DASHBOARD, roles: [ROLES.ADMIN, ROLES.TEACHER, ROLES.STAFF, ROLES.ACCOUNTANT] },
+        { label: 'Enter Library',      icon: 'Library', path: ROUTES.LIBRARY_DASHBOARD, roles: [ROLES.ADMIN, ROLES.STAFF, ROLES.ACCOUNTANT] },
       ],
     },
     {
@@ -556,7 +556,7 @@ const Sidebar = ({ mobileOpen, onMobileClose }) => {
     if (e.target === overlayRef.current) onMobileClose?.()
   }
 
-  const initials = user?.name
+  const Initials = user?.name
     ?.split(' ')
     .slice(0, 2)
     .map(n => n[0]?.toUpperCase())
@@ -606,7 +606,6 @@ const Sidebar = ({ mobileOpen, onMobileClose }) => {
           collapsed={sidebarCollapsed}
           toggleCollapsed={toggleSidebar}
           user={user}
-          initials={initials}
           navGroups={navGroups}
           isMobile={false}
         />
@@ -630,7 +629,6 @@ const Sidebar = ({ mobileOpen, onMobileClose }) => {
           collapsed={false}
           toggleCollapsed={onMobileClose}
           user={user}
-          initials={initials}
           navGroups={navGroups}
           isMobile
           onClose={onMobileClose}
@@ -641,7 +639,7 @@ const Sidebar = ({ mobileOpen, onMobileClose }) => {
 }
 
 /* ─────────────────────────── SidebarContent ─────────────────────── */
-const SidebarContent = ({ collapsed, toggleCollapsed, user, initials, navGroups, isMobile, onClose }) => (
+const SidebarContent = ({ collapsed, toggleCollapsed, user, navGroups, isMobile, onClose }) => (
   <div className="flex flex-col h-full overflow-hidden">
 
     {/* Logo / brand row */}

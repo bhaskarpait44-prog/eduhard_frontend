@@ -88,10 +88,10 @@ const TeacherProfile = () => {
       {/* Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="flex-1">
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+          <h1 className="text-2xl font-bold text-text-primary">
             My Profile
           </h1>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
+          <p className="text-sm text-text-secondary mt-0.5">
             View and manage your profile details. Employee ID: {profile?.employee_id || '--'} | {profile?.designation || 'Teacher'} | {profile?.department || 'Department not set'}
           </p>
         </div>

@@ -124,7 +124,7 @@ const StudentDashboard = () => {
       title: "Today's Classes",
       icon: CalendarRange,
       route: ROUTES.STUDENT_TIMETABLE,
-      tone: currentPeriod ? '#16a34a' : '#7c3aed',
+      tone: currentPeriod ? '#16a34a' : 'var(--color-brand)',
       primary: `${classesToday.total_periods || schedule.length || 0}`,
       secondary: currentPeriod
         ? `${currentPeriod.subject_name} is live now`
@@ -165,12 +165,12 @@ const StudentDashboard = () => {
         <section
           className="relative overflow-hidden rounded-3xl border px-5 py-5 sm:px-6"
           style={{
-            borderColor: '#c4b5fd',
-            background: 'linear-gradient(135deg, rgba(124,58,237,0.22), rgba(236,72,153,0.14) 55%, rgba(255,255,255,0.92) 100%)',
-            boxShadow: '0 20px 48px rgba(124,58,237,0.16)',
+            borderColor: 'var(--color-border)',
+            background: 'linear-gradient(135deg, rgba(79,70,229,0.12), rgba(236,72,153,0.06) 55%, var(--color-surface) 100%)',
+            boxShadow: '0 20px 48px rgba(79,70,229,0.10)',
           }}
         >
-          <div className="absolute inset-x-0 top-0 h-1 rounded-t-3xl bg-[linear-gradient(90deg,#7c3aed,#ec4899,#f59e0b,#10b981)]" />
+          <div className="absolute inset-x-0 top-0 h-1 rounded-t-3xl bg-[linear-gradient(90deg,var(--color-brand),#ec4899,#f59e0b,#10b981)]" />
           <div className="flex items-start gap-4">
             <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-white/80 text-[var(--student-accent)] shadow-sm">
               <Sparkles size={22} />
@@ -236,19 +236,19 @@ const StudentDashboard = () => {
         className="relative overflow-hidden rounded-3xl border p-5 sm:p-6"
         style={{
           borderColor: 'var(--color-border)',
-          background: 'linear-gradient(135deg, rgba(109,40,217,0.20), rgba(79,70,229,0.12) 52%, var(--color-surface) 100%)',
-          boxShadow: '0 4px 24px rgba(109,40,217,0.08)',
+          background: 'linear-gradient(135deg, rgba(79,70,229,0.12), rgba(99,102,241,0.06) 52%, var(--color-surface) 100%)',
+          boxShadow: '0 4px 24px rgba(79,70,229,0.04)',
         }}
       >
         {/* decorative top stripe */}
-        <div className="absolute inset-x-0 top-0 h-[3px] rounded-t-3xl" style={{ background: 'linear-gradient(90deg, #7c3aed, #6366f1)' }} />
+        <div className="absolute inset-x-0 top-0 h-[3px] rounded-t-3xl" style={{ background: 'linear-gradient(90deg, var(--color-brand), var(--color-brand-light))' }} />
 
         <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
           <div className="flex items-start gap-4 min-w-0">
             {/* Avatar */}
             <div
               className="hidden sm:flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl text-lg font-bold text-white shadow-lg"
-              style={{ background: 'linear-gradient(135deg, #7c3aed, #5b21b6)', boxShadow: '0 4px 16px rgba(124,58,237,0.35)' }}
+              style={{ background: 'linear-gradient(135deg, var(--color-brand-light), var(--color-brand))', boxShadow: '0 4px 16px rgba(79,70,229,0.20)' }}
             >
               {getInitials(student.name || user?.name || 'S')}
             </div>
@@ -271,7 +271,7 @@ const StudentDashboard = () => {
               </p>
 
               <div className="mt-3 flex flex-wrap gap-2">
-                <SoftPill label={`${classesToday.total_periods || schedule.length || 0} classes today`} tone="#6d28d9" />
+                <SoftPill label={`${classesToday.total_periods || schedule.length || 0} classes today`} tone="var(--color-brand)" />
                 <SoftPill label={`${upcomingEvents.length} upcoming event(s)`} tone="#0f766e" />
                 <SoftPill label={`${achievements.length} achievement badge(s)`} tone="#d97706" />
               </div>
@@ -386,8 +386,8 @@ const StudentDashboard = () => {
                       <div
                         className="h-4 w-4 rounded-full border-2 shrink-0 transition-all duration-300"
                         style={{
-                          borderColor: item.status === 'current' ? '#16a34a' : item.status === 'done' ? '#cbd5e1' : '#7c3aed',
-                          backgroundColor: item.status === 'current' ? '#16a34a' : item.status === 'done' ? 'var(--color-surface)' : 'var(--color-surface)',
+                          borderColor: item.status === 'current' ? '#16a34a' : item.status === 'done' ? 'var(--color-border)' : 'var(--color-brand)',
+                          backgroundColor: item.status === 'current' ? '#16a34a' : 'var(--color-surface)',
                           boxShadow: item.status === 'current' ? '0 0 0 4px rgba(22,163,74,0.18)' : 'none',
                         }}
                       />
@@ -915,14 +915,14 @@ function statusPillClass(status) {
 function statusPillStyle(status) {
   if (status === 'current') return { backgroundColor: 'rgba(22,163,74,0.14)', color: '#15803d' }
   if (status === 'done') return { backgroundColor: 'rgba(148,163,184,0.16)', color: '#64748b' }
-  return { backgroundColor: 'rgba(124,58,237,0.14)', color: '#6d28d9' }
+  return { backgroundColor: 'var(--student-accent-soft)', color: 'var(--student-accent)' }
 }
 
 function eventTone(type) {
   if (type === 'exam') return { soft: 'rgba(37,99,235,0.08)', strong: '#2563eb', border: 'rgba(37,99,235,0.18)' }
   if (type === 'fee') return { soft: 'rgba(239,68,68,0.08)', strong: '#dc2626', border: 'rgba(239,68,68,0.18)' }
   if (type === 'holiday') return { soft: 'rgba(22,163,74,0.08)', strong: '#15803d', border: 'rgba(22,163,74,0.18)' }
-  return { soft: 'rgba(124,58,237,0.08)', strong: '#6d28d9', border: 'rgba(124,58,237,0.18)' }
+  return { soft: 'var(--student-accent-soft)', strong: 'var(--student-accent)', border: 'rgba(79,70,229,0.15)' }
 }
 
 function prettifyBadge(value) {

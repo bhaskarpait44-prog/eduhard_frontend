@@ -254,15 +254,6 @@ const FeeStructurePage = ({ apiMode = 'default' }) => {
     )
   }, [structures, search])
 
-  const stats = useMemo(() => {
-    const nonOptional = structures.filter(s => !s.is_optional)
-    const annualTotal = nonOptional.reduce((acc, curr) => {
-      const amount = parseFloat(curr.amount) || 0
-      const multiplier = curr.frequency === 'monthly' ? 12 : curr.frequency === 'quarterly' ? 4 : 1
-      return acc + (amount * multiplier)
-    }, 0)
-    return { count: structures.length, annualTotal }
-  }, [structures])
 
   const calculateAnnual = (fee) => {
     const amt = parseFloat(fee.amount) || 0
@@ -392,36 +383,6 @@ const FeeStructurePage = ({ apiMode = 'default' }) => {
       }}
     >
       <div className="space-y-6">
-        {/* Welcome Header */}
-        <div 
-          className="flex flex-wrap items-center justify-between gap-6 rounded-[32px] border p-8 shadow-sm relative overflow-hidden backdrop-blur-md" 
-          style={{ 
-            background: isDark 
-              ? 'linear-gradient(135deg, rgba(76, 192, 212, 0.15) 0%, #1e1b4b 100%)'
-              : 'linear-gradient(135deg, #e0f7fa 0%, #fffdf9 100%)', 
-            borderColor: isDark ? 'rgba(76, 192, 212, 0.3)' : '#b2ebf2'
-          }}
-        >
-          <div className="absolute -right-20 -top-20 w-64 h-64 rounded-full bg-cyan-500/10 blur-3xl pointer-events-none" />
-          
-          <div className="z-10 max-w-md">
-            <h1 className="text-2xl font-black text-gray-900 dark:text-white tracking-tight">Fee Structure</h1>
-            <p className="mt-1.5 text-xs text-gray-500 dark:text-gray-400 font-semibold leading-relaxed">
-              Manage fee components for each class and session. These components define what students are charged.
-            </p>
-          </div>
-
-          <Space size="middle" className="z-10">
-            <div className="rounded-2xl bg-white/70 dark:bg-gray-900/60 border border-cyan-100/40 dark:border-cyan-950/20 p-4 min-w-[120px] shadow-sm">
-              <span className="text-[10px] font-black uppercase tracking-wider text-gray-400">Components</span>
-              <p className="text-xl font-black text-gray-900 dark:text-white mt-0.5">{stats.count}</p>
-            </div>
-            <div className="rounded-2xl bg-white/70 dark:bg-gray-900/60 border border-cyan-100/40 dark:border-cyan-950/20 p-4 min-w-[140px] shadow-sm">
-              <span className="text-[10px] font-black uppercase tracking-wider text-cyan-700 dark:text-cyan-400">Est. Annual (Non-opt)</span>
-              <p className="text-xl font-black text-cyan-600 dark:text-cyan-400 mt-0.5">{formatCurrency(stats.annualTotal)}</p>
-            </div>
-          </Space>
-        </div>
 
         {/* Filter Card */}
         <Card 

@@ -33,7 +33,6 @@ const EnterMarks = () => {
     loadingEntry,
     saving,
     entryPayload,
-    getAvailableSubjects,
     loadEntry,
     saveEntry,
     submitForReview,
@@ -55,10 +54,6 @@ const EnterMarks = () => {
     ) || null
   }, [sectionKey, uniqueSections])
 
-  const selectedExam = useMemo(() => (
-    exams.find((exam) => String(exam.id) === String(examId)) || null
-  ), [examId, exams])
-
   const visibleSections = uniqueSections
 
   useEffect(() => {
@@ -78,12 +73,14 @@ const EnterMarks = () => {
     )
     const first = matched || uniqueSections[0]
     if (first) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setSectionKey(`${first.class_id}:${first.section_id}:${first.is_class_teacher ? 'class_teacher' : 'subject_teacher'}`)
     }
   }, [preferredAssignment.assignment_role, preferredAssignment.class_id, preferredAssignment.section_id, uniqueSections, sectionKey])
 
   useEffect(() => {
     if (!visibleSections.length) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       if (sectionKey) setSectionKey('')
       return
     }
@@ -127,6 +124,7 @@ const EnterMarks = () => {
   // Automatically select a subject when subjectOptions changes
   useEffect(() => {
     if (!subjectOptions.length) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setSubjectId('')
       return
     }
@@ -145,6 +143,7 @@ const EnterMarks = () => {
   // Automatically resolve the examId when selectedSection and subjectId change
   useEffect(() => {
     if (!selectedSection || !subjectId || !exams.length) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setExamId('')
       return
     }
@@ -333,7 +332,6 @@ const EnterMarks = () => {
               subject={currentSubject}
               state={state}
               locked={entryPayload.locked}
-              reviewStatus={entryPayload.review_status}
               saving={saving}
               lastSavedAt={lastSavedAt}
               onChange={(enrollmentId, field, value) => {

@@ -76,26 +76,26 @@ const mobileTabs = [
 ]
 
 const studentThemeVars = {
-  '--color-brand': '#6d28d9',
-  '--color-brand-light': '#8b5cf6',
-  '--color-brand-dark': '#5b21b6',
-  '--color-bg': '#f5f3ff',
+  '--color-brand': '#4f46e5',
+  '--color-brand-light': '#6366f1',
+  '--color-brand-dark': '#3730a3',
+  '--color-bg': '#f8fafc',
   '--color-surface': '#ffffff',
-  '--color-surface-raised': '#f3efff',
-  '--color-border': '#ddd6fe',
-  '--color-text-primary': '#22163a',
-  '--color-text-secondary': '#5b4b77',
-  '--color-text-muted': '#8b7aa8',
-  '--color-sidebar-bg': '#f7f4ff',
-  '--color-sidebar-text': '#3f315b',
-  '--color-sidebar-muted': '#7f6a9f',
-  '--color-sidebar-active': '#6d28d9',
-  '--color-sidebar-hover': '#efe7ff',
-  '--color-sidebar-border': '#ddd6fe',
+  '--color-surface-raised': '#f1f5f9',
+  '--color-border': '#e2e8f0',
+  '--color-text-primary': '#0f172a',
+  '--color-text-secondary': '#475569',
+  '--color-text-muted': '#94a3b8',
+  '--color-sidebar-bg': '#ffffff',
+  '--color-sidebar-text': '#1e293b',
+  '--color-sidebar-muted': '#64748b',
+  '--color-sidebar-active': '#4f46e5',
+  '--color-sidebar-hover': '#f1f5f9',
+  '--color-sidebar-border': '#e2e8f0',
   '--color-sidebar-card': '#ffffff',
-  '--student-accent': '#7c3aed',
-  '--student-accent-soft': 'rgba(124, 58, 237, 0.14)',
-  '--student-tab-bg': 'rgba(255,255,255,0.86)',
+  '--student-accent': '#4f46e5',
+  '--student-accent-soft': 'rgba(79, 70, 229, 0.08)',
+  '--student-tab-bg': 'rgba(255, 255, 255, 0.8)',
 }
 
 const StudentLayout = () => {
@@ -170,7 +170,7 @@ const StudentLayout = () => {
       className="min-h-screen"
       style={studentThemeVars}
     >
-      <div className="dark:[--color-bg:#140f24] dark:[--color-surface:#1b1530] dark:[--color-surface-raised:#241d40] dark:[--color-border:#382d63] dark:[--color-text-primary:#f5f3ff] dark:[--color-text-secondary:#c4b5fd] dark:[--color-text-muted:#8f7bc4] dark:[--color-sidebar-bg:#120d22] dark:[--color-sidebar-text:#e9ddff] dark:[--color-sidebar-muted:#aa98d9] dark:[--color-sidebar-hover:#241a40] dark:[--color-sidebar-border:#312652] dark:[--color-sidebar-card:#1a1430] dark:[--student-tab-bg:rgba(26,20,48,0.92)] min-h-screen bg-[var(--color-bg)] text-[var(--color-text-primary)] transition-colors duration-300">
+      <div className="dark:[--color-bg:#0f172a] dark:[--color-surface:#1e293b] dark:[--color-surface-raised:#334155] dark:[--color-border:#334155] dark:[--color-text-primary:#f8fafc] dark:[--color-text-secondary:#cbd5e1] dark:[--color-text-muted:#64748b] dark:[--color-sidebar-bg:#0f172a] dark:[--color-sidebar-text:#f8fafc] dark:[--color-sidebar-muted:#94a3b8] dark:[--color-sidebar-hover:#1e293b] dark:[--color-sidebar-border:#334155] dark:[--color-sidebar-card:#1e293b] dark:[--student-tab-bg:rgba(15,23,42,0.8)] dark:[--student-accent-soft:rgba(99,102,241,0.15)] dark:[--student-accent:#6366f1] min-h-screen bg-[var(--color-bg)] text-[var(--color-text-primary)] transition-colors duration-300">
 
         {/* ── Desktop Sidebar ── */}
         <aside
@@ -185,7 +185,7 @@ const StudentLayout = () => {
             <div className="flex items-center gap-3">
               <div
                 className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl text-sm font-bold text-white shadow-lg"
-                style={{ background: 'linear-gradient(135deg, #7c3aed, #5b21b6)', boxShadow: '0 4px 12px rgba(124,58,237,0.35)' }}
+                style={{ background: 'linear-gradient(135deg, var(--color-brand-light), var(--color-brand))', boxShadow: '0 4px 12px rgba(79,70,229,0.25)' }}
               >
                 {getInitials(studentName)}
               </div>
@@ -221,7 +221,7 @@ const StudentLayout = () => {
                         style={({ isActive }) => ({
                           backgroundColor: isActive ? 'var(--color-sidebar-active)' : 'transparent',
                           color: isActive ? '#fff' : 'var(--color-sidebar-text)',
-                          boxShadow: isActive ? '0 2px 8px rgba(109,40,217,0.25)' : 'none',
+                           boxShadow: isActive ? '0 2px 8px rgba(79,70,229,0.20)' : 'none',
                         })}
                       >
                         {({ isActive }) => (
@@ -229,7 +229,7 @@ const StudentLayout = () => {
                             <span
                               className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg transition-all duration-200"
                               style={{
-                                backgroundColor: isActive ? 'rgba(255,255,255,0.20)' : 'rgba(124,58,237,0.08)',
+                                backgroundColor: isActive ? 'rgba(255,255,255,0.20)' : 'var(--student-accent-soft)',
                                 color: isActive ? '#fff' : 'var(--color-sidebar-active)',
                               }}
                             >
@@ -282,7 +282,7 @@ const StudentLayout = () => {
                 <div className="flex items-center gap-2.5 min-w-0">
                   <div
                     className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-[12px] font-bold text-white"
-                    style={{ background: 'linear-gradient(135deg, #7c3aed, #5b21b6)' }}
+                    style={{ background: 'linear-gradient(135deg, var(--color-brand-light), var(--color-brand))' }}
                   >
                     {getInitials(studentName)}
                   </div>
@@ -307,7 +307,7 @@ const StudentLayout = () => {
                 {studentMenu.map((group) => (
                   <div key={group.label}>
                     <p className="mb-2 px-2 text-[10px] font-bold uppercase tracking-[0.20em]" style={{ color: 'var(--color-sidebar-muted)' }}>
-                      {group.label}
+                       {group.label}
                     </p>
                     <div className="space-y-0.5">
                       {group.items.map((item) => {
@@ -320,7 +320,7 @@ const StudentLayout = () => {
                             style={({ isActive }) => ({
                               backgroundColor: isActive ? 'var(--color-sidebar-active)' : 'transparent',
                               color: isActive ? '#fff' : 'var(--color-sidebar-text)',
-                              boxShadow: isActive ? '0 2px 8px rgba(109,40,217,0.25)' : 'none',
+                              boxShadow: isActive ? '0 2px 8px rgba(79,70,229,0.20)' : 'none',
                             })}
                           >
                             {({ isActive }) => (
@@ -328,7 +328,7 @@ const StudentLayout = () => {
                                 <span
                                   className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg"
                                   style={{
-                                    backgroundColor: isActive ? 'rgba(255,255,255,0.20)' : 'rgba(124,58,237,0.08)',
+                                    backgroundColor: isActive ? 'rgba(255,255,255,0.20)' : 'var(--student-accent-soft)',
                                     color: isActive ? '#fff' : 'var(--color-sidebar-active)',
                                   }}
                                 >
@@ -429,7 +429,7 @@ const StudentLayout = () => {
                   type="button"
                   onClick={() => navigate(ROUTES.STUDENT_PROFILE)}
                   className="hidden sm:flex h-9 w-9 items-center justify-center rounded-xl text-[12px] font-bold text-white shrink-0 transition hover:opacity-85"
-                  style={{ background: 'linear-gradient(135deg, #7c3aed, #5b21b6)', boxShadow: '0 2px 8px rgba(124,58,237,0.30)' }}
+                  style={{ background: 'linear-gradient(135deg, var(--color-brand-light), var(--color-brand))', boxShadow: '0 2px 8px rgba(99,102,241,0.20)' }}
                   title="My Profile"
                   aria-label="My Profile"
                 >

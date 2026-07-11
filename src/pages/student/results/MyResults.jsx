@@ -55,7 +55,9 @@ const MyResults = () => {
     toastInfo('Refreshing results')
     try {
       await refresh()
-    } catch {}
+    } catch {
+      // silently ignore refresh errors
+    }
   }
 
   return (
@@ -1020,9 +1022,9 @@ const AwaitingExamPanel = ({ exam }) => (
     <div>
       <p className="results-awaiting-panel__title">{exam.name}</p>
       <p className="results-awaiting-panel__desc">
-        {exam.student_status === 'upcoming'
-          ? `Scheduled for ${formatDate(exam.start_date, 'long')}. Marks will appear after publication.`
-          : 'This exam is in your session, but marks have not been published yet.'}
+        {exam.student_status === 'upcoming' || !exam.student_status
+          ? `Scheduled for ${formatDate(exam.start_date, 'long')}. Results will appear after the exam is complete and results are published by the administrator.`
+          : 'This exam has been conducted. Results will appear here once the administrator publishes them in the Results section.'}
       </p>
       <span className="results-exam-tab__badge" style={examStatusStyle(exam.student_status)}>
         {exam.student_status}
@@ -1085,8 +1087,8 @@ const ResultsPageSkeleton = ({ compact = false }) => (
 )
 
 function examStatusStyle(status) {
-  if (status === 'published') return { backgroundColor: '#dcfce7', color: '#15803d' }
-  if (status === 'awaiting') return { backgroundColor: '#e5e7eb', color: '#4b5563' }
+  if (status === 'published') return { backgroundColor: '#fef3c7', color: '#b45309' } // scheduled, not yet released
+  if (status === 'awaiting')  return { backgroundColor: '#e5e7eb', color: '#4b5563' }
   return { backgroundColor: '#dbeafe', color: '#1d4ed8' }
 }
 
