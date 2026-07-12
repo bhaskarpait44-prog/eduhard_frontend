@@ -11,6 +11,7 @@ import {
   BookOpen,
   Star,
   AlertTriangle,
+  Medal,
 } from 'lucide-react'
 import Button from '@/components/ui/Button'
 import EmptyState from '@/components/ui/EmptyState'
@@ -62,18 +63,13 @@ const MyResults = () => {
 
   return (
     <div className="results-page">
-      {/* ── Top Action Bar ── */}
-      <div className="results-action-bar">
-        <div className="results-action-bar__left">
-          <div className="results-page-icon">
-            <ClipboardList size={18} />
-          </div>
-          <div>
-            <p className="results-page-label">Academic</p>
-            <h1 className="results-page-title">My Results</h1>
-          </div>
+      {/* ── Page Header ── */}
+      <div className="results-header">
+        <div>
+          <h1 className="results-header__title">My Results</h1>
+          <p className="results-header__subtitle">Exam performance and report cards</p>
         </div>
-        <div className="results-action-bar__right">
+        <div className="results-header__actions">
           <Button
             variant="secondary"
             onClick={handleRefresh}
@@ -103,32 +99,16 @@ const MyResults = () => {
       {/* ── Withheld Banner ── */}
       {isWithheld && (
         <div
-          className="results-withheld-banner animate-in fade-in slide-in-from-top-2 duration-400"
-          style={{
-            borderColor: totalPending > 0 ? '#fca5a5' : '#fcd34d',
-            backgroundColor: totalPending > 0 ? '#fff1f2' : '#fffbeb',
-          }}
+          className={`results-banner ${
+            totalPending > 0 ? 'results-banner--danger' : 'results-banner--warning'
+          }`}
         >
-          <div
-            className="results-withheld-banner__icon"
-            style={{
-              backgroundColor: totalPending > 0 ? '#fee2e2' : '#fef3c7',
-              color: totalPending > 0 ? '#dc2626' : '#d97706',
-            }}
-          >
-            <AlertTriangle size={16} />
-          </div>
-          <div className="results-withheld-banner__body">
-            <p
-              className="results-withheld-banner__title"
-              style={{ color: totalPending > 0 ? '#991b1b' : '#92400e' }}
-            >
-              {totalPending > 0 ? 'Result Withheld — Pending Dues' : 'Result Awaiting Release'}
+          <AlertTriangle size={16} className="results-banner__icon" />
+          <div className="results-banner__body">
+            <p className="results-banner__title">
+              {totalPending > 0 ? 'Result withheld — pending dues' : 'Result awaiting release'}
             </p>
-            <p
-              className="results-withheld-banner__desc"
-              style={{ color: totalPending > 0 ? '#b91c1c' : '#a16207' }}
-            >
+            <p className="results-banner__desc">
               {totalPending > 0 ? (
                 <>
                   Your result is withheld due to a pending balance of{' '}
@@ -142,7 +122,7 @@ const MyResults = () => {
             {totalPending > 0 && (
               <button
                 type="button"
-                className="results-withheld-banner__link"
+                className="results-banner__link"
                 onClick={() => navigate(ROUTES.STUDENT_FEES)}
               >
                 Go to Fees <ArrowRight size={13} />
@@ -153,11 +133,11 @@ const MyResults = () => {
       )}
 
       {/* ── Exam Selector ── */}
-      <div className="results-exam-selector">
-        <div className="results-exam-selector__header">
-          <p className="results-exam-selector__label">Select Exam</p>
+      <div className="results-card">
+        <div className="results-card__header">
+          <h2 className="results-card__title">Select Exam</h2>
           {!loading && exams.length > 0 && (
-            <span className="results-exam-selector__count">{exams.length} exams</span>
+            <span className="results-count">{exams.length} exams</span>
           )}
         </div>
 
@@ -177,7 +157,7 @@ const MyResults = () => {
                   <div className="results-exam-tab__top">
                     <span className="results-exam-tab__name">{exam.name}</span>
                     <span
-                      className="results-exam-tab__badge"
+                      className="results-badge"
                       style={examStatusStyle(exam.student_status)}
                     >
                       {exam.student_status}
@@ -212,71 +192,67 @@ const MyResults = () => {
         <ResultsPageSkeleton compact />
       ) : (
         <>
-          {/* ── Summary Stats ── */}
-          <div className="results-summary-grid">
-            <div className="results-summary-header">
+          {/* ── Summary ── */}
+          <div className="results-card">
+            <div className="results-card__header">
               <div>
-                <h2 className="results-summary-exam-name">
+                <h2 className="results-summary-name">
                   {result?.exam?.name || selectedExam.name}
                 </h2>
-                <p className="results-summary-exam-date">
+                <p className="results-summary-meta">
                   {formatDate(result?.exam?.start_date || selectedExam.start_date, 'long')}
+                  {result?.summary?.class_rank && (
+                    <span className="results-summary-rank">
+                      <Medal size={13} />
+                      Rank {result.summary.class_rank} of {result.summary.class_strength}
+                    </span>
+                  )}
                 </p>
-                {result?.summary?.class_rank && (
-                  <p className="results-summary-rank">
-                    🏅 Rank {result.summary.class_rank} of {result.summary.class_strength}
-                  </p>
-                )}
               </div>
-              <span
-                className="results-summary-status-badge"
-                style={resultBadgeStyle(summary?.result_status)}
-              >
+              <span className="results-badge" style={resultBadgeStyle(summary?.result_status)}>
                 {summary?.result_status || 'awaiting'}
               </span>
             </div>
 
-            <div className="results-metrics-row">
+            <div className="results-metrics">
               <MetricCard
                 label="Overall"
                 value={formatPercent(summary?.percentage || 0, 0)}
-                color="var(--student-accent)"
-                icon={<TrendingUp size={16} />}
+                icon={<TrendingUp size={15} />}
               />
               <MetricCard
                 label="Grade"
                 value={summary?.grade || '--'}
                 color={gradeTone(summary?.grade)}
-                icon={<Star size={16} />}
+                icon={<Star size={15} />}
               />
               <MetricCard
                 label="Status"
                 value={String(summary?.result_status || '--').toUpperCase()}
                 color={resultTone(summary?.result_status)}
-                icon={<Trophy size={16} />}
+                icon={<Trophy size={15} />}
               />
               <MetricCard
                 label="Subjects"
                 value={subjects.length}
-                color="#2563eb"
-                icon={<BookOpen size={16} />}
+                icon={<BookOpen size={15} />}
               />
             </div>
           </div>
 
           {/* ── Subject Marks Table ── */}
-          <div className="results-section-card">
-            <div className="results-section-card__header">
+          <div className="results-card">
+            <div className="results-card__header">
               <div>
-                <h2 className="results-section-card__title">Subject Wise Marks</h2>
-                <p className="results-section-card__desc">
+                <h2 className="results-card__title">Subject Wise Marks</h2>
+                <p className="results-card__desc">
                   Theory, practical, and combined subjects in one view.
                 </p>
               </div>
               {!isWithheld && (
                 <button
                   type="button"
-                  className="results-open-report-btn"
+                  className="results-link-btn"
                   onClick={() =>
                     navigate(`${ROUTES.STUDENT_REPORT_CARD}?examId=${selectedExamId}`)
                   }
@@ -291,14 +267,11 @@ const MyResults = () => {
           {/* ── Analysis + Outlook ── */}
           <div className="results-bottom-grid">
             {/* Result Analysis */}
-            <div className="results-section-card">
-              <div className="results-section-card__header results-section-card__header--icon">
-                <div className="results-section-icon results-section-icon--green">
-                  <Trophy size={16} />
-                </div>
+            <div className="results-card">
+              <div className="results-card__header">
                 <div>
-                  <h2 className="results-section-card__title">Result Analysis</h2>
-                  <p className="results-section-card__desc">
+                  <h2 className="results-card__title">Result Analysis</h2>
+                  <p className="results-card__desc">
                     Strengths and areas that need attention.
                   </p>
                 </div>
@@ -315,12 +288,12 @@ const MyResults = () => {
                   title="Needs Improvement"
                   items={analysis?.needs_improvement || []}
                   emptyText="No D or F subjects in this exam."
-                  tone="#ef4444"
+                  tone="#dc2626"
                 />
                 {result?.analysis?.class_comparison && (
-                  <div className="results-comparison-block">
-                    <p className="results-comparison-block__label">Performance vs Class</p>
-                    <p className="results-comparison-block__value">
+                  <div className="results-subcard">
+                    <p className="results-subcard__label">Performance vs Class</p>
+                    <p className="results-subcard__value">
                       {result.analysis.class_comparison}
                     </p>
                   </div>
@@ -331,36 +304,34 @@ const MyResults = () => {
             {/* Right column */}
             <div className="results-right-col">
               {compartment ? (
-                <div className="results-compartment-card">
-                  <div className="results-compartment-card__icon">
+                <div className="results-card results-card--compartment">
+                  <div className="results-compartment__head">
                     <CircleAlert size={16} />
+                    <h2 className="results-card__title">Compartment Notice</h2>
                   </div>
-                  <div>
-                    <h2 className="results-compartment-card__title">Compartment Notice</h2>
-                    <p className="results-compartment-card__desc">
-                      You must pass these subjects to progress.
-                    </p>
-                    <div className="results-compartment-card__tags">
-                      {(compartment.subjects || []).map((subject) => (
-                        <span key={subject} className="results-compartment-card__tag">
-                          {subject}
-                        </span>
-                      ))}
-                    </div>
+                  <p className="results-card__desc">
+                    You must pass these subjects to progress.
+                  </p>
+                  <div className="results-tag-row">
+                    {(compartment.subjects || []).map((subject) => (
+                      <span key={subject} className="results-compartment__tag">
+                        {subject}
+                      </span>
+                    ))}
                   </div>
                 </div>
               ) : (
-                <div className="results-section-card">
-                  <h2 className="results-section-card__title">Promotion Outlook</h2>
-                  <p className="results-section-card__desc" style={{ marginTop: '8px' }}>
+                <div className="results-card">
+                  <h2 className="results-card__title">Promotion Outlook</h2>
+                  <p className="results-card__desc results-card__desc--spaced">
                     {summary?.result_status === 'pass'
                       ? 'Passing state — keep this momentum through the session.'
                       : 'Recovery needed — review red subjects and speak with your teacher.'}
                   </p>
-                  <div className="results-outlook-badge">
-                    <p className="results-outlook-badge__label">Current Result</p>
+                  <div className="results-subcard results-subcard--spaced">
+                    <p className="results-subcard__label">Current Result</p>
                     <p
-                      className="results-outlook-badge__value"
+                      className="results-outlook-value"
                       style={{ color: resultTone(summary?.result_status) }}
                     >
                       {String(summary?.result_status || 'AWAITING').toUpperCase()}
@@ -382,15 +353,15 @@ const MyResults = () => {
       )}
 
       <style>{`
-        /* ── Page Container ── */
+        /* ── Page ── */
         .results-page {
           display: flex;
           flex-direction: column;
           gap: 16px;
         }
 
-        /* ── Action Bar ── */
-        .results-action-bar {
+        /* ── Header ── */
+        .results-header {
           display: flex;
           align-items: center;
           justify-content: space-between;
@@ -398,138 +369,149 @@ const MyResults = () => {
           flex-wrap: wrap;
         }
 
-        .results-action-bar__left {
-          display: flex;
-          align-items: center;
-          gap: 12px;
-        }
-
-        .results-page-icon {
-          display: flex;
-          height: 38px;
-          width: 38px;
-          align-items: center;
-          justify-content: center;
-          border-radius: 12px;
-          background-color: rgba(124, 58, 237, 0.10);
-          color: var(--student-accent);
-          flex-shrink: 0;
-        }
-
-        .results-page-label {
-          font-size: 10px;
-          font-weight: 700;
-          letter-spacing: 0.16em;
-          text-transform: uppercase;
-          color: var(--color-text-muted);
-          margin: 0;
-          line-height: 1;
-        }
-
-        .results-page-title {
+        .results-header__title {
           font-size: 20px;
-          font-weight: 700;
+          font-weight: 650;
           color: var(--color-text-primary);
-          margin: 2px 0 0 0;
+          margin: 0;
           line-height: 1.2;
         }
 
-        .results-action-bar__right {
+        .results-header__subtitle {
+          font-size: 13px;
+          color: var(--color-text-secondary);
+          margin: 2px 0 0;
+        }
+
+        .results-header__actions {
           display: flex;
           align-items: center;
           gap: 8px;
           flex-wrap: wrap;
         }
 
-        /* ── Withheld Banner ── */
-        .results-withheld-banner {
+        /* ── Banner ── */
+        .results-banner {
           display: flex;
           align-items: flex-start;
-          gap: 12px;
+          gap: 10px;
           padding: 14px 16px;
-          border-radius: 16px;
+          border-radius: 12px;
           border: 1px solid;
         }
 
-        .results-withheld-banner__icon {
-          display: flex;
-          height: 32px;
-          width: 32px;
-          align-items: center;
-          justify-content: center;
-          border-radius: 8px;
-          flex-shrink: 0;
+        .results-banner--danger {
+          border-color: #fecaca;
+          background-color: #fef2f2;
+          color: #991b1b;
         }
 
-        .results-withheld-banner__body {
+        .results-banner--warning {
+          border-color: #fde68a;
+          background-color: #fffbeb;
+          color: #92400e;
+        }
+
+        .results-banner__icon {
+          flex-shrink: 0;
+          margin-top: 2px;
+        }
+
+        .results-banner__body {
           flex: 1;
           min-width: 0;
         }
 
-        .results-withheld-banner__title {
+        .results-banner__title {
           font-size: 13px;
-          font-weight: 700;
-          margin: 0 0 4px;
+          font-weight: 650;
+          margin: 0 0 2px;
         }
 
-        .results-withheld-banner__desc {
+        .results-banner__desc {
           font-size: 13px;
           line-height: 1.5;
           margin: 0;
+          opacity: 0.9;
         }
 
-        .results-withheld-banner__link {
+        .results-banner__link {
           display: inline-flex;
           align-items: center;
           gap: 4px;
           margin-top: 8px;
           font-size: 12px;
-          font-weight: 700;
+          font-weight: 650;
           border: none;
           background: none;
           cursor: pointer;
           padding: 0;
-          color: #dc2626;
+          color: inherit;
           text-decoration: underline;
-          text-underline-offset: 2px;
+          text-underline-offset: 3px;
         }
 
-        /* ── Exam Selector ── */
-        .results-exam-selector {
+        /* ── Card ── */
+        .results-card {
           background-color: var(--color-surface);
           border: 1px solid var(--color-border);
-          border-radius: 20px;
-          padding: 18px 20px;
+          border-radius: 12px;
+          padding: 20px;
         }
 
-        .results-exam-selector__header {
+        .results-card__header {
           display: flex;
-          align-items: center;
+          align-items: flex-start;
           justify-content: space-between;
-          margin-bottom: 14px;
+          gap: 12px;
+          margin-bottom: 16px;
+          flex-wrap: wrap;
         }
 
-        .results-exam-selector__label {
-          font-size: 11px;
-          font-weight: 700;
-          letter-spacing: 0.16em;
-          text-transform: uppercase;
-          color: var(--color-text-muted);
+        .results-card__title {
+          font-size: 15px;
+          font-weight: 650;
+          color: var(--color-text-primary);
           margin: 0;
         }
 
-        .results-exam-selector__count {
-          font-size: 11px;
-          font-weight: 600;
+        .results-card__desc {
+          font-size: 13px;
+          color: var(--color-text-secondary);
+          margin: 3px 0 0;
+          line-height: 1.5;
+        }
+
+        .results-card__desc--spaced {
+          margin-top: 8px;
+        }
+
+        .results-count {
+          font-size: 12px;
           color: var(--color-text-secondary);
           background-color: var(--color-surface-raised);
+          border: 1px solid var(--color-border);
           padding: 2px 10px;
           border-radius: 99px;
         }
 
+        /* ── Badge ── */
+        .results-badge {
+          font-size: 11px;
+          font-weight: 600;
+          text-transform: capitalize;
+          padding: 3px 10px;
+          border-radius: 99px;
+          white-space: nowrap;
+          flex-shrink: 0;
+          align-self: flex-start;
+          line-height: 1.4;
+        }
+
+        /* ── Exam Tabs ── */
         .results-exam-tabs {
           display: flex;
-          gap: 10px;
+          gap: 8px;
           overflow-x: auto;
           padding-bottom: 2px;
           scrollbar-width: thin;
@@ -538,33 +520,31 @@ const MyResults = () => {
         .results-exam-tab {
           flex-shrink: 0;
           min-width: 160px;
-          border-radius: 14px;
-          border: 1.5px solid var(--color-border);
+          border-radius: 10px;
+          border: 1px solid var(--color-border);
           padding: 12px 14px;
           text-align: left;
           background-color: var(--color-surface);
           cursor: pointer;
-          transition: all 0.18s ease;
+          transition: border-color 0.15s ease, background-color 0.15s ease;
           outline: none;
         }
 
         .results-exam-tab:hover {
-          border-color: rgba(124, 58, 237, 0.35);
-          background-color: rgba(124, 58, 237, 0.04);
-          transform: translateY(-1px);
+          border-color: var(--student-accent);
         }
 
         .results-exam-tab--active {
-          border-color: var(--student-accent) !important;
-          background-color: rgba(124, 58, 237, 0.08) !important;
-          box-shadow: 0 4px 16px rgba(109, 40, 217, 0.10);
+          border-color: var(--student-accent);
+          background-color: var(--color-surface-raised);
+          box-shadow: inset 0 0 0 1px var(--student-accent);
         }
 
         .results-exam-tab__top {
           display: flex;
           align-items: flex-start;
           justify-content: space-between;
-          gap: 6px;
+          gap: 8px;
         }
 
         .results-exam-tab__name {
@@ -574,197 +554,106 @@ const MyResults = () => {
           line-height: 1.3;
         }
 
-        .results-exam-tab__badge {
-          font-size: 9px;
-          font-weight: 700;
-          letter-spacing: 0.12em;
-          text-transform: uppercase;
-          padding: 2px 7px;
-          border-radius: 99px;
-          white-space: nowrap;
-          flex-shrink: 0;
-        }
-
         .results-exam-tab__date {
-          font-size: 11px;
+          font-size: 12px;
           color: var(--color-text-secondary);
-          margin: 6px 0 0 0;
+          margin: 6px 0 0;
         }
 
-        /* ── Summary Section ── */
-        .results-summary-grid {
-          background-color: var(--color-surface);
-          border: 1px solid var(--color-border);
-          border-radius: 20px;
-          padding: 20px;
-        }
-
-        .results-summary-header {
-          display: flex;
-          align-items: flex-start;
-          justify-content: space-between;
-          gap: 12px;
-          margin-bottom: 18px;
-          flex-wrap: wrap;
-        }
-
-        .results-summary-exam-name {
-          font-size: 18px;
-          font-weight: 700;
+        /* ── Summary ── */
+        .results-summary-name {
+          font-size: 17px;
+          font-weight: 650;
           color: var(--color-text-primary);
           margin: 0;
         }
 
-        .results-summary-exam-date {
-          font-size: 12px;
+        .results-summary-meta {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          flex-wrap: wrap;
+          font-size: 13px;
           color: var(--color-text-secondary);
-          margin: 4px 0 0 0;
+          margin: 4px 0 0;
         }
 
         .results-summary-rank {
-          font-size: 12px;
+          display: inline-flex;
+          align-items: center;
+          gap: 4px;
           font-weight: 600;
-          color: var(--student-accent);
-          margin: 4px 0 0 0;
+          color: var(--color-text-primary);
         }
 
-        .results-summary-status-badge {
-          font-size: 10px;
-          font-weight: 700;
-          letter-spacing: 0.14em;
-          text-transform: uppercase;
-          padding: 4px 12px;
-          border-radius: 99px;
-          white-space: nowrap;
-          align-self: flex-start;
-        }
-
-        .results-metrics-row {
+        .results-metrics {
           display: grid;
           grid-template-columns: repeat(2, 1fr);
           gap: 10px;
         }
 
         @media (min-width: 640px) {
-          .results-metrics-row {
+          .results-metrics {
             grid-template-columns: repeat(4, 1fr);
           }
         }
 
         /* ── Metric Card ── */
-        .results-metric-card {
+        .results-metric {
           background-color: var(--color-surface-raised);
           border: 1px solid var(--color-border);
-          border-radius: 14px;
+          border-radius: 10px;
           padding: 14px 16px;
         }
 
-        .results-metric-card__header {
+        .results-metric__header {
           display: flex;
           align-items: center;
           justify-content: space-between;
-          margin-bottom: 8px;
+          gap: 8px;
+          margin-bottom: 6px;
         }
 
-        .results-metric-card__label {
-          font-size: 10px;
-          font-weight: 700;
-          letter-spacing: 0.14em;
-          text-transform: uppercase;
+        .results-metric__label {
+          font-size: 12px;
+          font-weight: 500;
+          color: var(--color-text-secondary);
+          margin: 0;
+        }
+
+        .results-metric__icon {
+          display: flex;
           color: var(--color-text-muted);
         }
 
-        .results-metric-card__icon {
-          display: flex;
-          height: 26px;
-          width: 26px;
-          align-items: center;
-          justify-content: center;
-          border-radius: 8px;
-          opacity: 0.85;
-        }
-
-        .results-metric-card__value {
+        .results-metric__value {
           font-size: 22px;
-          font-weight: 800;
+          font-weight: 700;
           line-height: 1.1;
           margin: 0;
-        }
-
-        /* ── Section Card ── */
-        .results-section-card {
-          background-color: var(--color-surface);
-          border: 1px solid var(--color-border);
-          border-radius: 20px;
-          padding: 20px;
-        }
-
-        .results-section-card__header {
-          display: flex;
-          align-items: flex-start;
-          justify-content: space-between;
-          gap: 12px;
-          margin-bottom: 16px;
-          flex-wrap: wrap;
-        }
-
-        .results-section-card__header--icon {
-          gap: 12px;
-          align-items: flex-start;
-        }
-
-        .results-section-icon {
-          display: flex;
-          height: 34px;
-          width: 34px;
-          align-items: center;
-          justify-content: center;
-          border-radius: 10px;
-          flex-shrink: 0;
-          margin-top: 2px;
-        }
-
-        .results-section-icon--green {
-          background-color: rgba(22, 163, 74, 0.10);
-          color: #16a34a;
-        }
-
-        .results-section-card__title {
-          font-size: 15px;
-          font-weight: 700;
           color: var(--color-text-primary);
-          margin: 0;
         }
 
-        .results-section-card__desc {
-          font-size: 12px;
-          color: var(--color-text-secondary);
-          margin: 4px 0 0 0;
-          line-height: 1.5;
-        }
-
-        /* ── Open Report Card Button ── */
-        .results-open-report-btn {
+        /* ── Link Button ── */
+        .results-link-btn {
           display: inline-flex;
           align-items: center;
           gap: 5px;
-          padding: 6px 14px;
-          border-radius: 99px;
-          border: none;
-          background-color: rgba(124, 58, 237, 0.10);
-          color: var(--student-accent);
-          font-size: 11px;
-          font-weight: 700;
-          letter-spacing: 0.12em;
-          text-transform: uppercase;
+          padding: 6px 12px;
+          border-radius: 8px;
+          border: 1px solid var(--color-border);
+          background-color: var(--color-surface);
+          color: var(--color-text-primary);
+          font-size: 12px;
+          font-weight: 600;
           cursor: pointer;
           transition: background-color 0.15s ease;
           white-space: nowrap;
           flex-shrink: 0;
         }
 
-        .results-open-report-btn:hover {
-          background-color: rgba(124, 58, 237, 0.18);
+        .results-link-btn:hover {
+          background-color: var(--color-surface-raised);
         }
 
         /* ── Bottom Grid ── */
@@ -786,177 +675,142 @@ const MyResults = () => {
           gap: 16px;
         }
 
-        /* ── Analysis Blocks ── */
+        /* ── Analysis ── */
         .results-analysis-blocks {
           display: flex;
           flex-direction: column;
           gap: 10px;
         }
 
-        .results-analysis-block {
+        .results-subcard {
           background-color: var(--color-surface-raised);
           border: 1px solid var(--color-border);
-          border-radius: 14px;
+          border-radius: 10px;
           padding: 14px 16px;
         }
 
-        .results-analysis-block__label {
-          font-size: 10px;
-          font-weight: 700;
-          letter-spacing: 0.14em;
-          text-transform: uppercase;
-          color: var(--color-text-muted);
-          margin: 0 0 8px;
+        .results-subcard--spaced {
+          margin-top: 14px;
         }
 
-        .results-analysis-block__tags {
-          display: flex;
-          flex-wrap: wrap;
-          gap: 6px;
-        }
-
-        .results-analysis-block__tag {
+        .results-subcard__label {
           font-size: 12px;
-          font-weight: 600;
-          padding: 4px 12px;
-          border-radius: 99px;
-        }
-
-        .results-analysis-block__empty {
-          font-size: 12px;
+          font-weight: 500;
           color: var(--color-text-secondary);
-          margin: 0;
-        }
-
-        .results-comparison-block {
-          background-color: var(--color-surface-raised);
-          border: 1px solid var(--color-border);
-          border-radius: 14px;
-          padding: 14px 16px;
-        }
-
-        .results-comparison-block__label {
-          font-size: 10px;
-          font-weight: 700;
-          letter-spacing: 0.14em;
-          text-transform: uppercase;
-          color: var(--color-text-muted);
           margin: 0 0 6px;
         }
 
-        .results-comparison-block__value {
+        .results-subcard__value {
           font-size: 13px;
           font-weight: 600;
           color: var(--color-text-primary);
           margin: 0;
         }
 
-        /* ── Compartment Card ── */
-        .results-compartment-card {
-          display: flex;
-          align-items: flex-start;
-          gap: 12px;
-          background-color: rgba(245, 158, 11, 0.08);
-          border: 1px solid #fcd34d;
-          border-radius: 20px;
-          padding: 18px 20px;
-        }
-
-        .results-compartment-card__icon {
-          display: flex;
-          height: 34px;
-          width: 34px;
-          align-items: center;
-          justify-content: center;
-          border-radius: 10px;
-          background-color: rgba(245, 158, 11, 0.15);
-          color: #b45309;
-          flex-shrink: 0;
-        }
-
-        .results-compartment-card__title {
-          font-size: 15px;
-          font-weight: 700;
-          color: #92400e;
-          margin: 0 0 4px;
-        }
-
-        .results-compartment-card__desc {
-          font-size: 12px;
-          color: #a16207;
-          margin: 0 0 10px;
-        }
-
-        .results-compartment-card__tags {
+        .results-tag-row {
           display: flex;
           flex-wrap: wrap;
           gap: 6px;
         }
 
-        .results-compartment-card__tag {
+        .results-analysis-tag {
+          display: inline-flex;
+          align-items: center;
+          gap: 6px;
+          font-size: 12px;
+          font-weight: 500;
+          padding: 4px 12px;
+          border-radius: 99px;
+          background-color: var(--color-surface);
+          border: 1px solid var(--color-border);
+          color: var(--color-text-primary);
+        }
+
+        .results-analysis-tag__dot {
+          height: 6px;
+          width: 6px;
+          border-radius: 99px;
+          flex-shrink: 0;
+        }
+
+        .results-analysis-empty {
+          font-size: 12px;
+          color: var(--color-text-secondary);
+          margin: 0;
+        }
+
+        /* ── Compartment ── */
+        .results-card--compartment {
+          border-color: #fde68a;
+          background-color: #fffbeb;
+        }
+
+        .results-compartment__head {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          color: #b45309;
+          margin-bottom: 4px;
+        }
+
+        .results-card--compartment .results-card__title {
+          color: #92400e;
+        }
+
+        .results-card--compartment .results-card__desc {
+          color: #a16207;
+          margin-bottom: 12px;
+        }
+
+        .results-compartment__tag {
           font-size: 12px;
           font-weight: 600;
           padding: 4px 12px;
           border-radius: 99px;
-          background-color: rgba(255, 255, 255, 0.65);
+          background-color: #fef3c7;
+          border: 1px solid #fde68a;
           color: #92400e;
         }
 
-        /* ── Outlook Badge ── */
-        .results-outlook-badge {
-          margin-top: 14px;
-          background-color: var(--color-surface-raised);
-          border: 1px solid var(--color-border);
-          border-radius: 12px;
-          padding: 12px 16px;
-        }
-
-        .results-outlook-badge__label {
-          font-size: 10px;
-          font-weight: 700;
-          letter-spacing: 0.14em;
-          text-transform: uppercase;
-          color: var(--color-text-muted);
-          margin: 0 0 4px;
-        }
-
-        .results-outlook-badge__value {
+        /* ── Outlook ── */
+        .results-outlook-value {
           font-size: 18px;
-          font-weight: 800;
+          font-weight: 700;
           margin: 0;
         }
 
         /* ── Awaiting Panel ── */
-        .results-awaiting-panel {
+        .results-awaiting {
           display: flex;
           align-items: flex-start;
           gap: 12px;
           background-color: var(--color-surface);
           border: 1px solid var(--color-border);
-          border-radius: 20px;
+          border-radius: 12px;
           padding: 20px;
         }
 
-        .results-awaiting-panel__icon {
+        .results-awaiting__icon {
           display: flex;
-          height: 38px;
-          width: 38px;
+          height: 36px;
+          width: 36px;
           align-items: center;
           justify-content: center;
-          border-radius: 12px;
-          background-color: rgba(100, 116, 139, 0.10);
-          color: #64748b;
+          border-radius: 10px;
+          background-color: var(--color-surface-raised);
+          border: 1px solid var(--color-border);
+          color: var(--color-text-secondary);
           flex-shrink: 0;
         }
 
-        .results-awaiting-panel__title {
-          font-size: 16px;
-          font-weight: 700;
+        .results-awaiting__title {
+          font-size: 15px;
+          font-weight: 650;
           color: var(--color-text-primary);
-          margin: 0 0 6px;
+          margin: 0 0 4px;
         }
 
-        .results-awaiting-panel__desc {
+        .results-awaiting__desc {
           font-size: 13px;
           color: var(--color-text-secondary);
           margin: 0 0 10px;
@@ -965,10 +819,10 @@ const MyResults = () => {
 
         /* ── Skeletons ── */
         .results-skeleton-pulse {
-          animation: pulse 1.6s ease-in-out infinite;
+          animation: results-pulse 1.6s ease-in-out infinite;
         }
 
-        @keyframes pulse {
+        @keyframes results-pulse {
           0%, 100% { opacity: 1; }
           50% { opacity: 0.45; }
         }
@@ -980,53 +834,48 @@ const MyResults = () => {
 /* ── Sub-components ── */
 
 const MetricCard = ({ label, value, color, icon }) => (
-  <div className="results-metric-card">
-    <div className="results-metric-card__header">
-      <p className="results-metric-card__label">{label}</p>
-      <div className="results-metric-card__icon" style={{ backgroundColor: `${color}18`, color }}>
-        {icon}
-      </div>
+  <div className="results-metric">
+    <div className="results-metric__header">
+      <p className="results-metric__label">{label}</p>
+      <div className="results-metric__icon">{icon}</div>
     </div>
-    <p className="results-metric-card__value" style={{ color }}>
+    <p className="results-metric__value" style={color ? { color } : undefined}>
       {value}
     </p>
   </div>
 )
 
 const AnalysisBlock = ({ title, items, emptyText, tone }) => (
-  <div className="results-analysis-block">
-    <p className="results-analysis-block__label">{title}</p>
+  <div className="results-subcard">
+    <p className="results-subcard__label">{title}</p>
     {items.length ? (
-      <div className="results-analysis-block__tags">
+      <div className="results-tag-row">
         {items.map((item) => (
-          <span
-            key={item}
-            className="results-analysis-block__tag"
-            style={{ backgroundColor: `${tone}16`, color: tone }}
-          >
+          <span key={item} className="results-analysis-tag">
+            <span className="results-analysis-tag__dot" style={{ backgroundColor: tone }} />
             {item}
           </span>
         ))}
       </div>
     ) : (
-      <p className="results-analysis-block__empty">{emptyText}</p>
+      <p className="results-analysis-empty">{emptyText}</p>
     )}
   </div>
 )
 
 const AwaitingExamPanel = ({ exam }) => (
-  <div className="results-awaiting-panel">
-    <div className="results-awaiting-panel__icon">
+  <div className="results-awaiting">
+    <div className="results-awaiting__icon">
       <ClipboardList size={18} />
     </div>
     <div>
-      <p className="results-awaiting-panel__title">{exam.name}</p>
-      <p className="results-awaiting-panel__desc">
+      <p className="results-awaiting__title">{exam.name}</p>
+      <p className="results-awaiting__desc">
         {exam.student_status === 'upcoming' || !exam.student_status
           ? `Scheduled for ${formatDate(exam.start_date, 'long')}. Results will appear after the exam is complete and results are published by the administrator.`
           : 'This exam has been conducted. Results will appear here once the administrator publishes them in the Results section.'}
       </p>
-      <span className="results-exam-tab__badge" style={examStatusStyle(exam.student_status)}>
+      <span className="results-badge" style={examStatusStyle(exam.student_status)}>
         {exam.student_status}
       </span>
     </div>
@@ -1040,8 +889,8 @@ const ExamTabsSkeleton = () => (
         key={i}
         style={{
           minWidth: '160px',
-          height: '72px',
-          borderRadius: '14px',
+          height: '68px',
+          borderRadius: '10px',
           backgroundColor: 'var(--color-surface-raised)',
           flexShrink: 0,
         }}
@@ -1054,7 +903,7 @@ const ResultsPageSkeleton = ({ compact = false }) => (
   <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }} className="results-skeleton-pulse">
     <div
       style={{
-        borderRadius: '20px',
+        borderRadius: '12px',
         backgroundColor: 'var(--color-surface)',
         border: '1px solid var(--color-border)',
         padding: '20px',
@@ -1064,13 +913,13 @@ const ResultsPageSkeleton = ({ compact = false }) => (
       <div style={{ height: '14px', width: '120px', borderRadius: '6px', backgroundColor: 'var(--color-surface-raised)', marginTop: '10px' }} />
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '10px', marginTop: '16px' }}>
         {Array.from({ length: 4 }).map((_, i) => (
-          <div key={i} style={{ height: '72px', borderRadius: '14px', backgroundColor: 'var(--color-surface-raised)' }} />
+          <div key={i} style={{ height: '72px', borderRadius: '10px', backgroundColor: 'var(--color-surface-raised)' }} />
         ))}
       </div>
     </div>
     <div
       style={{
-        borderRadius: '20px',
+        borderRadius: '12px',
         backgroundColor: 'var(--color-surface)',
         border: '1px solid var(--color-border)',
         padding: '20px',
@@ -1079,7 +928,7 @@ const ResultsPageSkeleton = ({ compact = false }) => (
       <div style={{ height: '18px', width: '140px', borderRadius: '8px', backgroundColor: 'var(--color-surface-raised)' }} />
       <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '16px' }}>
         {Array.from({ length: compact ? 2 : 4 }).map((_, i) => (
-          <div key={i} style={{ height: '48px', borderRadius: '12px', backgroundColor: 'var(--color-surface-raised)' }} />
+          <div key={i} style={{ height: '48px', borderRadius: '10px', backgroundColor: 'var(--color-surface-raised)' }} />
         ))}
       </div>
     </div>

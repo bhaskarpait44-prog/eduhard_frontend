@@ -1,4 +1,5 @@
 import { useEffect } from 'react'
+import { ConfigProvider, theme as antdTheme } from 'antd'
 import AppLayout from '@/layouts/AppLayout'
 import useUiStore from '@/store/uiStore'
 
@@ -47,7 +48,7 @@ const ACCOUNTANT_THEME_DARK = {
   '--color-bg': '#0f172a',
   '--color-surface': '#1e293b',
   '--color-surface-raised': '#334155',
-  '--color-border': '#1e293b',
+  '--color-border': '#334155', // Solves invisible borders in dark mode
   '--color-text-primary': '#f1f5f9',
   '--color-text-secondary': '#94a3b8',
   '--color-text-muted': '#475569',
@@ -55,10 +56,10 @@ const ACCOUNTANT_THEME_DARK = {
 
 const AccountantLayout = () => {
   const theme = useUiStore((state) => state.theme)
+  const isDark = theme === 'dark' || (theme === 'system' && window.matchMedia?.('(prefers-color-scheme: dark)').matches)
 
   useEffect(() => {
     const root = document.documentElement
-    const isDark = root.classList.contains('dark')
     const activeTheme = isDark ? ACCOUNTANT_THEME_DARK : ACCOUNTANT_THEME_LIGHT
 
     const previous = {}
@@ -73,13 +74,26 @@ const AccountantLayout = () => {
         else root.style.removeProperty(key)
       })
     }
-  }, [theme])
+  }, [theme, isDark])
 
-  // Roboto font scoped to accountant portal wrapper
   return (
-    <div style={{ fontFamily: "'Roboto', system-ui, sans-serif" }}>
-      <AppLayout />
-    </div>
+    <ConfigProvider
+      theme={{
+        algorithm: isDark ? antdTheme.darkAlgorithm : antdTheme.defaultAlgorithm,
+        token: {
+          colorPrimary: '#4361ee',
+          borderRadius: 12,
+          fontFamily: "'Roboto', system-ui, sans-serif",
+          colorBgContainer: isDark ? '#1e293b' : '#ffffff',
+          colorBgLayout: isDark ? '#0f172a' : '#f3f4f9',
+          colorBorderSecondary: isDark ? '#334155' : '#e9ebf0',
+        },
+      }}
+    >
+      <div style={{ fontFamily: "'Roboto', system-ui, sans-serif" }}>
+        <AppLayout />
+      </div>
+    </ConfigProvider>
   )
 }
 

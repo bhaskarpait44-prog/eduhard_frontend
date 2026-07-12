@@ -43,6 +43,7 @@ const EnterMarks = () => {
   const [subjectId, setSubjectId] = useState('')
   const [state, setState] = useState({})
   const [lastSavedAt, setLastSavedAt] = useState('')
+  const [entryError, setEntryError] = useState('')
   const autoSaveRef = useRef(null)
   const preferredAssignment = location.state || {}
 
@@ -163,6 +164,7 @@ const EnterMarks = () => {
 
   useEffect(() => {
     if (!examId || !selectedSection || !subjectId) return
+    setEntryError('')
     loadEntry({
       exam_id: examId,
       class_id: selectedSection.class_id,
@@ -181,7 +183,12 @@ const EnterMarks = () => {
       })
       setState(next)
     }).catch((error) => {
-      toastError(normalizeMarksError(error))
+      const msg = normalizeMarksError(error)
+      if (msg.includes('Teachers cannot enter marks for draft exams')) {
+        setEntryError('Teachers cannot enter marks for draft exams.')
+      } else {
+        toastError(msg)
+      }
     })
   }, [examId, selectedSection, subjectId, loadEntry, toastError])
 
@@ -319,6 +326,15 @@ const EnterMarks = () => {
             <p className="mt-2 text-sm text-text-muted max-w-xs mx-auto">
               There is no published examination configured for the selected class, section, and subject.
             </p>
+          </div>
+        ) : entryError ? (
+          <div className="flex flex-col items-center justify-center rounded-2xl border border-amber-100 bg-amber-50/50 py-20 px-6 text-center">
+            <Lock size={48} className="text-amber-600 mb-4" />
+            <h3 className="text-lg font-bold text-amber-900">Marks Entry Locked</h3>
+            <p className="mt-1 text-sm text-amber-700 max-w-md">{entryError}</p>
+            <div className="mt-6 inline-flex items-center gap-2 rounded-full bg-amber-100 px-4 py-1.5 text-[10px] font-black uppercase tracking-widest text-amber-800">
+              Draft Mode
+            </div>
           </div>
         ) : loadingBase || loadingEntry ? (
           <div className="flex flex-col items-center justify-center py-32">

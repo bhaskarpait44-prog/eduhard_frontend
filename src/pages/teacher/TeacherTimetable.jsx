@@ -9,6 +9,7 @@ import TimetableGrid from '@/components/teacher/TimetableGrid'
 import TimetableToday from '@/components/shared/TimetableToday'
 import ExamDutyTimetable from '@/components/teacher/ExamDutyTimetable'
 import { formatTime } from '@/utils/helpers'
+import { downloadBlob } from '@/utils/downloadBlob'
 
 // ─── Helpers ─────────────────────────────────────── (unchanged) ──────────────
 
@@ -35,7 +36,25 @@ const TeacherTimetable = () => {
   const [examDuties, setExamDuties] = useState([])
   const [currentPeriod, setCurrentPeriod] = useState(null)
   const [loading, setLoading] = useState(true)
+  const [downloading, setDownloading] = useState(false)
   const [view, setView] = useState('weekly')
+
+  const handleDownloadPdf = async () => {
+    setDownloading(true)
+    try {
+      if (view === 'exams') {
+        const response = await teacherApi.downloadTeacherExamTimetablePdf()
+        downloadBlob(response, `teacher_exam_duties_${new Date().toISOString().slice(0, 10)}.pdf`)
+      } else {
+        const response = await teacherApi.downloadTeacherTimetablePdf()
+        downloadBlob(response, `teacher_timetable_${new Date().toISOString().slice(0, 10)}.pdf`)
+      }
+    } catch (error) {
+      toastError(error?.message || 'Failed to download timetable PDF.')
+    } finally {
+      setDownloading(false)
+    }
+  }
 
   useEffect(() => {
     let active = true
@@ -81,7 +100,8 @@ const TeacherTimetable = () => {
         <Button 
           variant="secondary" 
           icon={Printer} 
-          onClick={() => window.print()}
+          onClick={handleDownloadPdf}
+          loading={downloading}
           size="sm"
         >
           Print Timetable
@@ -214,24 +234,28 @@ const TeacherTimetable = () => {
 // Add more entries as needed; unknown subjects fall back to slate grey.
 
 const SUBJECT_COLORS = {
-  'Physics':      '#7F77DD',
-  'Chemistry':    '#1D9E75',
-  'Mathematics':  '#D85A30',
-  'Math':         '#D85A30',
-  'English':      '#D4537E',
-  'Biology':      '#378ADD',
-  'History':      '#BA7517',
-  'Geography':    '#639922',
-  'Computer Sc':  '#533AB7',
-  'Computer':     '#533AB7',
-  'Hindi':        '#E24B4A',
-  'Assamese':     '#E24B4A',
-  'Economics':    '#0F6E56',
-  'Political Sc': '#993556',
-  'Physical Ed':  '#185FA5',
-  'Art':          '#D4537E',
+  'Physics':      '#6366f1',
+  'Chemistry':    '#10b981',
+  'Mathematics':  '#f59e0b',
+  'Math':         '#f59e0b',
+  'English':      '#3b82f6',
+  'Biology':      '#ec4899',
+  'History':      '#f97316',
+  'Geography':    '#84cc16',
+  'Computer Sc':  '#a855f7',
+  'Computer':     '#a855f7',
+  'Hindi':        '#ef4444',
+  'Assamese':     '#ef4444',
+  'Economics':    '#06b6d4',
+  'Political Sc': '#d946ef',
+  'Physical Ed':  '#22c55e',
+  'Art':          '#ec4899',
+  'English Oral': '#ec4899',
+  'English Writing': '#d946ef',
+  'Rhymes':       '#06b6d4',
+  'Drawing':      '#eab308',
 }
-const SUBJECT_COLOR_FALLBACK = '#888780'
+const SUBJECT_COLOR_FALLBACK = '#64748b'
 
 export const getSubjectColor = (name) => SUBJECT_COLORS[name] || SUBJECT_COLOR_FALLBACK
 

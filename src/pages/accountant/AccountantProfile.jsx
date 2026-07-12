@@ -67,38 +67,30 @@ const AccountantProfile = () => {
         algorithm: isDark ? antdTheme.darkAlgorithm : antdTheme.defaultAlgorithm,
         token: {
           colorPrimary: '#4361ee',
-          borderRadius: 10,
-          fontFamily: 'Roboto, system-ui, sans-serif',
+          borderRadius: 12,
+          fontFamily: "'Roboto', system-ui, sans-serif",
         },
       }}
     >
       <div className="space-y-6">
         {/* Profile Header Banner */}
-        <div
-          className="rounded-[32px] border p-6 shadow-sm relative overflow-hidden backdrop-blur-md"
-          style={{
-            background: isDark
-              ? 'linear-gradient(135deg, rgba(67, 97, 238, 0.15) 0%, #1e1b4b 100%)'
-              : 'linear-gradient(135deg, #eef2ff 0%, #fffdf9 100%)',
-            borderColor: isDark ? 'rgba(67, 97, 238, 0.3)' : '#c7d2fe'
-          }}
-        >
-          <div className="absolute -right-20 -top-20 w-64 h-64 rounded-full bg-indigo-500/10 blur-3xl pointer-events-none" />
+        <div className="flex flex-col md:flex-row md:items-center gap-5 rounded-2xl border border-gray-100 dark:border-gray-800 p-6 shadow-sm bg-white dark:bg-[#1e293b] relative overflow-hidden">
+          <div className="absolute -right-20 -top-20 w-64 h-64 rounded-full bg-indigo-500/5 blur-3xl pointer-events-none" />
 
-          <div className="z-10 relative flex flex-col md:flex-row md:items-center gap-5">
+          <div className="z-10 relative flex flex-col md:flex-row md:items-center gap-5 w-full">
             <Avatar
-              size={80}
+              size={72}
               icon={<UserOutlined />}
-              className="bg-indigo-500 text-white shadow-md border-2 border-white/50"
+              className="bg-indigo-500 text-white shadow-md border-2 border-white/50 dark:border-slate-700/50"
             />
             <div>
               <div className="flex items-center flex-wrap gap-2">
-                <h1 className="text-2xl font-black text-gray-900 dark:text-white tracking-tight">
+                <h1 className="text-xl font-black text-gray-900 dark:text-white tracking-tight">
                   {profile?.name || 'Loading profile...'}
                 </h1>
-                <Tag color="blue" className="font-extrabold uppercase text-[9px] border-0 px-2 rounded-full">
+                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider bg-indigo-50 text-indigo-700 dark:bg-indigo-950/40 dark:text-indigo-300">
                   Accountant
-                </Tag>
+                </span>
               </div>
               <p className="mt-1.5 text-xs text-gray-500 dark:text-gray-400 font-bold leading-relaxed flex flex-wrap items-center gap-x-2 gap-y-1">
                 <IdcardOutlined /> {profile?.designation || '--'}
@@ -115,7 +107,7 @@ const AccountantProfile = () => {
           {/* Permissions Section */}
           <Col xs={24} md={12}>
             <Card
-              className="rounded-[28px] border-gray-100 dark:border-gray-800 shadow-sm h-full"
+              className="rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm h-full bg-white dark:bg-[#1e293b]"
               title={
                 <div className="flex items-center gap-2">
                   <SafetyCertificateOutlined className="text-orange-500" />
@@ -139,7 +131,7 @@ const AccountantProfile = () => {
           {/* Activity Section */}
           <Col xs={24} md={12}>
             <Card
-              className="rounded-[28px] border-gray-100 dark:border-gray-800 shadow-sm h-full"
+              className="rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm h-full bg-white dark:bg-[#1e293b]"
               title={
                 <div className="flex items-center gap-2">
                   <TransactionOutlined className="text-orange-500" />
@@ -175,7 +167,7 @@ const AccountantProfile = () => {
 
         {/* Change Password Block */}
         <Card
-          className="rounded-[28px] border-gray-100 dark:border-gray-800 shadow-sm"
+          className="rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm bg-white dark:bg-[#1e293b]"
           title={
             <div className="flex items-center gap-2">
               <KeyOutlined className="text-indigo-500" />
@@ -214,7 +206,7 @@ const AccountantProfile = () => {
                 type="primary"
                 htmlType="submit"
                 loading={updating}
-                className="rounded-xl font-bold h-[38px] border-0 px-6"
+                className="rounded-xl font-bold h-10 px-6 border-0 shadow-sm transition-all"
                 style={{ background: 'linear-gradient(90deg, #4361ee 0%, #1d4ed8 100%)' }}
               >
                 Update Password

@@ -71,11 +71,14 @@ const AccountantDashboard = () => {
       dataIndex: 'student_name',
       key: 'student_name',
       render: (text) => (
-        <div className="flex items-center gap-2.5">
-          <Avatar size="small" className="bg-indigo-100 text-indigo-700 font-bold dark:bg-indigo-950/40 dark:text-indigo-300">
+        <div className="flex items-center gap-3">
+          <Avatar 
+            size="small" 
+            className="bg-gray-100 text-gray-700 font-extrabold dark:bg-gray-800 dark:text-gray-300 border border-gray-200/10"
+          >
             {getInitials(text)}
           </Avatar>
-          <span className="font-extrabold text-gray-800 dark:text-gray-200 hover:text-indigo-500 transition-colors">{text}</span>
+          <span className="text-sm font-bold text-gray-900 dark:text-gray-100 hover:text-indigo-500 transition-colors">{text}</span>
         </div>
       )
     },
@@ -83,25 +86,29 @@ const AccountantDashboard = () => {
       title: 'Class',
       dataIndex: 'class_name',
       key: 'class_name',
-      render: (text) => <Tag className="rounded-md border-0 bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400 font-bold text-[11px]">{text}</Tag>
+      render: (text) => (
+        <Tag className="rounded-full border-0 bg-gray-50 text-gray-500 dark:bg-gray-800 dark:text-gray-400 font-black text-[9px] uppercase tracking-wider px-2 py-0.5">
+          {text}
+        </Tag>
+      )
     },
     {
       title: 'Amount',
       dataIndex: 'amount',
       key: 'amount',
-      render: (val) => <span className="font-extrabold text-emerald-600 dark:text-emerald-400">{formatCurrency(val)}</span>
+      render: (val) => <span className="font-extrabold text-sm text-emerald-600 dark:text-emerald-400">{formatCurrency(val)}</span>
     },
     {
       title: 'Mode',
       dataIndex: 'payment_mode',
       key: 'payment_mode',
       render: (text) => {
-        let color = 'default'
+        let colorClass = 'bg-blue-50 text-blue-700 dark:bg-blue-950/30 dark:text-blue-300'
         const mode = text?.toLowerCase() || ''
-        if (mode === 'cash') color = 'blue'
-        else if (mode === 'online' || mode === 'upi') color = 'blue'
-        else if (mode === 'bank' || mode === 'cheque' || mode === 'card') color = 'green'
-        return <Tag color={color} className="uppercase font-extrabold text-[10px] rounded-full px-2">{text}</Tag>
+        if (mode === 'cash') colorClass = 'bg-amber-50 text-amber-700 dark:bg-amber-950/30 dark:text-amber-300'
+        else if (mode === 'online' || mode === 'upi') colorClass = 'bg-indigo-50 text-indigo-700 dark:bg-indigo-950/30 dark:text-indigo-300'
+        else if (mode === 'bank' || mode === 'cheque' || mode === 'card') colorClass = 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-300'
+        return <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider ${colorClass}`}>{text}</span>
       }
     },
     {
@@ -109,7 +116,7 @@ const AccountantDashboard = () => {
       dataIndex: 'receipt_no',
       key: 'receipt_no',
       render: (text) => (
-        <span className="inline-flex items-center gap-1 text-xs font-bold text-indigo-600 dark:text-indigo-400 underline decoration-indigo-500/20 underline-offset-4 hover:text-indigo-700 transition-colors">
+        <span className="inline-flex items-center gap-1.5 text-xs font-bold text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 transition-colors">
           <FileTextOutlined className="text-[10px]" />
           {text}
         </span>
@@ -123,69 +130,54 @@ const AccountantDashboard = () => {
         algorithm: isDark ? antdTheme.darkAlgorithm : antdTheme.defaultAlgorithm,
         token: {
           colorPrimary: '#4361ee',
-          borderRadius: 10,
-          fontFamily: 'Roboto, system-ui, sans-serif',
+          borderRadius: 12,
+          fontFamily: "'Roboto', system-ui, sans-serif",
         },
       }}
     >
       <div className="space-y-6">
         {/* Welcome Header */}
-        <div 
-          className="flex flex-wrap items-center justify-between gap-6 rounded-[32px] border p-6 shadow-sm relative overflow-hidden backdrop-blur-md" 
-          style={{ 
-            background: isDark 
-              ? 'linear-gradient(135deg, rgba(67, 97, 238, 0.15) 0%, #1e1b4b 100%)'
-              : 'linear-gradient(135deg, #eef2ff 0%, #fffdf9 100%)', 
-            borderColor: isDark ? '#4361ee30' : '#c7d2fe'
-          }}
-        >
-          <div className="absolute -right-20 -top-20 w-64 h-64 rounded-full bg-indigo-500/10 blur-3xl pointer-events-none" />
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 rounded-2xl border border-gray-100 dark:border-gray-800 p-6 shadow-sm bg-white dark:bg-[#1e293b] relative overflow-hidden">
+          <div className="absolute -right-20 -top-20 w-64 h-64 rounded-full bg-indigo-500/5 blur-3xl pointer-events-none" />
           
-          <div className="flex items-center gap-4 z-10">
-            <Avatar 
-              size={64} 
-              className="shadow-md border-2 border-indigo-400 bg-gradient-to-tr from-indigo-400 to-indigo-600 text-white font-extrabold text-xl flex items-center justify-center"
-            >
-              {getInitials(user?.name || 'Accountant')}
-            </Avatar>
-            <div>
-              <span className="text-[10px] font-black uppercase tracking-[0.2em] text-indigo-600 dark:text-indigo-400">{greeting}</span>
-              <h1 className="mt-0.5 text-2xl md:text-3xl font-black text-gray-900 dark:text-white tracking-tight">{user?.name || 'Accountant'}</h1>
-              <p className="mt-1 text-xs text-gray-500 dark:text-gray-400 font-semibold flex items-center gap-1.5">
-                Today: <span className="text-gray-700 dark:text-gray-200">{formatDate(new Date(), 'long')}</span> 
-                <span className="opacity-30">•</span> 
-                Session: <span className="px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-800 dark:bg-indigo-950/40 dark:text-indigo-300 font-bold text-[10px]">{dashboard?.session_id || todayStats?.session?.name || 'Current'}</span>
-              </p>
-            </div>
+          <div className="z-10 min-w-0">
+            <span className="text-[10px] font-black uppercase tracking-[0.2em] text-indigo-600 dark:text-indigo-400">{greeting}</span>
+            <h1 className="mt-0.5 text-2xl font-black text-gray-900 dark:text-white tracking-tight truncate">{user?.name || 'Accountant'}</h1>
+            <p className="mt-1.5 text-xs text-gray-400 dark:text-gray-500 font-semibold flex items-center gap-1.5 leading-none">
+              Today: <span className="text-gray-700 dark:text-gray-200">{formatDate(new Date(), 'long')}</span> 
+              <span className="opacity-30">•</span> 
+              Session: <span className="px-2.5 py-0.5 rounded-full bg-indigo-100 text-indigo-800 dark:bg-indigo-950/40 dark:text-indigo-300 font-bold text-[10px]">{dashboard?.session_id || todayStats?.session?.name || 'Current'}</span>
+            </p>
           </div>
-          <Space size="middle" className="z-10">
+          
+          <div className="z-10 flex flex-wrap items-center gap-2.5 sm:shrink-0">
             <Button
               type="primary"
-              size="large"
               icon={<PlusOutlined className="font-bold" />}
               onClick={() => navigate(ROUTES.ACCOUNTANT_COLLECTION)}
-              className="rounded-full font-bold shadow-md hover:shadow-lg transition-all flex items-center justify-center border-0"
-              style={{ height: '48px', padding: '0 28px', background: 'linear-gradient(90deg, #4361ee 0%, #1d4ed8 100%)' }}
+              className="h-10 px-5 rounded-xl font-bold shadow-sm transition-all flex items-center justify-center border-0"
+              style={{ background: 'linear-gradient(90deg, #4361ee 0%, #1d4ed8 100%)' }}
             >
               Collect Fee
             </Button>
             <Button
-              size="large"
               icon={<RedoOutlined className={isLoading ? 'animate-spin' : ''} />}
               onClick={() => refresh().catch(() => {})}
-              className="rounded-full font-bold border-gray-200 dark:border-gray-800 bg-white/80 dark:bg-gray-900/80 text-gray-700 dark:text-gray-200 hover:text-indigo-500 hover:border-indigo-400"
-              style={{ height: '48px', padding: '0 24px' }}
+              className="h-10 px-4 rounded-xl font-semibold flex items-center justify-center border border-gray-200 dark:border-gray-800 bg-white/80 dark:bg-gray-900/80 text-gray-700 dark:text-gray-200 hover:text-indigo-500 hover:border-indigo-400 transition-colors"
             >
               Refresh
             </Button>
-          </Space>
+          </div>
         </div>
 
         {/* Stats Grid */}
         <Row gutter={[16, 16]}>
           <Col xs={24} sm={12} xl={6}>
             <div className="h-full">
-              <Card className="rounded-[28px] shadow-sm hover:shadow-md transition-all border-gray-100 dark:border-gray-800 h-full" styles={{ body: { padding: '24px' } }}>
+              <Card 
+                className="rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 border-l-4 border-l-indigo-500 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md h-full overflow-hidden bg-white dark:bg-[#1e293b]" 
+                styles={{ body: { padding: '20px' } }}
+              >
                 {isLoading && !todayStats ? (
                   <Skeleton active paragraph={{ rows: 2 }} />
                 ) : (
@@ -225,7 +217,10 @@ const AccountantDashboard = () => {
 
           <Col xs={24} sm={12} xl={6}>
             <div className="h-full">
-              <Card className="rounded-[28px] shadow-sm hover:shadow-md transition-all border-gray-100 dark:border-gray-800 h-full" styles={{ body: { padding: '24px' } }}>
+              <Card 
+                className="rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 border-l-4 border-l-rose-500 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md h-full overflow-hidden bg-white dark:bg-[#1e293b]" 
+                styles={{ body: { padding: '20px' } }}
+              >
                 {isLoading && !todayStats ? (
                   <Skeleton active paragraph={{ rows: 2 }} />
                 ) : (
@@ -247,7 +242,7 @@ const AccountantDashboard = () => {
                       {todayStats?.pending_today?.student_count || 0} student(s) with dues
                     </div>
                     <div className="mt-4">
-                      <Tag color="red" className="rounded-full border-0 font-extrabold text-[10px] px-3 py-0.5">ACTION REQUIRED</Tag>
+                      <Tag color="red" className="rounded-full border-0 font-extrabold text-[9px] px-3 py-0.5">ACTION REQUIRED</Tag>
                     </div>
                   </>
                 )}
@@ -257,7 +252,10 @@ const AccountantDashboard = () => {
 
           <Col xs={24} sm={12} xl={6}>
             <div className="h-full">
-              <Card className="rounded-[28px] shadow-sm hover:shadow-md transition-all border-gray-100 dark:border-gray-800 h-full" styles={{ body: { padding: '24px' } }}>
+              <Card 
+                className="rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 border-l-4 border-l-blue-500 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md h-full overflow-hidden bg-white dark:bg-[#1e293b]" 
+                styles={{ body: { padding: '20px' } }}
+              >
                 {isLoading && !todayStats ? (
                   <Skeleton active paragraph={{ rows: 2 }} />
                 ) : (
@@ -296,7 +294,10 @@ const AccountantDashboard = () => {
 
           <Col xs={24} sm={12} xl={6}>
             <div className="h-full">
-              <Card className="rounded-[28px] shadow-sm hover:shadow-md transition-all border-gray-100 dark:border-gray-800 h-full" styles={{ body: { padding: '24px' } }}>
+              <Card 
+                className="rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 border-l-4 border-l-emerald-500 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md h-full overflow-hidden bg-white dark:bg-[#1e293b]" 
+                styles={{ body: { padding: '20px' } }}
+              >
                 {isLoading && !todayStats ? (
                   <Skeleton active paragraph={{ rows: 2 }} />
                 ) : (
@@ -321,7 +322,7 @@ const AccountantDashboard = () => {
                       <div className="text-[11px] leading-relaxed text-gray-500 dark:text-gray-400 font-semibold flex-1">
                         <div className="flex justify-between border-b border-gray-50 dark:border-gray-800/40 pb-1">
                           <span>Collected:</span> 
-                          <span className="text-gray-800 dark:text-gray-200">{formatCurrency(todayStats?.session_overview?.total_collected || 0)}</span>
+                          <span className="text-gray-850 dark:text-gray-200">{formatCurrency(todayStats?.session_overview?.total_collected || 0)}</span>
                         </div>
                         <div className="flex justify-between border-b border-gray-50 dark:border-gray-800/40 py-1">
                           <span>Expected:</span> 
@@ -346,8 +347,8 @@ const AccountantDashboard = () => {
           <Col xs={24} xl={15}>
             <div className="h-full">
               <Card 
-                className="rounded-[28px] shadow-sm border-gray-100 dark:border-gray-800 h-full overflow-hidden"
-                styles={{ header: { borderBottom: '1px solid rgba(0,0,0,0.06)' }, body: { padding: '0px' } }}
+                className="rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 h-full overflow-hidden bg-white dark:bg-[#1e293b]"
+                styles={{ header: { borderBottom: '1px solid var(--color-border)', padding: '16px 20px' }, body: { padding: '0px' } }}
                 title={
                   <div className="flex items-center justify-between py-1">
                     <span className="text-base font-black flex items-center gap-2 text-gray-900 dark:text-white tracking-tight">
@@ -361,7 +362,7 @@ const AccountantDashboard = () => {
                 {isLoading && !recentTransactions ? (
                   <div className="p-6"><Skeleton active paragraph={{ rows: 6 }} /></div>
                 ) : !recentTransactions || recentTransactions.length === 0 ? (
-                  <div className="py-12">
+                  <div className="py-12 bg-white dark:bg-[#1e293b]">
                     <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="No transactions recorded today" />
                   </div>
                 ) : (
@@ -374,7 +375,7 @@ const AccountantDashboard = () => {
                     onRow={(record) => ({
                       onClick: () => navigate(ROUTES.ACCOUNTANT_RECEIPT_DETAIL.replace(':id', record.id)),
                     })}
-                    rowClassName="cursor-pointer hover:bg-indigo-50/20 dark:hover:bg-indigo-950/10 transition-colors"
+                    rowClassName="cursor-pointer hover:bg-slate-50/50 dark:hover:bg-slate-800/40 transition-colors"
                     className="premium-table"
                   />
                 )}
@@ -388,7 +389,7 @@ const AccountantDashboard = () => {
               {/* Collection by Mode */}
               <div>
                 <Card 
-                  className="rounded-[28px] shadow-sm border-gray-100 dark:border-gray-800"
+                  className="rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 bg-white dark:bg-[#1e293b]"
                   title={<span className="font-black text-gray-900 dark:text-white tracking-tight">Collection by Mode</span>}
                 >
                   {isLoading && !modeBreakdown ? (
@@ -402,13 +403,13 @@ const AccountantDashboard = () => {
               {/* Weekly Trend */}
               <div>
                 <Card 
-                  className="rounded-[28px] shadow-sm border-gray-100 dark:border-gray-800"
+                  className="rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 bg-white dark:bg-[#1e293b]"
                   title={<span className="font-black text-gray-900 dark:text-white tracking-tight">Weekly Collection Trend</span>}
                 >
                   {isLoading && !weekTrend ? (
                     <Skeleton active paragraph={{ rows: 4 }} />
                   ) : weekTrend.length === 0 ? (
-                    <div className="flex h-40 flex-col items-center justify-center text-sm text-gray-400">
+                    <div className="flex h-40 flex-col items-center justify-center text-sm text-gray-400 bg-white dark:bg-[#1e293b]">
                       <RiseOutlined style={{ fontSize: '28px', opacity: 0.2, marginBottom: '8px' }} />
                       No trend data yet
                     </div>
@@ -441,6 +442,7 @@ const AccountantDashboard = () => {
                                     height: `${barHeight}%`,
                                     background: 'linear-gradient(180deg, #4361ee 0%, #1d4ed8 100%)',
                                   }}
+                                  onClick={() => navigate(ROUTES.ACCOUNTANT_REPORTS)}
                                 />
                               </div>
                               <div className="mt-2 text-[10px] font-bold text-gray-400 dark:text-gray-500 truncate">
@@ -458,13 +460,13 @@ const AccountantDashboard = () => {
               {/* Action Required */}
               <div>
                 <Card 
-                  className="rounded-[28px] shadow-sm border-gray-100 dark:border-gray-800"
+                  className="rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 bg-white dark:bg-[#1e293b]"
                   title={<span className="font-black text-gray-900 dark:text-white tracking-tight">Action Required</span>}
                 >
                   {isLoading && !pendingTasks ? (
                     <Skeleton active paragraph={{ rows: 3 }} />
                   ) : !pendingTasks || pendingTasks.length === 0 ? (
-                    <div className="py-6 flex flex-col items-center justify-center text-xs text-gray-400">
+                    <div className="py-6 flex flex-col items-center justify-center text-xs text-gray-400 bg-white dark:bg-[#1e293b]">
                       <CheckCircleOutlined className="text-emerald-500 text-lg mb-2" />
                       All tasks completed!
                     </div>
@@ -473,7 +475,7 @@ const AccountantDashboard = () => {
                       {(pendingTasks || []).map((task) => (
                         <div 
                           key={task.key} 
-                          className="flex items-center justify-between gap-4 rounded-2xl border border-gray-100 dark:border-gray-800/80 p-4 transition-all hover:border-indigo-200 hover:bg-indigo-50/10 dark:hover:bg-indigo-950/10 hover:translate-x-1 duration-200" 
+                          className="flex items-center justify-between gap-4 rounded-xl border border-gray-100 dark:border-gray-800/80 p-4 transition-all hover:border-indigo-200 hover:bg-indigo-50/5 dark:hover:bg-indigo-950/10 hover:translate-x-1 duration-200" 
                         >
                           <div className="flex items-center gap-3">
                             <span className="w-1.5 h-1.5 rounded-full bg-indigo-500" />
@@ -492,8 +494,8 @@ const AccountantDashboard = () => {
                             type="primary"
                             size="small"
                             onClick={() => navigate(task.route)}
-                            className="rounded-full font-bold text-[11px] px-3 border-0"
-                            style={{ backgroundColor: '#4361ee', borderColor: '#4361ee' }}
+                            className="rounded-full font-bold text-[10px] uppercase tracking-wider h-7 px-3 border-0 flex items-center justify-center shadow-sm"
+                            style={{ backgroundColor: '#4361ee' }}
                           >
                             Resolve
                           </Button>

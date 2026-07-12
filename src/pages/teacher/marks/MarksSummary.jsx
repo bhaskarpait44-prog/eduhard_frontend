@@ -52,11 +52,26 @@ const MarksSummary = () => {
     exams.find((exam) => String(exam.id) === String(examId)) || null
   ), [examId, exams])
 
-  const visibleSections = useMemo(() => (
-    selectedExam
-      ? uniqueSections.filter((section) => String(section.class_id) === String(selectedExam.class_id))
-      : uniqueSections
-  ), [selectedExam, uniqueSections])
+  const visibleExams = useMemo(() => (
+    selectedSection
+      ? exams.filter((exam) => String(exam.class_id) === String(selectedSection.class_id))
+      : exams
+  ), [selectedSection, exams])
+
+  const examOptions = useMemo(() => {
+    const uniqueExams = []
+    const seenIds = new Set()
+    visibleExams.forEach((ex) => {
+      if (!seenIds.has(ex.id)) {
+        seenIds.add(ex.id)
+        uniqueExams.push({
+          value: String(ex.id),
+          label: `${ex.name} (${ex.class_name || 'Class'})`,
+        })
+      }
+    })
+    return uniqueExams
+  }, [visibleExams])
 
   const selectionMismatch = useMemo(() => {
     if (!selectedExam || !selectedSection) return false
@@ -86,34 +101,16 @@ const MarksSummary = () => {
   }, [preferredAssignment.assignment_role, preferredAssignment.class_id, preferredAssignment.section_id, uniqueSections, sectionKey])
 
   useEffect(() => {
-    if (!exams.length) return
-    const hasCurrentExam = exams.some((exam) => String(exam.id) === String(examId))
-    if (hasCurrentExam) return
-
-    const preferredExam = exams.find((exam) => String(exam.id) === String(preferredAssignment.exam_id || ''))
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setExamId(String((preferredExam || exams[0]).id))
-  }, [examId, exams, preferredAssignment.exam_id])
-
-  useEffect(() => {
-    if (!visibleSections.length) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      if (sectionKey) setSectionKey('')
+    if (!visibleExams.length) {
+      if (examId) setExamId('')
       return
     }
+    const hasCurrentExam = visibleExams.some((exam) => String(exam.id) === String(examId))
+    if (hasCurrentExam) return
 
-    const hasCurrentSection = visibleSections.some((section) => (
-      `${section.class_id}:${section.section_id}:${section.is_class_teacher ? 'class_teacher' : 'subject_teacher'}` === sectionKey
-    ))
-    if (hasCurrentSection) return
-
-    const preferredSection = visibleSections.find((section) =>
-      String(section.class_id) === String(preferredAssignment.class_id || '') &&
-      String(section.section_id) === String(preferredAssignment.section_id || '')
-    )
-    const nextSection = preferredSection || visibleSections[0]
-    setSectionKey(`${nextSection.class_id}:${nextSection.section_id}:${nextSection.is_class_teacher ? 'class_teacher' : 'subject_teacher'}`)
-  }, [preferredAssignment.class_id, preferredAssignment.section_id, sectionKey, visibleSections])
+    const preferredExam = visibleExams.find((exam) => String(exam.id) === String(preferredAssignment.exam_id || ''))
+    setExamId(String((preferredExam || visibleExams[0]).id))
+  }, [examId, visibleExams, preferredAssignment.exam_id])
 
   useEffect(() => {
     if (!selectedSection || !examId) {
@@ -181,25 +178,25 @@ const MarksSummary = () => {
       >
         <div className="grid grid-cols-1 gap-4 xl:grid-cols-6">
           <div className="space-y-1.5 xl:col-span-2">
-            <label className="text-sm font-semibold ml-1" style={{ color: 'var(--color-text-primary)' }}>Examination</label>
-            <Select
-              value={examId}
-              onChange={(e) => setExamId(e.target.value)}
-              options={exams.map((ex) => ({ value: String(ex.id), label: ex.name }))}
-              placeholder="Choose Exam"
-              className="h-11 px-4 rounded-xl bg-surface-raised border border-border/50 text-sm font-semibold focus:border-primary transition-all"
-            />
-          </div>
-          <div className="space-y-1.5 xl:col-span-2">
             <label className="text-sm font-semibold ml-1" style={{ color: 'var(--color-text-primary)' }}>Class & Section</label>
             <Select
               value={sectionKey}
               onChange={(e) => setSectionKey(e.target.value)}
-              options={visibleSections.map((s) => ({
+              options={uniqueSections.map((s) => ({
                 value: `${s.class_id}:${s.section_id}:${s.is_class_teacher ? 'class_teacher' : 'subject_teacher'}`,
                 label: `${s.class_name} ${s.section_name}`,
               }))}
               placeholder="Choose Section"
+              className="h-11 px-4 rounded-xl bg-surface-raised border border-border/50 text-sm font-semibold focus:border-primary transition-all"
+            />
+          </div>
+          <div className="space-y-1.5 xl:col-span-2">
+            <label className="text-sm font-semibold ml-1" style={{ color: 'var(--color-text-primary)' }}>Examination</label>
+            <Select
+              value={examId}
+              onChange={(e) => setExamId(e.target.value)}
+              options={examOptions}
+              placeholder="Choose Exam"
               className="h-11 px-4 rounded-xl bg-surface-raised border border-border/50 text-sm font-semibold focus:border-primary transition-all"
             />
           </div>
