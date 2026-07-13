@@ -169,7 +169,7 @@ const SubjectsTab=({classId,subjects,isSaving,onCreate,onUpdate,onDelete,onReord
   )
 }
 
-const EnrolledStudentsTab=({students,isLoading,onOpenStudent})=>{
+const EnrolledStudentsTab=({students,isLoading,onOpenStudent,page,totalPages,onPageChange})=>{
   if(isLoading){
     return(
       <div className="space-y-3 animate-pulse">
@@ -191,37 +191,61 @@ const EnrolledStudentsTab=({students,isLoading,onOpenStudent})=>{
   }
 
   return(
-    <div className="rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
-      <table className="w-full">
-        <thead>
-          <tr className="bg-gray-50 dark:bg-gray-800/50 border-b border-gray-200 dark:border-gray-700">
-            {['Admission No','Student','Section','Roll No','Session','Status','Actions'].map(h=>(
-              <th key={h} className="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">{h}</th>
-            ))}
-          </tr>
-        </thead>
-        <tbody className="divide-y divide-gray-100 dark:divide-gray-700/50 bg-white dark:bg-gray-800">
-          {students.map(st=>(
-            <tr key={st.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-colors">
-              <td className="px-4 py-3 text-sm font-mono text-gray-600 dark:text-gray-300">{st.admission_no}</td>
-              <td className="px-4 py-3">
-                <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{st.first_name} {st.last_name}</p>
-              </td>
-              <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-300">{st.current_enrollment?.section||'—'}</td>
-              <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-300">{st.current_enrollment?.roll_number||'—'}</td>
-              <td className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">{st.current_enrollment?.session||'—'}</td>
-              <td className="px-4 py-3">
-                <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${st.current_enrollment?.status==='active'?'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-400':'bg-gray-100 text-gray-500 dark:bg-gray-700 dark:text-gray-400'}`}>
-                  {st.current_enrollment?.status||'inactive'}
-                </span>
-              </td>
-              <td className="px-4 py-3">
-                <button onClick={()=>onOpenStudent(st.id)} className="text-xs text-indigo-600 dark:text-indigo-400 hover:underline">View profile</button>
-              </td>
+    <div className="space-y-4">
+      <div className="rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
+        <table className="w-full">
+          <thead>
+            <tr className="bg-gray-50 dark:bg-gray-800/50 border-b border-gray-200 dark:border-gray-700">
+              {['Admission No','Student','Section','Roll No','Session','Status','Actions'].map(h=>(
+                <th key={h} className="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">{h}</th>
+              ))}
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody className="divide-y divide-gray-100 dark:divide-gray-700/50 bg-white dark:bg-gray-800">
+            {students.map(st=>(
+              <tr key={st.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-colors">
+                <td className="px-4 py-3 text-sm font-mono text-gray-600 dark:text-gray-300">{st.admission_no}</td>
+                <td className="px-4 py-3">
+                  <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{st.first_name} {st.last_name}</p>
+                </td>
+                <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-300">{st.current_enrollment?.section||'—'}</td>
+                <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-300">{st.current_enrollment?.roll_number||'—'}</td>
+                <td className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">{st.current_enrollment?.session||'—'}</td>
+                <td className="px-4 py-3">
+                  <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${st.current_enrollment?.status==='active'?'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-400':'bg-gray-100 text-gray-500 dark:bg-gray-700 dark:text-gray-400'}`}>
+                    {st.current_enrollment?.status||'inactive'}
+                  </span>
+                </td>
+                <td className="px-4 py-3">
+                  <button onClick={()=>onOpenStudent(st.id)} className="text-xs text-indigo-600 dark:text-indigo-400 hover:underline">View profile</button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      {totalPages > 1 && (
+        <div className="flex items-center justify-between px-4 py-3 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700">
+          <button
+            disabled={page <= 1}
+            onClick={() => onPageChange(page - 1)}
+            className="px-3 py-1.5 text-xs font-medium text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 transition-colors"
+          >
+            Previous
+          </button>
+          <span className="text-xs text-gray-500 dark:text-gray-400">
+            Page {page} of {totalPages}
+          </span>
+          <button
+            disabled={page >= totalPages}
+            onClick={() => onPageChange(page + 1)}
+            className="px-3 py-1.5 text-xs font-medium text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 transition-colors"
+          >
+            Next
+          </button>
+        </div>
+      )}
     </div>
   )
 }
@@ -235,6 +259,9 @@ const ClassDetailPage=()=>{
   const [enrolledStudents,setEnrolledStudents]=useState([])
   const [studentsLoading,setStudentsLoading]=useState(false)
   const [downloadingPdf,setDownloadingPdf]=useState(false)
+  const [page,setPage]=useState(1)
+  const [totalPages,setTotalPages]=useState(1)
+  const [totalStudents,setTotalStudents]=useState(0)
   const {selectedClass,sections,isLoading,isSaving,fetchClassById,createSection,updateSection,deleteSection,toggleSectionStatus}=useClasses()
   const {subjects,fetchSubjects,createSubject,updateSubject,deleteSubject,reorderSubjects}=useSubjects()
   const { toastError, toastSuccess } = useToast()
@@ -246,12 +273,16 @@ const ClassDetailPage=()=>{
     const loadEnrolled=async()=>{
       if(!currentSession?.id){
         setEnrolledStudents([])
+        setTotalPages(1)
+        setTotalStudents(0)
         return
       }
       setStudentsLoading(true)
       try{
-        const res=await getStudents({class_id:id,session_id:currentSession.id,perPage:200,page:1})
+        const res=await getStudents({class_id:id,session_id:currentSession.id,perPage:15,page})
         setEnrolledStudents(res?.data?.students||[])
+        setTotalPages(res?.data?.meta?.totalPages||1)
+        setTotalStudents(res?.data?.meta?.total||0)
       }catch(err){
         toastError(err.message||'Failed to load enrolled students')
         setEnrolledStudents([])
@@ -260,7 +291,7 @@ const ClassDetailPage=()=>{
       }
     }
     loadEnrolled()
-  },[id,currentSession?.id,toastError])
+  },[id,currentSession?.id,page,toastError])
 
   if(isLoading&&!selectedClass)return(
     <div className="space-y-5 animate-pulse">
@@ -338,7 +369,7 @@ const ClassDetailPage=()=>{
 
       <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 overflow-hidden">
         <div className="flex border-b border-gray-200 dark:border-gray-700 px-2 pt-2 gap-1">
-          {[{k:'sections',l:`Sections (${sections.length})`},{k:'subjects',l:`Subjects (${subjects.length})`},{k:'students',l:`Enrolled Students (${enrolledStudents.length})`}].map(t=>(
+          {[{k:'sections',l:`Sections (${sections.length})`},{k:'subjects',l:`Subjects (${subjects.length})`},{k:'students',l:`Enrolled Students (${totalStudents})`}].map(t=>(
             <button key={t.k} onClick={()=>setTab(t.k)}
               className={`px-4 py-2.5 text-sm font-medium rounded-t-xl transition-colors ${tab===t.k?'bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400 border-b-2 border-indigo-500':'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'}`}>
               {t.l}
@@ -367,7 +398,14 @@ const ClassDetailPage=()=>{
                   {downloadingPdf ? 'Preparing PDF...' : 'Download PDF'}
                 </button>
               </div>
-              <EnrolledStudentsTab students={enrolledStudents} isLoading={studentsLoading} onOpenStudent={(studentId)=>navigate(`/students/${studentId}`)}/>
+              <EnrolledStudentsTab 
+                students={enrolledStudents} 
+                isLoading={studentsLoading} 
+                onOpenStudent={(studentId)=>navigate(`/students/${studentId}`)}
+                page={page}
+                totalPages={totalPages}
+                onPageChange={setPage}
+              />
             </div>
           )}
         </div>
