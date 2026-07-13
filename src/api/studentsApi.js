@@ -34,3 +34,14 @@ export const deleteDocument = (id, docId)  => api.delete(`/students/${id}/docume
 export const createEnrollment = (data)     => api.post('/enrollments', data)
 export const getClasses     = ()           => api.get('/classes')
 export const getSections    = (classId) => api.get(`/classes/${classId}/sections`)
+
+// ── Student Leaving & Re-admission ────────────────────────────────────────────
+export const getLeavingSummary        = (params)   => api.get('/student-leaving/leaving-summary', { params })
+export const getLeftStudents          = (params)   => api.get('/student-leaving/left', { params })
+export const getGraduatedStudents     = (params)   => api.get('/student-leaving/graduated', { params })
+export const downloadLeftStudentsPdf  = ()         => api.get('/student-leaving/left/download', { responseType: 'blob' })
+export const downloadGraduatedPdf     = ()         => api.get('/student-leaving/graduated/download', { responseType: 'blob' })
+export const markStudentLeft          = (id, data) => api.patch(`/student-leaving/${id}/mark-left`, data)
+export const markStudentGraduated     = (id, data) => api.patch(`/student-leaving/${id}/mark-graduated`, data)
+export const getEnrollmentHistory     = (id)       => api.get(`/student-leaving/${id}/enrollment-history`)
+export const readmitStudent           = (id, data) => api.post(`/student-leaving/${id}/readmit`, data)
