@@ -29,7 +29,7 @@ const SectionForm = ({
 
   const schema = z.object({
     name            : z.string().min(1, 'Section name is required').max(10),
-    capacity        : z.coerce.number().int().min(1, 'Minimum capacity is 1').max(200, 'Maximum capacity is 200'),
+    capacity        : z.coerce.number().int().min(1, 'Minimum capacity is 1').max(1000, 'Maximum capacity is 1000'),
     class_teacher_id: z.string().optional().nullable().or(z.literal('')),
     is_active       : z.boolean().optional(),
   })
@@ -102,7 +102,7 @@ const SectionForm = ({
           {...register('capacity')}
           type="number"
           min="1"
-          max="200"
+          max="1000"
           placeholder="40"
           className={inputCls(!!errors.capacity)}
         />
