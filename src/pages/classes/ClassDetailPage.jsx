@@ -241,7 +241,7 @@ const ClassDetailPage=()=>{
   const { currentSession } = useSessionStore()
 
   usePageTitle(selectedClass?.name||'Class Detail')
-  useEffect(()=>{fetchClassById(id);fetchSubjects(id)},[id])
+  useEffect(()=>{fetchClassById(id);fetchSubjects(id)},[id, fetchClassById, fetchSubjects])
   useEffect(()=>{
     const loadEnrolled=async()=>{
       if(!currentSession?.id){

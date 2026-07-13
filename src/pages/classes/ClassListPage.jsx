@@ -31,17 +31,20 @@ const StatusBadge = ({ active }) => (
 )
 
 // ── Stat card ─────────────────────────────────────────────────────────────
-const StatCard = ({ icon: Icon, label, value, color }) => (
-  <div className="flex items-center gap-3 p-4 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700">
-    <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${color}`}>
-      <Icon size={18} className="text-white" />
+const StatCard = ({ icon, label, value, color }) => {
+  const Icon = icon
+  return (
+    <div className="flex items-center gap-3 p-4 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700">
+      <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${color}`}>
+        <Icon size={18} className="text-white" />
+      </div>
+      <div>
+        <p className="text-xl font-bold text-gray-900 dark:text-gray-100">{value ?? '—'}</p>
+        <p className="text-xs text-gray-500 dark:text-gray-400">{label}</p>
+      </div>
     </div>
-    <div>
-      <p className="text-xl font-bold text-gray-900 dark:text-gray-100">{value ?? '—'}</p>
-      <p className="text-xs text-gray-500 dark:text-gray-400">{label}</p>
-    </div>
-  </div>
-)
+  )
+}
 
 const OccupancyBar = ({ enrolled, capacity }) => {
   const pct = capacity > 0 ? Math.min((enrolled / capacity) * 100, 100) : 0
@@ -336,16 +339,14 @@ const ClassListPage = () => {
   const [sectionsLoading,setSectionsLoading]=useState(false)
   const [downloadingPdf,setDownloadingPdf]=useState(false)
 
-  useEffect(() => { fetchClasses() }, [])
+  useEffect(() => {
+    fetchClasses()
+  }, [fetchClasses])
   useEffect(() => {
     if (!currentSession?.id) fetchCurrentSession?.().catch(() => {})
   }, [currentSession?.id, fetchCurrentSession])
   useEffect(() => {
-    if (!downloadClassId) {
-      setDownloadSections([])
-      setDownloadSectionId('')
-      return
-    }
+    if (!downloadClassId) return
 
     const loadSections = async () => {
       setSectionsLoading(true)
@@ -615,8 +616,12 @@ const ClassListPage = () => {
             label="Class"
             value={downloadClassId}
             onChange={(e) => {
-              setDownloadClassId(e.target.value)
+              const val = e.target.value
+              setDownloadClassId(val)
               setDownloadSectionId('')
+              if (!val) {
+                setDownloadSections([])
+              }
             }}
             options={filteredClasses.map(cls => {
               const streamPart = cls.stream && cls.stream !== 'regular' 
