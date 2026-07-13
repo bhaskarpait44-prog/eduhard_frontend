@@ -137,7 +137,7 @@ const StepProfile = ({ defaultValues, onNext, onBack }) => {
             params: { field: field.key, value: field.val }
           })
           if (!res.data.isUnique) {
-            setError(field.key, { type: 'manual', message: `${label} is already taken` })
+            setError(field.key, { type: 'manual', message: `${field.label} is already taken` })
             setChecking(false)
             return
           }

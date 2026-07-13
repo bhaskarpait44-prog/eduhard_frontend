@@ -1,6 +1,6 @@
 import { CalendarClock, Clock, ClipboardCheck, Users } from 'lucide-react'
 import { ROUTES } from '@/constants/app'
-import { formatTime } from '@/utils/helpers'
+import { formatTime, formatMinutes } from '@/utils/helpers'
 
 const TimetableToday = ({ 
   schedule = [], 

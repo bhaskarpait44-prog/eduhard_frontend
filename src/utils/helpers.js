@@ -163,3 +163,18 @@ export const getFeeMonthLabel = (dateStr) => {
   const date = new Date(year, monthIndex, 1)
   return date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
 }
+
+/**
+ * Format minutes to a human-readable string (e.g. "45m" or "1h 15m")
+ * @param {number} minutes
+ */
+export const formatMinutes = (minutes) => {
+  if (typeof minutes !== 'number' || isNaN(minutes)) return '—'
+  if (minutes < 0) return '0m'
+  const hrs = Math.floor(minutes / 60)
+  const mins = minutes % 60
+  if (hrs > 0) {
+    return `${hrs}h ${mins}m`
+  }
+  return `${mins}m`
+}
