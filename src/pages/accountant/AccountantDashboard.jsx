@@ -1,19 +1,13 @@
 import { useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
-  Card,
   Row,
   Col,
   Progress,
   Table,
-  Button,
-  ConfigProvider,
-  Space,
   Avatar,
-  Tag,
   Empty,
   Skeleton,
-  theme as antdTheme
 } from 'antd'
 import {
   PlusOutlined,
@@ -26,24 +20,24 @@ import {
   CalendarOutlined,
   FileTextOutlined,
   SafetyCertificateOutlined,
-  CheckCircleOutlined
+  CheckCircleOutlined,
 } from '@ant-design/icons'
 import { ROUTES } from '@/constants/app'
 import usePageTitle from '@/hooks/usePageTitle'
 import useAccountantDashboard from '@/hooks/useAccountantDashboard'
-import useUiStore from '@/store/uiStore'
 import CollectionChart from '@/components/accountant/CollectionChart'
 import { formatCurrency, formatDate, getInitials } from '@/utils/helpers'
+import { paymentModeBadge } from '@/utils/feeStatus'
 import useAuthStore from '@/store/authStore'
+import Badge from '@/components/ui/Badge'
+import UIButton from '@/components/ui/Button'
+import Card from '@/components/ui/Card'
 
 const AccountantDashboard = () => {
   usePageTitle('Accountant Dashboard')
   const navigate = useNavigate()
   const user = useAuthStore((state) => state.user)
-  const { theme: storeTheme } = useUiStore()
   const { dashboard, todayStats, recentTransactions, pendingTasks, weekTrend, isLoading, refresh } = useAccountantDashboard()
-
-  const isDark = storeTheme === 'dark' || (storeTheme === 'system' && window.matchMedia?.('(prefers-color-scheme: dark)').matches)
 
   const collectionDelta = Number(todayStats?.today?.difference_from_yesterday || 0)
   const collectionDirection = collectionDelta >= 0
@@ -64,452 +58,400 @@ const AccountantDashboard = () => {
       title: 'Time',
       dataIndex: 'payment_date',
       key: 'payment_date',
-      render: (text) => <span className="text-xs text-gray-500 dark:text-gray-400 font-semibold">{formatDate(text, 'short')}</span>
+      render: (text) => (
+        <span className="text-xs font-medium" style={{ color: 'var(--color-text-secondary)' }}>
+          {formatDate(text, 'short')}
+        </span>
+      ),
     },
     {
       title: 'Student',
       dataIndex: 'student_name',
       key: 'student_name',
       render: (text) => (
-        <div className="flex items-center gap-3">
-          <Avatar 
-            size="small" 
-            className="bg-gray-100 text-gray-700 font-extrabold dark:bg-gray-800 dark:text-gray-300 border border-gray-200/10"
+        <div className="flex items-center gap-2.5">
+          <div
+            className="w-7 h-7 rounded-lg flex items-center justify-center text-[10px] font-semibold shrink-0"
+            style={{ backgroundColor: 'var(--color-surface-raised)', color: 'var(--color-text-secondary)' }}
           >
             {getInitials(text)}
-          </Avatar>
-          <span className="text-sm font-bold text-gray-900 dark:text-gray-100 hover:text-indigo-500 transition-colors">{text}</span>
+          </div>
+          <span className="text-sm font-medium" style={{ color: 'var(--color-text-primary)' }}>
+            {text}
+          </span>
         </div>
-      )
+      ),
     },
     {
       title: 'Class',
       dataIndex: 'class_name',
       key: 'class_name',
       render: (text) => (
-        <Tag className="rounded-full border-0 bg-gray-50 text-gray-500 dark:bg-gray-800 dark:text-gray-400 font-black text-[9px] uppercase tracking-wider px-2 py-0.5">
+        <span className="text-xs font-medium" style={{ color: 'var(--color-text-muted)' }}>
           {text}
-        </Tag>
-      )
+        </span>
+      ),
     },
     {
       title: 'Amount',
       dataIndex: 'amount',
       key: 'amount',
-      render: (val) => <span className="font-extrabold text-sm text-emerald-600 dark:text-emerald-400">{formatCurrency(val)}</span>
+      render: (val) => (
+        <span className="text-sm font-semibold" style={{ color: 'var(--color-success)' }}>
+          {formatCurrency(val)}
+        </span>
+      ),
     },
     {
       title: 'Mode',
       dataIndex: 'payment_mode',
       key: 'payment_mode',
-      render: (text) => {
-        let colorClass = 'bg-blue-50 text-blue-700 dark:bg-blue-950/30 dark:text-blue-300'
-        const mode = text?.toLowerCase() || ''
-        if (mode === 'cash') colorClass = 'bg-amber-50 text-amber-700 dark:bg-amber-950/30 dark:text-amber-300'
-        else if (mode === 'online' || mode === 'upi') colorClass = 'bg-indigo-50 text-indigo-700 dark:bg-indigo-950/30 dark:text-indigo-300'
-        else if (mode === 'bank' || mode === 'cheque' || mode === 'card') colorClass = 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-300'
-        return <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider ${colorClass}`}>{text}</span>
-      }
+      render: (text) => <Badge variant={paymentModeBadge(text)}>{text}</Badge>,
     },
     {
       title: 'Receipt',
       dataIndex: 'receipt_no',
       key: 'receipt_no',
       render: (text) => (
-        <span className="inline-flex items-center gap-1.5 text-xs font-bold text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 transition-colors">
+        <span className="inline-flex items-center gap-1.5 text-xs font-medium" style={{ color: 'var(--color-brand)' }}>
           <FileTextOutlined className="text-[10px]" />
           {text}
         </span>
-      )
-    }
+      ),
+    },
   ]
 
   return (
-    <ConfigProvider
-      theme={{
-        algorithm: isDark ? antdTheme.darkAlgorithm : antdTheme.defaultAlgorithm,
-        token: {
-          colorPrimary: '#4361ee',
-          borderRadius: 12,
-          fontFamily: "'Roboto', system-ui, sans-serif",
-        },
-      }}
-    >
-      <div className="space-y-6">
-        {/* Welcome Header */}
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 rounded-2xl border border-gray-100 dark:border-gray-800 p-6 shadow-sm bg-white dark:bg-[#1e293b] relative overflow-hidden">
-          <div className="absolute -right-20 -top-20 w-64 h-64 rounded-full bg-indigo-500/5 blur-3xl pointer-events-none" />
-          
-          <div className="z-10 min-w-0">
-            <span className="text-[10px] font-black uppercase tracking-[0.2em] text-indigo-600 dark:text-indigo-400">{greeting}</span>
-            <h1 className="mt-0.5 text-2xl font-black text-gray-900 dark:text-white tracking-tight truncate">{user?.name || 'Accountant'}</h1>
-            <p className="mt-1.5 text-xs text-gray-400 dark:text-gray-500 font-semibold flex items-center gap-1.5 leading-none">
-              Today: <span className="text-gray-700 dark:text-gray-200">{formatDate(new Date(), 'long')}</span> 
-              <span className="opacity-30">•</span> 
-              Session: <span className="px-2.5 py-0.5 rounded-full bg-indigo-100 text-indigo-800 dark:bg-indigo-950/40 dark:text-indigo-300 font-bold text-[10px]">{dashboard?.session_id || todayStats?.session?.name || 'Current'}</span>
-            </p>
-          </div>
-          
-          <div className="z-10 flex flex-wrap items-center gap-2.5 sm:shrink-0">
-            <Button
-              type="primary"
-              icon={<PlusOutlined className="font-bold" />}
-              onClick={() => navigate(ROUTES.ACCOUNTANT_COLLECTION)}
-              className="h-10 px-5 rounded-xl font-bold shadow-sm transition-all flex items-center justify-center border-0"
-              style={{ background: 'linear-gradient(90deg, #4361ee 0%, #1d4ed8 100%)' }}
-            >
-              Collect Fee
-            </Button>
-            <Button
-              icon={<RedoOutlined className={isLoading ? 'animate-spin' : ''} />}
-              onClick={() => refresh().catch(() => {})}
-              className="h-10 px-4 rounded-xl font-semibold flex items-center justify-center border border-gray-200 dark:border-gray-800 bg-white/80 dark:bg-gray-900/80 text-gray-700 dark:text-gray-200 hover:text-indigo-500 hover:border-indigo-400 transition-colors"
-            >
-              Refresh
-            </Button>
-          </div>
+    <div className="space-y-5">
+      {/* Welcome Header */}
+      <div
+        className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 rounded-2xl border p-5 shadow-sm"
+        style={{ backgroundColor: 'var(--color-surface)', borderColor: 'var(--color-border)' }}
+      >
+        <div className="min-w-0">
+          <p className="text-xs font-medium mb-0.5" style={{ color: 'var(--color-brand)' }}>
+            {greeting}
+          </p>
+          <h1 className="text-2xl font-bold tracking-tight truncate" style={{ color: 'var(--color-text-primary)' }}>
+            {user?.name || 'Accountant'}
+          </h1>
+          <p className="mt-1 text-xs font-medium flex flex-wrap items-center gap-1.5" style={{ color: 'var(--color-text-muted)' }}>
+            Today: <span style={{ color: 'var(--color-text-secondary)' }}>{formatDate(new Date(), 'long')}</span>
+            <span className="opacity-30">•</span>
+            Session:{' '}
+            <Badge variant="blue">{dashboard?.session_id || todayStats?.session?.name || 'Current'}</Badge>
+          </p>
         </div>
 
-        {/* Stats Grid */}
-        <Row gutter={[16, 16]}>
-          <Col xs={24} sm={12} xl={6}>
-            <div className="h-full">
-              <Card 
-                className="rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 border-l-4 border-l-indigo-500 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md h-full overflow-hidden bg-white dark:bg-[#1e293b]" 
-                styles={{ body: { padding: '20px' } }}
-              >
-                {isLoading && !todayStats ? (
-                  <Skeleton active paragraph={{ rows: 2 }} />
-                ) : (
-                  <>
-                    <div className="flex items-start justify-between">
-                      <div>
-                        <span className="text-[10px] font-black uppercase tracking-[0.18em] text-gray-400 block mb-1">Today's Collection</span>
-                        <div className="text-3xl font-black text-gray-900 dark:text-white tracking-tight">
-                          {formatCurrency(todayStats?.today?.total_amount || 0)}
-                        </div>
-                      </div>
-                      <Avatar 
-                        size="large" 
-                        className="bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400 flex items-center justify-center border-0"
-                        icon={<WalletOutlined />}
-                      />
-                    </div>
-                    <div className="text-xs font-semibold text-gray-500 mt-2">
-                      {todayStats?.today?.transaction_count || 0} transaction(s) today
-                    </div>
-                    <div className="mt-4 flex items-center gap-1.5 text-xs font-bold">
-                      <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold ${
-                        collectionDirection 
-                          ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-400' 
-                          : 'bg-rose-50 text-rose-700 dark:bg-rose-950/30 dark:text-rose-400'
-                      }`}>
-                        {collectionDirection ? <ArrowUpOutlined /> : <ArrowDownOutlined />}
-                        {formatCurrency(Math.abs(collectionDelta))}
-                      </span>
-                      <span className="text-gray-400 dark:text-gray-500 font-medium">vs yesterday</span>
-                    </div>
-                  </>
-                )}
-              </Card>
-            </div>
-          </Col>
-
-          <Col xs={24} sm={12} xl={6}>
-            <div className="h-full">
-              <Card 
-                className="rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 border-l-4 border-l-rose-500 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md h-full overflow-hidden bg-white dark:bg-[#1e293b]" 
-                styles={{ body: { padding: '20px' } }}
-              >
-                {isLoading && !todayStats ? (
-                  <Skeleton active paragraph={{ rows: 2 }} />
-                ) : (
-                  <>
-                    <div className="flex items-start justify-between">
-                      <div>
-                        <span className="text-[10px] font-black uppercase tracking-[0.18em] text-gray-400 block mb-1">Pending Today</span>
-                        <div className="text-3xl font-black text-gray-900 dark:text-white tracking-tight">
-                          {formatCurrency(todayStats?.pending_today?.amount || 0)}
-                        </div>
-                      </div>
-                      <Avatar 
-                        size="large" 
-                        className="bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 flex items-center justify-center border-0"
-                        icon={<ClockCircleOutlined />}
-                      />
-                    </div>
-                    <div className="text-xs font-semibold text-gray-500 mt-2">
-                      {todayStats?.pending_today?.student_count || 0} student(s) with dues
-                    </div>
-                    <div className="mt-4">
-                      <Tag color="red" className="rounded-full border-0 font-extrabold text-[9px] px-3 py-0.5">ACTION REQUIRED</Tag>
-                    </div>
-                  </>
-                )}
-              </Card>
-            </div>
-          </Col>
-
-          <Col xs={24} sm={12} xl={6}>
-            <div className="h-full">
-              <Card 
-                className="rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 border-l-4 border-l-blue-500 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md h-full overflow-hidden bg-white dark:bg-[#1e293b]" 
-                styles={{ body: { padding: '20px' } }}
-              >
-                {isLoading && !todayStats ? (
-                  <Skeleton active paragraph={{ rows: 2 }} />
-                ) : (
-                  <>
-                    <div className="flex items-start justify-between">
-                      <div>
-                        <span className="text-[10px] font-black uppercase tracking-[0.18em] text-gray-400 block mb-1">This Month</span>
-                        <div className="text-3xl font-black text-gray-900 dark:text-white tracking-tight">
-                          {formatCurrency(todayStats?.month?.total_amount || 0)}
-                        </div>
-                      </div>
-                      <Avatar 
-                        size="large" 
-                        className="bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 flex items-center justify-center border-0"
-                        icon={<CalendarOutlined />}
-                      />
-                    </div>
-                    <div className="mt-2 text-xs font-semibold text-gray-500 flex justify-between">
-                      <span>Target: {formatCurrency(todayStats?.month?.target_amount || 0)}</span>
-                      <span className="text-indigo-600 dark:text-indigo-400 font-bold">{monthPercent}%</span>
-                    </div>
-                    <div className="mt-3">
-                      <Progress
-                        percent={monthPercent}
-                        strokeColor={{ '0%': '#4361ee', '100%': '#1d4ed8' }}
-                        showInfo={false}
-                        strokeWidth={8}
-                        className="m-0"
-                      />
-                    </div>
-                  </>
-                )}
-              </Card>
-            </div>
-          </Col>
-
-          <Col xs={24} sm={12} xl={6}>
-            <div className="h-full">
-              <Card 
-                className="rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 border-l-4 border-l-emerald-500 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md h-full overflow-hidden bg-white dark:bg-[#1e293b]" 
-                styles={{ body: { padding: '20px' } }}
-              >
-                {isLoading && !todayStats ? (
-                  <Skeleton active paragraph={{ rows: 2 }} />
-                ) : (
-                  <>
-                    <div className="flex items-start justify-between">
-                      <span className="text-[10px] font-black uppercase tracking-[0.18em] text-gray-400 block mb-1">Session Summary</span>
-                      <Avatar 
-                        size="small" 
-                        className="bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 flex items-center justify-center border-0"
-                        icon={<SafetyCertificateOutlined />}
-                      />
-                    </div>
-                    <div className="flex items-center gap-4 mt-2 h-[72px]">
-                      <Progress
-                        type="circle"
-                        percent={Math.round(circularPct)}
-                        strokeColor={{ '0%': '#4361ee', '100%': '#10b981' }}
-                        width={64}
-                        strokeWidth={9}
-                        format={(p) => <span className="text-xs font-black text-gray-800 dark:text-gray-100">{p}%</span>}
-                      />
-                      <div className="text-[11px] leading-relaxed text-gray-500 dark:text-gray-400 font-semibold flex-1">
-                        <div className="flex justify-between border-b border-gray-50 dark:border-gray-800/40 pb-1">
-                          <span>Collected:</span> 
-                          <span className="text-gray-850 dark:text-gray-200">{formatCurrency(todayStats?.session_overview?.total_collected || 0)}</span>
-                        </div>
-                        <div className="flex justify-between border-b border-gray-50 dark:border-gray-800/40 py-1">
-                          <span>Expected:</span> 
-                          <span className="text-gray-900 dark:text-white font-bold">{formatCurrency(todayStats?.session_overview?.total_expected || 0)}</span>
-                        </div>
-                        <div className="flex justify-between pt-1">
-                          <span>Pending:</span> 
-                          <span className="text-rose-600 dark:text-rose-400">{formatCurrency(todayStats?.session_overview?.total_pending || 0)}</span>
-                        </div>
-                      </div>
-                    </div>
-                  </>
-                )}
-              </Card>
-            </div>
-          </Col>
-        </Row>
-
-        {/* Lower Dashboard Grid */}
-        <Row gutter={[16, 16]}>
-          {/* Recent Transactions Table */}
-          <Col xs={24} xl={15}>
-            <div className="h-full">
-              <Card 
-                className="rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 h-full overflow-hidden bg-white dark:bg-[#1e293b]"
-                styles={{ header: { borderBottom: '1px solid var(--color-border)', padding: '16px 20px' }, body: { padding: '0px' } }}
-                title={
-                  <div className="flex items-center justify-between py-1">
-                    <span className="text-base font-black flex items-center gap-2 text-gray-900 dark:text-white tracking-tight">
-                      <WalletOutlined className="text-indigo-500" />
-                      Recent Transactions
-                    </span>
-                    {isLoading && <span className="text-[10px] font-black text-indigo-500 animate-pulse tracking-widest">UPDATING...</span>}
-                  </div>
-                }
-              >
-                {isLoading && !recentTransactions ? (
-                  <div className="p-6"><Skeleton active paragraph={{ rows: 6 }} /></div>
-                ) : !recentTransactions || recentTransactions.length === 0 ? (
-                  <div className="py-12 bg-white dark:bg-[#1e293b]">
-                    <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="No transactions recorded today" />
-                  </div>
-                ) : (
-                  <Table
-                    dataSource={recentTransactions}
-                    columns={tableColumns}
-                    rowKey="id"
-                    pagination={false}
-                    size="middle"
-                    onRow={(record) => ({
-                      onClick: () => navigate(ROUTES.ACCOUNTANT_RECEIPT_DETAIL.replace(':id', record.id)),
-                    })}
-                    rowClassName="cursor-pointer hover:bg-slate-50/50 dark:hover:bg-slate-800/40 transition-colors"
-                    className="premium-table"
-                  />
-                )}
-              </Card>
-            </div>
-          </Col>
-
-          {/* Sidebar Analytics */}
-          <Col xs={24} xl={9}>
-            <div className="flex flex-col gap-6 h-full">
-              {/* Collection by Mode */}
-              <div>
-                <Card 
-                  className="rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 bg-white dark:bg-[#1e293b]"
-                  title={<span className="font-black text-gray-900 dark:text-white tracking-tight">Collection by Mode</span>}
-                >
-                  {isLoading && !modeBreakdown ? (
-                    <Skeleton active paragraph={{ rows: 3 }} />
-                  ) : (
-                    <CollectionChart items={modeBreakdown} />
-                  )}
-                </Card>
-              </div>
-
-              {/* Weekly Trend */}
-              <div>
-                <Card 
-                  className="rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 bg-white dark:bg-[#1e293b]"
-                  title={<span className="font-black text-gray-900 dark:text-white tracking-tight">Weekly Collection Trend</span>}
-                >
-                  {isLoading && !weekTrend ? (
-                    <Skeleton active paragraph={{ rows: 4 }} />
-                  ) : weekTrend.length === 0 ? (
-                    <div className="flex h-40 flex-col items-center justify-center text-sm text-gray-400 bg-white dark:bg-[#1e293b]">
-                      <RiseOutlined style={{ fontSize: '28px', opacity: 0.2, marginBottom: '8px' }} />
-                      No trend data yet
-                    </div>
-                  ) : (
-                    <div className="relative h-48 w-full pt-6">
-                      {/* Grid Lines */}
-                      <div className="absolute inset-0 flex flex-col justify-between pointer-events-none pb-8 pt-6">
-                        <div className="w-full border-b border-gray-100 dark:border-gray-800/40" />
-                        <div className="w-full border-b border-gray-100 dark:border-gray-800/40" />
-                        <div className="w-full border-b border-gray-100 dark:border-gray-800/40" />
-                        <div className="w-full border-b border-gray-100 dark:border-gray-800/40" />
-                      </div>
-                      
-                      {/* Bars */}
-                      <div className="relative flex items-end gap-3 h-full z-10">
-                        {weekTrend.map((item) => {
-                          const barHeight = Math.max((Number(item.amount || 0) / weekMax) * 100, 4)
-                          return (
-                            <div key={item.collection_date} className="group relative flex-1 text-center h-full flex flex-col justify-end">
-                              {/* Tooltip */}
-                              <div className="absolute bottom-full left-1/2 mb-2 w-28 -translate-x-1/2 rounded-xl bg-gray-900/95 dark:bg-gray-950/95 px-2.5 py-2 text-[10px] text-white opacity-0 shadow-xl transition-all duration-200 group-hover:opacity-100 pointer-events-none z-30 translate-y-1 group-hover:translate-y-0 border border-gray-800">
-                                <div className="font-extrabold text-indigo-400">{formatCurrency(item.amount)}</div>
-                                <div className="opacity-60 text-[9px] mt-0.5">{formatDate(item.collection_date)}</div>
-                              </div>
-                              
-                              <div className="w-full flex items-end h-32 cursor-pointer">
-                                <div
-                                  className="w-full rounded-t-xl transition-all duration-300 group-hover:brightness-110 shadow-sm"
-                                  style={{
-                                    height: `${barHeight}%`,
-                                    background: 'linear-gradient(180deg, #4361ee 0%, #1d4ed8 100%)',
-                                  }}
-                                  onClick={() => navigate(ROUTES.ACCOUNTANT_REPORTS)}
-                                />
-                              </div>
-                              <div className="mt-2 text-[10px] font-bold text-gray-400 dark:text-gray-500 truncate">
-                                {new Date(item.collection_date).toLocaleDateString(undefined, { weekday: 'short' })}
-                              </div>
-                            </div>
-                          )
-                        })}
-                      </div>
-                    </div>
-                  )}
-                </Card>
-              </div>
-
-              {/* Action Required */}
-              <div>
-                <Card 
-                  className="rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 bg-white dark:bg-[#1e293b]"
-                  title={<span className="font-black text-gray-900 dark:text-white tracking-tight">Action Required</span>}
-                >
-                  {isLoading && !pendingTasks ? (
-                    <Skeleton active paragraph={{ rows: 3 }} />
-                  ) : !pendingTasks || pendingTasks.length === 0 ? (
-                    <div className="py-6 flex flex-col items-center justify-center text-xs text-gray-400 bg-white dark:bg-[#1e293b]">
-                      <CheckCircleOutlined className="text-emerald-500 text-lg mb-2" />
-                      All tasks completed!
-                    </div>
-                  ) : (
-                    <div className="flex flex-col gap-3">
-                      {(pendingTasks || []).map((task) => (
-                        <div 
-                          key={task.key} 
-                          className="flex items-center justify-between gap-4 rounded-xl border border-gray-100 dark:border-gray-800/80 p-4 transition-all hover:border-indigo-200 hover:bg-indigo-50/5 dark:hover:bg-indigo-950/10 hover:translate-x-1 duration-200" 
-                        >
-                          <div className="flex items-center gap-3">
-                            <span className="w-1.5 h-1.5 rounded-full bg-indigo-500" />
-                            <div>
-                              <div className="text-xs font-bold text-gray-900 dark:text-white">
-                                {task.count || 0} {task.label}
-                              </div>
-                              {task.amount ? (
-                                <div className="text-[10px] font-bold text-gray-400 dark:text-gray-500 mt-0.5">
-                                  {formatCurrency(task.amount)}
-                                </div>
-                              ) : null}
-                            </div>
-                          </div>
-                          <Button
-                            type="primary"
-                            size="small"
-                            onClick={() => navigate(task.route)}
-                            className="rounded-full font-bold text-[10px] uppercase tracking-wider h-7 px-3 border-0 flex items-center justify-center shadow-sm"
-                            style={{ backgroundColor: '#4361ee' }}
-                          >
-                            Resolve
-                          </Button>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </Card>
-              </div>
-            </div>
-          </Col>
-        </Row>
+        <div className="flex items-center gap-2 shrink-0">
+          <UIButton
+            variant="primary"
+            icon={PlusOutlined}
+            onClick={() => navigate(ROUTES.ACCOUNTANT_COLLECTION)}
+          >
+            Collect Fee
+          </UIButton>
+          <UIButton
+            variant="secondary"
+            onClick={() => refresh().catch(() => {})}
+          >
+            <RedoOutlined className={isLoading ? 'animate-spin' : ''} />
+            Refresh
+          </UIButton>
+        </div>
       </div>
-    </ConfigProvider>
+
+      {/* Stats Grid */}
+      <Row gutter={[16, 16]}>
+        {/* Today's Collection */}
+        <Col xs={24} sm={12} xl={6}>
+          <div
+            className="rounded-2xl border shadow-sm p-5 h-full"
+            style={{ backgroundColor: 'var(--color-surface)', borderColor: 'var(--color-border)', borderLeft: '3px solid var(--color-brand)' }}
+          >
+            {isLoading && !todayStats ? (
+              <Skeleton active paragraph={{ rows: 2 }} />
+            ) : (
+              <>
+                <div className="flex items-start justify-between mb-2">
+                  <p className="text-xs font-medium uppercase tracking-wide" style={{ color: 'var(--color-text-muted)' }}>
+                    Today's Collection
+                  </p>
+                  <Avatar size="small" icon={<WalletOutlined />} style={{ backgroundColor: 'var(--color-surface-raised)', color: 'var(--color-brand)' }} />
+                </div>
+                <div className="text-2xl font-bold" style={{ color: 'var(--color-text-primary)' }}>
+                  {formatCurrency(todayStats?.today?.total_amount || 0)}
+                </div>
+                <p className="text-xs mt-1.5" style={{ color: 'var(--color-text-muted)' }}>
+                  {todayStats?.today?.transaction_count || 0} transaction(s) today
+                </p>
+                <div className="mt-3 flex items-center gap-1.5">
+                  <Badge variant={collectionDirection ? 'green' : 'red'} dot={false}>
+                    {collectionDirection ? <ArrowUpOutlined /> : <ArrowDownOutlined />}{' '}
+                    {formatCurrency(Math.abs(collectionDelta))}
+                  </Badge>
+                  <span className="text-xs" style={{ color: 'var(--color-text-muted)' }}>vs yesterday</span>
+                </div>
+              </>
+            )}
+          </div>
+        </Col>
+
+        {/* Pending Today */}
+        <Col xs={24} sm={12} xl={6}>
+          <div
+            className="rounded-2xl border shadow-sm p-5 h-full"
+            style={{ backgroundColor: 'var(--color-surface)', borderColor: 'var(--color-border)', borderLeft: '3px solid var(--color-danger)' }}
+          >
+            {isLoading && !todayStats ? (
+              <Skeleton active paragraph={{ rows: 2 }} />
+            ) : (
+              <>
+                <div className="flex items-start justify-between mb-2">
+                  <p className="text-xs font-medium uppercase tracking-wide" style={{ color: 'var(--color-text-muted)' }}>
+                    Pending Today
+                  </p>
+                  <Avatar size="small" icon={<ClockCircleOutlined />} style={{ backgroundColor: 'var(--color-surface-raised)', color: 'var(--color-danger)' }} />
+                </div>
+                <div className="text-2xl font-bold" style={{ color: 'var(--color-text-primary)' }}>
+                  {formatCurrency(todayStats?.pending_today?.amount || 0)}
+                </div>
+                <p className="text-xs mt-1.5" style={{ color: 'var(--color-text-muted)' }}>
+                  {todayStats?.pending_today?.student_count || 0} student(s) with dues
+                </p>
+                <div className="mt-3">
+                  <Badge variant="red">Action Required</Badge>
+                </div>
+              </>
+            )}
+          </div>
+        </Col>
+
+        {/* This Month */}
+        <Col xs={24} sm={12} xl={6}>
+          <div
+            className="rounded-2xl border shadow-sm p-5 h-full"
+            style={{ backgroundColor: 'var(--color-surface)', borderColor: 'var(--color-border)', borderLeft: '3px solid var(--color-info)' }}
+          >
+            {isLoading && !todayStats ? (
+              <Skeleton active paragraph={{ rows: 2 }} />
+            ) : (
+              <>
+                <div className="flex items-start justify-between mb-2">
+                  <p className="text-xs font-medium uppercase tracking-wide" style={{ color: 'var(--color-text-muted)' }}>
+                    This Month
+                  </p>
+                  <Avatar size="small" icon={<CalendarOutlined />} style={{ backgroundColor: 'var(--color-surface-raised)', color: 'var(--color-info)' }} />
+                </div>
+                <div className="text-2xl font-bold" style={{ color: 'var(--color-text-primary)' }}>
+                  {formatCurrency(todayStats?.month?.total_amount || 0)}
+                </div>
+                <div className="mt-1.5 text-xs flex justify-between" style={{ color: 'var(--color-text-muted)' }}>
+                  <span>Target: {formatCurrency(todayStats?.month?.target_amount || 0)}</span>
+                  <span style={{ color: 'var(--color-brand)' }}>{monthPercent}%</span>
+                </div>
+                <div className="mt-3">
+                  <Progress
+                    percent={monthPercent}
+                    strokeColor="var(--color-brand)"
+                    showInfo={false}
+                    strokeWidth={6}
+                    className="m-0"
+                  />
+                </div>
+              </>
+            )}
+          </div>
+        </Col>
+
+        {/* Session Summary */}
+        <Col xs={24} sm={12} xl={6}>
+          <div
+            className="rounded-2xl border shadow-sm p-5 h-full"
+            style={{ backgroundColor: 'var(--color-surface)', borderColor: 'var(--color-border)', borderLeft: '3px solid var(--color-success)' }}
+          >
+            {isLoading && !todayStats ? (
+              <Skeleton active paragraph={{ rows: 2 }} />
+            ) : (
+              <>
+                <div className="flex items-start justify-between mb-2">
+                  <p className="text-xs font-medium uppercase tracking-wide" style={{ color: 'var(--color-text-muted)' }}>
+                    Session Summary
+                  </p>
+                  <Avatar size="small" icon={<SafetyCertificateOutlined />} style={{ backgroundColor: 'var(--color-surface-raised)', color: 'var(--color-success)' }} />
+                </div>
+                <div className="flex items-center gap-4 mt-1">
+                  <Progress
+                    type="circle"
+                    percent={Math.round(circularPct)}
+                    strokeColor="var(--color-brand)"
+                    width={56}
+                    strokeWidth={10}
+                    format={(p) => (
+                      <span className="text-xs font-semibold" style={{ color: 'var(--color-text-primary)' }}>
+                        {p}%
+                      </span>
+                    )}
+                  />
+                  <div className="text-xs flex-1 space-y-1" style={{ color: 'var(--color-text-secondary)' }}>
+                    <div className="flex justify-between border-b pb-1" style={{ borderColor: 'var(--color-border)' }}>
+                      <span>Collected:</span>
+                      <span style={{ color: 'var(--color-text-primary)' }}>{formatCurrency(todayStats?.session_overview?.total_collected || 0)}</span>
+                    </div>
+                    <div className="flex justify-between border-b py-1" style={{ borderColor: 'var(--color-border)' }}>
+                      <span>Expected:</span>
+                      <span style={{ color: 'var(--color-text-primary)' }}>{formatCurrency(todayStats?.session_overview?.total_expected || 0)}</span>
+                    </div>
+                    <div className="flex justify-between pt-1">
+                      <span>Pending:</span>
+                      <span style={{ color: 'var(--color-danger)' }}>{formatCurrency(todayStats?.session_overview?.total_pending || 0)}</span>
+                    </div>
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
+        </Col>
+      </Row>
+
+      {/* Lower Grid */}
+      <Row gutter={[16, 16]}>
+        {/* Recent Transactions */}
+        <Col xs={24} xl={15}>
+          <Card
+            title="Recent Transactions"
+            headerAction={
+              isLoading ? (
+                <span className="text-[10px] font-medium animate-pulse" style={{ color: 'var(--color-brand)' }}>
+                  Updating…
+                </span>
+              ) : null
+            }
+            className="h-full"
+          >
+            {isLoading && !recentTransactions ? (
+              <Skeleton active paragraph={{ rows: 6 }} />
+            ) : !recentTransactions || recentTransactions.length === 0 ? (
+              <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="No transactions recorded today" />
+            ) : (
+              <div className="-mx-5 -mb-5 overflow-x-auto">
+                <Table
+                  dataSource={recentTransactions}
+                  columns={tableColumns}
+                  rowKey="id"
+                  pagination={false}
+                  size="small"
+                  onRow={(record) => ({
+                    onClick: () => navigate(ROUTES.ACCOUNTANT_RECEIPT_DETAIL.replace(':id', record.id)),
+                  })}
+                  rowClassName="cursor-pointer transition-colors"
+                />
+              </div>
+            )}
+          </Card>
+        </Col>
+
+        {/* Sidebar Analytics */}
+        <Col xs={24} xl={9}>
+          <div className="flex flex-col gap-4 h-full">
+            {/* Collection by Mode */}
+            <Card title="Collection by Mode">
+              {isLoading && !modeBreakdown ? (
+                <Skeleton active paragraph={{ rows: 3 }} />
+              ) : (
+                <CollectionChart items={modeBreakdown} />
+              )}
+            </Card>
+
+            {/* Weekly Trend */}
+            <Card title="Weekly Collection Trend">
+              {isLoading && !weekTrend ? (
+                <Skeleton active paragraph={{ rows: 4 }} />
+              ) : weekTrend.length === 0 ? (
+                <div className="flex h-36 flex-col items-center justify-center" style={{ color: 'var(--color-text-muted)' }}>
+                  <RiseOutlined style={{ fontSize: '24px', opacity: 0.3, marginBottom: 8 }} />
+                  <span className="text-sm">No trend data yet</span>
+                </div>
+              ) : (
+                <div className="relative h-40 w-full pt-4">
+                  {/* Grid lines */}
+                  <div className="absolute inset-0 flex flex-col justify-between pointer-events-none pb-8 pt-4">
+                    {[...Array(4)].map((_, i) => (
+                      <div key={i} className="w-full border-b" style={{ borderColor: 'var(--color-border)' }} />
+                    ))}
+                  </div>
+                  {/* Bars */}
+                  <div className="relative flex items-end gap-2 h-full z-10">
+                    {weekTrend.map((item) => {
+                      const barHeight = Math.max((Number(item.amount || 0) / weekMax) * 100, 4)
+                      return (
+                        <div key={item.collection_date} className="group relative flex-1 text-center h-full flex flex-col justify-end">
+                          <div
+                            className="absolute bottom-full left-1/2 mb-2 w-28 -translate-x-1/2 rounded-xl px-2 py-1.5 text-[10px] text-white opacity-0 shadow-sm transition-all group-hover:opacity-100 pointer-events-none z-30 border"
+                            style={{ backgroundColor: 'var(--color-text-primary)', borderColor: 'var(--color-border)' }}
+                          >
+                            <div className="font-semibold" style={{ color: 'var(--color-brand)' }}>{formatCurrency(item.amount)}</div>
+                            <div className="opacity-60 text-[9px] mt-0.5">{formatDate(item.collection_date)}</div>
+                          </div>
+                          <div className="w-full flex items-end h-28 cursor-pointer" onClick={() => navigate(ROUTES.ACCOUNTANT_REPORTS)}>
+                            <div
+                              className="w-full rounded-t-lg transition-all duration-200 hover:opacity-80"
+                              style={{ height: `${barHeight}%`, backgroundColor: 'var(--color-brand)' }}
+                            />
+                          </div>
+                          <div className="mt-1.5 text-[10px]" style={{ color: 'var(--color-text-muted)' }}>
+                            {new Date(item.collection_date).toLocaleDateString(undefined, { weekday: 'short' })}
+                          </div>
+                        </div>
+                      )
+                    })}
+                  </div>
+                </div>
+              )}
+            </Card>
+
+            {/* Action Required */}
+            <Card title="Action Required">
+              {isLoading && !pendingTasks ? (
+                <Skeleton active paragraph={{ rows: 3 }} />
+              ) : !pendingTasks || pendingTasks.length === 0 ? (
+                <div className="py-6 flex flex-col items-center justify-center gap-2">
+                  <CheckCircleOutlined style={{ fontSize: 20, color: 'var(--color-success)' }} />
+                  <span className="text-xs" style={{ color: 'var(--color-text-muted)' }}>All tasks completed!</span>
+                </div>
+              ) : (
+                <div className="flex flex-col gap-2">
+                  {(pendingTasks || []).map((task) => (
+                    <div
+                      key={task.key}
+                      className="flex items-center justify-between gap-3 rounded-xl border p-3 transition-all duration-150 hover:translate-x-0.5"
+                      style={{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface-raised)' }}
+                    >
+                      <div className="flex items-center gap-2.5">
+                        <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: 'var(--color-brand)' }} />
+                        <div>
+                          <div className="text-xs font-medium" style={{ color: 'var(--color-text-primary)' }}>
+                            {task.count || 0} {task.label}
+                          </div>
+                          {task.amount && (
+                            <div className="text-[10px] mt-0.5" style={{ color: 'var(--color-text-muted)' }}>
+                              {formatCurrency(task.amount)}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                      <UIButton variant="outline" size="xs" onClick={() => navigate(task.route)}>
+                        Resolve
+                      </UIButton>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </Card>
+          </div>
+        </Col>
+      </Row>
+    </div>
   )
 }
 

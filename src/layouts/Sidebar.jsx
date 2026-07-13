@@ -105,40 +105,50 @@ const getNavGroups = (user) => {
       {
         label: 'Main',
         items: [
-          { label: 'Dashboard', icon: 'LayoutDashboard', path: ROUTES.ACCOUNTANT_DASHBOARD },
-          { label: 'Fee Collection', icon: 'IndianRupee', path: ROUTES.ACCOUNTANT_COLLECTION },
+          { label: 'Dashboard',     icon: 'LayoutDashboard', path: ROUTES.ACCOUNTANT_DASHBOARD },
+          { label: 'Fee Collection', icon: 'IndianRupee',    path: ROUTES.ACCOUNTANT_COLLECTION },
         ],
       },
       {
-        label: 'Student Fees',
+        label: 'Students & Billing',
         items: [
-          { label: 'Search Student', icon: 'Search', path: ROUTES.ACCOUNTANT_STUDENTS },
-          { label: 'Invoices', icon: 'FileStack', path: ROUTES.ACCOUNTANT_INVOICES },
-          { label: 'Receipts', icon: 'Receipt', path: ROUTES.ACCOUNTANT_RECEIPTS },
+          { label: 'Search Student', icon: 'Search',    path: ROUTES.ACCOUNTANT_STUDENTS },
+          { label: 'Invoices',        icon: 'FileStack', path: ROUTES.ACCOUNTANT_INVOICES },
+          { label: 'Receipts',        icon: 'Receipt',   path: ROUTES.ACCOUNTANT_RECEIPTS },
         ],
       },
       {
-        label: 'Finance',
+        label: 'Fee Setup',
         items: [
-          { label: 'Fee Structure', icon: 'NotebookTabs', path: ROUTES.ACCOUNTANT_FEE_STRUCTURE },
-          ...(can('fees.edit') ? [{ label: 'Manage Structure', icon: 'PencilRuler', path: ROUTES.ACCOUNTANT_FEE_STRUCTURE_MANAGE }] : []),
-          { label: 'Defaulters', icon: 'TriangleAlert', path: ROUTES.ACCOUNTANT_DEFAULTERS },
-          { label: 'Fee Notices', icon: 'BellRing', path: ROUTES.ACCOUNTANT_NOTICES },
-          ...(can('fees.waive') ? [{ label: 'Concessions', icon: 'BadgePercent', path: ROUTES.ACCOUNTANT_CONCESSIONS }] : []),
-          { label: 'Carry Forward', icon: 'ArrowRightLeft', path: ROUTES.ACCOUNTANT_CARRY_FORWARD },
+          { label: 'Fee Structure',    icon: 'NotebookTabs', path: ROUTES.ACCOUNTANT_FEE_STRUCTURE },
+          ...(can('fees.edit')  ? [{ label: 'Manage Structure', icon: 'PencilRuler',   path: ROUTES.ACCOUNTANT_FEE_STRUCTURE_MANAGE }] : []),
+          ...(can('fees.waive') ? [{ label: 'Concessions',      icon: 'BadgePercent',  path: ROUTES.ACCOUNTANT_CONCESSIONS }] : []),
+          { label: 'Carry Forward',    icon: 'ArrowRightLeft', path: ROUTES.ACCOUNTANT_CARRY_FORWARD },
+        ],
+      },
+      {
+        label: 'Collections',
+        items: [
+          { label: 'Defaulters',         icon: 'TriangleAlert', path: ROUTES.ACCOUNTANT_DEFAULTERS },
+          { label: 'Fee Notices',         icon: 'BellRing',      path: ROUTES.ACCOUNTANT_NOTICES },
+          { label: 'Cheques',             icon: 'Landmark',      path: ROUTES.ACCOUNTANT_CHEQUES },
+          { label: 'UPI Confirmations',   icon: 'QrCode',        path: ROUTES.ACCOUNTANT_UPI_CONFIRMATIONS },
           ...(can('fees.refund') ? [{ label: 'Refunds', icon: 'Undo2', path: ROUTES.ACCOUNTANT_REFUNDS }] : []),
-          { label: 'Cheques', icon: 'Landmark', path: ROUTES.ACCOUNTANT_CHEQUES },
-          { label: 'UPI Confirmations', icon: 'QrCode', path: ROUTES.ACCOUNTANT_UPI_CONFIRMATIONS },
-          { label: 'Expenses', icon: 'Receipt', path: ROUTES.ACCOUNTANT_EXPENSES },
-          { label: 'Payroll', icon: 'Banknote', path: ROUTES.ACCOUNTANT_PAYROLL },
+        ],
+      },
+      {
+        label: 'Operations',
+        items: [
+          { label: 'Expenses', icon: 'Receipt',  path: ROUTES.ACCOUNTANT_EXPENSES },
+          { label: 'Payroll',  icon: 'Banknote', path: ROUTES.ACCOUNTANT_PAYROLL },
         ],
       },
       {
         label: 'Reports',
         items: [
-          ...(can('fees.report') ? [{ label: 'Reports', icon: 'BarChart3', path: ROUTES.ACCOUNTANT_REPORTS }] : []),
-          ...(can('fees.report') ? [{ label: 'Daily Report', icon: 'CalendarClock', path: ROUTES.ACCOUNTANT_REPORT_DAILY }] : []),
-          ...(can('fees.report') ? [{ label: 'Monthly Report', icon: 'CalendarDays', path: ROUTES.ACCOUNTANT_REPORT_MONTHLY }] : []),
+          ...(can('fees.report') ? [{ label: 'Reports',        icon: 'BarChart3',     path: ROUTES.ACCOUNTANT_REPORTS }] : []),
+          ...(can('fees.report') ? [{ label: 'Daily Report',   icon: 'CalendarClock', path: ROUTES.ACCOUNTANT_REPORT_DAILY }] : []),
+          ...(can('fees.report') ? [{ label: 'Monthly Report', icon: 'CalendarDays',  path: ROUTES.ACCOUNTANT_REPORT_MONTHLY }] : []),
         ],
       },
       {

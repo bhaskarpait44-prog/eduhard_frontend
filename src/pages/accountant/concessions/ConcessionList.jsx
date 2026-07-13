@@ -3,6 +3,8 @@ import usePermissions from '@/hooks/usePermissions'
 import { formatCurrency, formatDate } from '@/utils/helpers'
 import { useEffect, useState } from 'react'
 import * as accountantApi from '@/api/accountantApi'
+import PageHeader from '@/components/ui/PageHeader'
+import Card from '@/components/ui/Card'
 
 const ConcessionList = () => {
   usePageTitle('Concessions')
@@ -20,33 +22,33 @@ const ConcessionList = () => {
 
   return (
     <div className="space-y-5">
-      <div className="rounded-[28px] border p-5" style={{ backgroundColor: 'var(--color-surface)', borderColor: 'var(--color-border)' }}>
-        <h1 className="text-2xl font-bold" style={{ color: 'var(--color-text-primary)' }}>Concession List</h1>
-      </div>
-      <div className="overflow-x-auto rounded-[28px] border" style={{ backgroundColor: 'var(--color-surface)', borderColor: 'var(--color-border)' }}>
+      <PageHeader title="Concession List" subtitle="Applied fee concessions" />
+      <Card>
+        <div className="-mx-5 -mb-5 overflow-x-auto">
         <table className="w-full">
           <thead>
-            <tr style={{ borderBottom: '1px solid var(--color-border)' }}>
+            <tr style={{ borderBottom: '1px solid var(--color-border)', backgroundColor: 'var(--color-surface-raised)' }}>
               {['Student', 'Class', 'Fee', 'Original', 'Concession', 'Reason', 'Date'].map((head) => (
-                <th key={head} className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-[0.16em]" style={{ color: 'var(--color-text-muted)' }}>{head}</th>
+                <th key={head} className="px-4 py-3 text-left text-[10px] font-semibold uppercase tracking-wider" style={{ color: 'var(--color-text-muted)' }}>{head}</th>
               ))}
             </tr>
           </thead>
           <tbody>
             {concessions.map((row) => (
               <tr key={row.invoice_id} style={{ borderBottom: '1px solid var(--color-border)' }}>
-                <td className="px-4 py-3 text-sm font-semibold" style={{ color: 'var(--color-text-primary)' }}>{row.student_name}</td>
+                <td className="px-4 py-3 text-sm font-medium" style={{ color: 'var(--color-text-primary)' }}>{row.student_name}</td>
                 <td className="px-4 py-3 text-sm" style={{ color: 'var(--color-text-secondary)' }}>{row.class_name}</td>
                 <td className="px-4 py-3 text-sm" style={{ color: 'var(--color-text-secondary)' }}>{row.fee_name}</td>
-                <td className="px-4 py-3 text-sm">{formatCurrency(row.original_amount)}</td>
-                <td className="px-4 py-3 text-sm font-semibold text-blue-700">{formatCurrency(row.concession_amount)}</td>
+                <td className="px-4 py-3 text-sm" style={{ color: 'var(--color-text-primary)' }}>{formatCurrency(row.original_amount)}</td>
+                <td className="px-4 py-3 text-sm font-semibold" style={{ color: 'var(--color-brand)' }}>{formatCurrency(row.concession_amount)}</td>
                 <td className="px-4 py-3 text-sm" style={{ color: 'var(--color-text-secondary)' }}>{row.concession_reason}</td>
                 <td className="px-4 py-3 text-sm" style={{ color: 'var(--color-text-secondary)' }}>{formatDate(row.updated_at)}</td>
               </tr>
             ))}
           </tbody>
         </table>
-      </div>
+        </div>
+      </Card>
     </div>
   )
 }

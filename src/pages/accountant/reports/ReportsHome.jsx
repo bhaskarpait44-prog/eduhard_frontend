@@ -1,13 +1,5 @@
 import { Link } from 'react-router-dom'
-import {
-  Card,
-  Row,
-  Col,
-  Button,
-  Tag,
-  ConfigProvider,
-  theme as antdTheme
-} from 'antd'
+import { Row, Col } from 'antd'
 import {
   CalendarOutlined,
   ClockCircleOutlined,
@@ -19,153 +11,94 @@ import {
   WalletOutlined,
   UserDeleteOutlined,
   DownloadOutlined,
-  ArrowRightOutlined
+  ArrowRightOutlined,
 } from '@ant-design/icons'
 import usePageTitle from '@/hooks/usePageTitle'
 import { ROUTES } from '@/constants/app'
-import useUiStore from '@/store/uiStore'
+import PageHeader from '@/components/ui/PageHeader'
+import UIButton from '@/components/ui/Button'
+import Badge from '@/components/ui/Badge'
 
 const REPORTS = [
-  { 
-    label: 'Daily Report', 
-    path: ROUTES.ACCOUNTANT_REPORT_DAILY, 
-    icon: CalendarOutlined, 
-    description: 'Summary of collections and expenses for today.' 
-  },
-  { 
-    label: 'Monthly Report', 
-    path: ROUTES.ACCOUNTANT_REPORT_MONTHLY, 
-    icon: ClockCircleOutlined, 
-    description: 'Detailed financial performance for the current month.' 
-  },
-  { 
-    label: 'Class Wise Report', 
-    path: ROUTES.ACCOUNTANT_REPORT_CLASSWISE, 
-    icon: TeamOutlined, 
-    description: 'Fee status breakdown across different classes and sections.' 
-  },
-  { 
-    label: 'Session Summary', 
-    path: ROUTES.ACCOUNTANT_REPORT_SESSION, 
-    icon: FileTextOutlined, 
-    description: 'Comprehensive overview of the entire academic session.' 
-  },
-  { 
-    label: 'Defaulter Report', 
-    path: ROUTES.ACCOUNTANT_REPORT_DEFAULTERS, 
-    icon: AlertOutlined, 
-    description: 'List of students with pending dues and overdue history.' 
-  },
-  { 
-    label: 'Concession Report', 
-    path: ROUTES.ACCOUNTANT_REPORT_CONCESSIONS, 
-    icon: PercentageOutlined, 
-    description: 'Tracking all fee waivers and discounts applied.' 
-  },
-  { 
-    label: 'Custom Report', 
-    path: ROUTES.ACCOUNTANT_REPORT_CUSTOM, 
-    icon: SettingOutlined, 
-    description: 'Generate reports with custom date ranges and filters.' 
-  },
+  { label: 'Daily Report',     path: ROUTES.ACCOUNTANT_REPORT_DAILY,      icon: CalendarOutlined,    description: 'Summary of collections and expenses for today.' },
+  { label: 'Monthly Report',   path: ROUTES.ACCOUNTANT_REPORT_MONTHLY,    icon: ClockCircleOutlined,  description: 'Detailed financial performance for the current month.' },
+  { label: 'Class Wise Report',path: ROUTES.ACCOUNTANT_REPORT_CLASSWISE,  icon: TeamOutlined,         description: 'Fee status breakdown across different classes and sections.' },
+  { label: 'Session Summary',  path: ROUTES.ACCOUNTANT_REPORT_SESSION,    icon: FileTextOutlined,     description: 'Comprehensive overview of the entire academic session.' },
+  { label: 'Defaulter Report', path: ROUTES.ACCOUNTANT_REPORT_DEFAULTERS, icon: AlertOutlined,        description: 'List of students with pending dues and overdue history.' },
+  { label: 'Concession Report',path: ROUTES.ACCOUNTANT_REPORT_CONCESSIONS,icon: PercentageOutlined,   description: 'Tracking all fee waivers and discounts applied.' },
+  { label: 'Custom Report',    path: ROUTES.ACCOUNTANT_REPORT_CUSTOM,     icon: SettingOutlined,      description: 'Generate reports with custom date ranges and filters.' },
 ]
 
 const QUICK_ACTIONS = [
-  { label: 'Collect Fee', path: ROUTES.ACCOUNTANT_COLLECTION, icon: WalletOutlined, color: '#4361ee' },
-  { label: 'View Defaulters', path: ROUTES.ACCOUNTANT_DEFAULTERS, icon: UserDeleteOutlined, color: '#dc2626' },
-  { label: "Today's Report", path: ROUTES.ACCOUNTANT_REPORT_DAILY, icon: DownloadOutlined, color: '#16a34a' },
+  { label: 'Collect Fee',       path: ROUTES.ACCOUNTANT_COLLECTION,      icon: WalletOutlined,    color: 'var(--color-brand)' },
+  { label: 'View Defaulters',   path: ROUTES.ACCOUNTANT_DEFAULTERS,      icon: UserDeleteOutlined, color: 'var(--color-danger)' },
+  { label: "Today's Report",    path: ROUTES.ACCOUNTANT_REPORT_DAILY,    icon: DownloadOutlined,   color: 'var(--color-success)' },
 ]
 
 const ReportsHome = () => {
   usePageTitle('Reports')
-  const { theme: storeTheme } = useUiStore()
-
-  const isDark = storeTheme === 'dark' || (storeTheme === 'system' && window.matchMedia?.('(prefers-color-scheme: dark)').matches)
 
   return (
-    <ConfigProvider
-      theme={{
-        algorithm: isDark ? antdTheme.darkAlgorithm : antdTheme.defaultAlgorithm,
-        token: {
-          colorPrimary: '#4361ee',
-          borderRadius: 10,
-          fontFamily: 'Roboto, system-ui, sans-serif',
-        },
-      }}
-    >
-      <div className="space-y-6">
-        {/* Banner Block */}
-        <div
-          className="rounded-[32px] border p-6 shadow-sm relative overflow-hidden backdrop-blur-md"
-          style={{
-            background: isDark
-              ? 'linear-gradient(135deg, rgba(67, 97, 238, 0.15) 0%, #1e1b4b 100%)'
-              : 'linear-gradient(135deg, #eef2ff 0%, #fffdf9 100%)',
-            borderColor: isDark ? 'rgba(67, 97, 238, 0.3)' : '#c7d2fe'
-          }}
-        >
-          <div className="absolute -right-20 -top-20 w-64 h-64 rounded-full bg-indigo-500/10 blur-3xl pointer-events-none" />
+    <div className="space-y-5">
+      <PageHeader
+        title="Reports Center"
+        subtitle="Access financial summaries, collection trends, concessions, and student fee positions"
+        action={<Badge variant="blue">Analytics</Badge>}
+      />
 
-          <div className="z-10 relative">
-            <div className="flex items-center gap-2">
-              <h1 className="text-2xl font-black text-gray-900 dark:text-white tracking-tight">Reports Center</h1>
-              <Tag color="blue" className="font-extrabold uppercase text-[9px] border-0 px-2 rounded-full">Analytics</Tag>
-            </div>
-            <p className="mt-1 text-xs text-gray-500 dark:text-gray-400 font-semibold leading-relaxed">
-              Access financial summaries, collection trends, concessions, and student fee positions.
-            </p>
-
-            {/* Quick Actions Strip */}
-            <div className="mt-6 flex flex-wrap gap-3 border-t border-dashed pt-6 border-indigo-200/50 dark:border-indigo-900/50">
-              {QUICK_ACTIONS.map((action) => (
-                <Link key={action.label} to={action.path}>
-                  <Button
-                    size="large"
-                    icon={<action.icon />}
-                    className="rounded-xl font-bold flex items-center justify-center border-gray-200 dark:border-gray-800 text-gray-700 dark:text-gray-200 hover:shadow-md transition-all"
-                    style={{ height: '42px', padding: '0 16px' }}
-                  >
-                    {action.label}
-                    <ArrowRightOutlined className="ml-1 text-xs" />
-                  </Button>
-                </Link>
-              ))}
-            </div>
-          </div>
+      {/* Quick Actions Strip */}
+      <div
+        className="rounded-2xl border p-4"
+        style={{ backgroundColor: 'var(--color-surface)', borderColor: 'var(--color-border)' }}
+      >
+        <p className="text-xs font-medium mb-3" style={{ color: 'var(--color-text-muted)' }}>Quick Actions</p>
+        <div className="flex flex-wrap gap-2">
+          {QUICK_ACTIONS.map((action) => (
+            <Link key={action.label} to={action.path}>
+              <UIButton variant="secondary" size="sm">
+                <action.icon /> {action.label}
+                <ArrowRightOutlined className="ml-1 text-xs" />
+              </UIButton>
+            </Link>
+          ))}
         </div>
-
-        {/* Reports Navigation Grid */}
-        <Row gutter={[16, 16]}>
-          {REPORTS.map((report) => {
-            const Icon = report.icon
-            return (
-              <Col xs={24} sm={12} lg={8} key={report.path}>
-                <Link to={report.path}>
-                  <Card
-                    hoverable
-                    className="rounded-[24px] border-gray-100 dark:border-gray-850 h-full flex flex-col justify-between"
-                    styles={{ body: { padding: '24px', flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' } }}
-                  >
-                    <div>
-                      <div className="flex items-center justify-between mb-4">
-                        <div className="p-3 bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 rounded-2xl w-fit">
-                          <Icon className="text-xl" />
-                        </div>
-                        <ArrowRightOutlined className="text-gray-450 dark:text-gray-500 text-sm" />
-                      </div>
-                      <h3 className="text-sm font-extrabold text-gray-900 dark:text-white mb-2">{report.label}</h3>
-                      <p className="text-xs text-gray-400 dark:text-gray-500 font-semibold leading-relaxed">
-                        {report.description}
-                      </p>
-                    </div>
-                  </Card>
-                </Link>
-              </Col>
-            )
-          })}
-        </Row>
       </div>
-    </ConfigProvider>
+
+      {/* Reports Navigation Grid */}
+      <Row gutter={[16, 16]}>
+        {REPORTS.map((report) => {
+          const Icon = report.icon
+          return (
+            <Col xs={24} sm={12} lg={8} key={report.path}>
+              <Link to={report.path}>
+                <div
+                  className="rounded-2xl border p-5 h-full flex flex-col gap-4 transition-all duration-150 hover:shadow-sm hover:-translate-y-0.5 cursor-pointer"
+                  style={{ backgroundColor: 'var(--color-surface)', borderColor: 'var(--color-border)' }}
+                >
+                  <div className="flex items-start justify-between">
+                    <div
+                      className="p-2.5 rounded-xl"
+                      style={{ backgroundColor: 'var(--color-surface-raised)', color: 'var(--color-brand)' }}
+                    >
+                      <Icon style={{ fontSize: 18 }} />
+                    </div>
+                    <ArrowRightOutlined style={{ fontSize: 12, color: 'var(--color-text-muted)', marginTop: 4 }} />
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-semibold mb-1" style={{ color: 'var(--color-text-primary)' }}>
+                      {report.label}
+                    </h3>
+                    <p className="text-xs leading-relaxed" style={{ color: 'var(--color-text-muted)' }}>
+                      {report.description}
+                    </p>
+                  </div>
+                </div>
+              </Link>
+            </Col>
+          )
+        })}
+      </Row>
+    </div>
   )
 }
 

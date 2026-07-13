@@ -3,19 +3,29 @@ import { cn } from '@/utils/helpers'
 
 const Card = ({ title, children, className, headerAction }) => {
   return (
-    <div 
+    <div
       className={cn(
-        "overflow-hidden rounded-2xl border bg-white shadow-sm",
-        className
+        'overflow-hidden rounded-2xl border shadow-sm',
+        className,
       )}
-      style={{ borderColor: 'var(--color-border)' }}
+      style={{
+        backgroundColor: 'var(--color-surface)',
+        borderColor: 'var(--color-border)',
+      }}
     >
       {(title || headerAction) && (
-        <div 
+        <div
           className="flex items-center justify-between border-b px-5 py-4"
           style={{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface-raised)' }}
         >
-          {title && <h3 className="text-sm font-bold text-gray-900 uppercase tracking-wider">{title}</h3>}
+          {title && (
+            <h3
+              className="text-xs font-semibold uppercase tracking-wider"
+              style={{ color: 'var(--color-text-muted)' }}
+            >
+              {title}
+            </h3>
+          )}
           {headerAction}
         </div>
       )}

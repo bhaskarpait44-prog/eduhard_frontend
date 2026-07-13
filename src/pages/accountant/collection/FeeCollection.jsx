@@ -8,8 +8,6 @@ import {
   Input as AntInput,
   Result,
   Avatar,
-  ConfigProvider,
-  theme as antdTheme,
   DatePicker
 } from 'antd'
 import dayjs from 'dayjs'
@@ -36,7 +34,7 @@ import ReceiptPrint from '@/components/accountant/ReceiptPrint'
 import useFeeCollection from '@/hooks/useFeeCollection'
 import * as accountantApi from '@/api/accountantApi'
 import { formatCurrency, formatDate, getInitials, getFeeMonthLabel } from '@/utils/helpers'
-import useUiStore from '@/store/uiStore'
+import PageHeader from '@/components/ui/PageHeader'
 
 const today = new Date().toISOString().slice(0, 10)
 
@@ -52,7 +50,6 @@ const FeeCollection = () => {
   usePageTitle('Fee Collection')
   const { toastSuccess, toastError, toastWarning } = useToast()
   const { collect, isSaving } = useFeeCollection()
-  const { theme: storeTheme } = useUiStore()
   
   const [step, setStep] = useState(0)
   const [student, setStudent] = useState(null)
@@ -101,7 +98,6 @@ const FeeCollection = () => {
     return () => window.removeEventListener('keydown', handler)
   }, [step])
 
-  const isDark = storeTheme === 'dark' || (storeTheme === 'system' && window.matchMedia?.('(prefers-color-scheme: dark)').matches)
 
   const allInvoices = useMemo(() => {
     const pending = invoicePayload?.pending_invoices || []
@@ -197,87 +193,63 @@ const FeeCollection = () => {
   }
 
   return (
-    <ConfigProvider
-      theme={{
-        algorithm: isDark ? antdTheme.darkAlgorithm : antdTheme.defaultAlgorithm,
-        token: {
-          colorPrimary: '#4361ee',
-          borderRadius: 10,
-          fontFamily: 'Roboto, system-ui, sans-serif',
-        },
-      }}
-    >
-      <div className="space-y-6">
-        {/* Header Block */}
-        <div
-          className="flex flex-wrap items-center justify-between gap-6 rounded-[32px] border p-6 shadow-sm relative overflow-hidden backdrop-blur-md"
-          style={{ 
-            background: isDark 
-              ? 'linear-gradient(135deg, rgba(67, 97, 238, 0.15) 0%, #1e1b4b 100%)'
-              : 'linear-gradient(135deg, #eef2ff 0%, #fffdf9 100%)', 
-            borderColor: isDark ? '#4361ee30' : '#c7d2fe'
-          }}
-        >
-          <div className="absolute -right-20 -top-20 w-64 h-64 rounded-full bg-indigo-500/10 blur-3xl pointer-events-none" />
-          
-          <div className="z-10">
-            <h1 className="text-2xl font-black text-gray-900 dark:text-white tracking-tight">Counter Fee Collection</h1>
-            <p className="mt-1 text-xs text-gray-500 dark:text-gray-400 font-semibold">
-              Fast, keyboard-friendly counter workflow for repeated daily collections.
-            </p>
+    <div className="space-y-5">
+      <PageHeader
+        title="Counter Fee Collection"
+        subtitle="Fast, keyboard-friendly counter workflow for repeated daily collections"
+        action={
+          <Steps
+            current={step}
+            size="small"
+            items={[
+              { title: 'Student' },
+              { title: 'Invoices' },
+              { title: 'Payment' },
+              { title: 'Review' },
+              { title: 'Receipt' }
+            ]}
+          />
+        }
+      />
+      <Card
+        className="rounded-2xl"
+        styles={{ body: { padding: '28px' } }}
+      >
+        {step === 0 && (
+          <div className="space-y-5">
+            <div className="text-xs font-medium uppercase tracking-wider mb-2" style={{ color: 'var(--color-text-muted)' }}>Select Student</div>
+            <StudentSearchBox onSelect={selectStudent} autoFocus />
           </div>
-          <div className="w-full md:w-auto z-10">
-            <Steps
-              current={step}
-              size="small"
-              items={[
-                { title: 'Student' },
-                { title: 'Invoices' },
-                { title: 'Payment' },
-                { title: 'Review' },
-                { title: 'Receipt' }
-              ]}
-            />
-          </div>
-        </div>
+        )}
 
-        {/* Wizard Main Card */}
-        <Card 
-          className="rounded-[32px] shadow-sm border-gray-100 dark:border-gray-800"
-          styles={{ body: { padding: '32px' } }}
-        >
-          {step === 0 && (
-            <div className="space-y-5">
-              <div className="text-sm font-extrabold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-2">Select Student</div>
-              <StudentSearchBox onSelect={selectStudent} autoFocus />
-            </div>
-          )}
-
-          {step === 1 && student && (
-            <div className="space-y-6">
-              {/* Student Profile Hero Card */}
-              <div className="flex flex-wrap items-center justify-between gap-4 p-5 rounded-2xl bg-indigo-50/60 dark:bg-indigo-950/20 border border-indigo-100/50 dark:border-indigo-950/30">
-                <div className="flex items-center gap-3.5">
-                  <Avatar 
-                    size="large"
-                    className="bg-indigo-100 text-indigo-700 font-extrabold dark:bg-indigo-950/40 dark:text-indigo-300"
-                  >
-                    {getInitials(`${student.first_name} ${student.last_name}`)}
-                  </Avatar>
-                  <div>
-                    <h2 className="text-base font-extrabold text-gray-800 dark:text-gray-100">{student.first_name} {student.last_name}</h2>
-                    <p className="text-xs font-semibold text-gray-400 dark:text-gray-500 mt-0.5">
-                      {student.admission_no} • {invoicePayload?.student?.class_name || student.class_name} {invoicePayload?.student?.section_name ? `Section ${invoicePayload.student.section_name}` : ''}
-                    </p>
-                  </div>
-                </div>
-                <div className="text-left md:text-right">
-                  <span className="text-[10px] font-black uppercase tracking-wider text-gray-400">Total Pending Dues</span>
-                  <div className="text-xl font-black text-rose-600 dark:text-rose-400 mt-0.5">
-                    {formatCurrency(invoicePayload?.summary?.balance || 0)}
-                  </div>
+        {step === 1 && student && (
+          <div className="space-y-6">
+            {/* Student Profile Hero Card */}
+            <div
+              className="flex flex-wrap items-center justify-between gap-4 p-5 rounded-2xl border"
+              style={{ backgroundColor: 'var(--color-surface-raised)', borderColor: 'var(--color-border)' }}
+            >
+              <div className="flex items-center gap-3.5">
+                <Avatar
+                  size="large"
+                  style={{ backgroundColor: 'var(--color-brand)', color: '#fff', fontWeight: 600 }}
+                >
+                  {getInitials(`${student.first_name} ${student.last_name}`)}
+                </Avatar>
+                <div>
+                  <h2 className="text-base font-semibold" style={{ color: 'var(--color-text-primary)' }}>{student.first_name} {student.last_name}</h2>
+                  <p className="text-xs mt-0.5" style={{ color: 'var(--color-text-muted)' }}>
+                    {student.admission_no} · {invoicePayload?.student?.class_name || student.class_name} {invoicePayload?.student?.section_name ? `Section ${invoicePayload.student.section_name}` : ''}
+                  </p>
                 </div>
               </div>
+              <div className="text-left md:text-right">
+                <span className="text-[10px] font-medium uppercase tracking-wider" style={{ color: 'var(--color-text-muted)' }}>Total Pending Dues</span>
+                <div className="text-xl font-bold mt-0.5" style={{ color: 'var(--color-danger)' }}>
+                  {formatCurrency(invoicePayload?.summary?.balance || 0)}
+                </div>
+              </div>
+            </div>
 
               {/* Select Actions */}
               <div className="flex flex-wrap gap-2">
@@ -659,9 +631,8 @@ const FeeCollection = () => {
               </div>
             </div>
           )}
-        </Card>
-      </div>
-    </ConfigProvider>
+      </Card>
+    </div>
   )
 }
 

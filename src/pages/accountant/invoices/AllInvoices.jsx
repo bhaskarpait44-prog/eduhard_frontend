@@ -1,30 +1,20 @@
 import { useEffect, useState, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Eye, Wallet, ExternalLink, MoreVertical } from 'lucide-react'
+import { Eye, Wallet } from 'lucide-react'
 import usePageTitle from '@/hooks/usePageTitle'
 import { ROUTES } from '@/constants/app'
 import * as accountantApi from '@/api/accountantApi'
 import { formatCurrency, formatDate, getFeeMonthLabel } from '@/utils/helpers'
+import { feeStatusBadge } from '@/utils/feeStatus'
+import PageHeader from '@/components/ui/PageHeader'
+import Card from '@/components/ui/Card'
+import StatCard from '@/components/ui/StatCard'
+import Badge from '@/components/ui/Badge'
+import EmptyState from '@/components/ui/EmptyState'
+import TableSkeleton from '@/components/ui/TableSkeleton'
+import UIButton from '@/components/ui/Button'
 
 const PAGE_SIZE = 20
-
-const STATUS_STYLES = {
-  paid:         { bg: '#dcfce7', text: '#15803d', dot: '#22c55e', label: 'Paid' },
-  partial:      { bg: '#fef9c3', text: '#a16207', dot: '#eab308', label: 'Partial' },
-  unpaid:       { bg: '#fef2f2', text: '#b91c1c', dot: '#ef4444', label: 'Unpaid' },
-  overdue:      { bg: '#fff1f2', text: '#9f1239', dot: '#f43f5e', label: 'Overdue' },
-  cancelled:    { bg: '#f1f5f9', text: '#64748b', dot: '#94a3b8', label: 'Cancelled' },
-}
-
-const getStatus = (s) => STATUS_STYLES[s?.toLowerCase()] || { bg: '#f1f5f9', text: '#64748b', dot: '#94a3b8', label: s || '—' }
-
-const StatCard = ({ label, value, accent, sub }) => (
-  <div className="rounded-2xl p-4 flex flex-col gap-1" style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)' }}>
-    <span className="text-[10px] font-bold uppercase tracking-widest" style={{ color: 'var(--color-text-muted)' }}>{label}</span>
-    <span className="text-xl font-bold leading-tight truncate" style={{ color: accent || 'var(--color-text-primary)' }}>{value}</span>
-    {sub && <span className="text-xs" style={{ color: 'var(--color-text-muted)' }}>{sub}</span>}
-  </div>
-)
 
 const AllInvoices = () => {
   usePageTitle('All Invoices')
@@ -77,287 +67,223 @@ export const InvoiceTable = ({ title, rows = [], loading = false }) => {
   const clearAll  = () => { setSearch(''); setClassFilter(''); setStatus(''); setFeeFilter(''); setPage(1) }
   const hasFilter = search || classFilter || statusFilter || feeFilter
 
-  const inputStyle = {
-    backgroundColor: 'var(--color-bg-input)',
+  const selectStyle = {
+    backgroundColor: 'var(--color-surface)',
     borderColor: 'var(--color-border)',
     color: 'var(--color-text-primary)',
+    borderRadius: 10,
+    height: 36,
+    padding: '0 10px',
+    fontSize: 13,
+    border: '1px solid var(--color-border)',
+    outline: 'none',
+    width: '100%',
   }
 
   return (
     <div className="space-y-5">
+      <PageHeader
+        title={title}
+        subtitle="Fee invoices across all students"
+        action={
+          <Badge variant="blue">{filtered.length} invoice{filtered.length !== 1 ? 's' : ''}</Badge>
+        }
+      />
 
-      {/* ── Header ── */}
-      <div className="flex items-center justify-between gap-4 rounded-[28px] border p-5"
-        style={{ backgroundColor: 'var(--color-surface)', borderColor: 'var(--color-border)' }}>
-        <div>
-          <h1 className="text-2xl font-bold" style={{ color: 'var(--color-text-primary)' }}>{title}</h1>
-          <p className="mt-0.5 text-sm" style={{ color: 'var(--color-text-muted)' }}>Fee invoices across all students</p>
-        </div>
-        <span className="rounded-full px-4 py-2 text-sm font-semibold"
-          style={{ backgroundColor: 'var(--color-accent-subtle)', color: 'var(--color-accent-emphasis)' }}>
-          {filtered.length} invoice{filtered.length !== 1 ? 's' : ''}
-        </span>
-      </div>
-
-      {/* ── Stats ── */}
+      {/* Stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <StatCard label="Total Invoiced"  value={formatCurrency(totalDue)}  />
-        <StatCard label="Total Collected" value={formatCurrency(totalPaid)} accent="#15803d" />
-        <StatCard label="Outstanding"     value={formatCurrency(totalBal)}  accent={totalBal > 0 ? '#b91c1c' : '#15803d'} />
-        <StatCard label="Overdue"         value={overdueCount}              accent={overdueCount > 0 ? '#b91c1c' : undefined} sub="invoices" />
+        <StatCard label="Total Invoiced"  value={formatCurrency(totalDue)}   />
+        <StatCard label="Total Collected" value={formatCurrency(totalPaid)}  color="var(--color-success)" />
+        <StatCard label="Outstanding"     value={formatCurrency(totalBal)}   color={totalBal > 0 ? 'var(--color-danger)' : 'var(--color-success)'} />
+        <StatCard label="Overdue"         value={overdueCount} sub="invoices" color={overdueCount > 0 ? 'var(--color-danger)' : undefined} />
       </div>
 
-      {/* ── Filters ── */}
-      <div className="rounded-[24px] border p-4"
-        style={{ backgroundColor: 'var(--color-surface)', borderColor: 'var(--color-border)' }}>
+      {/* Filters */}
+      <Card>
         <div className="flex flex-wrap gap-3 items-end">
-
           {/* Search */}
           <div className="flex-1 min-w-[180px]">
-            <label className="block text-[10px] font-bold mb-1.5 uppercase tracking-widest" style={{ color: 'var(--color-text-muted)' }}>Search</label>
+            <label className="block text-xs font-medium mb-1.5" style={{ color: 'var(--color-text-muted)' }}>Search</label>
             <div className="relative">
-              <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: 'var(--color-text-muted)' }}
-                fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5" style={{ color: 'var(--color-text-muted)' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
               </svg>
-              <input type="text" placeholder="Student name or invoice no..."
-                value={search} onChange={(e) => { setSearch(e.target.value); resetPage() }}
-                className="w-full rounded-xl pl-9 pr-3 py-2 text-sm border outline-none transition-all focus:border-brand" style={inputStyle} />
+              <input
+                type="text"
+                placeholder="Student name or invoice no…"
+                value={search}
+                onChange={(e) => { setSearch(e.target.value); resetPage() }}
+                style={{ ...selectStyle, paddingLeft: 32 }}
+              />
             </div>
           </div>
-
-          {/* Class */}
           <div className="min-w-[130px]">
-            <label className="block text-[10px] font-bold mb-1.5 uppercase tracking-widest" style={{ color: 'var(--color-text-muted)' }}>Class</label>
-            <select value={classFilter} onChange={(e) => { setClassFilter(e.target.value); resetPage() }}
-              className="w-full rounded-xl px-3 py-2 text-sm border outline-none" style={inputStyle}>
+            <label className="block text-xs font-medium mb-1.5" style={{ color: 'var(--color-text-muted)' }}>Class</label>
+            <select value={classFilter} onChange={(e) => { setClassFilter(e.target.value); resetPage() }} style={selectStyle}>
               <option value="">All Classes</option>
               {classes.map((c) => <option key={c} value={c}>{c}</option>)}
             </select>
           </div>
-
-          {/* Fee Type */}
           <div className="min-w-[140px]">
-            <label className="block text-[10px] font-bold mb-1.5 uppercase tracking-widest" style={{ color: 'var(--color-text-muted)' }}>Fee Type</label>
-            <select value={feeFilter} onChange={(e) => { setFeeFilter(e.target.value); resetPage() }}
-              className="w-full rounded-xl px-3 py-2 text-sm border outline-none" style={inputStyle}>
+            <label className="block text-xs font-medium mb-1.5" style={{ color: 'var(--color-text-muted)' }}>Fee Type</label>
+            <select value={feeFilter} onChange={(e) => { setFeeFilter(e.target.value); resetPage() }} style={selectStyle}>
               <option value="">All Types</option>
               {feeTypes.map((f) => <option key={f} value={f}>{f}</option>)}
             </select>
           </div>
-
-          {/* Status */}
           <div className="min-w-[130px]">
-            <label className="block text-[10px] font-bold mb-1.5 uppercase tracking-widest" style={{ color: 'var(--color-text-muted)' }}>Status</label>
-            <select value={statusFilter} onChange={(e) => { setStatus(e.target.value); resetPage() }}
-              className="w-full rounded-xl px-3 py-2 text-sm border outline-none" style={inputStyle}>
+            <label className="block text-xs font-medium mb-1.5" style={{ color: 'var(--color-text-muted)' }}>Status</label>
+            <select value={statusFilter} onChange={(e) => { setStatus(e.target.value); resetPage() }} style={selectStyle}>
               <option value="">All Statuses</option>
               {statuses.map((s) => <option key={s} value={s} className="capitalize">{s}</option>)}
             </select>
           </div>
-
           {hasFilter && (
-            <button type="button" onClick={clearAll}
-              className="rounded-xl px-4 py-2 text-sm font-semibold border transition-colors hover:bg-gray-50"
-              style={{ borderColor: 'var(--color-border)', color: 'var(--color-text-muted)' }}>
-              Clear
-            </button>
+            <UIButton variant="ghost" size="sm" onClick={clearAll}>Clear</UIButton>
           )}
         </div>
-      </div>
+      </Card>
 
-      {/* ── Table ── */}
-      <div className="overflow-x-auto rounded-[28px] border"
-        style={{ backgroundColor: 'var(--color-surface)', borderColor: 'var(--color-border)' }}>
-
-        {loading ? (
-          <div className="space-y-0">
-            {Array.from({ length: 8 }).map((_, i) => (
-              <div key={i} className="flex gap-4 px-4 py-4" style={{ borderBottom: '1px solid var(--color-border)' }}>
-                {[80, 120, 80, 100, 80, 70, 70, 70, 60, 50].map((w, j) => (
-                  <div key={j} className="h-4 rounded-lg animate-pulse flex-shrink-0"
-                    style={{ width: w, backgroundColor: 'var(--color-border)' }} />
-                ))}
-              </div>
-            ))}
-          </div>
-        ) : filtered.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-16 gap-3">
-            <svg className="w-10 h-10 opacity-25" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
-                d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-            </svg>
-            <p className="text-sm font-medium" style={{ color: 'var(--color-text-muted)' }}>No invoices match your filters</p>
-            {hasFilter && (
-              <button type="button" onClick={clearAll}
-                className="text-sm font-semibold underline underline-offset-2"
-                style={{ color: 'var(--color-brand)' }}>Clear filters</button>
-            )}
-          </div>
-        ) : (
-          <table className="w-full">
-            <thead>
-              <tr style={{ borderBottom: '1px solid var(--color-border)', backgroundColor: 'var(--color-bg)' }}>
-                {['Invoice', 'Student', 'Class', 'Fee Type', 'Due Date', 'Amount', 'Paid', 'Balance', 'Status', 'Actions'].map((head) => (
-                  <th key={head}
-                    className="px-4 py-3 text-left text-[10px] font-bold uppercase tracking-widest whitespace-nowrap"
-                    style={{ color: 'var(--color-text-muted)' }}>
-                    {head}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {paginated.map((row, i) => {
-                const st  = getStatus(row.status)
-                const bal = Number(row.balance || 0)
-                return (
-                  <tr key={row.id}
-                    className="group cursor-pointer transition-colors hover:bg-indigo-50/15 dark:hover:bg-indigo-950/10"
-                    onClick={() => navigate(ROUTES.ACCOUNTANT_STUDENT_FEES.replace(':id', row.student_id))}
-                    style={{ borderBottom: i < paginated.length - 1 ? '1px solid var(--color-border)' : 'none' }}>
-
-                    {/* Invoice No */}
-                    <td className="px-4 py-3.5">
-                      <span className="text-xs font-bold px-2 py-1 rounded-lg"
-                        style={{ backgroundColor: 'var(--color-accent-subtle)', color: 'var(--color-accent-emphasis)' }}>
-                        INV-{row.id}
-                      </span>
-                    </td>
-
-                    {/* Student */}
-                    <td className="px-4 py-3.5">
-                      <div className="flex items-center gap-2.5">
-                        <div className="w-7 h-7 rounded-xl flex items-center justify-center text-[10px] font-bold flex-shrink-0"
-                          style={{ backgroundColor: 'var(--color-accent-subtle)', color: 'var(--color-accent-emphasis)' }}>
-                          {(row.student_name || '?').charAt(0).toUpperCase()}
+      {/* Table */}
+      <Card>
+        <div className="-mx-5 -mb-5 overflow-x-auto">
+          {loading ? (
+            <TableSkeleton rows={8} cols={10} />
+          ) : filtered.length === 0 ? (
+            <EmptyState
+              title="No invoices found"
+              description={hasFilter ? 'Try adjusting your filters' : 'No invoices available'}
+              action={hasFilter && <UIButton variant="outline" size="sm" onClick={clearAll}>Clear filters</UIButton>}
+            />
+          ) : (
+            <table className="w-full">
+              <thead>
+                <tr style={{ borderBottom: '1px solid var(--color-border)', backgroundColor: 'var(--color-surface-raised)' }}>
+                  {['Invoice', 'Student', 'Class', 'Fee Type', 'Due Date', 'Amount', 'Paid', 'Balance', 'Status', ''].map((head) => (
+                    <th
+                      key={head}
+                      className="px-4 py-3 text-left text-[10px] font-semibold uppercase tracking-wider whitespace-nowrap"
+                      style={{ color: 'var(--color-text-muted)' }}
+                    >
+                      {head}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {paginated.map((row, i) => {
+                  const bal = Number(row.balance || 0)
+                  return (
+                    <tr
+                      key={row.id}
+                      className="cursor-pointer transition-colors"
+                      onClick={() => navigate(ROUTES.ACCOUNTANT_STUDENT_FEES.replace(':id', row.student_id))}
+                      style={{ borderBottom: i < paginated.length - 1 ? '1px solid var(--color-border)' : 'none' }}
+                    >
+                      <td className="px-4 py-3.5">
+                        <Badge variant="blue">INV-{row.id}</Badge>
+                      </td>
+                      <td className="px-4 py-3.5">
+                        <div className="flex items-center gap-2">
+                          <div className="w-6 h-6 rounded-lg flex items-center justify-center text-[10px] font-medium shrink-0" style={{ backgroundColor: 'var(--color-surface-raised)', color: 'var(--color-text-secondary)' }}>
+                            {(row.student_name || '?').charAt(0).toUpperCase()}
+                          </div>
+                          <span className="text-sm font-medium whitespace-nowrap" style={{ color: 'var(--color-text-primary)' }}>
+                            {row.student_name}
+                          </span>
                         </div>
-                        <span className="text-sm font-semibold whitespace-nowrap"
-                          style={{ color: 'var(--color-text-primary)' }}>
-                          {row.student_name}
+                      </td>
+                      <td className="px-4 py-3.5 text-sm whitespace-nowrap" style={{ color: 'var(--color-text-secondary)' }}>
+                        {row.class_name}
+                      </td>
+                      <td className="px-4 py-3.5">
+                        <span className="text-xs px-2 py-0.5 rounded-lg whitespace-nowrap" style={{ backgroundColor: 'var(--color-surface-raised)', color: 'var(--color-text-secondary)', border: '1px solid var(--color-border)' }}>
+                          {row.fee_name} {row.due_date ? `(${getFeeMonthLabel(row.due_date)})` : ''}
                         </span>
-                      </div>
-                    </td>
-
-                    {/* Class */}
-                    <td className="px-4 py-3.5 text-sm whitespace-nowrap"
-                      style={{ color: 'var(--color-text-secondary)' }}>
-                      {row.class_name}
-                    </td>
-
-                    {/* Fee Type */}
-                    <td className="px-4 py-3.5">
-                      <span className="text-xs font-semibold px-2 py-1 rounded-lg whitespace-nowrap"
-                        style={{ backgroundColor: 'var(--color-surface-2)', color: 'var(--color-text-secondary)', border: '1px solid var(--color-border)' }}>
-                        {row.fee_name} {row.due_date ? `(${getFeeMonthLabel(row.due_date)})` : ''}
-                      </span>
-                    </td>
-
-                    {/* Due Date */}
-                    <td className="px-4 py-3.5 text-sm whitespace-nowrap"
-                      style={{ color: 'var(--color-text-secondary)' }}>
-                      {formatDate(row.due_date)}
-                    </td>
-
-                    {/* Amount */}
-                    <td className="px-4 py-3.5 text-sm font-semibold whitespace-nowrap"
-                      style={{ color: 'var(--color-text-primary)' }}>
-                      {formatCurrency(row.amount_due)}
-                    </td>
-
-                    {/* Paid */}
-                    <td className="px-4 py-3.5 text-sm font-semibold whitespace-nowrap"
-                      style={{ color: '#15803d' }}>
-                      {formatCurrency(row.amount_paid)}
-                    </td>
-
-                    {/* Balance */}
-                    <td className="px-4 py-3.5 text-sm font-bold whitespace-nowrap"
-                      style={{ color: bal > 0 ? '#b91c1c' : '#15803d' }}>
-                      {formatCurrency(bal)}
-                    </td>
-
-                    {/* Status */}
-                    <td className="px-4 py-3.5">
-                      <span className="inline-flex items-center gap-1.5 text-xs font-bold px-2.5 py-1 rounded-full whitespace-nowrap shadow-sm"
-                        style={{ backgroundColor: st.bg, color: st.text }}>
-                        <span className="w-1.5 h-1.5 rounded-full flex-shrink-0"
-                          style={{ backgroundColor: st.dot }} />
-                        {st.label}
-                      </span>
-                    </td>
-
-                    {/* Actions */}
-                    <td className="px-4 py-3.5" onClick={(e) => e.stopPropagation()}>
-                      <div className="flex items-center gap-1">
-                        <button
-                          type="button"
-                          onClick={() => navigate(ROUTES.ACCOUNTANT_STUDENT_FEES.replace(':id', row.student_id))}
-                          className="flex h-8 w-8 items-center justify-center rounded-full text-muted transition-colors hover:bg-indigo-50 hover:text-indigo-700 dark:hover:bg-indigo-950/40 dark:hover:text-indigo-400"
-                          title="View Detail"
-                        >
-                          <Eye size={16} />
-                        </button>
-                        {bal > 0 && (
+                      </td>
+                      <td className="px-4 py-3.5 text-sm whitespace-nowrap" style={{ color: 'var(--color-text-secondary)' }}>
+                        {formatDate(row.due_date)}
+                      </td>
+                      <td className="px-4 py-3.5 text-sm font-medium whitespace-nowrap" style={{ color: 'var(--color-text-primary)' }}>
+                        {formatCurrency(row.amount_due)}
+                      </td>
+                      <td className="px-4 py-3.5 text-sm font-medium whitespace-nowrap" style={{ color: 'var(--color-success)' }}>
+                        {formatCurrency(row.amount_paid)}
+                      </td>
+                      <td className="px-4 py-3.5 text-sm font-semibold whitespace-nowrap" style={{ color: bal > 0 ? 'var(--color-danger)' : 'var(--color-success)' }}>
+                        {formatCurrency(bal)}
+                      </td>
+                      <td className="px-4 py-3.5">
+                        <Badge variant={feeStatusBadge(row.status)} dot>{row.status}</Badge>
+                      </td>
+                      <td className="px-4 py-3.5" onClick={(e) => e.stopPropagation()}>
+                        <div className="flex items-center gap-1">
                           <button
                             type="button"
-                            onClick={() => navigate(ROUTES.ACCOUNTANT_COLLECTION)}
-                            className="flex h-8 w-8 items-center justify-center rounded-full text-brand transition-colors hover:bg-indigo-50 dark:hover:bg-indigo-950/40"
-                            title="Collect Fee"
+                            onClick={() => navigate(ROUTES.ACCOUNTANT_STUDENT_FEES.replace(':id', row.student_id))}
+                            className="w-7 h-7 flex items-center justify-center rounded-lg transition-colors"
+                            style={{ color: 'var(--color-text-muted)' }}
+                            title="View Detail"
                           >
-                            <Wallet size={16} />
+                            <Eye size={14} />
                           </button>
+                          {bal > 0 && (
+                            <button
+                              type="button"
+                              onClick={() => navigate(ROUTES.ACCOUNTANT_COLLECTION)}
+                              className="w-7 h-7 flex items-center justify-center rounded-lg transition-colors"
+                              style={{ color: 'var(--color-brand)' }}
+                              title="Collect Fee"
+                            >
+                              <Wallet size={14} />
+                            </button>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+              {/* Footer / Pagination */}
+              <tfoot>
+                <tr style={{ borderTop: '2px solid var(--color-border)', backgroundColor: 'var(--color-surface-raised)' }}>
+                  <td colSpan={5} className="px-4 py-3">
+                    <span className="text-xs" style={{ color: 'var(--color-text-muted)' }}>
+                      Showing {(page - 1) * PAGE_SIZE + 1}–{Math.min(page * PAGE_SIZE, filtered.length)} of {filtered.length}
+                    </span>
+                  </td>
+                  <td className="px-4 py-3 text-sm font-medium" style={{ color: 'var(--color-text-primary)' }}>{formatCurrency(totalDue)}</td>
+                  <td className="px-4 py-3 text-sm font-medium" style={{ color: 'var(--color-success)' }}>{formatCurrency(totalPaid)}</td>
+                  <td className="px-4 py-3 text-sm font-semibold" style={{ color: totalBal > 0 ? 'var(--color-danger)' : 'var(--color-success)' }}>{formatCurrency(totalBal)}</td>
+                  <td colSpan={2} className="px-4 py-3">
+                    <div className="flex items-center gap-1 justify-end">
+                      <button type="button" disabled={page === 1} onClick={() => setPage((p) => p - 1)}
+                        className="w-7 h-7 rounded-lg flex items-center justify-center text-xs border disabled:opacity-30 transition-colors"
+                        style={{ borderColor: 'var(--color-border)', color: 'var(--color-text-primary)' }}>‹
+                      </button>
+                      {Array.from({ length: totalPages }, (_, i) => i + 1)
+                        .filter((p) => p === 1 || p === totalPages || Math.abs(p - page) <= 1)
+                        .reduce((acc, p, idx, arr) => { if (idx > 0 && p - arr[idx - 1] > 1) acc.push('…'); acc.push(p); return acc }, [])
+                        .map((p, idx) => p === '…'
+                          ? <span key={`e${idx}`} className="w-7 h-7 flex items-center justify-center text-xs" style={{ color: 'var(--color-text-muted)' }}>…</span>
+                          : <button key={p} type="button" onClick={() => setPage(p)}
+                              className="w-7 h-7 rounded-lg flex items-center justify-center text-xs border transition-colors"
+                              style={{ borderColor: p === page ? 'var(--color-brand)' : 'var(--color-border)', backgroundColor: p === page ? 'var(--color-brand)' : 'transparent', color: p === page ? '#fff' : 'var(--color-text-primary)' }}>
+                              {p}
+                            </button>
                         )}
-                      </div>
-                    </td>
-                  </tr>
-                )
-              })}
-            </tbody>
-
-            {/* ── Footer / Pagination ── */}
-            <tfoot>
-              <tr style={{ borderTop: '2px solid var(--color-border)', backgroundColor: 'var(--color-surface-2)' }}>
-                <td colSpan={5} className="px-4 py-3">
-                  <span className="text-xs font-bold" style={{ color: 'var(--color-text-muted)' }}>
-                    Showing {(page - 1) * PAGE_SIZE + 1}–{Math.min(page * PAGE_SIZE, filtered.length)} of {filtered.length}
-                  </span>
-                </td>
-                <td className="px-4 py-3 text-sm font-bold whitespace-nowrap" style={{ color: 'var(--color-text-primary)' }}>
-                  {formatCurrency(totalDue)}
-                </td>
-                <td className="px-4 py-3 text-sm font-bold whitespace-nowrap" style={{ color: '#15803d' }}>
-                  {formatCurrency(totalPaid)}
-                </td>
-                <td className="px-4 py-3 text-sm font-bold whitespace-nowrap" style={{ color: totalBal > 0 ? '#b91c1c' : '#15803d' }}>
-                  {formatCurrency(totalBal)}
-                </td>
-                <td colSpan={2} className="px-4 py-3">
-                  <div className="flex items-center gap-1 justify-end">
-                    <button type="button" disabled={page === 1} onClick={() => setPage((p) => p - 1)}
-                      className="w-7 h-7 rounded-lg flex items-center justify-center text-xs font-bold border disabled:opacity-30 transition-colors hover:bg-indigo-50/40 dark:hover:bg-indigo-950/40"
-                      style={{ borderColor: 'var(--color-border)', color: 'var(--color-text-primary)' }}>‹</button>
-                    {Array.from({ length: totalPages }, (_, i) => i + 1)
-                      .filter((p) => p === 1 || p === totalPages || Math.abs(p - page) <= 1)
-                      .reduce((acc, p, idx, arr) => { if (idx > 0 && p - arr[idx - 1] > 1) acc.push('…'); acc.push(p); return acc }, [])
-                      .map((p, idx) => p === '…'
-                        ? <span key={`e${idx}`} className="w-7 h-7 flex items-center justify-center text-xs" style={{ color: 'var(--color-text-muted)' }}>…</span>
-                        : <button key={p} type="button" onClick={() => setPage(p)}
-                            className="w-7 h-7 rounded-lg flex items-center justify-center text-xs font-bold border transition-colors"
-                            style={{ borderColor: p === page ? 'var(--color-brand)' : 'var(--color-border)', backgroundColor: p === page ? 'var(--color-brand)' : 'transparent', color: p === page ? '#fff' : 'var(--color-text-primary)' }}>
-                            {p}
-                          </button>
-                      )}
-                    <button type="button" disabled={page === totalPages} onClick={() => setPage((p) => p + 1)}
-                      className="w-7 h-7 rounded-lg flex items-center justify-center text-xs font-bold border disabled:opacity-30 transition-colors hover:bg-indigo-50/40 dark:hover:bg-indigo-950/40"
-                      style={{ borderColor: 'var(--color-border)', color: 'var(--color-text-primary)' }}>›</button>
-                  </div>
-                </td>
-              </tr>
-            </tfoot>
-          </table>
-        )}
-      </div>
+                      <button type="button" disabled={page === totalPages} onClick={() => setPage((p) => p + 1)}
+                        className="w-7 h-7 rounded-lg flex items-center justify-center text-xs border disabled:opacity-30 transition-colors"
+                        style={{ borderColor: 'var(--color-border)', color: 'var(--color-text-primary)' }}>›
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              </tfoot>
+            </table>
+          )}
+        </div>
+      </Card>
     </div>
   )
 }

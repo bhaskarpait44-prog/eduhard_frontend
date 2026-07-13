@@ -6,6 +6,7 @@ import StudentSearchBox from '@/components/accountant/StudentSearchBox'
 import * as accountantApi from '@/api/accountantApi'
 import { LockedView } from './ConcessionList'
 import { formatCurrency } from '@/utils/helpers'
+import PageHeader from '@/components/ui/PageHeader'
 
 const ApplyConcession = () => {
   usePageTitle('Apply Concession')
@@ -89,9 +90,7 @@ const ApplyConcession = () => {
 
   return (
     <div className="space-y-5">
-      <div className="rounded-[28px] border p-5" style={{ backgroundColor: 'var(--color-surface)', borderColor: 'var(--color-border)' }}>
-        <h1 className="text-2xl font-bold" style={{ color: 'var(--color-text-primary)' }}>Apply Concession</h1>
-      </div>
+      <PageHeader title="Apply Concession" subtitle="Apply fee waivers or discounts to student invoices" />
       <StudentSearchBox onSelect={selectStudent} />
       {student && (
         <div className="space-y-4 rounded-[28px] border p-5" style={{ backgroundColor: 'var(--color-surface)', borderColor: 'var(--color-border)' }}>
@@ -132,7 +131,7 @@ const ApplyConcession = () => {
               <span>Original Fee (Amount Due):</span>
               <span className="font-semibold">{formatCurrency(originalAmount)}</span>
             </div>
-            <div className="flex justify-between text-red-600">
+            <div className="flex justify-between" style={{ color: 'var(--color-danger)' }}>
               <span>Concession Amount:</span>
               <span className="font-semibold">- {formatCurrency(concessionAmount)}</span>
             </div>

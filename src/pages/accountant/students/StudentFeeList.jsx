@@ -1,34 +1,21 @@
 import { useState, useEffect, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Search, Filter, UserRound, GraduationCap, ArrowRight, AlertCircle } from 'lucide-react'
+import { Search, UserRound, GraduationCap, ArrowRight, AlertCircle } from 'lucide-react'
 import usePageTitle from '@/hooks/usePageTitle'
 import useStudentFees from '@/hooks/useStudentFees'
 import { ROUTES } from '@/constants/app'
 import { formatCurrency, formatDate } from '@/utils/helpers'
+import { feeStatusBadge } from '@/utils/feeStatus'
 import TableSkeleton from '@/components/ui/TableSkeleton'
 import EmptyState from '@/components/ui/EmptyState'
 import Select from '@/components/ui/Select'
 import Button from '@/components/ui/Button'
+import Badge from '@/components/ui/Badge'
 import * as classApi from '@/api/classApi'
 
-const STATUS_STYLES = {
-  fully_paid: { bg: '#dcfce7', text: '#15803d' },
-  partial:    { bg: '#fef9c3', text: '#a16207' },
-  pending:    { bg: '#dcfce7', text: '#15803d' },
-  overdue:    { bg: '#fef2f2', text: '#b91c1c' },
-  waived:     { bg: '#f1f5f9', text: '#64748b' },
-}
-
-const STATUS_LABELS = {
-  pending: 'Up to date',
-}
-
-const getFeeStatusStyle = (status) => {
-  return STATUS_STYLES[status] || { bg: '#fef9c3', text: '#a16207' }
-}
-
 const getFeeStatusLabel = (status) => {
-  return STATUS_LABELS[status] || String(status || '').replace('_', ' ')
+  const labels = { pending: 'Up to date', fully_paid: 'Paid', waived: 'Waived' }
+  return labels[status] || String(status || '').replace('_', ' ')
 }
 
 const StudentFeeList = () => {
@@ -63,8 +50,8 @@ const StudentFeeList = () => {
             <h1 className="text-2xl font-bold" style={{ color: 'var(--color-text-primary)' }}>Student Fee Positions</h1>
             <p className="mt-1 text-sm" style={{ color: 'var(--color-text-secondary)' }}>Review and manage fee accounts for all active students.</p>
           </div>
-          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-indigo-50 text-indigo-600 dark:bg-indigo-950/30 dark:text-indigo-400">
-            <UserRound size={24} />
+          <div className="flex h-10 w-10 items-center justify-center rounded-2xl" style={{ backgroundColor: 'var(--color-surface-raised)', color: 'var(--color-brand)' }}>
+            <UserRound size={22} />
           </div>
         </div>
 
@@ -120,11 +107,11 @@ const StudentFeeList = () => {
             </thead>
             <tbody>
               {students.map((student) => (
-                <tr key={student.id} className="group transition-colors hover:bg-indigo-50/15 dark:hover:bg-indigo-950/10" style={{ borderBottom: '1px solid var(--color-border)' }}>
+                <tr key={student.id} className="group transition-colors" style={{ borderBottom: '1px solid var(--color-border)' }}>
                   <td className="px-5 py-4 text-xs font-bold" style={{ color: 'var(--color-text-muted)' }}>{student.admission_no}</td>
                   <td className="px-5 py-4">
-                    <div className="flex items-center gap-3">
-                      <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-indigo-100 text-[11px] font-bold text-indigo-700 dark:bg-indigo-950/50 dark:text-indigo-300">
+                    <div className="flex items-center gap-2.5">
+                      <div className="flex h-7 w-7 items-center justify-center rounded-lg text-[10px] font-medium flex-shrink-0" style={{ backgroundColor: 'var(--color-surface-raised)', color: 'var(--color-text-secondary)' }}>
                         {(student.student_name || '?').charAt(0)}
                       </div>
                       <div className="text-sm font-semibold" style={{ color: 'var(--color-text-primary)' }}>{student.student_name}</div>
@@ -134,26 +121,23 @@ const StudentFeeList = () => {
                     {student.class_name} <span className="opacity-50">{student.section_name ? `• Section ${student.section_name}` : ''}</span>
                   </td>
                   <td className="px-5 py-4 text-sm font-medium" style={{ color: 'var(--color-text-primary)' }}>{formatCurrency(student.total_due)}</td>
-                  <td className="px-5 py-4 text-sm font-medium text-green-700">{formatCurrency(student.total_paid)}</td>
-                  <td className="px-5 py-4 text-sm font-bold" style={{ color: Number(student.balance || 0) > 0 ? '#dc2626' : '#15803d' }}>{formatCurrency(student.balance)}</td>
+                  <td className="px-5 py-3.5 text-sm font-medium" style={{ color: 'var(--color-success)' }}>{formatCurrency(student.total_paid)}</td>
+                  <td className="px-5 py-3.5 text-sm font-semibold" style={{ color: Number(student.balance || 0) > 0 ? 'var(--color-danger)' : 'var(--color-success)' }}>{formatCurrency(student.balance)}</td>
                   <td className="px-5 py-4 text-xs" style={{ color: 'var(--color-text-muted)' }}>{student.last_payment_date ? formatDate(student.last_payment_date) : '--'}</td>
-                  <td className="px-5 py-4">
-                    <span className="rounded-full px-3 py-1 text-[10px] font-bold uppercase tracking-wider shadow-sm" style={{ 
-                      backgroundColor: getFeeStatusStyle(student.fee_status).bg, 
-                      color: getFeeStatusStyle(student.fee_status).text 
-                    }}>
+                  <td className="px-5 py-3.5">
+                    <Badge variant={feeStatusBadge(student.fee_status)}>
                       {getFeeStatusLabel(student.fee_status)}
-                    </span>
+                    </Badge>
                   </td>
-                  <td className="px-5 py-4">
+                  <td className="px-5 py-3.5">
                     <button
                       type="button"
                       onClick={() => navigate(ROUTES.ACCOUNTANT_STUDENT_FEES.replace(':id', student.id))}
-                      className="group flex items-center gap-1.5 rounded-full px-4 py-2 text-xs font-bold text-white shadow-sm transition-all hover:shadow-md active:scale-95"
+                      className="group flex items-center gap-1.5 rounded-full px-4 py-1.5 text-xs font-medium text-white transition-all hover:opacity-80"
                       style={{ backgroundColor: 'var(--color-brand)' }}
                     >
                       Details
-                      <ArrowRight size={14} className="transition-transform group-hover:translate-x-0.5" />
+                      <ArrowRight size={13} className="transition-transform group-hover:translate-x-0.5" />
                     </button>
                   </td>
                 </tr>

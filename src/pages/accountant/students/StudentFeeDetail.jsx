@@ -45,16 +45,16 @@ const StudentFeeDetail = () => {
               {student.admission_no} | {student.class_name} {student.section_name ? `Section ${student.section_name}` : ''} | {student.session_name}
             </p>
           </div>
-          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-green-50 text-green-700 dark:bg-green-950/30 dark:text-green-300">
-            <WalletCards size={24} />
+          <div className="flex h-10 w-10 items-center justify-center rounded-2xl" style={{ backgroundColor: 'var(--color-surface-raised)', color: 'var(--color-success)' }}>
+            <WalletCards size={22} />
           </div>
         </div>
 
         <div className="mt-4 grid gap-4 md:grid-cols-4">
-          <SummaryCard label="Total Fee" value={formatCurrency(summary.total_fee || 0)} />
-          <SummaryCard label="Paid" value={formatCurrency(summary.total_paid || 0)} tone="#15803d" />
-          <SummaryCard label="Balance" value={formatCurrency(summary.balance || 0)} tone={Number(summary.balance || 0) > 0 ? '#dc2626' : '#15803d'} />
-          <SummaryCard label="Concession" value={formatCurrency(summary.concession || 0)} tone="#2563eb" />
+          <SummaryCard label="Total Fee"  value={formatCurrency(summary.total_fee  || 0)} />
+          <SummaryCard label="Paid"        value={formatCurrency(summary.total_paid || 0)} tone="var(--color-success)" />
+          <SummaryCard label="Balance"     value={formatCurrency(summary.balance    || 0)} tone={Number(summary.balance || 0) > 0 ? 'var(--color-danger)' : 'var(--color-success)'} />
+          <SummaryCard label="Concession"  value={formatCurrency(summary.concession || 0)} tone="var(--color-brand)" />
         </div>
       </div>
 
