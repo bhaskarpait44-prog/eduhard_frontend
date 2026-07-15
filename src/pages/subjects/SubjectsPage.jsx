@@ -1,10 +1,13 @@
 // src/pages/subjects/SubjectsPage.jsx
-import { useEffect, useState } from 'react'
-import { BookOpen, AlertCircle, ArrowLeft, Download, Search } from 'lucide-react'
+import { useEffect, useState, useCallback } from 'react'
+import { BookOpen, AlertCircle, ArrowLeft, Download, Search, Plus } from 'lucide-react'
 import * as subjectApi from '@/api/subjectApi'
 import * as classApi from '@/api/classApi'
 import usePageTitle from '@/hooks/usePageTitle'
 import useToast from '@/hooks/useToast'
+import useSubjects from '@/hooks/useSubjects'
+import SubjectForm from '@/components/classes/SubjectForm'
+import Modal from '@/components/ui/Modal'
 
 // ── Status badge ──────────────────────────────────────────────────────────
 const StatusBadge = ({ active }) => (
@@ -152,16 +155,17 @@ const SubjectTableRow = ({ subject }) => (
 // ── Main Page ─────────────────────────────────────────────────────────────
 const SubjectsPage = () => {
   usePageTitle('Subjects')
-  const { toastError } = useToast()
+  const { toastError, toastSuccess } = useToast()
+  const { createSubject, isSaving } = useSubjects()
 
   const [classes, setClasses] = useState([])
   const [subjects, setSubjects] = useState([])
-  // FIX #3: Separate loading states for classes grid and subjects table
   const [isClassesLoading, setIsClassesLoading] = useState(true)
   const [isSubjectsLoading, setIsSubjectsLoading] = useState(false)
   const [selectedClass, setSelectedClass] = useState(null)
   const [searchTerm, setSearchTerm] = useState('')
   const [downloadingPdf, setDownloadingPdf] = useState(false)
+  const [addOpen, setAddOpen] = useState(false)
 
   useEffect(() => {
     fetchClasses()
@@ -173,51 +177,44 @@ const SubjectsPage = () => {
     }
   }, [selectedClass])
 
-  const fetchClasses = async () => {
+  // Fix #7: wrap in useCallback so the reference is stable and safe to add
+  // to useEffect dependency arrays if needed in the future.
+  const fetchClasses = useCallback(async () => {
     setIsClassesLoading(true)
     try {
       const res = await classApi.getClasses()
-      console.log('Classes API response:', res)
       // API returns { success: true, data: { classes, stats }, ... }
       const classesData = res?.data?.classes || []
-      console.log('Classes data:', classesData)
       setClasses(classesData)
     } catch (err) {
-      console.error('Error fetching classes:', err)
       toastError(err.message || 'Failed to load classes')
     } finally {
       setIsClassesLoading(false)
     }
-  }
+  }, [toastError])
 
-  const fetchSubjectsForClass = async (classId) => {
-    if (!classId) {
-      console.warn('fetchSubjectsForClass called with invalid classId:', classId)
-      return
-    }
+  // Fix #7: wrap in useCallback for stable reference
+  const fetchSubjectsForClass = useCallback(async (classId) => {
+    if (!classId) return
     // FIX #1: Set loading true so the subjects view shows a spinner
     setIsSubjectsLoading(true)
     try {
-      console.log('Fetching subjects for class:', classId)
       const res = await subjectApi.getSubjects(classId)
-      console.log('Subjects API response:', res)
       // API returns { success: true, data: [...], message, errors: [] }
       const subjectsArray = Array.isArray(res?.data) ? res.data : []
-      console.log('Subjects array:', subjectsArray)
       setSubjects(subjectsArray)
     } catch (err) {
-      console.error('Error fetching subjects:', err)
       toastError(err.message || 'Failed to load subjects')
     } finally {
       setIsSubjectsLoading(false)
     }
-  }
+  }, [toastError])
 
   const handleDownloadPdf = async () => {
-    if (!selectedClass?.id) return
+    const classId = selectedClass?.id || 'all'
     setDownloadingPdf(true)
     try {
-      const response = await subjectApi.downloadSubjectsPdf(selectedClass.id)
+      const response = await subjectApi.downloadSubjectsPdf(classId)
       const blob = response instanceof Blob
         ? response
         : response?.data instanceof Blob
@@ -226,7 +223,9 @@ const SubjectsPage = () => {
       const url = window.URL.createObjectURL(blob)
       const link = document.createElement('a')
       link.href = url
-      link.download = `${selectedClass.name.replace(/[^a-z0-9-_]+/gi, '-')}-subjects.pdf`
+      link.download = selectedClass
+        ? `${selectedClass.name.replace(/[^a-z0-9-_]+/gi, '-')}-subjects.pdf`
+        : 'All-Classes-Subjects.pdf'
       document.body.appendChild(link)
       link.click()
       link.remove()
@@ -261,6 +260,21 @@ const SubjectsPage = () => {
     setSearchTerm('')
   }
 
+  const handleAddSubject = async (data) => {
+    if (!selectedClass?.id) return
+    const res = await createSubject(selectedClass.id, data)
+    if (res.success) {
+      toastSuccess('Subject added successfully')
+      setAddOpen(false)
+      // Refresh the subjects list to show the new entry
+      fetchSubjectsForClass(selectedClass.id)
+    }
+  }
+
+  const nextOrderNumber = subjects.length > 0
+    ? Math.max(...subjects.map(s => s.order_number ?? 0)) + 1
+    : 1
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -293,17 +307,36 @@ const SubjectsPage = () => {
           )}
         </div>
 
-        {selectedClass && (
-          <button
-            onClick={handleDownloadPdf}
-            // FIX #5: Also disable while subjects are loading
-            disabled={downloadingPdf || isSubjectsLoading || subjects.length === 0}
-            className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-indigo-600 dark:bg-indigo-500 rounded-lg hover:bg-indigo-700 transition-colors disabled:opacity-50"
-          >
-            <Download size={16} />
-            {downloadingPdf ? 'Downloading...' : 'Download PDF'}
-          </button>
-        )}
+        <div className="flex items-center gap-2">
+          {selectedClass ? (
+            <>
+              <button
+                id="add-subject-btn"
+                onClick={() => setAddOpen(true)}
+                className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-indigo-600 dark:bg-indigo-500 rounded-lg hover:bg-indigo-700 dark:hover:bg-indigo-600 transition-colors"
+              >
+                <Plus size={16} /> Add Subject
+              </button>
+              <button
+                onClick={handleDownloadPdf}
+                disabled={downloadingPdf || isSubjectsLoading || subjects.length === 0}
+                className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-gray-600 dark:bg-gray-500 rounded-lg hover:bg-gray-700 transition-colors disabled:opacity-50"
+              >
+                <Download size={16} />
+                {downloadingPdf ? 'Downloading...' : 'Download PDF'}
+              </button>
+            </>
+          ) : (
+            <button
+              onClick={handleDownloadPdf}
+              disabled={downloadingPdf || isClassesLoading || classes.length === 0}
+              className="flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-indigo-700 dark:text-indigo-300 bg-indigo-50 dark:bg-indigo-950/40 border border-indigo-200 dark:border-indigo-800 rounded-xl hover:bg-indigo-100 dark:hover:bg-indigo-950/60 transition-colors disabled:opacity-50"
+            >
+              <Download size={16} />
+              {downloadingPdf ? 'Downloading...' : 'Download PDF'}
+            </button>
+          )}
+        </div>
       </div>
 
       {!selectedClass ? (
@@ -391,11 +424,19 @@ const SubjectsPage = () => {
               <div className="text-center py-12">
                 <BookOpen size={40} className="mx-auto text-gray-300 dark:text-gray-600 mb-3" />
                 <p className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">
-                  {searchTerm ? 'No subjects found matching your search' : 'No subjects for this class'}
+                  {searchTerm ? 'No subjects found matching your search' : 'No subjects for this class yet'}
                 </p>
-                <p className="text-xs text-gray-400 dark:text-gray-500">
-                  {searchTerm ? 'Try adjusting your search terms' : 'Subjects will appear here once created'}
-                </p>
+                {!searchTerm && (
+                  <button
+                    onClick={() => setAddOpen(true)}
+                    className="mt-3 text-sm text-indigo-600 dark:text-indigo-400 hover:underline"
+                  >
+                    + Add first subject
+                  </button>
+                )}
+                {searchTerm && (
+                  <p className="text-xs text-gray-400 dark:text-gray-500">Try adjusting your search terms</p>
+                )}
               </div>
             ) : (
               <div className="overflow-x-auto">
@@ -432,6 +473,23 @@ const SubjectsPage = () => {
             )}
           </div>
         </>
+      )}
+
+      {/* Add Subject modal — only rendered when a class is selected */}
+      {selectedClass && (
+        <Modal
+          open={addOpen}
+          onClose={() => setAddOpen(false)}
+          title={`Add Subject — ${selectedClass.name}`}
+          size="lg"
+        >
+          <SubjectForm
+            onSubmit={handleAddSubject}
+            onCancel={() => setAddOpen(false)}
+            isSaving={isSaving}
+            nextOrderNumber={nextOrderNumber}
+          />
+        </Modal>
       )}
     </div>
   )

@@ -449,7 +449,7 @@ const ExamsListPage = ({ onNavigate }) => {
               icon={Download} 
               onClick={() => setDownloadAllOpen(true)}
             >
-              Download Timetables
+              Download exam timetable
             </Button>
           )}
           {!isTeacher && (

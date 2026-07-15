@@ -48,6 +48,7 @@ const TeacherNoticeList = lazy(() => import('@/pages/teacher/notices/NoticeList'
 const TeacherNoticeForm = lazy(() => import('@/pages/teacher/notices/NoticeForm'))
 const TeacherLeave = lazy(() => import('@/pages/teacher/TeacherLeave'))
 const TeacherProfile = lazy(() => import('@/pages/teacher/TeacherProfile'))
+const TeacherAcademicCalendar = lazy(() => import('@/pages/teacher/TeacherAcademicCalendar'))
 const PlaceholderPage = lazy(() => import('@/pages/PlaceholderPage'))
 const SessionsPage = lazy(() => import('@/pages/sessions/SessionsPage'))
 const CreateSessionPage = lazy(() => import('@/pages/sessions/CreateSessionPage'))
@@ -414,6 +415,7 @@ const router = createBrowserRouter([
       { path: 'notices/new', element: <Lazy component={TeacherNoticeForm} /> },
       { path: 'leave',   element: <Lazy component={TeacherLeave} /> },
       { path: 'profile', element: <Lazy component={TeacherProfile} /> },
+      { path: 'academic-calendar', element: <Lazy component={TeacherAcademicCalendar} /> },
     ],
   },
 

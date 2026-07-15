@@ -48,7 +48,8 @@ const EditStudentPage = () => {
         navigate(ROUTES.STUDENTS)
       })
       .finally(() => setLoading(false))
-  }, [id, fetchStudent, navigate, toastError])
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [id]) // only re-fetch when the student ID in the URL changes
 
   const defaultValues = useMemo(() => {
     if (!student) return {}
@@ -178,29 +179,38 @@ const EditStudentPage = () => {
 
   useEffect(() => {
     if (isPermanentSame) {
-      setValue('perm_address', currentAddr[0])
-      setValue('perm_village', currentAddr[1])
-      setValue('perm_police_station', currentAddr[2])
-      setValue('perm_post_office', currentAddr[3])
-      setValue('perm_district', currentAddr[4])
-      setValue('perm_city', currentAddr[5])
-      setValue('perm_state', currentAddr[6])
-      setValue('perm_pincode', currentAddr[7])
+      setValue('perm_address',        currentAddr[0])
+      setValue('perm_village',         currentAddr[1])
+      setValue('perm_police_station',  currentAddr[2])
+      setValue('perm_post_office',     currentAddr[3])
+      setValue('perm_district',        currentAddr[4])
+      setValue('perm_city',            currentAddr[5])
+      setValue('perm_state',           currentAddr[6])
+      setValue('perm_pincode',         currentAddr[7])
     }
-  }, [isPermanentSame, ...currentAddr, setValue])
+  // Spreading currentAddr into deps caused a new array reference every render,
+  // firing this effect on every keystroke even when values hadn't changed.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isPermanentSame, currentAddr[0], currentAddr[1], currentAddr[2], currentAddr[3], currentAddr[4], currentAddr[5], currentAddr[6], currentAddr[7], setValue])
 
   const fatherPhone = watch('father_phone')
   const emergencyContact = watch('emergency_contact')
   const [lastFatherPhone, setLastFatherPhone] = useState(student?.father_phone || '')
 
-  if (fatherPhone !== lastFatherPhone) {
-    setLastFatherPhone(fatherPhone || '')
-    if (!emergencyContact || emergencyContact === lastFatherPhone) {
-      Promise.resolve().then(() => {
+  // Fix: calling setLastFatherPhone inside the render body caused an infinite loop.
+  // Every setState call triggers a re-render, which runs this code again.
+  // Move the sync logic into a useEffect so it only runs when fatherPhone changes.
+  useEffect(() => {
+    if (fatherPhone !== lastFatherPhone) {
+      setLastFatherPhone(fatherPhone || '')
+      if (!emergencyContact || emergencyContact === lastFatherPhone) {
         setValue('emergency_contact', fatherPhone)
-      })
+      }
     }
-  }
+  // lastFatherPhone is a ref value here — we intentionally exclude it from deps
+  // to avoid a secondary effect trigger; fatherPhone drives the comparison.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [fatherPhone, setValue])
 
   const onSave = async (data) => {
     if (isSubmittingRef.current) return

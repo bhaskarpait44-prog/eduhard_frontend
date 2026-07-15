@@ -25,7 +25,7 @@ const useSubjects = () => {
       store.setSubjects([])
       return []
     }
-  }, [])
+  }, [toastError])
 
   const createSubject = useCallback(async (classId, data) => {
     store.setSaving(true)
@@ -41,7 +41,7 @@ const useSubjects = () => {
     } finally {
       store.setSaving(false)
     }
-  }, [])
+  }, [toastError])
 
   const updateSubject = useCallback(async (classId, subjectId, data) => {
     store.setSaving(true)
@@ -57,9 +57,10 @@ const useSubjects = () => {
     } finally {
       store.setSaving(false)
     }
-  }, [])
+  }, [toastError])
 
   const deleteSubject = useCallback(async (classId, subjectId, reason = '') => {
+
     store.setSaving(true)
     try {
       await subjectApi.deleteSubject(classId, subjectId, reason)
@@ -73,7 +74,7 @@ const useSubjects = () => {
     } finally {
       store.setSaving(false)
     }
-  }, [])
+  }, [toastError])
 
   const reorderSubjects = useCallback(async (classId, orderedSubjects) => {
     const subjectOrders = (orderedSubjects || []).map((sub, index) => ({
@@ -99,7 +100,7 @@ const useSubjects = () => {
     } finally {
       store.setSaving(false)
     }
-  }, [])
+  }, [toastError])
 
   return {
     subjects: store.subjects,

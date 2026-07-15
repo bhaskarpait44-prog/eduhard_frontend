@@ -105,13 +105,14 @@ const useAcademicCalendarStore = create((set, get) => ({
     }
   },
 
-  downloadPdf: async (sessionId, filterType, filterAudience, month, year) => {
+  downloadPdf: async (sessionId, filterType, filterAudience, month, year, viewType) => {
     try {
       const params = { session_id: sessionId }
       if (filterType) params.event_type = filterType
       if (filterAudience) params.audience = filterAudience
       if (month) params.month = month
       if (year) params.year = year
+      if (viewType) params.view_type = viewType
       const blob = await api.downloadCalendarPdf(params)
       return blob
     } catch (err) {

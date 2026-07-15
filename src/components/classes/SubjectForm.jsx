@@ -77,7 +77,10 @@ const SubjectForm = ({
   isEdit   = false,
   nextOrderNumber = 1,
 }) => {
-  const schema = z
+  // Fix #5: schema was re-created on every render (new z.object() call each time).
+  // useMemo ensures it is only rebuilt when isEdit changes, which is the only
+  // prop that affects its shape (the `reason` field requirement).
+  const schema = useMemo(() => z
     .object({
       name         : z.string().min(1, 'Subject name is required').max(150),
       code         : z.string().min(1, 'Subject code is required').max(30)
@@ -121,6 +124,7 @@ const SubjectForm = ({
         }
       }
     })
+  , [isEdit])
 
   const {
     register,
@@ -226,11 +230,15 @@ const SubjectForm = ({
           </Field>
 
           <Field label="Subject Code" error={errors.code?.message} required>
+            {/* Fix #6: the explicit onChange prop was overwriting RHF's own onChange
+                (spread from register), so the field was never marked dirty and
+                validation events were lost. Pass it inside register() instead. */}
             <input
-              {...register('code')}
+              {...register('code', {
+                onChange: e => setValue('code', e.target.value.toUpperCase())
+              })}
               placeholder="MATH-6"
               className={inputCls(!!errors.code)}
-              onChange={e => setValue('code', e.target.value.toUpperCase())}
             />
           </Field>
         </div>

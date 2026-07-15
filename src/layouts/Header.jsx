@@ -183,7 +183,7 @@ const Header = ({ onMenuClick }) => {
               title       : item.title || 'New notice',
               description : [item.priority, item.posted_by_name].filter(Boolean).join(' | ') || 'A notice is waiting in your notice board.',
               count       : 1,
-              route       : ROUTES.TEACHER_NOTICES,
+              route       : (item.title?.startsWith('New Event:') || item.title?.includes('New Event:')) ? ROUTES.TEACHER_ACADEMIC_CALENDAR : ROUTES.TEACHER_NOTICES,
               source      : item.source || 'unified',
             }))
           const homeworkItems = homework
@@ -219,7 +219,7 @@ const Header = ({ onMenuClick }) => {
               title       : item.title || 'New notice',
               description : [item.priority, item.posted_by_name].filter(Boolean).join(' | ') || 'A notice is waiting in your notice board.',
               count       : 1,
-              route       : ROUTES.ACCOUNTANT_NOTICES,
+              route       : (item.title?.startsWith('New Event:') || item.title?.includes('New Event:')) ? ROUTES.ACADEMIC_CALENDAR : ROUTES.ACCOUNTANT_NOTICES,
               source      : item.source || 'unified',
             }))
 
@@ -263,7 +263,7 @@ const Header = ({ onMenuClick }) => {
               title       : item.title || 'New notice',
               description : [item.priority, item.posted_by_name].filter(Boolean).join(' | ') || 'A notice is waiting in your notice board.',
               count       : 1,
-              route       : ROUTES.RECEPTIONIST_NOTICES,
+              route       : (item.title?.startsWith('New Event:') || item.title?.includes('New Event:')) ? ROUTES.ACADEMIC_CALENDAR : ROUTES.RECEPTIONIST_NOTICES,
               source      : item.source || 'unified',
             }))
 
@@ -289,7 +289,7 @@ const Header = ({ onMenuClick }) => {
               title       : item.title || 'New notice',
               description : [item.priority, item.posted_by_name].filter(Boolean).join(' | ') || 'A notice is waiting in your notice board.',
               count       : 1,
-              route       : ROUTES.LIBRARY_NOTICES,
+              route       : (item.title?.startsWith('New Event:') || item.title?.includes('New Event:')) ? ROUTES.ACADEMIC_CALENDAR : ROUTES.LIBRARY_NOTICES,
               source      : item.source || 'unified',
             }))
           setNotifications(noticeItems.slice(0, 8))
@@ -327,7 +327,7 @@ const Header = ({ onMenuClick }) => {
             title       : item.title || 'New notice',
             description : [item.priority, item.posted_by_name].filter(Boolean).join(' | ') || 'A notice is waiting in your notice board.',
             count       : 1,
-            route       : ROUTES.STUDENT_NOTICES,
+            route       : (item.title?.startsWith('New Event:') || item.title?.includes('New Event:')) ? ROUTES.STUDENT_CALENDAR : ROUTES.STUDENT_NOTICES,
             source      : item.source || 'unified',
           }))
 

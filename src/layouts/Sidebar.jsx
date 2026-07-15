@@ -24,6 +24,7 @@ const getNavGroups = (user) => {
           { label: 'Dashboard',   icon: 'LayoutDashboard', path: `${ROUTES.TEACHER_ROOT}/dashboard` },
           { label: 'My Classes',  icon: 'School2',         path: ROUTES.TEACHER_CLASSES },
           { label: 'Timetable',   icon: 'CalendarRange',   path: ROUTES.TEACHER_TIMETABLE },
+          { label: 'Academic Calendar', icon: 'Calendar',   path: ROUTES.TEACHER_ACADEMIC_CALENDAR },
         ],
       },
       {
