@@ -3,7 +3,7 @@ import { useEffect, useState, useMemo } from 'react'
 import {
   ChevronLeft, ChevronRight, Plus, MoreVertical, Edit2, Trash2,
   Globe, Lock, Calendar as CalendarIcon, Clock, Users,
-  GraduationCap, Download, List, Sparkles
+  GraduationCap, Download, List, Sparkles, History, ScrollText
 } from 'lucide-react'
 import {
   format, addMonths, subMonths, startOfMonth, endOfMonth,
@@ -12,6 +12,7 @@ import {
 } from 'date-fns'
 import useAcademicCalendarStore from '@/store/academicCalendarStore'
 import useSessionStore from '@/store/sessionStore'
+import useAuditStore from '@/store/auditStore'
 import { PERMISSION } from '@/utils/permissions'
 import useAuth from '@/hooks/useAuth'
 import usePermissions from '@/hooks/usePermissions'
@@ -47,6 +48,7 @@ const AcademicCalendarPage = () => {
     filterType, setFilterType, downloadPdf
   } = useAcademicCalendarStore()
   const { sessions, currentSession, fetchSessions, fetchCurrentSession } = useSessionStore()
+  const { logs: auditLogs, isLoading: isAuditLoading, fetchLogs: fetchAuditLogs } = useAuditStore()
 
   const [selectedSessionId, setSelectedSessionId] = useState(null)
   const [selectedDate, setSelectedDate] = useState(new Date())
@@ -60,6 +62,12 @@ const AcademicCalendarPage = () => {
 
   const canCreate = can(PERMISSION.CALENDAR_CREATE)
   const canEdit = can(PERMISSION.CALENDAR_EDIT)
+
+  useEffect(() => {
+    if (viewMode === 'audit') {
+      fetchAuditLogs({ table_name: 'academic_events', limit: 50 }).catch(() => {})
+    }
+  }, [viewMode, fetchAuditLogs])
 
   useEffect(() => {
     fetchSessions()
@@ -133,9 +141,7 @@ const AcademicCalendarPage = () => {
     if (!selectedSessionId) return
     setIsDownloading(true)
     try {
-      const month = viewDate.getMonth() + 1
-      const year = viewDate.getFullYear()
-      const blob = await downloadPdf(selectedSessionId, filterType, filterAudience, month, year, viewMode)
+      const blob = await downloadPdf(selectedSessionId, filterType, filterAudience, null, null, viewMode)
       const sessionName = sessions.find(s => String(s.id) === String(selectedSessionId))?.name || 'Calendar'
       downloadBlob(blob, `Academic_Calendar_${sessionName.replace(/\s+/g, '_')}.pdf`)
       toast.success('PDF generated successfully')
@@ -206,6 +212,20 @@ const AcademicCalendarPage = () => {
               <List className="h-3.5 w-3.5" />
               List
             </button>
+            {can(PERMISSION.AUDIT_VIEW) && (
+              <button
+                onClick={() => setViewMode('audit')}
+                className={cn(
+                  "flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold transition-all",
+                  viewMode === 'audit'
+                    ? "bg-[var(--color-brand)] text-white shadow-sm"
+                    : "text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-raised)]"
+                )}
+              >
+                <History className="h-3.5 w-3.5" />
+                Audit Logs
+              </button>
+            )}
           </div>
 
           <Button
@@ -228,60 +248,62 @@ const AcademicCalendarPage = () => {
       </div>
 
       {/* Filters */}
-      <Card className="p-3 space-y-2.5">
-        <div className="flex flex-wrap items-center gap-1.5">
-          <span className="text-[10px] font-bold uppercase tracking-wider text-[var(--color-text-muted)] mr-1">Type</span>
-          <button
-            onClick={() => setFilterType(null)}
-            className={cn(chipBase, !filterType
-              ? "bg-[var(--color-brand)] text-white border-[var(--color-brand)] shadow-sm"
-              : chipIdle)}
-          >
-            All Types
-          </button>
-          {EVENT_TYPES.map(type => (
+      {viewMode !== 'audit' && (
+        <Card className="p-3 space-y-2.5">
+          <div className="flex flex-wrap items-center gap-1.5">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-[var(--color-text-muted)] mr-1">Type</span>
             <button
-              key={type.id}
-              onClick={() => setFilterType(type.id)}
-              className={cn(chipBase, "flex items-center gap-1.5",
-                filterType === type.id
-                  ? "bg-[var(--color-brand)] text-white border-[var(--color-brand)] shadow-sm"
-                  : chipIdle
-              )}
+              onClick={() => setFilterType(null)}
+              className={cn(chipBase, !filterType
+                ? "bg-[var(--color-brand)] text-white border-[var(--color-brand)] shadow-sm"
+                : chipIdle)}
             >
-              <span className={cn("h-1.5 w-1.5 rounded-full", type.bg)} />
-              {type.label}
+              All Types
             </button>
-          ))}
-        </div>
+            {EVENT_TYPES.map(type => (
+              <button
+                key={type.id}
+                onClick={() => setFilterType(type.id)}
+                className={cn(chipBase, "flex items-center gap-1.5",
+                  filterType === type.id
+                    ? "bg-[var(--color-brand)] text-white border-[var(--color-brand)] shadow-sm"
+                    : chipIdle
+                )}
+              >
+                <span className={cn("h-1.5 w-1.5 rounded-full", type.bg)} />
+                {type.label}
+              </button>
+            ))}
+          </div>
 
-        <div className="flex flex-wrap items-center gap-1.5 pt-2.5 border-t border-[var(--color-border)]">
-          <span className="text-[10px] font-bold uppercase tracking-wider text-[var(--color-text-muted)] mr-1">Audience</span>
-          <button
-            onClick={() => setFilterAudience(null)}
-            className={cn(chipBase, !filterAudience
-              ? "bg-slate-800 text-white border-slate-800 shadow-sm dark:bg-slate-200 dark:text-slate-900 dark:border-slate-200"
-              : chipIdle)}
-          >
-            All Audiences
-          </button>
-          {AUDIENCES.map(aud => (
+          <div className="flex flex-wrap items-center gap-1.5 pt-2.5 border-t border-[var(--color-border)]">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-[var(--color-text-muted)] mr-1">Audience</span>
             <button
-              key={aud}
-              onClick={() => setFilterAudience(aud)}
-              className={cn(chipBase, "capitalize",
-                filterAudience === aud
-                  ? "bg-slate-800 text-white border-slate-800 shadow-sm dark:bg-slate-200 dark:text-slate-900 dark:border-slate-200"
-                  : chipIdle
-              )}
+              onClick={() => setFilterAudience(null)}
+              className={cn(chipBase, !filterAudience
+                ? "bg-slate-800 text-white border-slate-800 shadow-sm dark:bg-slate-200 dark:text-slate-900 dark:border-slate-200"
+                : chipIdle)}
             >
-              {aud}
+              All Audiences
             </button>
-          ))}
-        </div>
-      </Card>
+            {AUDIENCES.map(aud => (
+              <button
+                key={aud}
+                onClick={() => setFilterAudience(aud)}
+                className={cn(chipBase, "capitalize",
+                  filterAudience === aud
+                    ? "bg-slate-800 text-white border-slate-800 shadow-sm dark:bg-slate-200 dark:text-slate-900 dark:border-slate-200"
+                    : chipIdle
+                )}
+              >
+                {aud}
+              </button>
+            ))}
+          </div>
+        </Card>
+      )}
 
-      {viewMode === 'calendar' ? (
+      {viewMode === 'calendar' && (
         <div className="grid grid-cols-1 gap-5 lg:grid-cols-3">
           {/* Calendar Grid */}
           <div className="lg:col-span-2">
@@ -524,7 +546,9 @@ const AcademicCalendarPage = () => {
             </Card>
           </div>
         </div>
-      ) : (
+      )}
+ 
+      {viewMode === 'list' && (
         <Card className="overflow-hidden">
           <div className="overflow-x-auto">
             <table className="min-w-full">
@@ -649,6 +673,104 @@ const AcademicCalendarPage = () => {
         </Card>
       )}
 
+      {viewMode === 'audit' && (
+        <Card className="p-5">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-bold text-[var(--color-text-primary)]">Academic Calendar Audit Trail</h3>
+            <p className="text-xs text-[var(--color-text-muted)]">Showing latest change logs for academic events</p>
+          </div>
+          {isAuditLoading ? (
+            <div className="space-y-4 animate-pulse">
+              {[...Array(5)].map((_, i) => (
+                <div key={i} className="h-16 bg-[var(--color-surface-raised)] rounded-xl" />
+              ))}
+            </div>
+          ) : auditLogs.length === 0 ? (
+            <div className="py-12 text-center">
+              <ScrollText className="mx-auto text-gray-300 dark:text-gray-600 mb-3" size={40} />
+              <p className="text-sm font-semibold text-[var(--color-text-secondary)]">No audit logs found</p>
+              <p className="text-xs text-[var(--color-text-muted)] mt-1">Changes to calendar events will show up here.</p>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="min-w-full">
+                <thead>
+                  <tr className="border-b border-[var(--color-border)] bg-[var(--color-surface-raised)]/40 text-left">
+                    <th className="px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-[var(--color-text-muted)]">Timestamp</th>
+                    <th className="px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-[var(--color-text-muted)]">Event ID</th>
+                    <th className="px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-[var(--color-text-muted)]">Field Changed</th>
+                    <th className="px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-[var(--color-text-muted)]">Before → After</th>
+                    <th className="px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-[var(--color-text-muted)]">Reason / Note</th>
+                    <th className="px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-[var(--color-text-muted)]">Admin</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-[var(--color-border)] text-xs text-[var(--color-text-secondary)]">
+                  {auditLogs.map(log => {
+                    const formattedDate = new Date(log.created_at).toLocaleString('en-IN', {
+                      day: '2-digit', month: 'short', year: 'numeric',
+                      hour: '2-digit', minute: '2-digit'
+                    })
+                    const FIELD_LABELS = {
+                      title: 'Title',
+                      description: 'Description',
+                      event_type: 'Event Type',
+                      start_date: 'Start Date',
+                      end_date: 'End Date',
+                      start_time: 'Start Time',
+                      end_time: 'End Time',
+                      is_all_day: 'All Day setting',
+                      audience: 'Audience',
+                      target_class_id: 'Target Class',
+                      color: 'Color',
+                      is_published: 'Publish Status',
+                      notify_on_publish: 'Notify Audience',
+                      is_deleted: 'Deleted'
+                    }
+                    const label = FIELD_LABELS[log.field_name] || log.field_name
+                    return (
+                      <tr key={log.id} className="hover:bg-[var(--color-surface-raised)]/30 transition-colors">
+                        <td className="px-4 py-3 font-semibold whitespace-nowrap">{formattedDate}</td>
+                        <td className="px-4 py-3 font-mono font-bold text-gray-500">#{log.record_id}</td>
+                        <td className="px-4 py-3">
+                          <span className="font-semibold bg-blue-50 text-blue-700 px-1.5 py-0.5 rounded border border-blue-100 dark:bg-blue-950/40 dark:text-blue-300 dark:border-blue-900/50">
+                            {label}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3">
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            <span className="text-[10px] px-1 bg-red-50 text-red-700 dark:bg-red-950/20 dark:text-red-300 rounded font-semibold line-through">
+                              {log.old_value !== null ? String(log.old_value) : 'None'}
+                            </span>
+                            <span>→</span>
+                            <span className="text-[10px] px-1 bg-emerald-50 text-emerald-700 dark:bg-emerald-950/20 dark:text-emerald-300 rounded font-semibold">
+                              {log.new_value !== null ? String(log.new_value) : 'None'}
+                            </span>
+                          </div>
+                        </td>
+                        <td className="px-4 py-3 max-w-xs italic text-[var(--color-text-muted)] break-words">
+                          {log.reason ? `"${log.reason}"` : '—'}
+                        </td>
+                        <td className="px-4 py-3 whitespace-nowrap">
+                          <div className="flex items-center gap-1.5">
+                            <div className="w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-bold text-white bg-[var(--color-brand)]">
+                              {(log.changed_by_name || 'A')[0].toUpperCase()}
+                            </div>
+                            <div className="flex flex-col">
+                              <span className="font-semibold text-[var(--color-text-primary)]">{log.changed_by_name || 'System'}</span>
+                              <span className="text-[9px] text-[var(--color-text-muted)]">{log.changed_by_email || ''}</span>
+                            </div>
+                          </div>
+                        </td>
+                      </tr>
+                    )
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </Card>
+      )}
+
       <EventFormModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
@@ -657,7 +779,7 @@ const AcademicCalendarPage = () => {
       />
 
       <ConfirmDialog
-        isOpen={!!deletingId}
+        open={!!deletingId}
         onClose={() => setDeletingId(null)}
         onConfirm={handleDelete}
         title="Delete Event?"

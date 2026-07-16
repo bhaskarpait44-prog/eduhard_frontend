@@ -5,6 +5,8 @@ import { isStudentPortalSetupError } from '@/utils/studentPortal'
 const useStudentStore = create((set) => ({
   dashboard: null,
   todaySchedule: [],
+  isHoliday: false,
+  holidayName: '',
   upcomingEvents: [],
   achievements: [],
   loading: false,
@@ -18,6 +20,8 @@ const useStudentStore = create((set) => ({
   clearDashboard: () => set({
     dashboard: null,
     todaySchedule: [],
+    isHoliday: false,
+    holidayName: '',
     upcomingEvents: [],
     achievements: [],
     loading: false,
@@ -44,6 +48,8 @@ const useStudentStore = create((set) => ({
       set({
         dashboard: dashboardRes?.data || null,
         todaySchedule: scheduleRes?.data?.schedule || dashboardRes?.data?.today_schedule || [],
+        isHoliday: !!scheduleRes?.data?.is_holiday || !!dashboardRes?.data?.is_holiday,
+        holidayName: scheduleRes?.data?.holiday_name || dashboardRes?.data?.holiday_name || '',
         upcomingEvents: eventsRes?.data?.events || dashboardRes?.data?.upcoming_events || [],
         achievements: achievementsRes?.data?.achievements || dashboardRes?.data?.achievements || [],
         loading: false,
@@ -58,6 +64,8 @@ const useStudentStore = create((set) => ({
         set({
           dashboard: null,
           todaySchedule: [],
+          isHoliday: false,
+          holidayName: '',
           upcomingEvents: [],
           achievements: [],
           loading: false,

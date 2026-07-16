@@ -7,8 +7,27 @@ const TimetableToday = ({
   currentPeriodId = null, 
   nextPeriodId = null,
   onNavigate,
-  isTeacher = false 
+  isTeacher = false,
+  isHoliday = false,
+  holidayName = ''
 }) => {
+  if (isHoliday) {
+    return (
+      <div
+        className="rounded-2xl border p-10 text-center"
+        style={{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface)' }}
+      >
+        <span className="text-xl">🎉</span>
+        <p className="mt-3 text-sm font-semibold" style={{ color: 'var(--color-text-primary)' }}>
+          School Holiday Today
+        </p>
+        <p className="mt-1 text-xs" style={{ color: 'var(--color-text-muted)' }}>
+          {holidayName || 'Declared Holiday'}
+        </p>
+      </div>
+    )
+  }
+
   if (!schedule.length) {
     return (
       <div

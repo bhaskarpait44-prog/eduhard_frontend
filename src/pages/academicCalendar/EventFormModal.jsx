@@ -1,9 +1,9 @@
 // src/pages/academicCalendar/EventFormModal.jsx
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useMemo } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import * as z from 'zod'
-import { X, Calendar, Clock, Palette, Info, Users, GraduationCap, Send, Globe } from 'lucide-react'
+import { X, Calendar, Clock, Palette, Info, Users, GraduationCap, Send, Globe, AlertTriangle } from 'lucide-react'
 import useAcademicCalendarStore from '@/store/academicCalendarStore'
 import useClasses from '@/hooks/useClasses'
 import Modal from '@/components/ui/Modal'
@@ -66,7 +66,7 @@ const PRESET_COLORS = [
 ]
 
 const EventFormModal = ({ isOpen, onClose, event, sessionId }) => {
-  const { createEvent, updateEvent, isSaving } = useAcademicCalendarStore()
+  const { createEvent, updateEvent, isSaving, events } = useAcademicCalendarStore()
   const { classes, fetchClasses } = useClasses()
   const [showAdvanced, setShowAdvanced] = useState(false)
 
@@ -88,6 +88,22 @@ const EventFormModal = ({ isOpen, onClose, event, sessionId }) => {
   const audience = watch('audience')
   const isPublished = watch('is_published')
   const currentColor = watch('color')
+
+  const watchedStartDate = watch('start_date')
+  const watchedEndDate = watch('end_date')
+  const watchedEventType = watch('event_type')
+
+  const conflicts = useMemo(() => {
+    if (!watchedStartDate || !watchedEndDate || !watchedEventType || !events) return []
+    return events.filter(ev => {
+      if (event && ev.id === event.id) return false
+      const overlap = watchedStartDate <= ev.end_date && watchedEndDate >= ev.start_date
+      if (!overlap) return false
+      if (watchedEventType === 'exam' && ev.event_type === 'holiday') return true
+      if (watchedEventType === 'holiday' && ev.event_type === 'exam') return true
+      return false
+    })
+  }, [watchedStartDate, watchedEndDate, watchedEventType, event, events])
 
   // Reset target class if audience changes from students
   useEffect(() => {
@@ -292,6 +308,24 @@ const EventFormModal = ({ isOpen, onClose, event, sessionId }) => {
             </div>
           )}
         </div>
+
+        {conflicts.length > 0 && (
+          <div className="rounded-xl border border-amber-200 bg-amber-50 p-3.5 text-amber-800 dark:border-amber-900/50 dark:bg-amber-950/20 dark:text-amber-300">
+            <div className="flex gap-2">
+              <AlertTriangle className="h-4.5 w-4.5 shrink-0 text-amber-600 dark:text-amber-400" />
+              <div>
+                <p className="text-xs font-bold">Scheduling Conflict Detected</p>
+                <div className="mt-1 text-[10px] space-y-1">
+                  {conflicts.map(c => (
+                    <p key={c.id}>
+                      An <strong>{c.event_type}</strong> event ("{c.title}") is scheduled on this period ({c.start_date} to {c.end_date}).
+                    </p>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
 
         <div className="flex items-center justify-end gap-3 pt-4 border-t border-[var(--color-border)]">
           <Button type="button" variant="ghost" onClick={onClose} disabled={isSaving}>

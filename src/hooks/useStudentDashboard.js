@@ -7,6 +7,8 @@ const useStudentDashboard = () => {
   const {
     dashboard,
     todaySchedule,
+    isHoliday,
+    holidayName,
     upcomingEvents,
     achievements,
     loading,
@@ -49,6 +51,8 @@ const useStudentDashboard = () => {
   return {
     dashboard,
     todaySchedule,
+    isHoliday,
+    holidayName,
     upcomingEvents,
     achievements,
     loading,

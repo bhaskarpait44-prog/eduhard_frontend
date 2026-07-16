@@ -33,6 +33,8 @@ const TeacherTimetable = () => {
   const { toastError } = useToast()
   const [timetable, setTimetable] = useState([])
   const [todaySchedule, setTodaySchedule] = useState([])
+  const [isHoliday, setIsHoliday] = useState(false)
+  const [holidayName, setHolidayName] = useState('')
   const [examDuties, setExamDuties] = useState([])
   const [currentPeriod, setCurrentPeriod] = useState(null)
   const [loading, setLoading] = useState(true)
@@ -70,6 +72,8 @@ const TeacherTimetable = () => {
         if (!active) return
         setTimetable(weeklyRes?.data?.timetable || [])
         setTodaySchedule(todayRes?.data?.schedule || [])
+        setIsHoliday(!!todayRes?.data?.is_holiday)
+        setHolidayName(todayRes?.data?.holiday_name || '')
         setCurrentPeriod(currentRes?.data?.current_period || null)
         setExamDuties(examRes?.data?.timetable || [])
       } catch (error) {
@@ -196,6 +200,8 @@ const TeacherTimetable = () => {
               currentPeriodId={currentPeriod?.id || null}
               onNavigate={navigate}
               isTeacher={true}
+              isHoliday={isHoliday}
+              holidayName={holidayName}
             />
           </section>
 
@@ -221,6 +227,8 @@ const TeacherTimetable = () => {
               currentPeriodId={currentPeriod?.id || null}
               onNavigate={navigate}
               isTeacher={true}
+              isHoliday={isHoliday}
+              holidayName={holidayName}
             />
           </section>
         </>

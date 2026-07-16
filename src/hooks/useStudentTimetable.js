@@ -11,6 +11,8 @@ const useStudentTimetable = () => {
   const [loading, setLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
   const [error, setError] = useState(null)
+  const [isHoliday, setIsHoliday] = useState(false)
+  const [holidayName, setHolidayName] = useState('')
 
   const load = useCallback(async ({ silent = false } = {}) => {
     setError(null)
@@ -27,6 +29,8 @@ const useStudentTimetable = () => {
 
       setTimetable(weeklyRes?.data?.timetable || [])
       setTodaySchedule(todayRes?.data?.schedule || [])
+      setIsHoliday(!!todayRes?.data?.is_holiday)
+      setHolidayName(todayRes?.data?.holiday_name || '')
       setCurrentPeriod(currentRes?.data?.current_period || null)
       setNextPeriod(currentRes?.data?.next_period || null)
       setExamSchedule(examsRes?.data?.exams || [])
@@ -36,6 +40,8 @@ const useStudentTimetable = () => {
       if (isStudentPortalSetupError(err)) {
         setTimetable([])
         setTodaySchedule([])
+        setIsHoliday(false)
+        setHolidayName('')
         setCurrentPeriod(null)
         setNextPeriod(null)
         setExamSchedule([])
@@ -58,6 +64,8 @@ const useStudentTimetable = () => {
   return {
     timetable,
     todaySchedule,
+    isHoliday,
+    holidayName,
     currentPeriod,
     nextPeriod,
     examSchedule,

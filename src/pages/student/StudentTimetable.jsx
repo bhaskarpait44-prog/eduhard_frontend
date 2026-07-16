@@ -25,6 +25,8 @@ const StudentTimetable = () => {
   const {
     timetable,
     todaySchedule,
+    isHoliday,
+    holidayName,
     currentPeriod,
     nextPeriod,
     examSchedule,
@@ -136,6 +138,8 @@ const StudentTimetable = () => {
                 schedule={todaySchedule}
                 currentPeriodId={currentPeriod?.id || null}
                 nextPeriodId={nextPeriod?.id || null}
+                isHoliday={isHoliday}
+                holidayName={holidayName}
               />
               <ExamCountdown exams={examSchedule} />
             </div>

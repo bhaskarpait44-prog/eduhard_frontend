@@ -151,9 +151,7 @@ const TeacherAcademicCalendar = () => {
     if (!selectedSessionId) return
     setIsDownloading(true)
     try {
-      const month = viewDate.getMonth() + 1
-      const year = viewDate.getFullYear()
-      const blob = await downloadPdf(selectedSessionId, filterType, filterAudience, month, year)
+      const blob = await downloadPdf(selectedSessionId, filterType, filterAudience, null, null)
       const sessionName = sessions.find(s => String(s.id) === String(selectedSessionId))?.name || 'Calendar'
       downloadBlob(blob, `Academic_Calendar_${sessionName.replace(/\s+/g, '_')}.pdf`)
       toast.success('Calendar PDF generated successfully')
@@ -552,14 +550,14 @@ const TeacherAcademicCalendar = () => {
 
       {deletingId && (
         <ConfirmDialog
-          isOpen={!!deletingId}
+          open={!!deletingId}
           onClose={() => setDeletingId(null)}
           onConfirm={handleDelete}
           title="Delete Event"
-          message="Are you sure you want to permanently delete this academic calendar event? This action cannot be undone."
-          confirmText="Delete Event"
-          cancelText="Keep Event"
-          confirmVariant="danger"
+          description="Are you sure you want to permanently delete this academic calendar event? This action cannot be undone."
+          confirmLabel="Delete Event"
+          cancelLabel="Keep Event"
+          variant="danger"
         />
       )}
     </div>

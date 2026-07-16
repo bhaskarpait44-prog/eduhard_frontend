@@ -30,6 +30,8 @@ const StudentDashboard = () => {
   const {
     dashboard,
     todaySchedule,
+    isHoliday,
+    holidayName,
     upcomingEvents,
     achievements,
     loading,
@@ -124,18 +126,20 @@ const StudentDashboard = () => {
       title: "Today's Classes",
       icon: CalendarRange,
       route: ROUTES.STUDENT_TIMETABLE,
-      tone: currentPeriod ? '#16a34a' : 'var(--color-brand)',
-      primary: `${classesToday.total_periods || schedule.length || 0}`,
-      secondary: currentPeriod
-        ? `${currentPeriod.subject_name} is live now`
-        : nextPeriod
-          ? `${nextPeriod.subject_name} is next`
-          : 'No more classes today',
-      footer: currentPeriod
+      tone: isHoliday || dashboard?.is_holiday ? '#10b981' : currentPeriod ? '#16a34a' : 'var(--color-brand)',
+      primary: isHoliday || dashboard?.is_holiday ? 'Holiday' : `${classesToday.total_periods || schedule.length || 0}`,
+      secondary: isHoliday || dashboard?.is_holiday
+        ? (holidayName || dashboard?.holiday_name || 'School Closed')
+        : (currentPeriod
+            ? `${currentPeriod.subject_name} is live now`
+            : nextPeriod
+              ? `${nextPeriod.subject_name} is next`
+              : 'No more classes today'),
+      footer: isHoliday || dashboard?.is_holiday ? 'No classes scheduled' : (currentPeriod
         ? `Ends in ${formatMinutes(currentPeriod.countdown_minutes)}`
         : nextPeriod
           ? `Starts in ${formatMinutes(nextPeriod.countdown_minutes)}`
-          : 'Schedule complete',
+          : 'Schedule complete'),
     },
   ]
 
@@ -398,6 +402,12 @@ const StudentDashboard = () => {
                   </div>
                 ))}
               </div>
+            ) : isHoliday || dashboard?.is_holiday ? (
+              <EmptyMiniState
+                icon={CalendarRange}
+                title="School Holiday Today"
+                description={`Holiday: ${holidayName || dashboard?.holiday_name || 'Declared Holiday'}`}
+              />
             ) : (
               <EmptyMiniState
                 icon={CalendarRange}

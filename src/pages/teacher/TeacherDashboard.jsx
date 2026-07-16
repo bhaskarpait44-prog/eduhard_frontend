@@ -46,6 +46,8 @@ const TeacherDashboard = () => {
   const {
     dashboard,
     schedule,
+    isHoliday,
+    holidayName,
     recentActivity,
     loading,
     refreshing,
@@ -86,15 +88,15 @@ const TeacherDashboard = () => {
       key: 'classes',
       title: "Today's Classes",
       icon: CalendarDays,
-      tone: unmarkedCount === 0 ? '#10b981' : '#f59e0b',
+      tone: isHoliday || dashboard?.is_holiday ? '#10b981' : (unmarkedCount === 0 ? '#10b981' : '#f59e0b'),
       route: ROUTES.TEACHER_TIMETABLE,
-      metric: String(glance?.todays_classes?.total_periods || 0),
-      metricLabel: 'Periods Scheduled',
-      description: Number(glance?.todays_classes?.total_periods || 0) === 0
+      metric: isHoliday || dashboard?.is_holiday ? 'Holiday' : String(glance?.todays_classes?.total_periods || 0),
+      metricLabel: isHoliday || dashboard?.is_holiday ? (holidayName || dashboard?.holiday_name || 'School Closed') : 'Periods Scheduled',
+      description: isHoliday || dashboard?.is_holiday ? 'No classes scheduled' : (Number(glance?.todays_classes?.total_periods || 0) === 0
         ? 'No classes scheduled today'
         : (nextPeriod
             ? `Next: ${formatSubjectClass(nextPeriod)}`
-            : 'No more periods left today'),
+            : 'No more periods left today')),
     },
     {
       key: 'attendance',
@@ -300,11 +302,19 @@ const TeacherDashboard = () => {
             {loading && !scheduleRows.length ? (
               <ScheduleSkeleton />
             ) : scheduleRows.length === 0 ? (
-              <EmptyState
-                icon={CalendarDays}
-                title="No classes scheduled today"
-                message="Your timetable is clear for today. Any free periods or updates will appear here."
-              />
+              isHoliday || dashboard?.is_holiday ? (
+                <EmptyState
+                  icon={CalendarDays}
+                  title="School Holiday Today"
+                  message={`Holiday: ${holidayName || dashboard?.holiday_name || 'Declared Holiday'}`}
+                />
+              ) : (
+                <EmptyState
+                  icon={CalendarDays}
+                  title="No classes scheduled today"
+                  message="Your timetable is clear for today. Any free periods or updates will appear here."
+                />
+              )
             ) : (
               <div className="space-y-4">
                 {scheduleRows.map((item, index) => {

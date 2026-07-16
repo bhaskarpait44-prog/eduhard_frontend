@@ -7,6 +7,8 @@ const useTeacherDashboard = () => {
   const {
     dashboard,
     schedule,
+    isHoliday,
+    holidayName,
     pendingTasks,
     recentActivity,
     loading,
@@ -49,6 +51,8 @@ const useTeacherDashboard = () => {
   return {
     dashboard,
     schedule,
+    isHoliday,
+    holidayName,
     pendingTasks,
     recentActivity,
     loading,

@@ -4,6 +4,8 @@ import * as teacherApi from '@/api/teacherApi'
 const useTeacherStore = create((set) => ({
   dashboard: null,
   schedule: [],
+  isHoliday: false,
+  holidayName: '',
   pendingTasks: [],
   recentActivity: [],
   loading: false,
@@ -17,6 +19,8 @@ const useTeacherStore = create((set) => ({
   clearTeacherDashboard: () => set({
     dashboard: null,
     schedule: [],
+    isHoliday: false,
+    holidayName: '',
     pendingTasks: [],
     recentActivity: [],
     loading: false,
@@ -43,6 +47,8 @@ const useTeacherStore = create((set) => ({
       set({
         dashboard: dashboardRes?.data || null,
         schedule: scheduleRes?.data?.schedule || dashboardRes?.data?.today_schedule || [],
+        isHoliday: !!scheduleRes?.data?.is_holiday || !!dashboardRes?.data?.is_holiday,
+        holidayName: scheduleRes?.data?.holiday_name || dashboardRes?.data?.holiday_name || '',
         pendingTasks: tasksRes?.data?.tasks || [],
         recentActivity: activityRes?.data?.activity || dashboardRes?.data?.recent_activity || [],
         loading: false,
@@ -56,6 +62,8 @@ const useTeacherStore = create((set) => ({
       set({
         loading: false,
         refreshing: false,
+        isHoliday: false,
+        holidayName: '',
         error: error?.message || 'Unable to load dashboard.',
       })
       throw error
