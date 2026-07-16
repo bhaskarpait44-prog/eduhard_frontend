@@ -55,6 +55,9 @@ const TeacherAcademicCalendar = () => {
   const [editingEvent, setEditingEvent] = useState(null)
   const [deletingId, setDeletingId] = useState(null)
   const [isDownloading, setIsDownloading] = useState(false)
+  // Bug fix 8: loading guards to prevent double-click duplicate requests
+  const [isDeleting, setIsDeleting] = useState(false)
+  const [publishingId, setPublishingId] = useState(null)
 
   const canCreate = can(PERMISSION.CALENDAR_CREATE)
   const canEdit = can(PERMISSION.CALENDAR_EDIT)
@@ -73,6 +76,10 @@ const TeacherAcademicCalendar = () => {
   useEffect(() => {
     if (selectedSessionId) {
       fetchEvents(selectedSessionId)
+      // Bug fix 7: reset filters whenever the session changes so stale filters
+      // don't silently hide events from the newly-selected session.
+      setFilterType(null)
+      setFilterAudience(null)
     }
   }, [selectedSessionId])
 
@@ -129,7 +136,11 @@ const TeacherAcademicCalendar = () => {
   }
 
   const handleDelete = async () => {
+    // Bug fix 8: guard against double-click
+    if (isDeleting) return
+    setIsDeleting(true)
     const res = await deleteEvent(deletingId)
+    setIsDeleting(false)
     if (res.success) {
       toast.success('Event deleted successfully')
       setDeletingId(null)
@@ -139,7 +150,11 @@ const TeacherAcademicCalendar = () => {
   }
 
   const handleTogglePublish = async (id) => {
+    // Bug fix 8: guard against double-click
+    if (publishingId) return
+    setPublishingId(id)
     const res = await publishEvent(id)
+    setPublishingId(null)
     if (res.success) {
       toast.success(`Event ${res.data.is_published ? 'published' : 'unpublished'} successfully`)
     } else {
@@ -502,10 +517,12 @@ const TeacherAcademicCalendar = () => {
                       {/* Display publication status if teacher has edit permissions */}
                       {canEdit && (
                         <div className="mt-1.5 flex items-center justify-between border-t pt-2" style={{ borderColor: 'var(--color-border)' }}>
+                          {/* Bug fix 6: show actual event audience instead of hardcoded "(Everyone)" */}
                           <span className="flex items-center gap-1 text-[10px] font-medium" style={{ color: 'var(--color-text-muted)' }}>
                             {event.is_published ? (
                               <>
-                                <Globe size={11} className="text-emerald-500" /> Published (Everyone)
+                                <Globe size={11} className="text-emerald-500" />
+                                Published ({event.audience ? event.audience.charAt(0).toUpperCase() + event.audience.slice(1) : 'Everyone'})
                               </>
                             ) : (
                               <>
@@ -515,10 +532,11 @@ const TeacherAcademicCalendar = () => {
                           </span>
                           <button
                             onClick={() => handleTogglePublish(event.id)}
-                            className="text-[10px] font-bold hover:underline transition-all"
+                            disabled={publishingId === event.id}
+                            className="text-[10px] font-bold hover:underline transition-all disabled:opacity-50"
                             style={{ color: 'var(--color-brand)' }}
                           >
-                            {event.is_published ? 'Unpublish' : 'Publish'}
+                            {publishingId === event.id ? '...' : event.is_published ? 'Unpublish' : 'Publish'}
                           </button>
                         </div>
                       )}
