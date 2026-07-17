@@ -272,7 +272,7 @@ const AdminPromotionPage = () => {
 
       const summary = response?.data || {}
       toastSuccess(
-        `Promotion completed. Promoted: ${summary.promoted_count || 0}, repeated: ${summary.repeated_count || 0}, graduated: ${summary.graduated_count || 0}.`
+        `Promotion completed. Promoted: ${summary.promoted_count || 0}, repeated: ${summary.repeated_count || 0}, graduated: ${summary.graduated_count || 0}${summary.skipped_no_result_count ? `, skipped (no result): ${summary.skipped_no_result_count}` : ''}.`
       )
       await loadStudents()
     } catch (error) {
