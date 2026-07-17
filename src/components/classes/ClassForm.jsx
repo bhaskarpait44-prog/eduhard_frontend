@@ -43,7 +43,7 @@ const ClassForm = ({
 }) => {
   const [streams, setStreams] = useState([])
   const [isLoadingStreams, setIsLoadingStreams] = useState(false)
-  const [showAddStreamModal, setShowAddStreamModal] = useState(false)
+  const [isAddingStreamInline, setIsAddingStreamInline] = useState(false)
   const [newInlineStreamName, setNewInlineStreamName] = useState('')
   const [isSavingInlineStream, setIsSavingInlineStream] = useState(false)
 
@@ -107,7 +107,7 @@ const ClassForm = ({
 
   const handleAddNewStreamInline = () => {
     setNewInlineStreamName('')
-    setShowAddStreamModal(true)
+    setIsAddingStreamInline(true)
   }
 
   const handleCreateStreamInline = async () => {
@@ -121,7 +121,7 @@ const ClassForm = ({
         setStreams(freshStreams.data)
       }
       setValue('stream', trimmed.toLowerCase())
-      setShowAddStreamModal(false)
+      setIsAddingStreamInline(false)
       setNewInlineStreamName('')
     } catch (err) {
       alert(err.message || 'Failed to create stream.')
@@ -188,32 +188,86 @@ const ClassForm = ({
           />
         </Field>
  
-        <div className="flex items-end gap-2">
-          <div className="flex-1">
-            <Field
-              label="Stream"
-              error={errors.stream?.message}
-              hint="Default is Regular; select a stream or click Add New to create one"
-              required
-            >
-              <select
-                {...register('stream')}
-                className={inputCls(!!errors.stream)}
+        <div className="space-y-2">
+          <div className="flex items-end gap-2">
+            <div className="flex-1">
+              <Field
+                label="Stream"
+                error={errors.stream?.message}
+                hint="Default is Regular; select a stream or click Add New to create one"
+                required
               >
-                {streamOptions.map((option) => (
-                  <option key={option.value} value={option.value}>{option.label}</option>
-                ))}
-              </select>
-            </Field>
+                <select
+                  {...register('stream')}
+                  className={inputCls(!!errors.stream)}
+                >
+                  {streamOptions.map((option) => (
+                    <option key={option.value} value={option.value}>{option.label}</option>
+                  ))}
+                </select>
+              </Field>
+            </div>
+            <button
+              type="button"
+              onClick={handleAddNewStreamInline}
+              className="px-3.5 py-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-xs font-semibold shrink-0 transition-colors"
+              style={{ height: '42px', display: 'flex', alignItems: 'center' }}
+            >
+              + Add New
+            </button>
           </div>
-          <button
-            type="button"
-            onClick={handleAddNewStreamInline}
-            className="px-3.5 py-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-xs font-semibold shrink-0 transition-colors"
-            style={{ height: '42px', display: 'flex', alignItems: 'center' }}
-          >
-            + Add New
-          </button>
+
+          {isAddingStreamInline && (
+            <div 
+              className="p-3.5 rounded-xl border border-dashed animate-in fade-in slide-in-from-top-1 duration-200"
+              style={{
+                backgroundColor: 'var(--color-surface-raised)',
+                borderColor: 'var(--color-border)',
+              }}
+            >
+              <label className="text-xs font-semibold" style={{ color: 'var(--color-text-primary)' }}>
+                New Stream Name
+              </label>
+              <div className="flex gap-2 mt-1">
+                <input
+                  type="text"
+                  autoFocus
+                  value={newInlineStreamName}
+                  onChange={(e) => setNewInlineStreamName(e.target.value)}
+                  placeholder="e.g. Vocational"
+                  maxLength={50}
+                  className="flex-1 px-3 py-1.5 text-xs rounded-lg border outline-none transition-all focus:ring-2 focus:ring-indigo-500/20"
+                  style={{
+                    backgroundColor: 'var(--color-surface)',
+                    borderColor: 'var(--color-border)',
+                    color: 'var(--color-text-primary)',
+                  }}
+                />
+                <button
+                  type="button"
+                  disabled={isSavingInlineStream || !newInlineStreamName.trim()}
+                  onClick={handleCreateStreamInline}
+                  className="px-3 py-1.5 text-xs font-semibold text-white bg-indigo-600 rounded-lg hover:bg-indigo-755 transition-colors disabled:opacity-50 flex items-center gap-1"
+                >
+                  {isSavingInlineStream && (
+                    <Loader2 className="animate-spin" size={10} />
+                  )}
+                  Save
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsAddingStreamInline(false)
+                    setNewInlineStreamName('')
+                  }}
+                  className="px-3 py-1.5 text-xs font-semibold bg-white dark:bg-gray-800 border rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                  style={{ borderColor: 'var(--color-border)', color: 'var(--color-text-secondary)' }}
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          )}
         </div>
  
         {/* Age Range */}
@@ -287,69 +341,7 @@ const ClassForm = ({
         </div>
       </form>
 
-      {showAddStreamModal && (
-        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div 
-            className="border shadow-2xl rounded-2xl p-6 max-w-sm w-full animate-in fade-in zoom-in-95 duration-200"
-            style={{
-              backgroundColor: 'var(--color-surface)',
-              borderColor: 'var(--color-border)',
-            }}
-          >
-            <h3 className="text-lg font-bold" style={{ color: 'var(--color-text-primary)' }}>
-              Add Custom Stream
-            </h3>
-            <p className="text-xs mt-1" style={{ color: 'var(--color-text-secondary)' }}>
-              Create a custom academic stream (e.g. Vocational, Humanities) to assign to classes.
-            </p>
-            
-            <div className="mt-4 space-y-1.5">
-              <label className="text-xs font-semibold" style={{ color: 'var(--color-text-primary)' }}>
-                Stream Name
-              </label>
-              <input
-                type="text"
-                autoFocus
-                value={newInlineStreamName}
-                onChange={(e) => setNewInlineStreamName(e.target.value)}
-                placeholder="e.g. Vocational"
-                maxLength={50}
-                className="w-full rounded-xl border px-3.5 py-2.5 text-sm outline-none transition-all focus:ring-2 focus:ring-indigo-500/20"
-                style={{
-                  backgroundColor: 'var(--color-surface-raised)',
-                  borderColor: 'var(--color-border)',
-                  color: 'var(--color-text-primary)',
-                }}
-              />
-            </div>
-            
-            <div className="flex items-center justify-end gap-3 mt-6 pt-3 border-t" style={{ borderColor: 'var(--color-border)' }}>
-              <button
-                type="button"
-                onClick={() => {
-                  setShowAddStreamModal(false)
-                  setNewInlineStreamName('')
-                }}
-                className="px-4 py-2 text-xs font-semibold bg-white dark:bg-gray-800 border rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
-                style={{ borderColor: 'var(--color-border)', color: 'var(--color-text-secondary)' }}
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                disabled={isSavingInlineStream || !newInlineStreamName.trim()}
-                onClick={handleCreateStreamInline}
-                className="px-4 py-2 text-xs font-semibold text-white bg-indigo-600 dark:bg-indigo-500 rounded-lg hover:bg-indigo-700 dark:hover:bg-indigo-600 transition-colors disabled:opacity-50 flex items-center gap-1.5"
-              >
-                {isSavingInlineStream && (
-                  <Loader2 className="animate-spin" size={12} />
-                )}
-                Create Stream
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+
     </>
   )
 }
