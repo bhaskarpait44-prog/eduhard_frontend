@@ -202,14 +202,19 @@ const StepEnrollment = ({ defaultValues, currentSession, onSubmit, onBack, isPar
             disabled={!classId || loadingS || !currentSession}
             {...register('section_id')}
           />
-          <Select
+          <Input
             label="Stream (Optional)"
             error={errors.stream?.message}
-            options={streamOptions}
-            placeholder={selectedClass?.stream ? 'Stream from selected class' : 'Select stream'}
+            list="enrollment-streams"
+            placeholder={selectedClass?.stream ? 'Stream from selected class' : 'e.g. regular, science, vocational...'}
             disabled={Boolean(selectedClass?.stream) || !currentSession}
             {...register('stream')}
           />
+          <datalist id="enrollment-streams">
+            {streamOptions.map((option) => (
+              <option key={option.value} value={option.value} />
+            ))}
+          </datalist>
           <Select
             label="Medium (Optional)"
             options={[

@@ -161,17 +161,20 @@ const ClassForm = ({
       <Field
         label="Stream"
         error={errors.stream?.message}
-        hint="Default is Regular; choose Arts, Commerce, or Science when needed"
+        hint="Default is Regular; type a custom stream or choose from the list"
         required
       >
-        <select
+        <input
           {...register('stream')}
+          list="class-streams"
+          placeholder="e.g. regular, science, vocational..."
           className={inputCls(!!errors.stream)}
-        >
+        />
+        <datalist id="class-streams">
           {streamOptions.map((option) => (
-            <option key={option.value} value={option.value}>{option.label}</option>
+            <option key={option.value} value={option.value} />
           ))}
-        </select>
+        </datalist>
       </Field>
 
       {/* Age Range */}
