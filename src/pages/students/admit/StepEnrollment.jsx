@@ -4,6 +4,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { AlertCircle } from 'lucide-react'
 import { getClasses, getClassOptions, getSections, getSubjects } from '@/api/classApi'
+import { getStreams } from '@/api/streamApi'
 import Input from '@/components/ui/Input'
 import Select from '@/components/ui/Select'
 import Button from '@/components/ui/Button'
@@ -13,7 +14,7 @@ const schema = z.object({
   session_id: z.string().min(1, 'Session is required'),
   class_id: z.string().min(1, 'Class is required'),
   section_id: z.string().min(1, 'Section is required'),
-  stream: z.enum(['regular', 'arts', 'commerce', 'science']).optional().or(z.literal('')),
+  stream: z.string().max(50).optional().or(z.literal('')),
   joining_type: z.enum(['fresh', 'promoted', 'transfer_in', 'rejoined'], { required_error: 'Joining type required' }),
   joined_date: z
     .string()
@@ -39,17 +40,11 @@ const JOINING_TYPES = [
   { value: 'rejoined', label: 'Re-Admitted' },
 ]
 
-const STREAM_OPTIONS = [
-  { value: 'regular', label: 'Regular' },
-  { value: 'arts', label: 'Arts' },
-  { value: 'commerce', label: 'Commerce' },
-  { value: 'science', label: 'Science' },
-]
-
 const StepEnrollment = ({ defaultValues, currentSession, onSubmit, onBack, isPartialSuccess }) => {
   const [classes, setClasses] = useState([])
   const [sections, setSections] = useState([])
   const [subjects, setSubjects] = useState([])
+  const [streams, setStreams] = useState([])
   const [loadingC, setLoadingC] = useState(false)
   const [loadingS, setLoadingS] = useState(false)
   const [loadingSubj, setLoadingSubj] = useState(false)
@@ -69,6 +64,25 @@ const StepEnrollment = ({ defaultValues, currentSession, onSubmit, onBack, isPar
   const classId = watch('class_id')
   const subjectIds = watch('subject_ids')
   const selectedClass = classes.find((cls) => String(cls.value) === String(classId))
+
+  useEffect(() => {
+    getStreams()
+      .then((res) => {
+        if (res && Array.isArray(res.data)) {
+          setStreams(res.data)
+        }
+      })
+      .catch((err) => console.error('Failed to load streams:', err))
+  }, [])
+
+  const streamOptions = streams.length > 0
+    ? streams.map(s => ({ value: s.name, label: s.name.charAt(0).toUpperCase() + s.name.slice(1) }))
+    : [
+        { value: 'regular', label: 'Regular' },
+        { value: 'arts', label: 'Arts' },
+        { value: 'commerce', label: 'Commerce' },
+        { value: 'science', label: 'Science' },
+      ]
 
   // Sync session_id if currentSession loads after mount
   useEffect(() => {
@@ -191,7 +205,7 @@ const StepEnrollment = ({ defaultValues, currentSession, onSubmit, onBack, isPar
           <Select
             label="Stream (Optional)"
             error={errors.stream?.message}
-            options={STREAM_OPTIONS}
+            options={streamOptions}
             placeholder={selectedClass?.stream ? 'Stream from selected class' : 'Select stream'}
             disabled={Boolean(selectedClass?.stream) || !currentSession}
             {...register('stream')}

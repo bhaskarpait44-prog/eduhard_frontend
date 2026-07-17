@@ -219,6 +219,7 @@ export const ROUTES = {
 
   // Settings
   SETTINGS: '/settings',
+  STREAMS: '/settings/streams',
   ADMISSIONS: '/admission',
   ADMISSION_STATUS: '/status',
 }

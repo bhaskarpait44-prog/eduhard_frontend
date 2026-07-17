@@ -715,6 +715,34 @@ const SettingsPage = () => {
           </SettingsCard>
 
           <SettingsCard
+            icon={ClipboardList}
+            title="Academic Streams"
+            description="Manage dynamic academic streams for class groups."
+            action={
+              <button
+                onClick={() => navigate(ROUTES.STREAMS)}
+                className="inline-flex items-center gap-1 text-sm font-medium transition-opacity hover:opacity-70"
+                style={{ color: 'var(--color-brand)' }}
+              >
+                Manage streams
+                <ArrowUpRight size={14} />
+              </button>
+            }
+          >
+            <div
+              className="rounded-2xl p-4"
+              style={{ backgroundColor: 'var(--color-surface-raised)' }}
+            >
+              <p className="text-xs uppercase tracking-wide" style={{ color: 'var(--color-text-muted)' }}>
+                Custom Streams
+              </p>
+              <p className="text-sm mt-2" style={{ color: 'var(--color-text-secondary)' }}>
+                Create additional academic streams (like Vocational, Humanities) to align class groupings and admissions.
+              </p>
+            </div>
+          </SettingsCard>
+
+          <SettingsCard
             icon={Shield}
             title="System Overview"
             description="A quick read on environment details for this frontend."

@@ -9,6 +9,7 @@ import { getCertificates, generateCertificate, revokeCertificate, getSettings, u
 import * as certificateApiNamespace from './certificateApi'
 export const certificateApi = { ...certificateApiNamespace, getCertificates, generateCertificate, revokeCertificate, getSettings, updateSettings }
 export * as classApi      from './classApi'
+export * as streamApi     from './streamApi'
 export * as subjectApi    from './subjectApi'
 export * as teacherApi    from './teacherApi'
 export * as accountantApi        from './accountantApi'

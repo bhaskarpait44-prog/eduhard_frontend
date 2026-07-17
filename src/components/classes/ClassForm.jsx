@@ -1,15 +1,10 @@
-// src/pages/classes/components/ClassForm.jsx
+// src/components/classes/ClassForm.jsx
+import { useState, useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { AlertCircle } from 'lucide-react'
-
-const STREAM_OPTIONS = [
-  { value: 'regular', label: 'Regular' },
-  { value: 'arts', label: 'Arts' },
-  { value: 'commerce', label: 'Commerce' },
-  { value: 'science', label: 'Science' },
-]
+import { getStreams } from '@/api/streamApi'
 
 const Field = ({ label, error, children, required, hint }) => (
   <div className="flex flex-col gap-1.5">
@@ -46,12 +41,36 @@ const ClassForm = ({
   isSaving = false,
   isEdit   = false,
 }) => {
+  const [streams, setStreams] = useState([])
+  const [isLoadingStreams, setIsLoadingStreams] = useState(false)
+
+  useEffect(() => {
+    setIsLoadingStreams(true)
+    getStreams()
+      .then((res) => {
+        if (res && Array.isArray(res.data)) {
+          setStreams(res.data)
+        }
+      })
+      .catch((err) => console.error('Failed to fetch streams:', err))
+      .finally(() => setIsLoadingStreams(false))
+  }, [])
+
+  const streamOptions = streams.length > 0
+    ? streams.map(s => ({ value: s.name, label: s.name.charAt(0).toUpperCase() + s.name.slice(1) }))
+    : [
+        { value: 'regular', label: 'Regular' },
+        { value: 'arts', label: 'Arts' },
+        { value: 'commerce', label: 'Commerce' },
+        { value: 'science', label: 'Science' },
+      ]
+
   const schema = z
     .object({
       name         : z.string().min(1, 'Class name is required').max(100),
       display_name : z.string().max(100).optional().nullable().or(z.literal('')),
       order_number : z.coerce.number().int().min(1, 'Order number required'),
-      stream       : z.enum(['regular', 'arts', 'commerce', 'science']).optional().or(z.literal('')),
+      stream       : z.string().max(50).optional().or(z.literal('')),
       min_age      : z.coerce.number().int().min(1).max(25).optional().nullable().or(z.literal('')),
       max_age      : z.coerce.number().int().min(1).max(30).optional().nullable().or(z.literal('')),
       description  : z.string().max(1000).optional().nullable(),
@@ -149,7 +168,7 @@ const ClassForm = ({
           {...register('stream')}
           className={inputCls(!!errors.stream)}
         >
-          {STREAM_OPTIONS.map((option) => (
+          {streamOptions.map((option) => (
             <option key={option.value} value={option.value}>{option.label}</option>
           ))}
         </select>

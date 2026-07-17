@@ -86,6 +86,7 @@ const CreateTeacherPage = lazy(() => import('@/pages/admin/CreateTeacherPage'))
 const TeacherDetailPage = lazy(() => import('@/pages/admin/TeacherDetailPage'))
 const ClassDetailPage = lazy(() => import('@/pages/classes/ClassDetailPage'))
 const SettingsPage = lazy(() => import('@/pages/SettingsPage'))
+const StreamManagementPage = lazy(() => import('@/pages/admin/StreamManagementPage'))
 const AdminTeacherControlPage = lazy(() => import('@/pages/admin/AdminTeacherControlPage'))
 const AdminNoticePage = lazy(() => import('@/pages/admin/AdminNoticePage'))
 const AdminPromotionPage = lazy(() => import('@/pages/admin/AdminPromotionPage'))
@@ -644,6 +645,14 @@ const router = createBrowserRouter([
         element: (
           <ProtectedRoute roles={[ROLES.ADMIN]}>
             <Lazy component={SettingsPage} />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: ROUTES.STREAMS,
+        element: (
+          <ProtectedRoute roles={[ROLES.ADMIN]}>
+            <Lazy component={StreamManagementPage} />
           </ProtectedRoute>
         ),
       },
