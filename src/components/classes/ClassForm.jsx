@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { AlertCircle } from 'lucide-react'
+import { AlertCircle, Loader2 } from 'lucide-react'
 import { getStreams, createStream } from '@/api/streamApi'
 
 const Field = ({ label, error, children, required, hint }) => (
@@ -43,6 +43,9 @@ const ClassForm = ({
 }) => {
   const [streams, setStreams] = useState([])
   const [isLoadingStreams, setIsLoadingStreams] = useState(false)
+  const [showAddStreamModal, setShowAddStreamModal] = useState(false)
+  const [newInlineStreamName, setNewInlineStreamName] = useState('')
+  const [isSavingInlineStream, setIsSavingInlineStream] = useState(false)
 
   useEffect(() => {
     setIsLoadingStreams(true)
@@ -102,12 +105,15 @@ const ClassForm = ({
     },
   })
 
-  const handleAddNewStreamInline = async () => {
-    const name = window.prompt('Enter new academic stream name (e.g. Vocational, Humanities):')
-    if (!name) return
-    const trimmed = name.trim()
-    if (!trimmed) return
+  const handleAddNewStreamInline = () => {
+    setNewInlineStreamName('')
+    setShowAddStreamModal(true)
+  }
 
+  const handleCreateStreamInline = async () => {
+    const trimmed = newInlineStreamName.trim()
+    if (!trimmed) return
+    setIsSavingInlineStream(true)
     try {
       await createStream({ name: trimmed })
       const freshStreams = await getStreams()
@@ -115,8 +121,12 @@ const ClassForm = ({
         setStreams(freshStreams.data)
       }
       setValue('stream', trimmed.toLowerCase())
+      setShowAddStreamModal(false)
+      setNewInlineStreamName('')
     } catch (err) {
       alert(err.message || 'Failed to create stream.')
+    } finally {
+      setIsSavingInlineStream(false)
     }
   }
 
@@ -133,148 +143,214 @@ const ClassForm = ({
   }
 
   return (
-    <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-5">
-
-      <Field
-        label="Class Name"
-        error={errors.name?.message}
-        hint="Use names like LKG, UKG, Class 1, Class 2 ... Class 12"
-        required
-      >
-        <input
-          {...register('name')}
-          placeholder="Class 1"
-          className={inputCls(!!errors.name)}
-        />
-      </Field>
-
-      {/* Display Name */}
-      <Field
-        label="Display Name"
-        error={errors.display_name?.message}
-        hint="Optional custom label (e.g. 'Class 1 - A' or 'Primary 1')"
-      >
-        <input
-          {...register('display_name')}
-          placeholder="e.g. Primary 1"
-          className={inputCls(!!errors.display_name)}
-        />
-      </Field>
-
-      {/* Order Number */}
-      <Field
-        label="Order Number"
-        error={errors.order_number?.message}
-        hint="Determines promotion sequence — Grade 1 = 1, Grade 2 = 2"
-        required
-      >
-        <input
-          {...register('order_number')}
-          type="number"
-          min="1"
-          placeholder="6"
-          className={inputCls(!!errors.order_number)}
-        />
-      </Field>
-
-      <div className="flex items-end gap-2">
-        <div className="flex-1">
-          <Field
-            label="Stream"
-            error={errors.stream?.message}
-            hint="Default is Regular; select a stream or click Add New to create one"
-            required
-          >
-            <select
-              {...register('stream')}
-              className={inputCls(!!errors.stream)}
+    <>
+      <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-5">
+ 
+        <Field
+          label="Class Name"
+          error={errors.name?.message}
+          hint="Use names like LKG, UKG, Class 1, Class 2 ... Class 12"
+          required
+        >
+          <input
+            {...register('name')}
+            placeholder="Class 1"
+            className={inputCls(!!errors.name)}
+          />
+        </Field>
+ 
+        {/* Display Name */}
+        <Field
+          label="Display Name"
+          error={errors.display_name?.message}
+          hint="Optional custom label (e.g. 'Class 1 - A' or 'Primary 1')"
+        >
+          <input
+            {...register('display_name')}
+            placeholder="e.g. Primary 1"
+            className={inputCls(!!errors.display_name)}
+          />
+        </Field>
+ 
+        {/* Order Number */}
+        <Field
+          label="Order Number"
+          error={errors.order_number?.message}
+          hint="Determines promotion sequence — Grade 1 = 1, Grade 2 = 2"
+          required
+        >
+          <input
+            {...register('order_number')}
+            type="number"
+            min="1"
+            placeholder="6"
+            className={inputCls(!!errors.order_number)}
+          />
+        </Field>
+ 
+        <div className="flex items-end gap-2">
+          <div className="flex-1">
+            <Field
+              label="Stream"
+              error={errors.stream?.message}
+              hint="Default is Regular; select a stream or click Add New to create one"
+              required
             >
-              {streamOptions.map((option) => (
-                <option key={option.value} value={option.value}>{option.label}</option>
-              ))}
-            </select>
+              <select
+                {...register('stream')}
+                className={inputCls(!!errors.stream)}
+              >
+                {streamOptions.map((option) => (
+                  <option key={option.value} value={option.value}>{option.label}</option>
+                ))}
+              </select>
+            </Field>
+          </div>
+          <button
+            type="button"
+            onClick={handleAddNewStreamInline}
+            className="px-3.5 py-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-xs font-semibold shrink-0 transition-colors"
+            style={{ height: '42px', display: 'flex', alignItems: 'center' }}
+          >
+            + Add New
+          </button>
+        </div>
+ 
+        {/* Age Range */}
+        <div className="grid grid-cols-2 gap-4">
+          <Field label="Min Age (years)" error={errors.min_age?.message}>
+            <input
+              {...register('min_age')}
+              type="number"
+              min="1"
+              max="25"
+              placeholder="10"
+              className={inputCls(!!errors.min_age)}
+            />
+          </Field>
+          <Field label="Max Age (years)" error={errors.max_age?.message}>
+            <input
+              {...register('max_age')}
+              type="number"
+              min="1"
+              max="30"
+              placeholder="13"
+              className={inputCls(!!errors.max_age)}
+            />
           </Field>
         </div>
-        <button
-          type="button"
-          onClick={handleAddNewStreamInline}
-          className="px-3.5 py-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-xs font-semibold shrink-0 transition-colors"
-          style={{ height: '42px', display: 'flex', alignItems: 'center' }}
-        >
-          + Add New
-        </button>
-      </div>
-
-      {/* Age Range */}
-      <div className="grid grid-cols-2 gap-4">
-        <Field label="Min Age (years)" error={errors.min_age?.message}>
-          <input
-            {...register('min_age')}
-            type="number"
-            min="1"
-            max="25"
-            placeholder="10"
-            className={inputCls(!!errors.min_age)}
+ 
+        {/* Description */}
+        <Field label="Description" error={errors.description?.message}>
+          <textarea
+            {...register('description')}
+            placeholder="Optional notes about this class"
+            rows={2}
+            className={inputCls(!!errors.description) + ' resize-none'}
           />
         </Field>
-        <Field label="Max Age (years)" error={errors.max_age?.message}>
-          <input
-            {...register('max_age')}
-            type="number"
-            min="1"
-            max="30"
-            placeholder="13"
-            className={inputCls(!!errors.max_age)}
-          />
-        </Field>
-      </div>
+ 
+        {/* Reason — only for edits */}
+        {isEdit && (
+          <Field label="Reason for Change" error={errors.reason?.message} required>
+            <input
+              {...register('reason')}
+              placeholder="Brief reason for this update"
+              className={inputCls(!!errors.reason)}
+            />
+          </Field>
+        )}
+ 
+        {/* Actions */}
+        <div className="flex items-center justify-end gap-3 pt-2 border-t border-gray-100 dark:border-gray-700">
+          <button
+            type="button"
+            onClick={onCancel}
+            disabled={isSaving}
+            className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors disabled:opacity-50"
+          >
+            Cancel
+          </button>
+          <button
+            type="submit"
+            disabled={isSaving}
+            className="px-5 py-2 text-sm font-medium text-white bg-indigo-600 dark:bg-indigo-500 rounded-lg hover:bg-indigo-700 dark:hover:bg-indigo-600 transition-colors disabled:opacity-60 flex items-center gap-2"
+          >
+            {isSaving && (
+              <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"/>
+              </svg>
+            )}
+            {isSaving ? 'Saving…' : isEdit ? 'Save Changes' : 'Save Class'}
+          </button>
+        </div>
+      </form>
 
-      {/* Description */}
-      <Field label="Description" error={errors.description?.message}>
-        <textarea
-          {...register('description')}
-          placeholder="Optional notes about this class"
-          rows={2}
-          className={inputCls(!!errors.description) + ' resize-none'}
-        />
-      </Field>
-
-      {/* Reason — only for edits */}
-      {isEdit && (
-        <Field label="Reason for Change" error={errors.reason?.message} required>
-          <input
-            {...register('reason')}
-            placeholder="Brief reason for this update"
-            className={inputCls(!!errors.reason)}
-          />
-        </Field>
+      {showAddStreamModal && (
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div 
+            className="border shadow-2xl rounded-2xl p-6 max-w-sm w-full animate-in fade-in zoom-in-95 duration-200"
+            style={{
+              backgroundColor: 'var(--color-surface)',
+              borderColor: 'var(--color-border)',
+            }}
+          >
+            <h3 className="text-lg font-bold" style={{ color: 'var(--color-text-primary)' }}>
+              Add Custom Stream
+            </h3>
+            <p className="text-xs mt-1" style={{ color: 'var(--color-text-secondary)' }}>
+              Create a custom academic stream (e.g. Vocational, Humanities) to assign to classes.
+            </p>
+            
+            <div className="mt-4 space-y-1.5">
+              <label className="text-xs font-semibold" style={{ color: 'var(--color-text-primary)' }}>
+                Stream Name
+              </label>
+              <input
+                type="text"
+                autoFocus
+                value={newInlineStreamName}
+                onChange={(e) => setNewInlineStreamName(e.target.value)}
+                placeholder="e.g. Vocational"
+                maxLength={50}
+                className="w-full rounded-xl border px-3.5 py-2.5 text-sm outline-none transition-all focus:ring-2 focus:ring-indigo-500/20"
+                style={{
+                  backgroundColor: 'var(--color-surface-raised)',
+                  borderColor: 'var(--color-border)',
+                  color: 'var(--color-text-primary)',
+                }}
+              />
+            </div>
+            
+            <div className="flex items-center justify-end gap-3 mt-6 pt-3 border-t" style={{ borderColor: 'var(--color-border)' }}>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowAddStreamModal(false)
+                  setNewInlineStreamName('')
+                }}
+                className="px-4 py-2 text-xs font-semibold bg-white dark:bg-gray-800 border rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                style={{ borderColor: 'var(--color-border)', color: 'var(--color-text-secondary)' }}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                disabled={isSavingInlineStream || !newInlineStreamName.trim()}
+                onClick={handleCreateStreamInline}
+                className="px-4 py-2 text-xs font-semibold text-white bg-indigo-600 dark:bg-indigo-500 rounded-lg hover:bg-indigo-700 dark:hover:bg-indigo-600 transition-colors disabled:opacity-50 flex items-center gap-1.5"
+              >
+                {isSavingInlineStream && (
+                  <Loader2 className="animate-spin" size={12} />
+                )}
+                Create Stream
+              </button>
+            </div>
+          </div>
+        </div>
       )}
-
-      {/* Actions */}
-      <div className="flex items-center justify-end gap-3 pt-2 border-t border-gray-100 dark:border-gray-700">
-        <button
-          type="button"
-          onClick={onCancel}
-          disabled={isSaving}
-          className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors disabled:opacity-50"
-        >
-          Cancel
-        </button>
-        <button
-          type="submit"
-          disabled={isSaving}
-          className="px-5 py-2 text-sm font-medium text-white bg-indigo-600 dark:bg-indigo-500 rounded-lg hover:bg-indigo-700 dark:hover:bg-indigo-600 transition-colors disabled:opacity-60 flex items-center gap-2"
-        >
-          {isSaving && (
-            <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none">
-              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
-              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"/>
-            </svg>
-          )}
-          {isSaving ? 'Saving…' : isEdit ? 'Save Changes' : 'Save Class'}
-        </button>
-      </div>
-    </form>
+    </>
   )
 }
 
