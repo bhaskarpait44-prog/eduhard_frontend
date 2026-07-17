@@ -4,7 +4,7 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { AlertCircle } from 'lucide-react'
-import { getStreams } from '@/api/streamApi'
+import { getStreams, createStream } from '@/api/streamApi'
 
 const Field = ({ label, error, children, required, hint }) => (
   <div className="flex flex-col gap-1.5">
@@ -86,6 +86,7 @@ const ClassForm = ({
   const {
     register,
     handleSubmit,
+    setValue,
     formState: { errors },
   } = useForm({
     resolver     : zodResolver(schema),
@@ -100,6 +101,24 @@ const ClassForm = ({
       stream      : defaultValues.stream || 'regular',
     },
   })
+
+  const handleAddNewStreamInline = async () => {
+    const name = window.prompt('Enter new academic stream name (e.g. Vocational, Humanities):')
+    if (!name) return
+    const trimmed = name.trim()
+    if (!trimmed) return
+
+    try {
+      await createStream({ name: trimmed })
+      const freshStreams = await getStreams()
+      if (freshStreams && Array.isArray(freshStreams.data)) {
+        setStreams(freshStreams.data)
+      }
+      setValue('stream', trimmed.toLowerCase())
+    } catch (err) {
+      alert(err.message || 'Failed to create stream.')
+    }
+  }
 
   const handleFormSubmit = (data) => {
     // Normalize empty optional fields before sending to the API.
@@ -158,24 +177,33 @@ const ClassForm = ({
         />
       </Field>
 
-      <Field
-        label="Stream"
-        error={errors.stream?.message}
-        hint="Default is Regular; type a custom stream or choose from the list"
-        required
-      >
-        <input
-          {...register('stream')}
-          list="class-streams"
-          placeholder="e.g. regular, science, vocational..."
-          className={inputCls(!!errors.stream)}
-        />
-        <datalist id="class-streams">
-          {streamOptions.map((option) => (
-            <option key={option.value} value={option.value} />
-          ))}
-        </datalist>
-      </Field>
+      <div className="flex items-end gap-2">
+        <div className="flex-1">
+          <Field
+            label="Stream"
+            error={errors.stream?.message}
+            hint="Default is Regular; select a stream or click Add New to create one"
+            required
+          >
+            <select
+              {...register('stream')}
+              className={inputCls(!!errors.stream)}
+            >
+              {streamOptions.map((option) => (
+                <option key={option.value} value={option.value}>{option.label}</option>
+              ))}
+            </select>
+          </Field>
+        </div>
+        <button
+          type="button"
+          onClick={handleAddNewStreamInline}
+          className="px-3.5 py-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-xs font-semibold shrink-0 transition-colors"
+          style={{ height: '42px', display: 'flex', alignItems: 'center' }}
+        >
+          + Add New
+        </button>
+      </div>
 
       {/* Age Range */}
       <div className="grid grid-cols-2 gap-4">

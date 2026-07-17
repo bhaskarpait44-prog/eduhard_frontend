@@ -4,7 +4,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { AlertCircle } from 'lucide-react'
 import { getClasses, getClassOptions, getSections, getSubjects } from '@/api/classApi'
-import { getStreams } from '@/api/streamApi'
+import { getStreams, createStream } from '@/api/streamApi'
 import Input from '@/components/ui/Input'
 import Select from '@/components/ui/Select'
 import Button from '@/components/ui/Button'
@@ -83,6 +83,24 @@ const StepEnrollment = ({ defaultValues, currentSession, onSubmit, onBack, isPar
         { value: 'commerce', label: 'Commerce' },
         { value: 'science', label: 'Science' },
       ]
+
+  const handleAddNewStreamInline = async () => {
+    const name = window.prompt('Enter new academic stream name (e.g. Vocational, Humanities):')
+    if (!name) return
+    const trimmed = name.trim()
+    if (!trimmed) return
+
+    try {
+      await createStream({ name: trimmed })
+      const freshStreams = await getStreams()
+      if (freshStreams && Array.isArray(freshStreams.data)) {
+        setStreams(freshStreams.data)
+      }
+      setValue('stream', trimmed.toLowerCase())
+    } catch (err) {
+      alert(err.message || 'Failed to create stream.')
+    }
+  }
 
   // Sync session_id if currentSession loads after mount
   useEffect(() => {
@@ -202,19 +220,27 @@ const StepEnrollment = ({ defaultValues, currentSession, onSubmit, onBack, isPar
             disabled={!classId || loadingS || !currentSession}
             {...register('section_id')}
           />
-          <Input
-            label="Stream (Optional)"
-            error={errors.stream?.message}
-            list="enrollment-streams"
-            placeholder={selectedClass?.stream ? 'Stream from selected class' : 'e.g. regular, science, vocational...'}
-            disabled={Boolean(selectedClass?.stream) || !currentSession}
-            {...register('stream')}
-          />
-          <datalist id="enrollment-streams">
-            {streamOptions.map((option) => (
-              <option key={option.value} value={option.value} />
-            ))}
-          </datalist>
+          <div className="flex items-end gap-2">
+            <div className="flex-1">
+              <Select
+                label="Stream (Optional)"
+                error={errors.stream?.message}
+                options={streamOptions}
+                placeholder={selectedClass?.stream ? 'Stream from selected class' : 'Select stream'}
+                disabled={Boolean(selectedClass?.stream) || !currentSession}
+                {...register('stream')}
+              />
+            </div>
+            <button
+              type="button"
+              disabled={Boolean(selectedClass?.stream) || !currentSession}
+              onClick={handleAddNewStreamInline}
+              className="px-3.5 py-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 text-xs font-semibold shrink-0 transition-colors disabled:opacity-50"
+              style={{ height: '42px', display: 'flex', alignItems: 'center' }}
+            >
+              + Add New
+            </button>
+          </div>
           <Select
             label="Medium (Optional)"
             options={[
