@@ -99,14 +99,16 @@ const StepProfile = ({ defaultValues, onNext, onBack }) => {
   const emergencyContact = watch('emergency_contact')
   const [lastFatherPhone, setLastFatherPhone] = useState(defaultValues.father_phone || '')
 
-  if (fatherPhone !== lastFatherPhone) {
-    setLastFatherPhone(fatherPhone || '')
-    if (!emergencyContact || emergencyContact === lastFatherPhone) {
-      Promise.resolve().then(() => {
-        setValue('emergency_contact', fatherPhone)
-      })
+  // Sync emergency contact with father's phone if it was empty or matched the old number
+  useEffect(() => {
+    const fPhone = fatherPhone || ''
+    if (fPhone !== lastFatherPhone) {
+      setLastFatherPhone(fPhone)
+      if (!emergencyContact || emergencyContact === lastFatherPhone) {
+        setValue('emergency_contact', fPhone)
+      }
     }
-  }
+  }, [fatherPhone, lastFatherPhone, emergencyContact, setValue])
 
   const fatherName = watch('father_name')
   const parentEmail = watch('parent_email')
