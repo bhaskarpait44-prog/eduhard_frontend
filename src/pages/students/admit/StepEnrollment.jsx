@@ -115,6 +115,10 @@ const StepEnrollment = ({ defaultValues, currentSession, onSubmit, onBack, isPar
     }
   }
 
+  const handleAddNewClassInline = () => {
+    setShowAddClassModal(true)
+  }
+
   const handleCreateClassInlineSubmit = async (classData) => {
     setIsSavingClassInline(true)
     try {
