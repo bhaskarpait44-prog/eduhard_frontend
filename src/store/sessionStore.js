@@ -6,6 +6,7 @@ const useSessionStore = create((set, get) => ({
   sessions       : [],
   pagination     : { total: 0, page: 1, limit: 20, totalPages: 0 },
   currentSession : null,
+  hasFetchedCurrentSession: false,
   selectedSession: null,
   sessionStats   : null,
   isLoading      : false,
@@ -32,11 +33,13 @@ const useSessionStore = create((set, get) => ({
 
   // ── Fetch current session ───────────────────────────────────────────
   fetchCurrentSession: async () => {
+    if (get().hasFetchedCurrentSession) return get().currentSession
     try {
       const res = await api.getCurrentSession()
-      set({ currentSession: res.data })
+      set({ currentSession: res.data || null, hasFetchedCurrentSession: true })
       return res.data
     } catch {
+      set({ hasFetchedCurrentSession: true })
       // Not critical — silently fail
     }
   },
