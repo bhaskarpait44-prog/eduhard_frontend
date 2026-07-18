@@ -41,10 +41,8 @@ const AdmitStudentPage = () => {
   const [isSubmitting, setIsSubmitting] = useState(false)
 
   useEffect(() => {
-    if (!currentSession && !isLoading) {
-      fetchCurrentSession()
-    }
-  }, [currentSession, isLoading, fetchCurrentSession])
+    fetchCurrentSession()
+  }, [fetchCurrentSession])
 
   // Save wizard state to sessionStorage when partial success occurs
   useEffect(() => {
