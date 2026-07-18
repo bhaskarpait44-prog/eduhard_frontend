@@ -71,7 +71,12 @@ export default function LeftStudentsPage() {
       const classes = clsRes.data?.classes || clsRes.data || []
       const sessions = sessRes.data?.sessions || sessRes.data || []
       
-      setClasses(classes.map(c => ({ value: String(c.id), label: c.name })))
+      setClasses(classes.map(c => {
+        const streamPart = c.stream && c.stream !== 'regular'
+          ? ` (${c.stream.charAt(0).toUpperCase() + c.stream.slice(1)})`
+          : ''
+        return { value: String(c.id), label: `${c.display_name || c.name}${streamPart}` }
+      }))
       setSessions(sessions.map(s => ({ value: String(s.id), label: s.name })))
     } catch (err) { toastError('Failed to load filter metadata.') }
   }

@@ -382,7 +382,12 @@ const AdmissionsManagementPage = () => {
           placeholder="All Classes"
           value={filters.class_id}
           onChange={(e) => setFilters(f => ({ ...f, class_id: e.target.value, page: 1 }))}
-          options={classes.map(c => ({ label: c.name, value: c.id }))}
+          options={classes.map(c => {
+            const streamPart = c.stream && c.stream !== 'regular'
+              ? ` (${c.stream.charAt(0).toUpperCase() + c.stream.slice(1)})`
+              : ''
+            return { value: c.id, label: `${c.display_name || c.name}${streamPart}` }
+          })}
         />
         <div className="flex items-center justify-between gap-2">
           <Button variant="ghost" onClick={() => setFilters({ status: 'pending', search: '', class_id: '', page: 1, perPage: 10 })}>

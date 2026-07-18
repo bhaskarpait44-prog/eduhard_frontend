@@ -219,7 +219,15 @@ export default function EnrollmentsPage() {
       label: `${s.name}${s.is_current ? ' (Current)' : ''}` 
     }))
   ), [sessions])
-  const classOptions   = useMemo(() => classes.map((c)  => ({ value: String(c.id),  label: c.display_name || c.name })), [classes])
+  const classOptions   = useMemo(() => classes.map((c)  => {
+    const streamPart = c.stream && c.stream !== 'regular'
+      ? ` (${c.stream.charAt(0).toUpperCase() + c.stream.slice(1)})`
+      : ''
+    return {
+      value: String(c.id),
+      label: `${c.display_name || c.name}${streamPart}`
+    }
+  }), [classes])
   // FIX #4: Removed inaccurate activeCount (only counted current page slice of max 20).
   // Now using classKeys.length — the number of distinct classes in the current filtered view.
   const grouped   = useMemo(() => groupByClass(students), [students])
