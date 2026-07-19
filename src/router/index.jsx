@@ -10,6 +10,7 @@ import LibraryLayout from '@/layouts/LibraryLayout'
 import ParentLayout from '@/layouts/ParentLayout'
 import ReceptionistLayout from '@/layouts/ReceptionistLayout'
 import TeacherLayout from '@/layouts/TeacherLayout'
+import StaffLayout from '@/layouts/StaffLayout'
 import LoginPage from '@/pages/LoginPage'
 import NotFoundPage from '@/pages/NotFoundPage'
 
@@ -20,7 +21,9 @@ const AdmissionStatus = lazy(() => import('@/pages/public/AdmissionStatus'))
 
 const DashboardPage = lazy(() => import('@/pages/DashboardPage'))
 const AdminDashboard = DashboardPage
-const StaffDashboard = lazy(() => import('@/pages/PlaceholderPage'))
+const StaffDashboard = lazy(() => import('@/pages/staff/StaffDashboard'))
+const StaffNotices = lazy(() => import('@/pages/staff/StaffNotices'))
+const StaffProfile = lazy(() => import('@/pages/staff/StaffProfile'))
 const ReceptionistDashboard = lazy(() => import('@/pages/receptionist/ReceptionistDashboard'))
 const ReceptionistVisitorLog = lazy(() => import('@/pages/receptionist/VisitorLog'))
 const ReceptionistStudentSearch = lazy(() => import('@/pages/receptionist/StudentSearch'))
@@ -218,7 +221,7 @@ const StaffShell = () => {
     return <Navigate to={ROUTES.STUDENT_DASHBOARD} replace />
   }
   if (role === ROLES.STAFF || role === ROLES.RECEPTIONIST) {
-    return <Navigate to={role === ROLES.RECEPTIONIST ? "/receptionist/dashboard" : ROUTES.DASHBOARD} replace />
+    return <Navigate to={role === ROLES.RECEPTIONIST ? "/receptionist/dashboard" : ROUTES.STAFF_DASHBOARD} replace />
   }
   return <AppLayout />
 }
@@ -319,6 +322,21 @@ const router = createBrowserRouter([
       { path: 'students', element: <Lazy component={ReceptionistStudentSearch} /> },
       { path: 'notices', element: <Lazy component={ReceptionistNotices} /> },
       { path: 'profile', element: <Lazy component={PlaceholderPage} /> },
+    ],
+  },
+
+  {
+    path: '/staff',
+    element: (
+      <ProtectedRoute roles={[ROLES.STAFF]}>
+        <StaffLayout />
+      </ProtectedRoute>
+    ),
+    children: [
+      { index: true, element: <Navigate to="dashboard" replace /> },
+      { path: 'dashboard', element: <Lazy component={StaffDashboard} /> },
+      { path: 'notices', element: <Lazy component={StaffNotices} /> },
+      { path: 'profile', element: <Lazy component={StaffProfile} /> },
     ],
   },
 
@@ -436,14 +454,6 @@ const router = createBrowserRouter([
         element: (
           <ProtectedRoute roles={[ROLES.ADMIN]}>
             <Lazy component={AdminDashboard} />
-          </ProtectedRoute>
-        ),
-      },
-      {
-        path: ROUTES.STAFF_DASHBOARD,
-        element: (
-          <ProtectedRoute roles={[ROLES.STAFF]}>
-            <Lazy component={StaffDashboard} />
           </ProtectedRoute>
         ),
       },

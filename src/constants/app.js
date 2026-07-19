@@ -146,7 +146,10 @@ export const ROUTES = {
   ADMIN_NOTICES: '/admin/notices',
 
   // Dashboards
+  STAFF_ROOT: '/staff',
   STAFF_DASHBOARD: '/staff/dashboard',
+  STAFF_NOTICES: '/staff/notices',
+  STAFF_PROFILE: '/staff/profile',
   RECEPTIONIST_ROOT: '/receptionist',
   RECEPTIONIST_DASHBOARD: '/receptionist/dashboard',
   RECEPTIONIST_VISITORS: '/receptionist/visitors',

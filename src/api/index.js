@@ -30,9 +30,10 @@ import * as alumniApiNamespace from './alumniApi'
 export const alumniApi = { ...alumniApiNamespace, getAlumniStats, getAlumniDirectory, getAlumniProfile, upsertAlumniProfile, downloadAlumniPdf, listAlumniEvents, createAlumniEvent, updateAlumniEvent, deleteAlumniEvent }
 export * as transportApi         from './transportApi'
 export * as userManagementApi    from './userManagementApi'
-import { adminListNotices, adminCreateNotice, adminUpdateNotice, adminDeleteNotice, teacherListNotices, teacherCreateNotice, teacherUpdateNotice, teacherDeleteNotice, getAccountantPortalNotices, getStudentNotices, markNoticeRead, pinNotice, unpinNotice } from './noticesApi'
+import { adminListNotices, adminCreateNotice, adminUpdateNotice, adminDeleteNotice, teacherListNotices, teacherCreateNotice, teacherUpdateNotice, teacherDeleteNotice, getAccountantPortalNotices, getStudentNotices, markNoticeRead, pinNotice, unpinNotice, getStaffNotices, markStaffNoticeRead } from './noticesApi'
 import * as noticesApiNamespace from './noticesApi'
-export const noticesApi = { ...noticesApiNamespace, adminListNotices, adminCreateNotice, adminUpdateNotice, adminDeleteNotice, teacherListNotices, teacherCreateNotice, teacherUpdateNotice, teacherDeleteNotice, getAccountantPortalNotices, getStudentNotices, markNoticeRead, pinNotice, unpinNotice }
+export const noticesApi = { ...noticesApiNamespace, adminListNotices, adminCreateNotice, adminUpdateNotice, adminDeleteNotice, teacherListNotices, teacherCreateNotice, teacherUpdateNotice, teacherDeleteNotice, getAccountantPortalNotices, getStudentNotices, markNoticeRead, pinNotice, unpinNotice, getStaffNotices, markStaffNoticeRead }
+
 export * as academicCalendarApi  from './academicCalendarApi'
 import { updateSettings as settingsApi_updateSettings } from './settingsApi'
 import * as settingsApiNamespace from './settingsApi'

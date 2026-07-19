@@ -71,7 +71,11 @@ const Header = ({ onMenuClick }) => {
       ? ROUTES.ACCOUNTANT_PROFILE
       : user?.role === ROLES.RECEPTIONIST
         ? ROUTES.RECEPTIONIST_PROFILE
-        : ROUTES.SETTINGS
+        : user?.role === ROLES.LIBRARIAN
+          ? '/library/profile'
+          : user?.role === ROLES.STAFF
+            ? ROUTES.STAFF_PROFILE
+            : ROUTES.SETTINGS
   const secondaryRoute  = ROUTES.SETTINGS
   const secondaryLabel  = 'Settings'
 

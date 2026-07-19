@@ -186,6 +186,36 @@ const getNavGroups = (user) => {
     ]
   }
 
+  if (user?.role === ROLES.STAFF) {
+    return [
+      {
+        label: 'Main',
+        items: [
+          { label: 'Dashboard', icon: 'LayoutDashboard', path: ROUTES.STAFF_DASHBOARD },
+        ],
+      },
+      {
+        label: 'Services',
+        items: [
+          { label: 'Library Portal', icon: 'Library', path: ROUTES.LIBRARY_DASHBOARD },
+          { label: 'Academic Calendar', icon: 'Calendar', path: ROUTES.ACADEMIC_CALENDAR },
+        ],
+      },
+      {
+        label: 'Communication',
+        items: [
+          { label: 'Notices', icon: 'BellRing', path: ROUTES.STAFF_NOTICES },
+        ],
+      },
+      {
+        label: 'Account',
+        items: [
+          { label: 'My Profile', icon: 'UserRound', path: ROUTES.STAFF_PROFILE },
+        ],
+      },
+    ]
+  }
+
   return [
     {
       label: null,
