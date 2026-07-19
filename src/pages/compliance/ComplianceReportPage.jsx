@@ -96,9 +96,12 @@ const ComplianceReportPage = () => {
       staff_attendance: { ok: 90, warn: 80 }
     }
     const t = thresholds[type]
-    if (metric >= t.ok) return { label: 'Compliant', color: 'green', score: 100, icon: CheckCircle2 }
-    if (metric >= t.warn) return { label: 'Attention', color: 'amber', score: 50, icon: AlertCircle }
-    return { label: 'Non-Compliant', color: 'red', score: 0, icon: XCircle }
+    // F1 FIX: score is the actual metric value, not a binary 0/50/100.
+    // This means a school at 88% attendance scores 88, not 50.
+    const score = Math.round(metric)
+    if (metric >= t.ok) return { label: 'Compliant', color: 'green', score, icon: CheckCircle2 }
+    if (metric >= t.warn) return { label: 'Attention', color: 'amber', score, icon: AlertCircle }
+    return { label: 'Non-Compliant', color: 'red', score, icon: XCircle }
   }
 
   const sectionsStatus = useMemo(() => {
@@ -245,8 +248,9 @@ const ComplianceReportPage = () => {
                   </div>
                 </div>
               </div>
+              {/* F6 FIX: Parse dates as local time (not UTC) to avoid off-by-one-day display */}
               <p className="mt-6 text-sm text-text-secondary leading-relaxed italic">
-                This report aggregates institutional performance data for the session <strong>{report.session.name}</strong> ({new Date(report.session.start_date).toLocaleDateString()} to {new Date(report.session.end_date).toLocaleDateString()}). 
+                This report aggregates institutional performance data for the session <strong>{report.session.name}</strong> ({new Date(report.session.start_date + 'T00:00:00').toLocaleDateString()} to {new Date(report.session.end_date + 'T00:00:00').toLocaleDateString()}). 
                 Values are calculated based on live system records.
               </p>
             </div>
@@ -321,6 +325,10 @@ const ComplianceReportPage = () => {
               <div className="grid grid-cols-2 gap-4 mb-6">
                 <MiniStat label="Exams Conducted" value={report.academic.exams_conducted} />
                 <MiniStat label="Pass Rate" value={formatPercent(report.academic.pass_rate)} />
+                {/* F2 FIX: avg_marks was returned from backend but never displayed */}
+                {report.academic.avg_marks > 0 && (
+                  <MiniStat label="Avg. Marks" value={report.academic.avg_marks} sub="out of max" />
+                )}
               </div>
               <div className="grid grid-cols-2 gap-6">
                 <div className="space-y-3">
