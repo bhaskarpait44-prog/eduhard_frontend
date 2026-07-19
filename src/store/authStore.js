@@ -97,10 +97,22 @@ const useAuthStore = create(
 
       clearError: () => set({ error: null }),
 
+      loginWithQr: (payload) => {
+        const { token, refresh_token, user } = payload || {}
+        set({
+          token,
+          refreshToken: refresh_token || null,
+          user: normalizeUser(user),
+          isLoading: false,
+          error: null,
+        })
+      },
+
       // Called by Axios interceptor after a successful silent refresh
       updateToken: (token, refreshToken) => {
         set({ token, refreshToken: refreshToken || get().refreshToken })
       },
+
 
       // Mark as hydrated after persist loads
       setHydrated: () => set({ isHydrated: true }),
