@@ -5,7 +5,7 @@ import useClasses  from '@/hooks/useClasses'
 import useSubjects from '@/hooks/useSubjects'
 import usePageTitle from '@/hooks/usePageTitle'
 import { getStudents } from '@/api/studentsApi'
-import { downloadClassStudentsPdf } from '@/api/classApi'
+import { downloadClassStudentsPdf, downloadSimpleClassStudentsPdf } from '@/api/classApi'
 import { downloadBlob } from '@/utils/downloadBlob'
 import useToast from '@/hooks/useToast'
 import useSessionStore from '@/store/sessionStore'
@@ -63,11 +63,31 @@ const SectionsTab=({classId,sections,isSaving,onCreate,onUpdate,onDelete,onToggl
       ):(
         <div className="rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
           <table className="w-full">
-            <thead><tr className="bg-gray-50 dark:bg-gray-800/50 border-b border-gray-200 dark:border-gray-700">{['Section','Capacity','Enrolled','Availability','Status','Actions'].map(h=><th key={h} className="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">{h}</th>)}</tr></thead>
+            <thead><tr className="bg-gray-50 dark:bg-gray-800/50 border-b border-gray-200 dark:border-gray-700">{['Section','Class Teacher','Capacity','Enrolled','Availability','Status','Actions'].map(h=><th key={h} className="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">{h}</th>)}</tr></thead>
             <tbody className="divide-y divide-gray-100 dark:divide-gray-700/50 bg-white dark:bg-gray-800">
               {sections.map(sec=>(
                 <tr key={sec.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-colors">
                   <td className="px-4 py-3 font-semibold text-gray-900 dark:text-gray-100">Section {sec.name}</td>
+                  <td className="px-4 py-3">
+                    {sec.class_teacher_name ? (
+                      <div className="flex items-center gap-2">
+                        {sec.classTeacher?.profile_photo ? (
+                          <img
+                            src={sec.classTeacher.profile_photo}
+                            alt={sec.class_teacher_name}
+                            className="w-6 h-6 rounded-full object-cover"
+                          />
+                        ) : (
+                          <div className="w-6 h-6 rounded-full bg-indigo-100 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 flex items-center justify-center text-[10px] font-bold">
+                            {sec.class_teacher_name.charAt(0)}
+                          </div>
+                        )}
+                        <span className="text-sm text-gray-800 dark:text-gray-200">{sec.class_teacher_name}</span>
+                      </div>
+                    ) : (
+                      <span className="text-xs text-gray-400 italic">Unassigned</span>
+                    )}
+                  </td>
                   <td className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">{sec.capacity}</td>
                   <td className="px-4 py-3 text-sm text-gray-900 dark:text-gray-100">{sec.enrolled_count||0}</td>
                   <td className="px-4 py-3 min-w-36"><CapBar enrolled={sec.enrolled_count||0} capacity={sec.capacity}/></td>
@@ -169,61 +189,88 @@ const SubjectsTab=({classId,subjects,isSaving,onCreate,onUpdate,onDelete,onReord
   )
 }
 
-const EnrolledStudentsTab=({students,isLoading,onOpenStudent,page,totalPages,onPageChange})=>{
-  if(isLoading){
-    return(
-      <div className="space-y-3 animate-pulse">
-        {[1,2,3,4].map(i=>(
-          <div key={i} className="h-12 rounded-lg bg-gray-100 dark:bg-gray-700/50"/>
-        ))}
-      </div>
-    )
-  }
-
-  if(!students.length){
-    return(
-      <div className="text-center py-12 bg-gray-50 dark:bg-gray-800/50 rounded-xl border border-dashed border-gray-200 dark:border-gray-700">
-        <Users size={28} className="mx-auto text-gray-300 dark:text-gray-600 mb-3"/>
-        <p className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">No enrolled students in this class</p>
-        <p className="text-xs text-gray-400 dark:text-gray-500">Students will appear here after enrollment</p>
-      </div>
-    )
-  }
-
-  return(
+const EnrolledStudentsTab=({students,sections=[],selectedSection='',onSelectSection,isLoading,onOpenStudent,page,totalPages,onPageChange})=>{
+  return (
     <div className="space-y-4">
-      <div className="rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
-        <table className="w-full">
-          <thead>
-            <tr className="bg-gray-50 dark:bg-gray-800/50 border-b border-gray-200 dark:border-gray-700">
-              {['Admission No','Student','Section','Roll No','Session','Status','Actions'].map(h=>(
-                <th key={h} className="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">{h}</th>
-              ))}
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-100 dark:divide-gray-700/50 bg-white dark:bg-gray-800">
-            {students.map(st=>(
-              <tr key={st.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-colors">
-                <td className="px-4 py-3 text-sm font-mono text-gray-600 dark:text-gray-300">{st.admission_no}</td>
-                <td className="px-4 py-3">
-                  <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{st.first_name} {st.last_name}</p>
-                </td>
-                <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-300">{st.current_enrollment?.section||'—'}</td>
-                <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-300">{st.current_enrollment?.roll_number||'—'}</td>
-                <td className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">{st.current_enrollment?.session||'—'}</td>
-                <td className="px-4 py-3">
-                  <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${st.current_enrollment?.status==='active'?'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-400':'bg-gray-100 text-gray-500 dark:bg-gray-700 dark:text-gray-400'}`}>
-                    {st.current_enrollment?.status||'inactive'}
-                  </span>
-                </td>
-                <td className="px-4 py-3">
-                  <button onClick={()=>onOpenStudent(st.id)} className="text-xs text-indigo-600 dark:text-indigo-400 hover:underline">View profile</button>
-                </td>
+      {sections.length > 0 && (
+        <div className="flex items-center gap-1.5 flex-wrap pb-1">
+          <span className="text-xs font-semibold text-gray-500 dark:text-gray-400 mr-1">Section:</span>
+          <button
+            type="button"
+            onClick={() => onSelectSection('')}
+            className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${
+              !selectedSection
+                ? 'bg-indigo-600 text-white shadow-sm'
+                : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
+            }`}
+          >
+            All Sections
+          </button>
+          {sections.map((s) => (
+            <button
+              key={s.id}
+              type="button"
+              onClick={() => onSelectSection(String(s.id))}
+              className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${
+                selectedSection === String(s.id)
+                  ? 'bg-indigo-600 text-white shadow-sm'
+                  : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
+              }`}
+            >
+              Section {s.name}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {isLoading ? (
+        <div className="space-y-3 animate-pulse">
+          {[1,2,3,4].map(i=>(
+            <div key={i} className="h-12 rounded-lg bg-gray-100 dark:bg-gray-700/50"/>
+          ))}
+        </div>
+      ) : !students.length ? (
+        <div className="text-center py-12 bg-gray-50 dark:bg-gray-800/50 rounded-xl border border-dashed border-gray-200 dark:border-gray-700">
+          <Users size={28} className="mx-auto text-gray-300 dark:text-gray-600 mb-3"/>
+          <p className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">
+            {selectedSection ? 'No students enrolled in this section' : 'No enrolled students in this class'}
+          </p>
+          <p className="text-xs text-gray-400 dark:text-gray-500">Students will appear here after enrollment</p>
+        </div>
+      ) : (
+        <div className="rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
+          <table className="w-full">
+            <thead>
+              <tr className="bg-gray-50 dark:bg-gray-800/50 border-b border-gray-200 dark:border-gray-700">
+                {['Admission No','Student','Section','Roll No','Session','Status','Actions'].map(h=>(
+                  <th key={h} className="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">{h}</th>
+                ))}
               </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+            </thead>
+            <tbody className="divide-y divide-gray-100 dark:divide-gray-700/50 bg-white dark:bg-gray-800">
+              {students.map(st=>(
+                <tr key={st.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-colors">
+                  <td className="px-4 py-3 text-sm font-mono text-gray-600 dark:text-gray-300">{st.admission_no}</td>
+                  <td className="px-4 py-3">
+                    <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{st.first_name} {st.last_name}</p>
+                  </td>
+                  <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-300">{st.current_enrollment?.section||'—'}</td>
+                  <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-300">{st.current_enrollment?.roll_number||'—'}</td>
+                  <td className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">{st.current_enrollment?.session||'—'}</td>
+                  <td className="px-4 py-3">
+                    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${st.current_enrollment?.status==='active'?'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-400':'bg-gray-100 text-gray-500 dark:bg-gray-700 dark:text-gray-400'}`}>
+                      {st.current_enrollment?.status||'inactive'}
+                    </span>
+                  </td>
+                  <td className="px-4 py-3">
+                    <button onClick={()=>onOpenStudent(st.id)} className="text-xs text-indigo-600 dark:text-indigo-400 hover:underline">View profile</button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
 
       {totalPages > 1 && (
         <div className="flex items-center justify-between px-4 py-3 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700">
@@ -262,6 +309,8 @@ const ClassDetailPage=()=>{
   const [page,setPage]=useState(1)
   const [totalPages,setTotalPages]=useState(1)
   const [totalStudents,setTotalStudents]=useState(0)
+  const [selectedSectionFilter, setSelectedSectionFilter] = useState('')
+  const [downloadFormat, setDownloadFormat] = useState('table') // 'table' | 'cards'
   const {selectedClass,sections,isLoading,isSaving,fetchClassById,createSection,updateSection,deleteSection,toggleSectionStatus}=useClasses()
   const {subjects,fetchSubjects,createSubject,updateSubject,deleteSubject,reorderSubjects}=useSubjects()
   const { toastError, toastSuccess } = useToast()
@@ -279,7 +328,9 @@ const ClassDetailPage=()=>{
       }
       setStudentsLoading(true)
       try{
-        const res=await getStudents({class_id:id,session_id:currentSession.id,perPage:15,page})
+        const params = { class_id: id, session_id: currentSession.id, perPage: 15, page }
+        if (selectedSectionFilter) params.section_id = selectedSectionFilter
+        const res=await getStudents(params)
         setEnrolledStudents(res?.data?.students||[])
         setTotalPages(res?.data?.meta?.totalPages||1)
         setTotalStudents(res?.data?.meta?.total||0)
@@ -291,7 +342,7 @@ const ClassDetailPage=()=>{
       }
     }
     loadEnrolled()
-  },[id,currentSession?.id,page,toastError])
+  },[id,currentSession?.id,page,selectedSectionFilter,toastError])
 
   if(isLoading&&!selectedClass)return(
     <div className="space-y-5 animate-pulse">
@@ -320,12 +371,24 @@ const ClassDetailPage=()=>{
 
     setDownloadingPdf(true)
     try {
-      const response = await downloadClassStudentsPdf(id, { session_id: currentSession.id })
-      const fileName = `${(cls?.name || 'class').replace(/[^a-z0-9-_]+/gi, '-')}-students.pdf`
+      const params = {
+        session_id: currentSession.id,
+        ...(selectedSectionFilter ? { section_id: selectedSectionFilter } : {}),
+      }
+      const isSimple = downloadFormat === 'table'
+      const response = isSimple
+        ? await downloadSimpleClassStudentsPdf(id, params)
+        : await downloadClassStudentsPdf(id, params)
+
+      const sectionSuffix = selectedSectionFilter
+        ? `-section-${sections.find(s => String(s.id) === selectedSectionFilter)?.name || selectedSectionFilter}`
+        : ''
+      const typeSuffix = isSimple ? '-roster' : '-students'
+      const fileName = `${(cls?.name || 'class').replace(/[^a-z0-9-_]+/gi, '-')}${sectionSuffix}${typeSuffix}.pdf`
       downloadBlob(response, fileName)
-      toastSuccess('Class student list PDF downloaded.')
+      toastSuccess(`Class ${isSimple ? 'attendance roster' : 'students'} PDF downloaded.`)
     } catch (err) {
-      toastError(err.message || 'Failed to download class student PDF.')
+      toastError(err.message || 'Failed to download PDF.')
     } finally {
       setDownloadingPdf(false)
     }
@@ -385,21 +448,53 @@ const ClassDetailPage=()=>{
                 <div>
                   <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">Enrolled Students</p>
                   <p className="text-xs text-gray-500 dark:text-gray-400">
-                    Download a PDF with school name, class name, section, student list, enrollment, and subjects.
+                    Download student roster with enrollment number, section, and subjects.
                   </p>
                 </div>
-                <button
-                  type="button"
-                  onClick={handleDownloadStudentsPdf}
-                  disabled={downloadingPdf || studentsLoading || !currentSession?.id}
-                  className="inline-flex items-center justify-center gap-2 rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-60"
-                >
-                  <Download size={15} />
-                  {downloadingPdf ? 'Preparing PDF...' : 'Download PDF'}
-                </button>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <div className="flex items-center bg-gray-100 dark:bg-gray-800 rounded-lg p-0.5 border border-gray-200 dark:border-gray-700">
+                    <button
+                      type="button"
+                      onClick={() => setDownloadFormat('table')}
+                      className={`px-2.5 py-1 text-xs font-medium rounded-md transition-all ${
+                        downloadFormat === 'table'
+                          ? 'bg-white dark:bg-gray-700 text-indigo-600 dark:text-indigo-300 shadow-sm'
+                          : 'text-gray-500 dark:text-gray-400 hover:text-gray-700'
+                      }`}
+                    >
+                      Tabular Roster
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setDownloadFormat('cards')}
+                      className={`px-2.5 py-1 text-xs font-medium rounded-md transition-all ${
+                        downloadFormat === 'cards'
+                          ? 'bg-white dark:bg-gray-700 text-indigo-600 dark:text-indigo-300 shadow-sm'
+                          : 'text-gray-500 dark:text-gray-400 hover:text-gray-700'
+                      }`}
+                    >
+                      Student Cards
+                    </button>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleDownloadStudentsPdf}
+                    disabled={downloadingPdf || studentsLoading || !currentSession?.id}
+                    className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-indigo-600 px-3.5 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    <Download size={13} />
+                    {downloadingPdf ? 'Preparing...' : 'Download PDF'}
+                  </button>
+                </div>
               </div>
               <EnrolledStudentsTab 
                 students={enrolledStudents} 
+                sections={sections}
+                selectedSection={selectedSectionFilter}
+                onSelectSection={(secId) => {
+                  setSelectedSectionFilter(secId)
+                  setPage(1)
+                }}
                 isLoading={studentsLoading} 
                 onOpenStudent={(studentId)=>navigate(`/students/${studentId}`)}
                 page={page}
@@ -414,3 +509,4 @@ const ClassDetailPage=()=>{
   )
 }
 export default ClassDetailPage
+

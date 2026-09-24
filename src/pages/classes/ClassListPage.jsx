@@ -10,7 +10,7 @@ import useClasses from '@/hooks/useClasses'
 import usePageTitle from '@/hooks/usePageTitle'
 import ClassForm from '@/components/classes/ClassForm'
 import { ROUTES } from '@/constants/app'
-import { downloadClassStudentsPdf, getSections } from '@/api/classApi'
+import { downloadClassStudentsPdf, downloadSimpleClassStudentsPdf, getSections } from '@/api/classApi'
 import { downloadBlob } from '@/utils/downloadBlob'
 import useToast from '@/hooks/useToast'
 import useSessionStore from '@/store/sessionStore'
@@ -321,6 +321,8 @@ const ClassListPage = () => {
   // View and search states
   const [viewMode, setViewMode] = useState('table') // 'grid' | 'table'
   const [searchTerm, setSearchTerm] = useState('')
+  const [selectedStream, setSelectedStream] = useState('all')
+  const [selectedStatus, setSelectedStatus] = useState('all') // 'all' | 'active' | 'inactive'
 
   // Modal states
   const [createModal, setCreateModal] = useState(false)
@@ -335,6 +337,7 @@ const ClassListPage = () => {
   const [downloadModal,setDownloadModal]=useState(false)
   const [downloadClassId,setDownloadClassId]=useState('')
   const [downloadSectionId,setDownloadSectionId]=useState('')
+  const [downloadFormat,setDownloadFormat]=useState('table') // 'table' | 'cards'
   const [downloadSections,setDownloadSections]=useState([])
   const [sectionsLoading,setSectionsLoading]=useState(false)
   const [downloadingPdf,setDownloadingPdf]=useState(false)
@@ -364,11 +367,31 @@ const ClassListPage = () => {
     loadSections()
   }, [downloadClassId, toastError])
 
-  // Filter classes based on search
-  const filteredClasses = classes.filter(cls =>
-    cls.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (cls.display_name && cls.display_name.toLowerCase().includes(searchTerm.toLowerCase()))
-  )
+  // Distinct available streams from classes
+  const availableStreams = Array.from(
+    new Set(classes.map(c => c.stream || 'regular'))
+  ).filter(Boolean)
+
+  // Filter classes based on search, stream, and status
+  const filteredClasses = classes.filter(cls => {
+    const term = searchTerm.toLowerCase()
+    const matchesSearch =
+      !term ||
+      cls.name.toLowerCase().includes(term) ||
+      (cls.display_name && cls.display_name.toLowerCase().includes(term)) ||
+      (cls.stream && cls.stream.toLowerCase().includes(term))
+
+    const matchesStream =
+      selectedStream === 'all' ||
+      (cls.stream || 'regular').toLowerCase() === selectedStream.toLowerCase()
+
+    const matchesStatus =
+      selectedStatus === 'all' ||
+      (selectedStatus === 'active' && cls.is_active) ||
+      (selectedStatus === 'inactive' && !cls.is_active)
+
+    return matchesSearch && matchesStream && matchesStatus
+  })
 
   const handleCreate = async (data) => {
     const result = await createClass(data)
@@ -431,12 +454,18 @@ const ClassListPage = () => {
 
     setDownloadingPdf(true)
     try {
-      const response = await downloadClassStudentsPdf(downloadClassId, {
+      const params = {
         session_id: currentSession.id,
         ...(downloadSectionId ? { section_id: downloadSectionId } : {}),
-      })
+      }
+      const isSimple = downloadFormat === 'table'
+      const response = isSimple
+        ? await downloadSimpleClassStudentsPdf(downloadClassId, params)
+        : await downloadClassStudentsPdf(downloadClassId, params)
+
       const className = classes.find((cls) => String(cls.id) === String(downloadClassId))?.name || 'class'
-      downloadBlob(response, `${className.replace(/[^a-z0-9-_]+/gi, '-')}-students.pdf`)
+      const suffix = isSimple ? 'roster' : 'students'
+      downloadBlob(response, `${className.replace(/[^a-z0-9-_]+/gi, '-')}-${suffix}.pdf`)
       
       setDownloadModal(false)
       toastSuccess('Class PDF downloaded successfully.')
@@ -499,17 +528,59 @@ const ClassListPage = () => {
         </div>
       </div>
 
-      {/* ── Search bar ─────────────────────────────────────────────────── */}
-      <div className="flex items-center gap-3">
+      {/* ── Search & Filter bar ─────────────────────────────────────────── */}
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
         <div className="relative flex-1 max-w-md">
           <input
             type="text"
-            placeholder="Search classes..."
+            placeholder="Search classes or streams..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="w-full pl-10 pr-4 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 dark:text-gray-100"
           />
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
+        </div>
+
+        <div className="flex items-center gap-2 flex-wrap">
+          {/* Stream Filter */}
+          <select
+            value={selectedStream}
+            onChange={(e) => setSelectedStream(e.target.value)}
+            aria-label="Filter by stream"
+            className="px-3 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-sm dark:text-gray-100 focus:ring-2 focus:ring-indigo-500 outline-none"
+          >
+            <option value="all">All Streams</option>
+            {availableStreams.map((st) => (
+              <option key={st} value={st}>
+                {formatStream(st) || st}
+              </option>
+            ))}
+          </select>
+
+          {/* Status Filter */}
+          <select
+            value={selectedStatus}
+            onChange={(e) => setSelectedStatus(e.target.value)}
+            aria-label="Filter by status"
+            className="px-3 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-sm dark:text-gray-100 focus:ring-2 focus:ring-indigo-500 outline-none"
+          >
+            <option value="all">All Status</option>
+            <option value="active">Active Only</option>
+            <option value="inactive">Inactive Only</option>
+          </select>
+
+          {(selectedStream !== 'all' || selectedStatus !== 'all' || searchTerm) && (
+            <button
+              onClick={() => {
+                setSelectedStream('all')
+                setSelectedStatus('all')
+                setSearchTerm('')
+              }}
+              className="text-xs text-indigo-600 dark:text-indigo-400 hover:underline px-2 py-1"
+            >
+              Reset Filters
+            </button>
+          )}
         </div>
       </div>
 
@@ -647,6 +718,36 @@ const ClassListPage = () => {
             }))}
             placeholder={sectionsLoading ? 'Loading sections...' : 'All sections'}
           />
+
+          <div className="space-y-1.5">
+            <label className="text-xs font-semibold text-gray-700 dark:text-gray-300">PDF Format</label>
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                onClick={() => setDownloadFormat('table')}
+                className={`p-2.5 rounded-lg border text-left text-xs font-medium transition-colors ${
+                  downloadFormat === 'table'
+                    ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300'
+                    : 'border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50 text-gray-700 dark:text-gray-300'
+                }`}
+              >
+                <div className="font-semibold mb-0.5">Tabular Roster</div>
+                <div className="text-[11px] text-gray-500 dark:text-gray-400">Clean list with Roll No, Admission No, Name & Section</div>
+              </button>
+              <button
+                type="button"
+                onClick={() => setDownloadFormat('cards')}
+                className={`p-2.5 rounded-lg border text-left text-xs font-medium transition-colors ${
+                  downloadFormat === 'cards'
+                    ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300'
+                    : 'border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50 text-gray-700 dark:text-gray-300'
+                }`}
+              >
+                <div className="font-semibold mb-0.5">Student Cards</div>
+                <div className="text-[11px] text-gray-500 dark:text-gray-400">Detailed card layout with enrolled subjects</div>
+              </button>
+            </div>
+          </div>
 
           <div className="flex justify-end gap-3 pt-2">
             <button
