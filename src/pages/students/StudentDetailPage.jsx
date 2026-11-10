@@ -52,9 +52,9 @@ const TABS = [
 ]
 
 const InfoItem = ({ label, value }) => (
-  <div className="flex justify-between py-2 border-b border-gray-50 last:border-0">
-    <span className="text-sm font-medium text-gray-500">{label}</span>
-    <span className="text-sm font-semibold text-gray-900">{value || '--'}</span>
+  <div className="flex justify-between py-2 border-b border-gray-100 dark:border-gray-800 last:border-0">
+    <span className="text-sm font-medium text-gray-500 dark:text-gray-400">{label}</span>
+    <span className="text-sm font-semibold text-gray-900 dark:text-gray-100">{value || '--'}</span>
   </div>
 )
 
@@ -179,7 +179,17 @@ const StudentDetailPage = () => {
     catch { toastError('Unable to copy') }
   }
 
-  if (pageLoading || !student) return <div className="max-w-[1400px] mx-auto p-6 animate-pulse"><div className="h-8 w-48 bg-gray-200 rounded mb-6" /><div className="grid grid-cols-1 lg:grid-cols-[320px_1fr] gap-6"><div className="h-screen bg-gray-200 rounded-xl" /><div className="h-screen bg-gray-200 rounded-xl" /></div></div>
+  if (pageLoading || !student) {
+    return (
+      <div className="max-w-[1400px] mx-auto p-6 animate-pulse">
+        <div className="h-8 w-48 bg-gray-200 dark:bg-gray-700 rounded mb-6" />
+        <div className="grid grid-cols-1 lg:grid-cols-[320px_1fr] gap-6">
+          <div className="h-screen bg-gray-200 dark:bg-gray-700 rounded-xl" />
+          <div className="h-screen bg-gray-200 dark:bg-gray-700 rounded-xl" />
+        </div>
+      </div>
+    )
+  }
 
   const fullName = `${student.first_name} ${student.last_name}`.trim()
   const enrollment = student.current_enrollment
@@ -191,19 +201,19 @@ const StudentDetailPage = () => {
         <div className="flex items-center gap-4">
           <button 
             onClick={() => navigate(ROUTES.STUDENTS)}
-            className="p-2 rounded-xl border border-gray-200 bg-white hover:bg-gray-50 text-gray-600 transition-colors shadow-sm"
+            className="p-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-300 transition-colors shadow-sm"
             title="Back to Students"
           >
             <ArrowLeft size={20} />
           </button>
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Student Details</h1>
-            <nav className="flex items-center gap-2 text-xs font-medium text-gray-400 mt-1">
-              <span className="hover:text-gray-600 cursor-pointer" onClick={() => navigate('/')}>Dashboard</span>
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Student Details</h1>
+            <nav className="flex items-center gap-2 text-xs font-medium text-gray-400 dark:text-gray-400 mt-1">
+              <span className="hover:text-gray-600 dark:hover:text-gray-300 cursor-pointer" onClick={() => navigate('/')}>Dashboard</span>
               <ChevronRIcon size={10} />
-              <span className="hover:text-gray-600 cursor-pointer" onClick={() => navigate(ROUTES.STUDENTS)}>Student</span>
+              <span className="hover:text-gray-600 dark:hover:text-gray-300 cursor-pointer" onClick={() => navigate(ROUTES.STUDENTS)}>Student</span>
               <ChevronRIcon size={10} />
-              <span className="text-indigo-600">Student Details</span>
+              <span className="text-indigo-600 dark:text-indigo-400 font-semibold">Student Details</span>
             </nav>
           </div>
         </div>
@@ -214,7 +224,7 @@ const StudentDetailPage = () => {
                 variant="secondary" 
                 icon={LogOut} 
                 size="sm" 
-                className="text-red-600 border-red-100 hover:bg-red-50" 
+                className="text-red-600 dark:text-red-400 border-red-100 dark:border-red-900/40 hover:bg-red-50 dark:hover:bg-red-900/20" 
                 onClick={() => setLeftOpen(true)}
               >
                 Mark as Left
@@ -223,7 +233,7 @@ const StudentDetailPage = () => {
                 variant="secondary" 
                 icon={GraduationCap} 
                 size="sm" 
-                className="text-blue-600 border-blue-100 hover:bg-blue-50" 
+                className="text-blue-600 dark:text-blue-400 border-blue-100 dark:border-blue-900/40 hover:bg-blue-50 dark:hover:bg-blue-900/20" 
                 onClick={() => setGraduatedOpen(true)}
               >
                 Mark as Graduated
@@ -235,7 +245,7 @@ const StudentDetailPage = () => {
               variant="secondary" 
               icon={ArrowRightLeft} 
               size="sm" 
-              className="text-emerald-600 border-emerald-100 hover:bg-emerald-50" 
+              className="text-emerald-600 dark:text-emerald-400 border-emerald-100 dark:border-emerald-900/40 hover:bg-emerald-50 dark:hover:bg-emerald-900/20" 
               onClick={() => setReadmitOpen(true)}
             >
               Re-admit Student
@@ -263,10 +273,10 @@ const StudentDetailPage = () => {
         
         {/* ── Left Sidebar ── */}
         <div className="space-y-6">
-          <div className="p-6 rounded-xl border border-gray-100 bg-white shadow-sm space-y-6">
+          <div className="p-6 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm space-y-6">
             <div className="flex flex-col items-center text-center">
               <div className="relative group cursor-pointer" onClick={() => student.photo_path && setPreviewOpen(true)}>
-                <div className="w-24 h-24 rounded-2xl overflow-hidden shadow-md border-4 border-white flex items-center justify-center bg-indigo-600">
+                <div className="w-24 h-24 rounded-2xl overflow-hidden shadow-md border-4 border-white dark:border-gray-700 flex items-center justify-center bg-indigo-600">
                   {student.photo_path ? (
                     <img 
                       src={getFileUrl(student.photo_path)} 
@@ -287,25 +297,25 @@ const StudentDetailPage = () => {
                   <div 
                     className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold uppercase mb-1 shadow-sm border ${
                       student.status === 'active' 
-                        ? 'bg-green-50 text-green-600 border-green-100' 
+                        ? 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/60 dark:text-emerald-300 dark:border-emerald-800' 
                         : student.status === 'left' 
-                        ? 'bg-red-50 text-red-600 border-red-100'
-                        : 'bg-blue-50 text-blue-600 border-blue-100'
+                        ? 'bg-red-50 text-red-700 border-red-200 dark:bg-red-950/60 dark:text-red-300 dark:border-red-800'
+                        : 'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950/60 dark:text-blue-300 dark:border-blue-800'
                     }`}
                   >
                     <span className={`w-1.5 h-1.5 rounded-full ${
-                      student.status === 'active' ? 'bg-green-500' : student.status === 'left' ? 'bg-red-500' : 'bg-blue-500'
+                      student.status === 'active' ? 'bg-emerald-500' : student.status === 'left' ? 'bg-red-500' : 'bg-blue-500'
                     }`} />
                     {student.status || 'Active'}
                   </div>
-                  <h2 className="text-lg font-bold text-gray-900 leading-tight">{fullName}</h2>
-                  <p className="text-sm font-bold text-indigo-600 tracking-tight">{student.admission_no}</p>
+                  <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100 leading-tight">{fullName}</h2>
+                  <p className="text-sm font-bold text-indigo-600 dark:text-indigo-400 tracking-tight">{student.admission_no}</p>
                 </div>
               </div>
             </div>
 
             <div className="space-y-4">
-              <h3 className="text-sm font-bold text-gray-900 border-b pb-2">Basic Information</h3>
+              <h3 className="text-sm font-bold text-gray-900 dark:text-gray-100 border-b border-gray-100 dark:border-gray-700/60 pb-2">Basic Information</h3>
               <div className="space-y-1">
                 <InfoItem label="Roll No" value={enrollment?.roll_number} />
                 <InfoItem label="Gender" value={student.gender?.charAt(0).toUpperCase() + student.gender?.slice(1)} />
@@ -318,7 +328,7 @@ const StudentDetailPage = () => {
               <Button 
                 variant="primary" 
                 icon={Info} 
-                className="w-full py-2.5 rounded-xl shadow-lg shadow-indigo-100" 
+                className="w-full py-2.5 rounded-xl shadow-lg shadow-indigo-100 dark:shadow-none" 
                 onClick={() => navigate(`${ROUTES.STUDENTS}/${id}/full-details`)}
               >
                 Details
@@ -326,39 +336,39 @@ const StudentDetailPage = () => {
             </div>
           </div>
 
-          <div className="p-6 rounded-xl border border-gray-100 bg-white shadow-sm space-y-4">
-            <h3 className="text-sm font-bold text-gray-900 border-b pb-2">Primary Contact Info</h3>
+          <div className="p-6 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm space-y-4">
+            <h3 className="text-sm font-bold text-gray-900 dark:text-gray-100 border-b border-gray-100 dark:border-gray-700/60 pb-2">Primary Contact Info</h3>
             <div className="space-y-4">
               <div className="flex items-center gap-3">
-                <div className="h-9 w-9 rounded-lg bg-gray-50 flex items-center justify-center text-gray-400">
+                <div className="h-9 w-9 rounded-lg bg-gray-50 dark:bg-gray-700/50 flex items-center justify-center text-gray-400 dark:text-gray-400">
                   <Phone size={16} />
                 </div>
                 <div>
-                  <p className="text-[10px] font-bold text-gray-400 uppercase">Phone Number</p>
-                  <p className="text-sm font-semibold text-gray-900">{student.phone || '--'}</p>
+                  <p className="text-[10px] font-bold text-gray-400 dark:text-gray-400 uppercase">Phone Number</p>
+                  <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">{student.phone || '--'}</p>
                 </div>
               </div>
               <div className="flex items-center gap-3">
-                <div className="h-9 w-9 rounded-lg bg-gray-50 flex items-center justify-center text-gray-400">
+                <div className="h-9 w-9 rounded-lg bg-gray-50 dark:bg-gray-700/50 flex items-center justify-center text-gray-400 dark:text-gray-400">
                   <Mail size={16} />
                 </div>
                 <div className="min-w-0">
-                  <p className="text-[10px] font-bold text-gray-400 uppercase">Email Address</p>
-                  <p className="text-sm font-semibold text-gray-900 truncate">{student.email || '--'}</p>
+                  <p className="text-[10px] font-bold text-gray-400 dark:text-gray-400 uppercase">Email Address</p>
+                  <p className="text-sm font-semibold text-gray-900 dark:text-gray-100 truncate">{student.email || '--'}</p>
                 </div>
               </div>
             </div>
           </div>
 
           {/* Account Management */}
-          <div className="p-6 rounded-xl border border-gray-100 bg-white shadow-sm space-y-4">
-            <h3 className="text-sm font-bold text-gray-900 border-b pb-2">Account Management</h3>
+          <div className="p-6 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm space-y-4">
+            <h3 className="text-sm font-bold text-gray-900 dark:text-gray-100 border-b border-gray-100 dark:border-gray-700/60 pb-2">Account Management</h3>
             <div className="space-y-2">
               <Button 
                 variant="secondary" 
                 size="sm" 
                 icon={student.is_active ? ShieldCheck : CheckCircle2} 
-                className={`w-full justify-start ${student.is_active ? 'text-amber-600' : 'text-emerald-600'}`}
+                className={`w-full justify-start ${student.is_active ? 'text-amber-600 dark:text-amber-400' : 'text-emerald-600 dark:text-emerald-400'}`}
                 onClick={async () => {
                   const res = await toggleStatus(student.id)
                   if (res.success) {
@@ -379,7 +389,7 @@ const StudentDetailPage = () => {
         {/* ── Right Content ── */}
         <div className="min-w-0 space-y-6">
           {/* Tabs */}
-          <div className="flex overflow-x-auto no-scrollbar border-b border-gray-200">
+          <div className="flex overflow-x-auto no-scrollbar border-b border-gray-200 dark:border-gray-700">
             {TABS.map(tab => {
               const active = activeTab === tab.key
               return (
@@ -387,7 +397,9 @@ const StudentDetailPage = () => {
                   key={tab.key}
                   onClick={() => handleTabChange(tab.key)}
                   className={`flex items-center gap-2 px-6 py-4 text-xs font-bold whitespace-nowrap border-b-2 transition-all duration-300 ease-in-out ${
-                    active ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-gray-500 hover:text-indigo-600 hover:border-indigo-500'
+                    active 
+                      ? 'border-indigo-600 dark:border-indigo-400 text-indigo-600 dark:text-indigo-400' 
+                      : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:border-indigo-500'
                   }`}
                 >
                   <tab.icon size={16} /> {tab.label}
@@ -416,14 +428,14 @@ const StudentDetailPage = () => {
       {/* ── Modals ── */}
       <Modal open={passwordOpen} onClose={() => setPasswordOpen(false)} title="Access Credentials" size="lg">
         <div className="space-y-6 p-1">
-          <div className="p-4 rounded-xl bg-indigo-50 border border-indigo-100 flex items-start gap-3">
-            <ShieldCheck size={20} className="text-indigo-600 mt-0.5" />
-            <p className="text-xs text-indigo-800 leading-relaxed">Login credentials allow students and parents to access their respective portals. Keep these secure.</p>
+          <div className="p-4 rounded-xl bg-indigo-50 dark:bg-indigo-950/40 border border-indigo-100 dark:border-indigo-900/50 flex items-start gap-3">
+            <ShieldCheck size={20} className="text-indigo-600 dark:text-indigo-400 mt-0.5 shrink-0" />
+            <p className="text-xs text-indigo-800 dark:text-indigo-300 leading-relaxed font-medium">Login credentials allow students and parents to access their respective portals. Keep these secure.</p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-4">
-              <h4 className="text-xs font-black uppercase tracking-widest text-indigo-600">Student Access</h4>
+              <h4 className="text-xs font-black uppercase tracking-widest text-indigo-600 dark:text-indigo-400">Student Access</h4>
               <CredentialRow icon={Mail} label="Login Email" value={student.email} onCopy={handleCopy} />
               
               <div className="space-y-2">
@@ -440,21 +452,21 @@ const StudentDetailPage = () => {
               </div>
 
               {resetResult && (
-                <div className="mt-2 p-3 bg-green-50 rounded-lg border border-green-100">
-                  <p className="text-[10px] font-bold text-green-800 mb-1">Status:</p>
+                <div className="mt-2 p-3 bg-emerald-50 dark:bg-emerald-950/40 rounded-lg border border-emerald-100 dark:border-emerald-900/50">
+                  <p className="text-[10px] font-bold text-emerald-800 dark:text-emerald-300 mb-1">Status:</p>
                   <div className="flex items-center justify-between">
-                    <code className="text-sm font-bold text-green-900">
+                    <code className="text-sm font-bold text-emerald-900 dark:text-emerald-200">
                       {resetResult.generated_password ? `New Temp: ${resetResult.generated_password}` : 'Password Updated'}
                     </code>
                     {resetResult.generated_password && (
-                      <button onClick={() => handleCopy(resetResult.generated_password)} className="text-green-600"><Copy size={14}/></button>
+                      <button onClick={() => handleCopy(resetResult.generated_password)} className="text-emerald-600 dark:text-emerald-400"><Copy size={14}/></button>
                     )}
                   </div>
                 </div>
               )}
             </div>
             <div className="space-y-4">
-              <h4 className="text-xs font-black uppercase tracking-widest text-amber-600">Parent Access</h4>
+              <h4 className="text-xs font-black uppercase tracking-widest text-amber-600 dark:text-amber-400">Parent Access</h4>
               <CredentialRow icon={Mail} label="Login Email" value={student.parent_email} onCopy={handleCopy} />
               
               <div className="space-y-2">
@@ -471,14 +483,14 @@ const StudentDetailPage = () => {
               </div>
 
               {parentResetResult && (
-                <div className="mt-2 p-3 bg-amber-50 rounded-lg border border-amber-100">
-                  <p className="text-[10px] font-bold text-amber-800 mb-1">Status:</p>
+                <div className="mt-2 p-3 bg-amber-50 dark:bg-amber-950/40 rounded-lg border border-amber-100 dark:border-amber-900/50">
+                  <p className="text-[10px] font-bold text-amber-800 dark:text-amber-300 mb-1">Status:</p>
                   <div className="flex items-center justify-between">
-                    <code className="text-sm font-bold text-amber-900">
+                    <code className="text-sm font-bold text-amber-900 dark:text-amber-200">
                       {parentResetResult.generated_password ? `New Temp: ${parentResetResult.generated_password}` : 'Password Updated'}
                     </code>
                     {parentResetResult.generated_password && (
-                      <button onClick={() => handleCopy(parentResetResult.generated_password)} className="text-amber-600"><Copy size={14}/></button>
+                      <button onClick={() => handleCopy(parentResetResult.generated_password)} className="text-amber-600 dark:text-amber-400"><Copy size={14}/></button>
                     )}
                   </div>
                 </div>
@@ -514,8 +526,8 @@ const StudentDetailPage = () => {
         }
       >
         <div className="space-y-4">
-          <div className="p-4 rounded-xl bg-red-50 dark:bg-red-950/20 border border-red-100 dark:border-red-900/30 flex gap-3">
-            <AlertTriangle className="text-red-600 shrink-0 mt-0.5" size={20} />
+          <div className="p-4 rounded-xl bg-red-50 dark:bg-red-950/30 border border-red-100 dark:border-red-900/40 flex gap-3">
+            <AlertTriangle className="text-red-600 dark:text-red-400 shrink-0 mt-0.5" size={20} />
             <div>
               <h4 className="text-sm font-bold text-red-800 dark:text-red-200">Critical Action!</h4>
               <p className="text-xs text-red-700 dark:text-red-300 mt-1 leading-relaxed">
@@ -525,7 +537,7 @@ const StudentDetailPage = () => {
           </div>
 
           <div className="space-y-2">
-            <p className="text-xs text-gray-500 font-medium leading-relaxed">
+            <p className="text-xs text-gray-500 dark:text-gray-400 font-medium leading-relaxed">
               To proceed, please type the student's full name <strong className="text-gray-800 dark:text-gray-200 font-bold">"{fullName}"</strong> below:
             </p>
             <Input
@@ -537,7 +549,7 @@ const StudentDetailPage = () => {
           </div>
 
           <div className="space-y-2">
-            <label className="text-xs text-gray-500 font-medium">Reason for Deletion (Optional):</label>
+            <label className="text-xs text-gray-500 dark:text-gray-400 font-medium">Reason for Deletion (Optional):</label>
             <Input
               type="text"
               placeholder="e.g. Left the institution / Duplicate entry"
@@ -550,7 +562,7 @@ const StudentDetailPage = () => {
 
       {/* Image Preview Modal */}
       <Modal open={previewOpen} onClose={() => setPreviewOpen(false)} title="Profile Photo" size="md">
-        <div className="flex justify-center p-2">
+        <div className="flex justify-center p-2 bg-gray-50 dark:bg-gray-900/50 rounded-xl">
           <img 
             src={getFileUrl(student.photo_path)} 
             alt={fullName} 
@@ -568,8 +580,8 @@ const TabDetails = ({ student }) => {
   return (
     <div className="space-y-6">
       {/* Parents Information */}
-      <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-6">
-        <h3 className="text-base font-bold text-gray-900 mb-6">Parents Information</h3>
+      <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm p-6">
+        <h3 className="text-base font-bold text-gray-900 dark:text-gray-100 mb-6">Parents Information</h3>
         <div className="space-y-4">
           <ParentCard 
             name={student.father_name} 
@@ -594,12 +606,12 @@ const TabDetails = ({ student }) => {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Documents */}
-        <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-6">
-          <h3 className="text-base font-bold text-gray-900 mb-6">Documents</h3>
+        <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm p-6">
+          <h3 className="text-base font-bold text-gray-900 dark:text-gray-100 mb-6">Documents</h3>
           {documents.length === 0 ? (
-            <div className="py-8 text-center border-2 border-dashed border-gray-50 rounded-xl">
-              <ScrollText size={32} className="mx-auto text-gray-200 mb-2" />
-              <p className="text-xs text-gray-400 font-medium">No documents uploaded</p>
+            <div className="py-8 text-center border-2 border-dashed border-gray-200 dark:border-gray-700 rounded-xl">
+              <ScrollText size={32} className="mx-auto text-gray-300 dark:text-gray-600 mb-2" />
+              <p className="text-xs text-gray-400 dark:text-gray-400 font-medium">No documents uploaded</p>
             </div>
           ) : (
             <div className="space-y-3">
@@ -611,8 +623,8 @@ const TabDetails = ({ student }) => {
         </div>
 
         {/* Address */}
-        <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-6">
-          <h3 className="text-base font-bold text-gray-900 mb-6">Address</h3>
+        <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm p-6">
+          <h3 className="text-base font-bold text-gray-900 dark:text-gray-100 mb-6">Address</h3>
           <div className="space-y-6">
             <AddressRow icon={MapPin} label="Current Address" value={`${student.address || ''}, ${student.city || ''}, ${student.state || ''} ${student.pincode || ''}`.trim() || 'Not Provided'} />
             <AddressRow icon={ArrowRightLeft} label="Permanent Address" value={student.is_permanent_same ? `${student.address || ''}, ${student.city || ''}, ${student.state || ''} ${student.pincode || ''}`.trim() : `${student.perm_address || ''}, ${student.perm_city || ''}, ${student.perm_state || ''} ${student.perm_pincode || ''}`.trim() || 'Not Provided'} />
@@ -622,16 +634,16 @@ const TabDetails = ({ student }) => {
 
       {/* Previous School Details */}
       {(student.prev_school_name || student.prev_school_address) && (
-        <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-6">
-          <h3 className="text-base font-bold text-gray-900 mb-6 border-b pb-4">Previous School Details</h3>
+        <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm p-6">
+          <h3 className="text-base font-bold text-gray-900 dark:text-gray-100 mb-6 border-b border-gray-100 dark:border-gray-700 pb-4">Previous School Details</h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
             <div>
-              <p className="text-[10px] font-bold text-gray-400 uppercase mb-1">Previous School Name</p>
-              <p className="text-sm font-semibold text-gray-900">{student.prev_school_name || 'N/A'}</p>
+              <p className="text-[10px] font-bold text-gray-400 dark:text-gray-400 uppercase mb-1">Previous School Name</p>
+              <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">{student.prev_school_name || 'N/A'}</p>
             </div>
             <div>
-              <p className="text-[10px] font-bold text-gray-400 uppercase mb-1">School Address</p>
-              <p className="text-sm font-semibold text-gray-900">{student.prev_school_address || 'N/A'}</p>
+              <p className="text-[10px] font-bold text-gray-400 dark:text-gray-400 uppercase mb-1">School Address</p>
+              <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">{student.prev_school_address || 'N/A'}</p>
             </div>
           </div>
         </div>
@@ -641,43 +653,43 @@ const TabDetails = ({ student }) => {
 }
 
 const ParentCard = ({ name, role, phone, email }) => (
-  <div className="flex items-center justify-between p-4 rounded-xl border border-gray-50 bg-gray-50/30 hover:bg-gray-50 transition-colors">
+  <div className="flex items-center justify-between p-4 rounded-xl border border-gray-100 dark:border-gray-700/60 bg-gray-50/50 dark:bg-gray-800/40 hover:bg-gray-50 dark:hover:bg-gray-750 transition-colors">
     <div className="flex items-center gap-4 flex-1">
-      <div className="h-12 w-12 rounded-lg overflow-hidden bg-white border border-gray-100 shadow-sm">
-        <div className="w-full h-full flex items-center justify-center bg-gray-50 text-gray-400 font-bold uppercase text-lg">
+      <div className="h-12 w-12 rounded-lg overflow-hidden bg-white dark:bg-gray-700 border border-gray-100 dark:border-gray-600 shadow-sm">
+        <div className="w-full h-full flex items-center justify-center bg-gray-50 dark:bg-gray-700 text-gray-400 dark:text-gray-300 font-bold uppercase text-lg">
           {getInitials(name || role)}
         </div>
       </div>
       <div>
-        <h4 className="text-sm font-bold text-gray-900">{name || 'Not Provided'}</h4>
-        <p className="text-xs font-semibold text-indigo-600">{role}</p>
+        <h4 className="text-sm font-bold text-gray-900 dark:text-gray-100">{name || 'Not Provided'}</h4>
+        <p className="text-xs font-semibold text-indigo-600 dark:text-indigo-400">{role}</p>
       </div>
     </div>
     <div className="hidden sm:grid grid-cols-2 gap-x-12 flex-[2]">
       <div>
-        <p className="text-[10px] font-bold text-gray-400 uppercase mb-0.5">Phone</p>
-        <p className="text-xs font-semibold text-gray-900">{phone || '--'}</p>
+        <p className="text-[10px] font-bold text-gray-400 dark:text-gray-400 uppercase mb-0.5">Phone</p>
+        <p className="text-xs font-semibold text-gray-900 dark:text-gray-100">{phone || '--'}</p>
       </div>
       <div>
-        <p className="text-[10px] font-bold text-gray-400 uppercase mb-0.5">Email</p>
-        <p className="text-xs font-semibold text-gray-900 truncate max-w-[150px]">{email || '--'}</p>
+        <p className="text-[10px] font-bold text-gray-400 dark:text-gray-400 uppercase mb-0.5">Email</p>
+        <p className="text-xs font-semibold text-gray-900 dark:text-gray-100 truncate max-w-[150px]">{email || '--'}</p>
       </div>
     </div>
-    <button className="p-2 text-gray-400 hover:text-indigo-600 transition-colors" title="Reset Password">
+    <button className="p-2 text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors" title="Reset Password">
       <KeyRound size={16} />
     </button>
   </div>
 )
 
 const DocumentRow = ({ name, path }) => (
-  <div className="flex items-center justify-between p-3 rounded-lg border border-gray-50 bg-gray-50/30">
+  <div className="flex items-center justify-between p-3 rounded-lg border border-gray-100 dark:border-gray-700/60 bg-gray-50/50 dark:bg-gray-800/40">
     <div className="flex items-center gap-3">
-      <div className="p-2 bg-white rounded shadow-sm text-red-500">
+      <div className="p-2 bg-white dark:bg-gray-700 rounded shadow-sm text-red-500 dark:text-red-400">
         <ScrollText size={16} />
       </div>
-      <span className="text-xs font-bold text-gray-700 truncate max-w-[150px]">{name}</span>
+      <span className="text-xs font-bold text-gray-700 dark:text-gray-200 truncate max-w-[150px]">{name}</span>
     </div>
-    <a href={getFileUrl(path)} target="_blank" rel="noreferrer" className="p-2 rounded bg-indigo-900 text-white hover:bg-indigo-800 shadow-sm transition-colors">
+    <a href={getFileUrl(path)} target="_blank" rel="noreferrer" className="p-2 rounded bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm transition-colors">
       <FileDown size={14} />
     </a>
   </div>
@@ -685,12 +697,12 @@ const DocumentRow = ({ name, path }) => (
 
 const AddressRow = ({ icon: Icon, label, value }) => (
   <div className="flex items-start gap-4">
-    <div className="h-10 w-10 rounded-full bg-gray-50 flex items-center justify-center text-gray-400 shrink-0 border border-gray-100">
+    <div className="h-10 w-10 rounded-full bg-gray-50 dark:bg-gray-800 flex items-center justify-center text-gray-400 dark:text-gray-300 shrink-0 border border-gray-100 dark:border-gray-700">
       <Icon size={16} />
     </div>
     <div className="space-y-1">
-      <p className="text-xs font-bold text-gray-900">{label}</p>
-      <p className="text-xs font-medium text-gray-500 leading-relaxed">{value}</p>
+      <p className="text-xs font-bold text-gray-900 dark:text-gray-100">{label}</p>
+      <p className="text-xs font-medium text-gray-500 dark:text-gray-400 leading-relaxed">{value}</p>
     </div>
   </div>
 )
@@ -709,26 +721,26 @@ const TabAttendance = ({ enrollmentId }) => {
   }, [year, month, enrollmentId, fetchStudentAttendance])
 
   return (
-    <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-6 space-y-6">
+    <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm p-6 space-y-6">
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {[
-          { label: 'Present', value: studentSummary?.presentCount || 0, color: 'text-green-600', bg: 'bg-green-50' },
-          { label: 'Absent', value: studentSummary?.absentCount || 0, color: 'text-red-600', bg: 'bg-red-50' },
-          { label: 'Late', value: studentSummary?.lateCount || 0, color: 'text-amber-600', bg: 'bg-amber-50' },
-          { label: 'Percentage', value: studentSummary?.percentage != null ? `${studentSummary.percentage}%` : '—', color: 'text-indigo-600', bg: 'bg-indigo-50' },
+          { label: 'Present', value: studentSummary?.presentCount || 0, color: 'text-emerald-600 dark:text-emerald-400', bg: 'bg-emerald-50 dark:bg-emerald-950/40' },
+          { label: 'Absent', value: studentSummary?.absentCount || 0, color: 'text-red-600 dark:text-red-400', bg: 'bg-red-50 dark:bg-red-950/40' },
+          { label: 'Late', value: studentSummary?.lateCount || 0, color: 'text-amber-600 dark:text-amber-400', bg: 'bg-amber-50 dark:bg-amber-950/40' },
+          { label: 'Percentage', value: studentSummary?.percentage != null ? `${studentSummary.percentage}%` : '—', color: 'text-indigo-600 dark:text-indigo-400', bg: 'bg-indigo-50 dark:bg-indigo-950/40' },
         ].map(s => (
-          <div key={s.label} className={`${s.bg} p-4 rounded-xl border-b-4 border-black border-opacity-5`}>
-            <p className="text-[10px] font-black uppercase text-gray-500 tracking-widest mb-1">{s.label}</p>
+          <div key={s.label} className={`${s.bg} p-4 rounded-xl border border-gray-100 dark:border-gray-700/60`}>
+            <p className="text-[10px] font-black uppercase text-gray-500 dark:text-gray-400 tracking-widest mb-1">{s.label}</p>
             <p className={`text-2xl font-black ${s.color}`}>{s.value}</p>
           </div>
         ))}
       </div>
       
-      <div className="border border-gray-100 rounded-xl p-4 bg-gray-50/30">
+      <div className="border border-gray-100 dark:border-gray-700 rounded-xl p-4 bg-gray-50/50 dark:bg-gray-900/30">
         <div className="flex items-center justify-between mb-6">
-          <button onClick={() => month === 0 ? (setMonth(11), setYear(y => y - 1)) : setMonth(m => m - 1)} className="p-2 hover:bg-white rounded-lg transition-colors border shadow-sm"><ChevronLeft size={16} /></button>
-          <h3 className="text-sm font-bold uppercase tracking-[0.2em] text-gray-500">{MONTHS[month]} {year}</h3>
-          <button onClick={() => month === 11 ? (setMonth(0), setYear(y => y + 1)) : setMonth(m => m + 1)} className="p-2 hover:bg-white rounded-lg transition-colors border shadow-sm"><ChevronRIcon size={16} /></button>
+          <button onClick={() => month === 0 ? (setMonth(11), setYear(y => y - 1)) : setMonth(m => m - 1)} className="p-2 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg transition-colors border border-gray-200 dark:border-gray-700 shadow-sm"><ChevronLeft size={16} /></button>
+          <h3 className="text-sm font-bold uppercase tracking-[0.2em] text-gray-600 dark:text-gray-300">{MONTHS[month]} {year}</h3>
+          <button onClick={() => month === 11 ? (setMonth(0), setYear(y => y + 1)) : setMonth(m => m + 1)} className="p-2 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg transition-colors border border-gray-200 dark:border-gray-700 shadow-sm"><ChevronRIcon size={16} /></button>
         </div>
         <AttendanceCalendar year={year} month={month} records={studentRecords} />
       </div>
@@ -739,17 +751,17 @@ const TabAttendance = ({ enrollmentId }) => {
 const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December']
 
 const CredentialRow = ({ icon: Icon, label, value, onCopy }) => (
-  <div className="flex items-center justify-between gap-3 rounded-xl p-3 border border-gray-100 bg-gray-50/50">
+  <div className="flex items-center justify-between gap-3 rounded-xl p-3 border border-gray-100 dark:border-gray-700/60 bg-gray-50/50 dark:bg-gray-800/40">
     <div className="flex items-center gap-3 min-w-0">
-      <div className="flex h-10 w-10 items-center justify-center rounded-xl shrink-0 bg-white shadow-sm text-indigo-600">
+      <div className="flex h-10 w-10 items-center justify-center rounded-xl shrink-0 bg-white dark:bg-gray-700 shadow-sm text-indigo-600 dark:text-indigo-400">
         <Icon size={16} />
       </div>
       <div className="min-w-0 text-left">
-        <p className="text-[10px] font-bold uppercase text-gray-400 mb-0.5">{label}</p>
-        <p className="text-sm font-semibold text-gray-900 truncate">{value || '--'}</p>
+        <p className="text-[10px] font-bold uppercase text-gray-400 dark:text-gray-400 mb-0.5">{label}</p>
+        <p className="text-sm font-semibold text-gray-900 dark:text-gray-100 truncate">{value || '--'}</p>
       </div>
     </div>
-    <button onClick={() => onCopy(value)} className="p-2 text-gray-400 hover:text-indigo-600"><Copy size={14} /></button>
+    <button onClick={() => onCopy(value)} className="p-2 text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400"><Copy size={14} /></button>
   </div>
 )
 

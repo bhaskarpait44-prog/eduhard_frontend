@@ -293,12 +293,12 @@ const EditStudentPage = () => {
       <form onSubmit={handleSubmit(onSave)} className="space-y-6">
         
         {/* Login & Access Details */}
-        <div className="bg-indigo-50 border border-indigo-100 rounded-2xl p-6 space-y-5 shadow-sm">
+        <div className="bg-indigo-50 dark:bg-indigo-950/30 border border-indigo-100 dark:border-indigo-900/40 rounded-2xl p-6 space-y-5 shadow-sm">
           <SectionHeading title="Login & Access Details" subtitle="Credentials for student and parent portals" />
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="p-3 bg-white rounded-xl border border-indigo-200">
-               <p className="text-[10px] font-black uppercase text-indigo-400 mb-1">Student Portal ID</p>
-               <p className="text-sm font-bold text-indigo-900">{student?.admission_no || '--'}</p>
+            <div className="p-3 bg-white dark:bg-gray-800 rounded-xl border border-indigo-200 dark:border-indigo-800">
+               <p className="text-[10px] font-black uppercase text-indigo-500 dark:text-indigo-400 mb-1">Student Portal ID</p>
+               <p className="text-sm font-bold text-indigo-900 dark:text-indigo-200">{student?.admission_no || '--'}</p>
             </div>
             <Input 
               label="Student Login Email (Optional)" 
@@ -317,7 +317,7 @@ const EditStudentPage = () => {
               {...register('parent_email')} 
             />
           </div>
-          <div className="flex items-center gap-2 p-3 bg-white/50 rounded-xl text-[11px] text-indigo-700 font-medium">
+          <div className="flex items-center gap-2 p-3 bg-white/50 dark:bg-gray-800/50 rounded-xl text-[11px] text-indigo-700 dark:text-indigo-300 font-medium">
              <KeyRound size={14} />
              <span>Passwords can be reset from the student profile page. Admission number acts as the primary login ID for students.</span>
           </div>

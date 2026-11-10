@@ -75,28 +75,28 @@ const mobileTabs = [
   { label: 'Fees', icon: CreditCard, path: ROUTES.STUDENT_FEES },
 ]
 
-const studentThemeVars = {
+const getStudentThemeVars = (isDark) => ({
   '--color-brand': '#4f46e5',
   '--color-brand-light': '#6366f1',
   '--color-brand-dark': '#3730a3',
-  '--color-bg': '#f8fafc',
-  '--color-surface': '#ffffff',
-  '--color-surface-raised': '#f1f5f9',
-  '--color-border': '#e2e8f0',
-  '--color-text-primary': '#0f172a',
-  '--color-text-secondary': '#475569',
-  '--color-text-muted': '#94a3b8',
-  '--color-sidebar-bg': '#ffffff',
-  '--color-sidebar-text': '#1e293b',
-  '--color-sidebar-muted': '#64748b',
+  '--color-bg': isDark ? '#0f172a' : '#f8fafc',
+  '--color-surface': isDark ? '#1e293b' : '#ffffff',
+  '--color-surface-raised': isDark ? '#334155' : '#f1f5f9',
+  '--color-border': isDark ? '#334155' : '#e2e8f0',
+  '--color-text-primary': isDark ? '#f8fafc' : '#0f172a',
+  '--color-text-secondary': isDark ? '#cbd5e1' : '#475569',
+  '--color-text-muted': isDark ? '#64748b' : '#94a3b8',
+  '--color-sidebar-bg': isDark ? '#0f172a' : '#ffffff',
+  '--color-sidebar-text': isDark ? '#f8fafc' : '#1e293b',
+  '--color-sidebar-muted': isDark ? '#94a3b8' : '#64748b',
   '--color-sidebar-active': '#4f46e5',
-  '--color-sidebar-hover': '#f1f5f9',
-  '--color-sidebar-border': '#e2e8f0',
-  '--color-sidebar-card': '#ffffff',
-  '--student-accent': '#4f46e5',
-  '--student-accent-soft': 'rgba(79, 70, 229, 0.08)',
-  '--student-tab-bg': 'rgba(255, 255, 255, 0.8)',
-}
+  '--color-sidebar-hover': isDark ? '#1e293b' : '#f1f5f9',
+  '--color-sidebar-border': isDark ? '#334155' : '#e2e8f0',
+  '--color-sidebar-card': isDark ? '#1e293b' : '#ffffff',
+  '--student-accent': isDark ? '#6366f1' : '#4f46e5',
+  '--student-accent-soft': isDark ? 'rgba(99, 102, 241, 0.15)' : 'rgba(79, 70, 229, 0.08)',
+  '--student-tab-bg': isDark ? 'rgba(15, 23, 42, 0.85)' : 'rgba(255, 255, 255, 0.85)',
+})
 
 const StudentLayout = () => {
   const location = useLocation()
@@ -106,6 +106,25 @@ const StudentLayout = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [isOffline, setIsOffline] = useState(typeof navigator !== 'undefined' ? !navigator.onLine : false)
   const [unreadNotices, setUnreadNotices] = useState(0)
+
+  const [isDark, setIsDark] = useState(() => {
+    if (typeof document !== 'undefined') {
+      return document.documentElement.classList.contains('dark')
+    }
+    return false
+  })
+
+  useEffect(() => {
+    const checkDark = () => {
+      setIsDark(document.documentElement.classList.contains('dark'))
+    }
+    checkDark()
+    const observer = new MutationObserver(checkDark)
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] })
+    return () => observer.disconnect()
+  }, [theme])
+
+  const dynamicThemeVars = useMemo(() => getStudentThemeVars(isDark), [isDark])
 
   const [prevPathname, setPrevPathname] = useState(location.pathname)
   if (location.pathname !== prevPathname) {
@@ -168,7 +187,7 @@ const StudentLayout = () => {
   return (
     <div
       className="min-h-screen"
-      style={studentThemeVars}
+      style={dynamicThemeVars}
     >
       <div className="dark:[--color-bg:#0f172a] dark:[--color-surface:#1e293b] dark:[--color-surface-raised:#334155] dark:[--color-border:#334155] dark:[--color-text-primary:#f8fafc] dark:[--color-text-secondary:#cbd5e1] dark:[--color-text-muted:#64748b] dark:[--color-sidebar-bg:#0f172a] dark:[--color-sidebar-text:#f8fafc] dark:[--color-sidebar-muted:#94a3b8] dark:[--color-sidebar-hover:#1e293b] dark:[--color-sidebar-border:#334155] dark:[--color-sidebar-card:#1e293b] dark:[--student-tab-bg:rgba(15,23,42,0.8)] dark:[--student-accent-soft:rgba(99,102,241,0.15)] dark:[--student-accent:#6366f1] min-h-screen bg-[var(--color-bg)] text-[var(--color-text-primary)] transition-colors duration-300">
 
