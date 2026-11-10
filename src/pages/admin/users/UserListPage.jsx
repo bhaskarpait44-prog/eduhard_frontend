@@ -388,7 +388,7 @@ const UserListPage = () => {
         <div className="flex flex-wrap gap-2">
           <button
             onClick={() => navigate(roleFilter ? `${ROUTES.USER_IMPORT}?role=${roleFilter}` : ROUTES.USER_IMPORT)}
-            className="flex items-center gap-2 px-4 py-2.5 text-sm font-medium rounded-xl hover:bg-gray-50 transition-colors"
+            className="flex items-center gap-2 px-4 py-2.5 text-sm font-medium rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
             style={{ backgroundColor: 'var(--color-surface)', color: 'var(--color-text-primary)', border: '1px solid var(--color-border)' }}
           >
             <Upload size={15} />
@@ -782,7 +782,7 @@ const UserListPage = () => {
           <div className="flex gap-3 w-full">
             <button
               onClick={() => setUserToDelete(null)}
-              className="flex-1 px-4 py-2.5 text-sm font-medium rounded-xl border border-gray-200 text-gray-500 hover:bg-gray-50 transition-colors"
+              className="flex-1 px-4 py-2.5 text-sm font-medium rounded-xl border border-gray-200 dark:border-gray-700 text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
             >
               Cancel
             </button>

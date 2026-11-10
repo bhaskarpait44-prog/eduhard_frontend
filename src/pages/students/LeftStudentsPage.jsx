@@ -156,19 +156,19 @@ export default function LeftStudentsPage() {
       {summary && (
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {[
-            { label: 'Active Students', value: summary.total_active, icon: Users, color: '#16a34a', bg: '#f0fdf4' },
-            { label: 'Left This Session', value: summary.left_this_session, icon: LogOut, color: '#dc2626', bg: '#fef2f2' },
-            { label: 'Graduated', value: summary.graduated_this_session, icon: GraduationCap, color: '#2563eb', bg: '#eff6ff' },
-            { label: 'Re-admissions', value: summary.readmissions_this_session, icon: ArrowRightLeft, color: '#9333ea', bg: '#f5f3ff' },
+            { label: 'Active Students', value: summary.total_active, icon: Users, color: '#16a34a', bg: 'rgba(22, 163, 74, 0.1)' },
+            { label: 'Left This Session', value: summary.left_this_session, icon: LogOut, color: '#dc2626', bg: 'rgba(220, 38, 38, 0.1)' },
+            { label: 'Graduated', value: summary.graduated_this_session, icon: GraduationCap, color: '#2563eb', bg: 'rgba(37, 99, 235, 0.1)' },
+            { label: 'Re-admissions', value: summary.readmissions_this_session, icon: ArrowRightLeft, color: '#9333ea', bg: 'rgba(147, 51, 234, 0.1)' },
           ].map((stat, i) => (
-            <div key={i} className="p-4 rounded-2xl bg-white border border-gray-100 shadow-sm">
+            <div key={i} className="p-4 rounded-2xl bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 shadow-sm">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style={{ backgroundColor: stat.bg, color: stat.color }}>
                   <stat.icon size={20} />
                 </div>
                 <div>
-                  <p className="text-2xl font-bold text-gray-900">{stat.value}</p>
-                  <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">{stat.label}</p>
+                  <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">{stat.value}</p>
+                  <p className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider">{stat.label}</p>
                 </div>
               </div>
             </div>
@@ -259,7 +259,7 @@ export default function LeftStudentsPage() {
                   </td>
                 </tr>
               ) : students.map((student) => (
-                <tr key={student.id} className="hover:bg-gray-50/50 transition-colors" style={{ borderTop: '1px solid var(--color-border)' }}>
+                <tr key={student.id} className="hover:bg-gray-50/50 dark:hover:bg-gray-750/50 transition-colors" style={{ borderTop: '1px solid var(--color-border)' }}>
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-3">
                       <div className="w-9 h-9 rounded-full bg-slate-100 flex items-center justify-center overflow-hidden border border-slate-200">
@@ -357,7 +357,7 @@ export default function LeftStudentsPage() {
         {selectedTcStudent && (
           <div className="p-4 flex flex-col items-center">
             <p className="text-sm text-gray-500 mb-6">Preview and download the Transfer Certificate for {selectedTcStudent.first_name} {selectedTcStudent.last_name}.</p>
-            <div className="w-full bg-gray-50 p-6 rounded-2xl border border-gray-100 flex justify-center">
+            <div className="w-full bg-gray-50 dark:bg-gray-900/40 p-6 rounded-2xl border border-gray-100 dark:border-gray-700 flex justify-center">
                <TransferCertificateDownload data={selectedTcStudent} />
             </div>
             <div className="mt-8 w-full flex justify-end">

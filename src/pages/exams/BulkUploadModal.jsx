@@ -77,11 +77,11 @@ const BulkUploadModal = ({ open, onClose, examId, subjects = [] }) => {
                 placeholder="Choose a subject..."
               />
 
-              <div className="p-4 rounded-xl border border-dashed border-gray-300 bg-gray-50 flex flex-col items-center gap-3">
-                <FileSpreadsheet size={32} className="text-gray-400" />
+              <div className="p-4 rounded-xl border border-dashed border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/40 flex flex-col items-center gap-3">
+                <FileSpreadsheet size={32} className="text-gray-400 dark:text-gray-500" />
                 <div className="text-center">
-                  <p className="text-sm font-medium text-gray-700">Step 1: Get the template</p>
-                  <p className="text-xs text-gray-500 mt-1">Download a pre-filled Excel sheet with student names.</p>
+                  <p className="text-sm font-medium text-gray-700 dark:text-gray-200">Step 1: Get the template</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Download a pre-filled Excel sheet with student names.</p>
                 </div>
                 <Button 
                   variant="outline" 

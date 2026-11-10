@@ -288,8 +288,8 @@ const LoginPage = () => {
                   />
                 )}
                 {qrStatus === 'expired' && (
-                  <div className="absolute inset-0 bg-white/95 flex flex-col items-center justify-center p-4 text-center">
-                    <p className="text-sm font-semibold text-gray-900 mb-2">QR Code Expired</p>
+                  <div className="absolute inset-0 bg-white/95 dark:bg-gray-800/95 flex flex-col items-center justify-center p-4 text-center">
+                    <p className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-2">QR Code Expired</p>
                     <button
                       onClick={handleStartQrLogin}
                       className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 text-white rounded-lg text-xs font-semibold hover:bg-blue-700 transition-colors"

@@ -22,22 +22,22 @@ export default function ParentFees() {
     <div className="max-w-6xl mx-auto space-y-8 pb-10">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div className="flex items-center gap-4">
-          <div className="p-3 bg-blue-50 rounded-2xl">
-            <Wallet className="text-blue-600" size={24} />
+          <div className="p-3 bg-blue-50 dark:bg-blue-950/40 rounded-2xl">
+            <Wallet className="text-blue-600 dark:text-blue-400" size={24} />
           </div>
           <div>
-            <h1 className="text-xl font-black text-gray-900 tracking-tight">Fees & Ledger</h1>
-            <p className="text-sm font-medium text-gray-500">View invoices and payment history</p>
+            <h1 className="text-xl font-black text-gray-900 dark:text-white tracking-tight">Fees & Ledger</h1>
+            <p className="text-sm font-medium text-gray-500 dark:text-gray-400">View invoices and payment history</p>
           </div>
         </div>
         <WardSelector />
       </div>
 
-      <div className="bg-white rounded-[32px] border border-gray-100 overflow-hidden shadow-sm">
+      <div className="bg-white dark:bg-gray-800 rounded-[32px] border border-gray-100 dark:border-gray-700 overflow-hidden shadow-sm">
         {isDetailsLoading ? (
           <div className="flex flex-col items-center justify-center p-20">
-            <div className="w-10 h-10 rounded-full border-4 border-blue-100 border-t-blue-600 animate-spin mb-4" />
-            <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">Loading Ledger...</p>
+            <div className="w-10 h-10 rounded-full border-4 border-blue-100 dark:border-blue-900 border-t-blue-600 animate-spin mb-4" />
+            <p className="text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest">Loading Ledger...</p>
           </div>
         ) : fees.length === 0 ? (
           <div className="p-12">
@@ -46,23 +46,23 @@ export default function ParentFees() {
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-left">
-              <thead className="bg-gray-50/50 border-b border-gray-50">
+              <thead className="bg-gray-50/50 dark:bg-gray-900/40 border-b border-gray-50 dark:border-gray-700">
                 <tr>
-                  <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-gray-400">Fee Description</th>
-                  <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-gray-400">Due Date</th>
-                  <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-gray-400 text-right">Amount</th>
-                  <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-gray-400 text-center">Status</th>
+                  <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-gray-400 dark:text-gray-500">Fee Description</th>
+                  <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-gray-400 dark:text-gray-500">Due Date</th>
+                  <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-gray-400 dark:text-gray-500 text-right">Amount</th>
+                  <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-gray-400 dark:text-gray-500 text-center">Status</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-50">
+              <tbody className="divide-y divide-gray-50 dark:divide-gray-700">
                 {fees.map((fee) => (
-                  <tr key={fee.id} className="hover:bg-gray-50/30 transition-colors">
+                  <tr key={fee.id} className="hover:bg-gray-50/30 dark:hover:bg-gray-750 transition-colors">
                     <td className="px-8 py-5">
-                      <p className="text-sm font-bold text-gray-900">{fee.fee_name}</p>
-                      <p className="text-[10px] text-gray-400 font-mono mt-0.5">{fee.invoice_no}</p>
+                      <p className="text-sm font-bold text-gray-900 dark:text-gray-100">{fee.fee_name}</p>
+                      <p className="text-[10px] text-gray-400 dark:text-gray-500 font-mono mt-0.5">{fee.invoice_no}</p>
                     </td>
-                    <td className="px-8 py-5 text-sm font-medium text-gray-500">{formatDate(fee.due_date)}</td>
-                    <td className="px-8 py-5 text-sm font-black text-right">{formatCurrency(fee.amount_due)}</td>
+                    <td className="px-8 py-5 text-sm font-medium text-gray-500 dark:text-gray-400">{formatDate(fee.due_date)}</td>
+                    <td className="px-8 py-5 text-sm font-black text-right text-gray-900 dark:text-gray-100">{formatCurrency(fee.amount_due)}</td>
                     <td className="px-8 py-5 text-center">
                       <Badge variant={fee.status === 'paid' ? 'green' : fee.status === 'overdue' ? 'red' : 'amber'} className="rounded-lg">
                         {fee.status}

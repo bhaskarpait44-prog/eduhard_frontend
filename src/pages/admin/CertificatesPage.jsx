@@ -178,22 +178,22 @@ const getCertificateComponent = (type, data = {}, settings = {}) => {
 
 /* ─── Sub-components ─────────────────────────────────────────────────────── */
 const PreviewSkeleton = () => (
-  <div className="w-full h-full p-8 space-y-6 animate-pulse bg-white">
-    <div className="flex items-center gap-4 border-b pb-6 border-gray-100">
-      <div className="w-14 h-14 rounded-xl bg-gray-100" />
+  <div className="w-full h-full p-8 space-y-6 animate-pulse bg-white dark:bg-gray-800">
+    <div className="flex items-center gap-4 border-b pb-6 border-gray-100 dark:border-gray-700">
+      <div className="w-14 h-14 rounded-xl bg-gray-100 dark:bg-gray-700" />
       <div className="space-y-2 flex-1">
-        <div className="h-5 bg-gray-100 rounded w-1/3" />
-        <div className="h-3 bg-gray-50 rounded w-1/2" />
+        <div className="h-5 bg-gray-100 dark:bg-gray-700 rounded w-1/3" />
+        <div className="h-3 bg-gray-50 dark:bg-gray-700/60 rounded w-1/2" />
       </div>
     </div>
-    <div className="h-8 bg-gray-100 rounded w-1/2 mx-auto" />
+    <div className="h-8 bg-gray-100 dark:bg-gray-700 rounded w-1/2 mx-auto" />
     <div className="space-y-3 pt-2">
-      {[1,2,3].map(i => <div key={i} className="h-4 bg-gray-50 rounded" style={{ width: `${90 - i*10}%` }} />)}
+      {[1,2,3].map(i => <div key={i} className="h-4 bg-gray-50 dark:bg-gray-700/60 rounded" style={{ width: `${90 - i*10}%` }} />)}
     </div>
-    <div className="h-20 bg-gray-50 rounded-2xl w-full border border-gray-100" />
+    <div className="h-20 bg-gray-50 dark:bg-gray-700/40 rounded-2xl w-full border border-gray-100 dark:border-gray-700" />
     <div className="flex justify-between pt-8">
-      <div className="w-36 h-1 bg-gray-100 rounded" />
-      <div className="w-36 h-1 bg-gray-100 rounded" />
+      <div className="w-36 h-1 bg-gray-100 dark:bg-gray-700 rounded" />
+      <div className="w-36 h-1 bg-gray-100 dark:bg-gray-700 rounded" />
     </div>
   </div>
 )

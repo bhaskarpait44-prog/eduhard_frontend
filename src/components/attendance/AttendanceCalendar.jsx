@@ -4,12 +4,12 @@ const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
 
 const getStatusColor = (status) => {
   switch (status) {
-    case 'present': return 'bg-emerald-500 text-white shadow-emerald-200'
-    case 'absent':  return 'bg-red-500 text-white shadow-red-200'
-    case 'late':    return 'bg-amber-500 text-white shadow-amber-200'
-    case 'half_day': return 'bg-blue-500 text-white shadow-blue-200'
-    case 'holiday': return 'bg-gray-100 text-gray-400'
-    default:        return 'bg-white text-gray-400 border border-gray-100'
+    case 'present': return 'bg-emerald-500 text-white shadow-emerald-200 dark:shadow-none'
+    case 'absent':  return 'bg-red-500 text-white shadow-red-200 dark:shadow-none'
+    case 'late':    return 'bg-amber-500 text-white shadow-amber-200 dark:shadow-none'
+    case 'half_day': return 'bg-blue-500 text-white shadow-blue-200 dark:shadow-none'
+    case 'holiday': return 'bg-gray-100 dark:bg-gray-700 text-gray-400 dark:text-gray-400'
+    default:        return 'bg-white dark:bg-gray-800 text-gray-400 dark:text-gray-500 border border-gray-100 dark:border-gray-700'
   }
 }
 
@@ -30,7 +30,7 @@ export default function AttendanceCalendar({ year, month, records = [] }) {
     <div className="w-full">
       <div className="grid grid-cols-7 gap-1 mb-2">
         {DAYS.map(d => (
-          <div key={d} className="text-[10px] font-black text-gray-400 uppercase text-center py-2 tracking-widest">
+          <div key={d} className="text-[10px] font-black text-gray-400 dark:text-gray-500 uppercase text-center py-2 tracking-widest">
             {d}
           </div>
         ))}
@@ -54,12 +54,12 @@ export default function AttendanceCalendar({ year, month, records = [] }) {
         })}
       </div>
 
-      <div className="mt-6 flex flex-wrap gap-x-4 gap-y-2 justify-center border-t border-gray-100 pt-4 px-2">
+      <div className="mt-6 flex flex-wrap gap-x-4 gap-y-2 justify-center border-t border-gray-100 dark:border-gray-700 pt-4 px-2">
         <LegendItem color="bg-emerald-500" label="Pres" />
         <LegendItem color="bg-red-500" label="Abs" />
         <LegendItem color="bg-amber-500" label="Late" />
         <LegendItem color="bg-blue-500" label="Half" />
-        <LegendItem color="bg-gray-100" label="None" />
+        <LegendItem color="bg-gray-100 dark:bg-gray-700" label="None" />
       </div>
     </div>
   )
@@ -68,6 +68,6 @@ export default function AttendanceCalendar({ year, month, records = [] }) {
 const LegendItem = ({ color, label }) => (
   <div className="flex items-center gap-1.5">
     <div className={`h-2.5 w-2.5 rounded-full ${color}`} />
-    <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">{label}</span>
+    <span className="text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">{label}</span>
   </div>
 )

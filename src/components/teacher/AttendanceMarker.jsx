@@ -478,7 +478,7 @@ const AttendanceMarker = ({
                 onChange={(e) => setReason(e.target.value)}
                 rows={3}
                 placeholder="Explain why you are editing or marking attendance for a past date..."
-                className="w-full rounded-xl px-4 py-3 text-sm outline-none border border-orange-200 focus:ring-2 focus:ring-orange-200 transition-all bg-white shadow-inner font-medium"
+                className="w-full rounded-xl px-4 py-3 text-sm outline-none border border-orange-200 dark:border-orange-800 focus:ring-2 focus:ring-orange-200 dark:focus:ring-orange-800 transition-all bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 shadow-inner font-medium"
               />
               <div className="text-[10px] font-semibold text-orange-700 flex justify-between px-1">
                 <span>Minimum 10 characters required</span>
@@ -506,14 +506,14 @@ const Counter = ({ label, count, color, className }) => (
 // eslint-disable-next-line no-unused-vars
 const Banner = ({ tone, icon: Icon, title, message }) => {
   const styles = {
-    warning: 'bg-orange-50 border-orange-200 text-orange-800',
-    error: 'bg-rose-50 border-rose-200 text-rose-800',
-    success: 'bg-emerald-50 border-emerald-200 text-emerald-800',
+    warning: 'bg-orange-50 dark:bg-orange-950/30 border-orange-200 dark:border-orange-900/50 text-orange-800 dark:text-orange-200',
+    error: 'bg-rose-50 dark:bg-rose-950/30 border-rose-200 dark:border-rose-900/50 text-rose-800 dark:text-rose-200',
+    success: 'bg-emerald-50 dark:bg-emerald-950/30 border-emerald-200 dark:border-emerald-900/50 text-emerald-800 dark:text-emerald-200',
   }
   const iconStyles = {
-    warning: 'bg-white text-orange-600 shadow-sm border border-orange-100',
-    error: 'bg-white text-rose-600 shadow-sm border border-rose-100',
-    success: 'bg-white text-emerald-600 shadow-sm border border-emerald-100',
+    warning: 'bg-white dark:bg-gray-800 text-orange-600 dark:text-orange-400 shadow-sm border border-orange-100 dark:border-orange-900/50',
+    error: 'bg-white dark:bg-gray-800 text-rose-600 dark:text-rose-400 shadow-sm border border-rose-100 dark:border-rose-900/50',
+    success: 'bg-white dark:bg-gray-800 text-emerald-600 dark:text-emerald-400 shadow-sm border border-emerald-100 dark:border-emerald-900/50',
   }
   return (
     <div className={cn("rounded-[var(--radius-lg)] border p-5 flex items-start gap-5 shadow-sm", styles[tone])}>

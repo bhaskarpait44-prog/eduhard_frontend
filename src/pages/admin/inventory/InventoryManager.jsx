@@ -458,12 +458,12 @@ export default function InventoryManager() {
                 <div className="flex gap-2">
                   <button disabled={txPage === 1}
                     onClick={() => setTxPage(p => p - 1)}
-                    className="p-1.5 rounded-lg hover:bg-gray-100 disabled:opacity-30">
+                    className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-30">
                     <ChevronLeft size={16} />
                   </button>
                   <button disabled={txPage * TX_PAGE_SIZE >= txTotal}
                     onClick={() => setTxPage(p => p + 1)}
-                    className="p-1.5 rounded-lg hover:bg-gray-100 disabled:opacity-30">
+                    className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-30">
                     <ChevronRight size={16} />
                   </button>
                 </div>

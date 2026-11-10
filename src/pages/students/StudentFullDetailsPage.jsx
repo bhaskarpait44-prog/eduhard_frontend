@@ -90,7 +90,7 @@ const StudentFullDetailsPage = () => {
     }
   }, [toastError])
 
-  if (loading || !student) return <div className="max-w-5xl mx-auto p-6 animate-pulse"><div className="h-8 w-48 bg-gray-200 rounded mb-6" /><div className="space-y-6"><div className="h-64 bg-gray-100 rounded-2xl" /><div className="h-64 bg-gray-100 rounded-2xl" /></div></div>
+  if (loading || !student) return <div className="max-w-5xl mx-auto p-6 animate-pulse"><div className="h-8 w-48 bg-gray-200 dark:bg-gray-700 rounded mb-6" /><div className="space-y-6"><div className="h-64 bg-gray-100 dark:bg-gray-800 rounded-2xl" /><div className="h-64 bg-gray-100 dark:bg-gray-800 rounded-2xl" /></div></div>
 
   const fullName = `${student.first_name} ${student.last_name}`.trim()
   const enrollment = student.current_enrollment
@@ -187,7 +187,7 @@ const StudentFullDetailsPage = () => {
             <div className="space-y-6">
               <h4 className="text-xs font-black uppercase tracking-widest text-amber-600">Permanent Address</h4>
               {student.is_permanent_same ? (
-                <div className="h-32 flex items-center justify-center border-2 border-dashed border-border rounded-xl bg-gray-50">
+                <div className="h-32 flex items-center justify-center border-2 border-dashed border-border rounded-xl bg-gray-50 dark:bg-gray-900/40">
                    <p className="text-xs font-bold text-text-muted uppercase tracking-widest">Same as Current Address</p>
                 </div>
               ) : (
@@ -248,7 +248,7 @@ const StudentFullDetailsPage = () => {
             {/* Guardian */}
             {(student.guardian_name || student.guardian_phone || student.guardian_email) && (
               <div className="space-y-4">
-                <div className="inline-flex items-center gap-2 px-3 py-1 bg-gray-100 rounded-lg text-gray-700 font-bold text-[10px] uppercase tracking-wider">Guardian Details</div>
+                <div className="inline-flex items-center gap-2 px-3 py-1 bg-gray-100 dark:bg-gray-800 rounded-lg text-gray-700 dark:text-gray-300 font-bold text-[10px] uppercase tracking-wider">Guardian Details</div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
                   <DataField label="Guardian Name" value={student.guardian_name} />
                   <DataField label="Relation" value={student.guardian_relation} />
@@ -270,20 +270,20 @@ const StudentFullDetailsPage = () => {
             <div className="overflow-x-auto">
               <table className="w-full text-left text-sm">
                 <thead>
-                  <tr className="bg-gray-50 text-[10px] font-black uppercase tracking-widest text-gray-400 border-b border-gray-100">
+                  <tr className="bg-gray-50 dark:bg-gray-900/60 text-[10px] font-black uppercase tracking-widest text-gray-400 dark:text-gray-500 border-b border-gray-100 dark:border-gray-800">
                     <th className="px-4 py-3">School & Location</th>
                     <th className="px-4 py-3">Class</th>
                     <th className="px-4 py-3 text-center">Year</th>
                     <th className="px-4 py-3 text-right">Percentage/Grade</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-50">
+                <tbody className="divide-y divide-gray-50 dark:divide-gray-800">
                   {student.previous_academic_records.map((rec, i) => (
-                    <tr key={i} className="hover:bg-gray-50/50 transition-colors">
-                      <td className="px-4 py-3 font-bold text-gray-700">{rec.school_name}{rec.location ? `, ${rec.location}` : ''}</td>
-                      <td className="px-4 py-3 text-gray-500 font-medium">{rec.class_name}</td>
-                      <td className="px-4 py-3 text-center text-gray-500 font-medium">{rec.year_of_study || '—'}</td>
-                      <td className="px-4 py-3 text-right font-black text-indigo-600">{rec.percentage_grade || '—'}</td>
+                    <tr key={i} className="hover:bg-gray-50/50 dark:hover:bg-gray-750/50 transition-colors">
+                      <td className="px-4 py-3 font-bold text-gray-700 dark:text-gray-200">{rec.school_name}{rec.location ? `, ${rec.location}` : ''}</td>
+                      <td className="px-4 py-3 text-gray-500 dark:text-gray-400 font-medium">{rec.class_name}</td>
+                      <td className="px-4 py-3 text-center text-gray-500 dark:text-gray-400 font-medium">{rec.year_of_study || '—'}</td>
+                      <td className="px-4 py-3 text-right font-black text-indigo-600 dark:text-indigo-400">{rec.percentage_grade || '—'}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -298,9 +298,9 @@ const StudentFullDetailsPage = () => {
           {student.documents?.length > 0 ? (
              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
                 {student.documents.map(doc => (
-                  <div key={doc.id} className="p-3 rounded-xl border border-border bg-gray-50/50 flex items-center justify-between group hover:border-brand transition-colors">
+                  <div key={doc.id} className="p-3 rounded-xl border border-border bg-gray-50/50 dark:bg-gray-900/40 flex items-center justify-between group hover:border-brand transition-colors">
                     <div className="flex items-center gap-3">
-                      <div className="p-2 bg-white rounded-lg text-indigo-500 shadow-sm"><FileText size={16} /></div>
+                      <div className="p-2 bg-white dark:bg-gray-800 rounded-lg text-indigo-500 dark:text-indigo-400 shadow-sm"><FileText size={16} /></div>
                       <div className="min-w-0">
                         <p className="text-xs font-bold text-text-primary truncate max-w-[150px]">{doc.name}</p>
                         <p className="text-[9px] font-bold text-text-muted uppercase">{doc.document_type?.replace(/_/g, ' ')}</p>

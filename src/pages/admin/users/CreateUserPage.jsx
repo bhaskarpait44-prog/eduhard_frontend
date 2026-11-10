@@ -22,29 +22,33 @@ const ROLES = ['admin', 'teacher', 'accountant', 'student', 'librarian', 'staff'
 
 const Field = ({ label, error, children, required, hint, icon: Icon }) => (
   <div className="flex flex-col gap-1.5">
-    <label className="text-xs font-bold text-gray-700 uppercase tracking-wider flex items-center gap-2">
-      {Icon && <Icon size={13} className="text-gray-400" />}
+    <label className="text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider flex items-center gap-2">
+      {Icon && <Icon size={13} className="text-gray-400 dark:text-gray-500" />}
       {label}
       {required && <span className="text-red-500 ml-0.5">*</span>}
     </label>
     {children}
     {error && (
-      <p className="flex items-center gap-1 text-[11px] font-medium text-red-500 mt-0.5">
+      <p className="flex items-center gap-1 text-[11px] font-medium text-red-500 dark:text-red-400 mt-0.5">
         <AlertCircle size={11} />
         {error}
       </p>
     )}
-    {hint && !error && <p className="text-[11px] text-gray-400 font-medium italic">{hint}</p>}
+    {hint && !error && <p className="text-[11px] text-gray-400 dark:text-gray-500 font-medium italic">{hint}</p>}
   </div>
 )
 
 const FormSection = ({ title, icon: Icon, children, description }) => (
-  <div className="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden">
-    <div className="px-6 py-4 border-b border-gray-50 bg-gray-50/30 flex items-center gap-3">
-      {Icon && <div className="p-2 bg-white rounded-lg shadow-sm text-indigo-600"><Icon size={18} /></div>}
+  <div className="bg-white dark:bg-gray-800 rounded-3xl border border-gray-100 dark:border-gray-700 shadow-sm overflow-hidden">
+    <div className="px-6 py-4 border-b border-gray-100 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-900/40 flex items-center gap-3">
+      {Icon && (
+        <div className="p-2 bg-white dark:bg-gray-700 rounded-lg shadow-sm text-indigo-600 dark:text-indigo-400">
+          <Icon size={18} />
+        </div>
+      )}
       <div>
-        <h3 className="text-sm font-bold text-gray-900 uppercase tracking-wider">{title}</h3>
-        {description && <p className="text-[11px] text-gray-500">{description}</p>}
+        <h3 className="text-sm font-bold text-gray-900 dark:text-gray-100 uppercase tracking-wider">{title}</h3>
+        {description && <p className="text-[11px] text-gray-500 dark:text-gray-400">{description}</p>}
       </div>
     </div>
     <div className="p-6">
@@ -53,23 +57,23 @@ const FormSection = ({ title, icon: Icon, children, description }) => (
   </div>
 )
 
-const inputClassName = (error) => `w-full px-4 py-3 rounded-xl text-sm border outline-none transition-all bg-gray-50/50 text-gray-900 placeholder:text-gray-400/60 ${error ? 'border-red-300 ring-2 ring-red-50' : 'border-gray-100 focus:border-indigo-400 focus:bg-white focus:ring-4 focus:ring-indigo-50'}`
+const inputClassName = (error) => `w-full px-4 py-3 rounded-xl text-sm border outline-none transition-all bg-gray-50/50 dark:bg-gray-900/50 text-gray-900 dark:text-gray-100 placeholder:text-gray-400/60 dark:placeholder:text-gray-500 dark:[color-scheme:dark] ${error ? 'border-red-300 dark:border-red-500 ring-2 ring-red-50 dark:ring-red-950/40' : 'border-gray-200 dark:border-gray-700 focus:border-indigo-400 dark:focus:border-indigo-500 focus:bg-white dark:focus:bg-gray-900 focus:ring-4 focus:ring-indigo-50 dark:focus:ring-indigo-950/40'}`
 
 const CredentialRow = ({ icon: Icon, label, value, onCopy }) => (
-  <div className="flex items-center justify-between gap-3 rounded-2xl px-5 py-4 bg-gray-50 border border-gray-100">
+  <div className="flex items-center justify-between gap-3 rounded-2xl px-5 py-4 bg-gray-50 dark:bg-gray-900/50 border border-gray-100 dark:border-gray-700">
     <div className="flex items-center gap-4 min-w-0">
-      <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white shadow-sm text-indigo-600 border border-indigo-50">
+      <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white dark:bg-gray-800 shadow-sm text-indigo-600 dark:text-indigo-400 border border-indigo-50 dark:border-indigo-900/50">
         <Icon size={18} />
       </div>
       <div className="min-w-0">
-        <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-gray-400 mb-0.5">{label}</p>
-        <p className="truncate text-sm font-bold text-gray-900">{value || '--'}</p>
+        <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-gray-400 dark:text-gray-500 mb-0.5">{label}</p>
+        <p className="truncate text-sm font-bold text-gray-900 dark:text-gray-100">{value || '--'}</p>
       </div>
     </div>
     <button 
       type="button"
       onClick={() => onCopy(value)}
-      className="p-2.5 rounded-xl bg-white shadow-sm border border-gray-100 text-gray-400 hover:text-indigo-600 hover:border-indigo-200 transition-all"
+      className="p-2.5 rounded-xl bg-white dark:bg-gray-800 shadow-sm border border-gray-100 dark:border-gray-700 text-gray-400 dark:text-gray-500 hover:text-indigo-600 dark:hover:text-indigo-400 hover:border-indigo-200 dark:hover:border-indigo-800 transition-all"
     >
       <Copy size={16} />
     </button>
@@ -169,13 +173,13 @@ const CreateUserPage = () => {
         <div className="flex items-center gap-4">
           <button
             onClick={() => navigate(initialRole ? `${ROUTES.USER_MANAGE}?role=${initialRole}` : ROUTES.USERS)}
-            className="w-10 h-10 flex items-center justify-center rounded-xl bg-white border border-gray-100 shadow-sm text-gray-500 hover:text-indigo-600 hover:border-indigo-200 transition-all"
+            className="w-10 h-10 flex items-center justify-center rounded-xl bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 shadow-sm text-gray-500 dark:text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:border-indigo-200 dark:hover:border-indigo-800 transition-all"
           >
             <ArrowLeft size={18} />
           </button>
           <div>
-            <h1 className="text-2xl font-black text-gray-900 tracking-tight">Create New User</h1>
-            <p className="text-sm text-gray-500 font-medium">Add a new member to the school portal</p>
+            <h1 className="text-2xl font-black text-gray-900 dark:text-white tracking-tight">Create New User</h1>
+            <p className="text-sm text-gray-500 dark:text-gray-400 font-medium">Add a new member to the school portal</p>
           </div>
         </div>
       </div>
@@ -226,7 +230,7 @@ const CreateUserPage = () => {
                   <Input
                     {...register('joining_date')}
                     type="date"
-                    className="border border-gray-100 focus:border-indigo-400 focus:bg-white focus:ring-4 focus:ring-indigo-50 !bg-gray-50/50"
+                    className="border border-gray-200 dark:border-gray-700 focus:border-indigo-400 focus:bg-white dark:focus:bg-gray-900 focus:ring-4 focus:ring-indigo-50 !bg-gray-50/50 dark:!bg-gray-900/50"
                   />
                 </Field>
                 <Field label="Department" icon={Briefcase}>
@@ -245,16 +249,16 @@ const CreateUserPage = () => {
                 description={`Manage access for ${role} role`}
               >
                 <div className="space-y-6">
-                  <div className="p-4 rounded-2xl bg-indigo-50/50 border border-indigo-100/50">
+                  <div className="p-4 rounded-2xl bg-indigo-50/50 dark:bg-indigo-950/30 border border-indigo-100/50 dark:border-indigo-900/40">
                     <PermissionSelector selected={permissions} onChange={setPermissions} />
-                    <div className="mt-4 pt-4 border-t border-indigo-100/30 flex items-center justify-between">
-                      <p className="text-[11px] font-bold text-indigo-400 uppercase tracking-wider">
+                    <div className="mt-4 pt-4 border-t border-indigo-100/30 dark:border-indigo-900/40 flex items-center justify-between">
+                      <p className="text-[11px] font-bold text-indigo-400 dark:text-indigo-300 uppercase tracking-wider">
                         {permissions.length} Permissions active
                       </p>
                       <button 
                         type="button"
                         onClick={() => setPermissions(roleDefaults)}
-                        className="text-[11px] font-bold text-indigo-600 hover:underline uppercase tracking-wider"
+                        className="text-[11px] font-bold text-indigo-600 dark:text-indigo-400 hover:underline uppercase tracking-wider"
                       >
                         Reset to defaults ({roleDefaults.length})
                       </button>
@@ -268,13 +272,13 @@ const CreateUserPage = () => {
           <div className="space-y-6">
             <FormSection title="Account Setup" icon={KeyRound}>
               <div className="space-y-5">
-                <div className="flex items-start gap-3 p-4 rounded-2xl bg-gray-50 border border-gray-100 cursor-pointer group hover:bg-white hover:border-indigo-200 transition-all">
+                <div className="flex items-start gap-3 p-4 rounded-2xl bg-gray-50 dark:bg-gray-900/40 border border-gray-100 dark:border-gray-700 cursor-pointer group hover:bg-white dark:hover:bg-gray-800 hover:border-indigo-200 dark:hover:border-indigo-700 transition-all">
                   <div className="mt-0.5">
                     <input id="auto_pwd" type="checkbox" {...register('auto_password')} className="w-5 h-5 accent-indigo-600 cursor-pointer rounded-lg" />
                   </div>
-                  <label htmlFor="auto_pwd" className="text-sm font-semibold text-gray-700 cursor-pointer group-hover:text-indigo-600 transition-colors">
+                  <label htmlFor="auto_pwd" className="text-sm font-semibold text-gray-700 dark:text-gray-300 cursor-pointer group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
                     Auto-generate password
-                    <span className="block text-[11px] font-medium text-gray-400 mt-1 leading-relaxed">
+                    <span className="block text-[11px] font-medium text-gray-400 dark:text-gray-500 mt-1 leading-relaxed">
                       System will create a secure password and show it after creation
                     </span>
                   </label>
@@ -286,13 +290,13 @@ const CreateUserPage = () => {
                   </Field>
                 )}
 
-                <div className="flex items-start gap-3 p-4 rounded-2xl bg-gray-50 border border-gray-100 cursor-pointer group hover:bg-white hover:border-indigo-200 transition-all">
+                <div className="flex items-start gap-3 p-4 rounded-2xl bg-gray-50 dark:bg-gray-900/40 border border-gray-100 dark:border-gray-700 cursor-pointer group hover:bg-white dark:hover:bg-gray-800 hover:border-indigo-200 dark:hover:border-indigo-700 transition-all">
                   <div className="mt-0.5">
                     <input id="force_pwd" type="checkbox" {...register('force_password_change')} defaultChecked className="w-5 h-5 accent-indigo-600 cursor-pointer rounded-lg" />
                   </div>
-                  <label htmlFor="force_pwd" className="text-sm font-semibold text-gray-700 cursor-pointer group-hover:text-indigo-600 transition-colors">
+                  <label htmlFor="force_pwd" className="text-sm font-semibold text-gray-700 dark:text-gray-300 cursor-pointer group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
                     Require password change
-                    <span className="block text-[11px] font-medium text-gray-400 mt-1 leading-relaxed">
+                    <span className="block text-[11px] font-medium text-gray-400 dark:text-gray-500 mt-1 leading-relaxed">
                       User must change password on their first login
                     </span>
                   </label>
@@ -311,20 +315,20 @@ const CreateUserPage = () => {
           </div>
         </div>
 
-        <div className="fixed bottom-0 left-0 right-0 p-4 bg-white/80 backdrop-blur-md border-t border-gray-100 z-10">
+        <div className="fixed bottom-0 left-0 right-0 p-4 bg-white/80 dark:bg-gray-900/80 backdrop-blur-md border-t border-gray-100 dark:border-gray-800 z-10">
           <div className="max-w-5xl mx-auto flex items-center justify-end gap-4">
             <button
               type="button"
               onClick={() => navigate(initialRole ? `${ROUTES.USER_MANAGE}?role=${initialRole}` : ROUTES.USERS)}
               disabled={isSaving}
-              className="px-6 py-3 text-sm font-bold text-gray-500 hover:text-gray-900 transition-colors uppercase tracking-widest"
+              className="px-6 py-3 text-sm font-bold text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors uppercase tracking-widest"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={isSaving}
-              className="flex items-center gap-3 px-10 py-3 bg-indigo-600 text-white rounded-2xl text-sm font-bold shadow-xl shadow-indigo-100 hover:bg-indigo-700 disabled:opacity-50 transition-all uppercase tracking-widest"
+              className="flex items-center gap-3 px-10 py-3 bg-indigo-600 text-white rounded-2xl text-sm font-bold shadow-xl shadow-indigo-100 dark:shadow-none hover:bg-indigo-700 disabled:opacity-50 transition-all uppercase tracking-widest"
             >
               {isSaving ? (
                 <>
@@ -356,13 +360,13 @@ const CreateUserPage = () => {
         )}
       >
         <div className="space-y-6">
-          <div className="rounded-[32px] p-6 bg-emerald-50 border border-emerald-100 flex items-start gap-4">
-            <div className="w-12 h-12 rounded-2xl bg-white flex items-center justify-center text-emerald-600 shadow-sm shrink-0">
+          <div className="rounded-[32px] p-6 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-100 dark:border-emerald-900/50 flex items-start gap-4">
+            <div className="w-12 h-12 rounded-2xl bg-white dark:bg-gray-800 flex items-center justify-center text-emerald-600 dark:text-emerald-400 shadow-sm shrink-0">
               <ShieldCheck size={24} />
             </div>
             <div>
-              <p className="text-sm font-bold text-emerald-900">Success!</p>
-              <p className="mt-1 text-xs font-medium text-emerald-700 leading-relaxed">
+              <p className="text-sm font-bold text-emerald-900 dark:text-emerald-200">Success!</p>
+              <p className="mt-1 text-xs font-medium text-emerald-700 dark:text-emerald-300 leading-relaxed">
                 The account is now active. Please share these credentials securely with {createdAccount?.name}.
               </p>
             </div>

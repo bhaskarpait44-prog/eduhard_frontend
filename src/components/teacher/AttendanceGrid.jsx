@@ -109,7 +109,7 @@ const AttendanceGrid = ({
             <table className="w-full border-collapse">
               <thead>
                 <tr className="bg-surface-raised/30 border-b" style={{ borderColor: 'var(--color-border)' }}>
-                  <th className="sticky left-0 z-10 min-w-[220px] px-6 py-5 text-left text-[10px] font-bold uppercase tracking-[0.15em] text-text-muted shadow-[2px_0_10px_rgba(0,0,0,0.03)] backdrop-blur-md bg-white/95" style={{ backgroundColor: 'inherit' }}>
+                  <th className="sticky left-0 z-10 min-w-[220px] px-6 py-5 text-left text-[10px] font-bold uppercase tracking-[0.15em] text-text-muted shadow-[2px_0_10px_rgba(0,0,0,0.03)] backdrop-blur-md bg-surface/95" style={{ backgroundColor: 'inherit' }}>
                     Student Information
                   </th>
                   {days.map((day) => {
@@ -138,7 +138,7 @@ const AttendanceGrid = ({
 
                   return (
                     <tr key={student.enrollment_id} className="group hover:bg-surface-raised/40 transition-colors duration-200">
-                      <td className="sticky left-0 z-10 px-6 py-4 shadow-[2px_0_10px_rgba(0,0,0,0.03)] backdrop-blur-md bg-white/95" style={{ backgroundColor: 'inherit' }}>
+                      <td className="sticky left-0 z-10 px-6 py-4 shadow-[2px_0_10px_rgba(0,0,0,0.03)] backdrop-blur-md bg-surface/95" style={{ backgroundColor: 'inherit' }}>
                         <div className="flex flex-col min-w-0">
                           <p className="text-sm font-bold text-text-primary group-hover:text-primary transition-colors truncate uppercase tracking-tight leading-tight">
                             {student.student_name || `${student.first_name} ${student.last_name}`}
@@ -199,7 +199,7 @@ const AttendanceGrid = ({
 
                 {!!rows.length && (
                   <tr className="bg-surface-raised/20">
-                    <td className="sticky left-0 z-10 px-6 py-5 shadow-[2px_0_10px_rgba(0,0,0,0.03)] backdrop-blur-md bg-white/95" style={{ backgroundColor: 'inherit' }}>
+                    <td className="sticky left-0 z-10 px-6 py-5 shadow-[2px_0_10px_rgba(0,0,0,0.03)] backdrop-blur-md bg-surface/95" style={{ backgroundColor: 'inherit' }}>
                       <p className="text-[10px] font-bold text-text-muted uppercase tracking-[0.2em]">Daily Rate</p>
                     </td>
                     {days.map((day) => {
@@ -260,16 +260,36 @@ const AttendanceGrid = ({
 
 const SummaryCard = ({ icon: Icon, title, subtitle, items, tone }) => {
   const tones = {
-    warning: { color: '#f59e0b', bg: 'bg-orange-50/50', border: 'border-orange-100', item: 'bg-white text-orange-900 border-orange-100' },
-    error: { color: '#ef4444', bg: 'bg-rose-50/50', border: 'border-rose-100', item: 'bg-white text-rose-900 border-rose-100' },
-    success: { color: '#10b981', bg: 'bg-emerald-50/50', border: 'border-emerald-100', item: 'bg-white text-emerald-900 border-emerald-100' }
+    warning: {
+      color: '#f59e0b',
+      bg: 'bg-orange-50/50 dark:bg-orange-950/20',
+      border: 'border-orange-100 dark:border-orange-900/40',
+      item: 'bg-white dark:bg-gray-800 text-orange-900 dark:text-orange-200 border-orange-100 dark:border-orange-900/40'
+    },
+    error: {
+      color: '#ef4444',
+      bg: 'bg-rose-50/50 dark:bg-rose-950/20',
+      border: 'border-rose-100 dark:border-rose-900/40',
+      item: 'bg-white dark:bg-gray-800 text-rose-900 dark:text-rose-200 border-rose-100 dark:border-rose-900/40'
+    },
+    success: {
+      color: '#10b981',
+      bg: 'bg-emerald-50/50 dark:bg-emerald-950/20',
+      border: 'border-emerald-100 dark:border-emerald-900/40',
+      item: 'bg-white dark:bg-gray-800 text-emerald-900 dark:text-emerald-200 border-emerald-100 dark:border-emerald-900/40'
+    }
   }
-  const config = tones[tone] || { color: 'var(--color-primary)', bg: 'bg-surface-raised', border: 'border-border', item: 'bg-white text-text-primary border-border' }
+  const config = tones[tone] || {
+    color: 'var(--color-primary)',
+    bg: 'bg-surface-raised',
+    border: 'border-border',
+    item: 'bg-surface text-text-primary border-border'
+  }
 
   return (
     <div className={cn("rounded-[28px] border p-6 shadow-sm flex flex-col transition-all hover:shadow-md", config.bg, config.border)}>
       <div className="flex items-center gap-4 mb-6">
-        <div className="h-11 w-11 rounded-[18px] bg-white flex items-center justify-center shadow-sm border border-white" style={{ color: config.color }}>
+        <div className="h-11 w-11 rounded-[18px] bg-white dark:bg-gray-800 flex items-center justify-center shadow-sm border border-white dark:border-gray-700" style={{ color: config.color }}>
           <Icon size={20} />
         </div>
         <div>

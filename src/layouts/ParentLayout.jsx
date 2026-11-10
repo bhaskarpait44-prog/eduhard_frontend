@@ -59,16 +59,30 @@ export default function ParentLayout() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col md:flex-row">
+    <div
+      className="min-h-screen flex flex-col md:flex-row"
+      style={{ backgroundColor: 'var(--color-bg)' }}
+    >
       {/* Desktop Sidebar */}
-      <aside className="hidden md:flex w-72 bg-white border-r border-gray-100 flex-col sticky top-0 h-screen">
+      <aside
+        className="hidden md:flex w-72 flex-col sticky top-0 h-screen"
+        style={{
+          backgroundColor: 'var(--color-surface)',
+          borderRight: '1px solid var(--color-border)',
+        }}
+      >
         <div className="p-8">
           <div className="flex items-center gap-3 mb-10">
-            <div className="w-10 h-10 rounded-xl bg-indigo-600 flex items-center justify-center text-white font-bold shadow-lg shadow-indigo-200">
+            <div className="w-10 h-10 rounded-xl bg-indigo-600 flex items-center justify-center text-white font-bold shadow-lg shadow-indigo-200/40">
               EC
             </div>
             <div>
-              <h1 className="text-lg font-bold text-gray-900 tracking-tight">EduCore</h1>
+              <h1
+                className="text-lg font-bold tracking-tight"
+                style={{ color: 'var(--color-text-primary)' }}
+              >
+                EduCore
+              </h1>
               <p className="text-[10px] font-bold text-indigo-500 uppercase tracking-widest leading-none">Parent Portal</p>
             </div>
           </div>
@@ -83,10 +97,13 @@ export default function ParentLayout() {
                   to={item.path}
                   className={({ isActive }) => `
                     flex items-center gap-3 px-4 py-3 rounded-2xl text-sm font-bold transition-all
-                    ${isActive 
-                      ? 'bg-indigo-50 text-indigo-600 shadow-sm' 
-                      : 'text-gray-500 hover:bg-gray-50 hover:text-gray-900'}
+                    ${isActive
+                      ? 'bg-indigo-50 text-indigo-600 dark:bg-indigo-950/60 dark:text-indigo-400'
+                      : 'hover:bg-surface-raised'}
                   `}
+                  style={({ isActive }) => ({
+                    color: isActive ? undefined : 'var(--color-text-secondary)',
+                  })}
                 >
                   <Icon size={18} />
                   {item.label}
@@ -101,18 +118,35 @@ export default function ParentLayout() {
           </nav>
         </div>
 
-        <div className="mt-auto p-6 border-t border-gray-50">
-          <div className="flex items-center gap-3 p-3 rounded-2xl bg-gray-50">
-            <div className="w-10 h-10 rounded-xl bg-indigo-100 text-indigo-600 flex items-center justify-center font-bold text-sm">
+        <div
+          className="mt-auto p-6"
+          style={{ borderTop: '1px solid var(--color-border)' }}
+        >
+          <div
+            className="flex items-center gap-3 p-3 rounded-2xl"
+            style={{ backgroundColor: 'var(--color-surface-raised)' }}
+          >
+            <div className="w-10 h-10 rounded-xl bg-indigo-100 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 flex items-center justify-center font-bold text-sm">
               {initials}
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-bold text-gray-900 truncate">{user?.name || 'Parent'}</p>
-              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Guardian</p>
+              <p
+                className="text-sm font-bold truncate"
+                style={{ color: 'var(--color-text-primary)' }}
+              >
+                {user?.name || 'Parent'}
+              </p>
+              <p
+                className="text-[10px] font-bold uppercase tracking-wider"
+                style={{ color: 'var(--color-text-muted)' }}
+              >
+                Guardian
+              </p>
             </div>
-            <button 
+            <button
               onClick={handleLogout}
-              className="p-2 text-gray-400 hover:text-red-500 transition-colors"
+              className="p-2 hover:text-red-500 transition-colors"
+              style={{ color: 'var(--color-text-muted)' }}
             >
               <LogOut size={18} />
             </button>
@@ -122,14 +156,28 @@ export default function ParentLayout() {
 
       {/* Main Content */}
       <main className="flex-1 flex flex-col min-w-0 pb-20 md:pb-0">
-        <header className="h-16 md:h-20 bg-white/80 backdrop-blur-md border-b border-gray-100 flex items-center justify-between px-6 sticky top-0 z-30">
+        <header
+          className="h-16 md:h-20 backdrop-blur-md flex items-center justify-between px-6 sticky top-0 z-30"
+          style={{
+            backgroundColor: 'var(--color-surface)',
+            borderBottom: '1px solid var(--color-border)',
+          }}
+        >
           <div className="md:hidden flex items-center gap-2">
             <div className="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center text-white font-bold text-sm">EC</div>
-            <span className="font-bold text-gray-900">EduCore</span>
+            <span
+              className="font-bold"
+              style={{ color: 'var(--color-text-primary)' }}
+            >
+              EduCore
+            </span>
           </div>
 
           <div className="hidden md:block">
-            <h2 className="text-sm font-bold text-gray-400 uppercase tracking-widest">
+            <h2
+              className="text-sm font-bold uppercase tracking-widest"
+              style={{ color: 'var(--color-text-muted)' }}
+            >
               {PARENT_MENU.find(m => m.path === location.pathname)?.label || 'Parent Portal'}
             </h2>
           </div>
@@ -137,14 +185,23 @@ export default function ParentLayout() {
           <div className="flex items-center gap-4">
             <button
               onClick={() => navigate(ROUTES.PARENT_NOTICES)}
-              className="w-10 h-10 rounded-xl bg-gray-50 flex items-center justify-center text-gray-500 hover:bg-gray-100 transition-all relative"
+              className="w-10 h-10 rounded-xl flex items-center justify-center transition-all relative"
+              style={{
+                backgroundColor: 'var(--color-surface-raised)',
+                color: 'var(--color-text-secondary)',
+              }}
+              onMouseEnter={e => { e.currentTarget.style.backgroundColor = 'var(--color-border)' }}
+              onMouseLeave={e => { e.currentTarget.style.backgroundColor = 'var(--color-surface-raised)' }}
             >
               <Bell size={20} />
               {unreadNotices > 0 && (
-                <span className="absolute top-2.5 right-2.5 w-2 h-2 bg-red-500 rounded-full border-2 border-white" />
+                <span
+                  className="absolute top-2.5 right-2.5 w-2 h-2 bg-red-500 rounded-full"
+                  style={{ border: '2px solid var(--color-surface)' }}
+                />
               )}
             </button>
-            <div className="w-10 h-10 rounded-xl bg-indigo-50 flex items-center justify-center text-indigo-600 font-bold md:hidden">
+            <div className="w-10 h-10 rounded-xl bg-indigo-50 dark:bg-indigo-950/60 flex items-center justify-center text-indigo-600 dark:text-indigo-400 font-bold md:hidden">
               {initials}
             </div>
           </div>
@@ -156,7 +213,13 @@ export default function ParentLayout() {
       </main>
 
       {/* Mobile Navigation */}
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 px-6 py-3 z-50 flex items-center justify-between shadow-[0_-5px_20px_rgba(0,0,0,0.05)]">
+      <nav
+        className="md:hidden fixed bottom-0 left-0 right-0 px-6 py-3 z-50 flex items-center justify-between shadow-[0_-5px_20px_rgba(0,0,0,0.08)]"
+        style={{
+          backgroundColor: 'var(--color-surface)',
+          borderTop: '1px solid var(--color-border)',
+        }}
+      >
         {MOBILE_TABS.map((tab) => {
           const Icon = tab.icon
           const active = location.pathname === tab.path
@@ -164,9 +227,10 @@ export default function ParentLayout() {
             <NavLink
               key={tab.path}
               to={tab.path}
-              className={`flex flex-col items-center gap-1 transition-all ${active ? 'text-indigo-600' : 'text-gray-400'}`}
+              className={`flex flex-col items-center gap-1 transition-all ${active ? 'text-indigo-600 dark:text-indigo-400' : ''}`}
+              style={({ isActive }) => ({ color: isActive ? undefined : 'var(--color-text-muted)' })}
             >
-              <div className={`p-2 rounded-xl transition-all ${active ? 'bg-indigo-50' : ''}`}>
+              <div className={`p-2 rounded-xl transition-all ${active ? 'bg-indigo-50 dark:bg-indigo-950/60' : ''}`}>
                 <Icon size={20} />
               </div>
               <span className="text-[10px] font-bold uppercase tracking-tight">{tab.label}</span>

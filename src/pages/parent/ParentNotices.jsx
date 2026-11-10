@@ -67,28 +67,28 @@ export default function ParentNotices() {
     <div className="max-w-6xl mx-auto space-y-8 pb-10">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div className="flex items-center gap-4">
-          <div className="p-3 bg-amber-50 rounded-2xl">
-            <Bell className="text-amber-600" size={24} />
+          <div className="p-3 bg-amber-50 dark:bg-amber-950/40 rounded-2xl">
+            <Bell className="text-amber-600 dark:text-amber-400" size={24} />
           </div>
           <div>
-            <h1 className="text-xl font-black text-gray-900 tracking-tight">Announcements</h1>
-            <p className="text-sm font-medium text-gray-500">Official updates and notices from school</p>
+            <h1 className="text-xl font-black text-gray-900 dark:text-white tracking-tight">Announcements</h1>
+            <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Official updates and notices from school</p>
           </div>
         </div>
       </div>
 
       {isLoading ? (
         <div className="flex flex-col items-center justify-center p-20">
-          <div className="w-10 h-10 rounded-full border-4 border-amber-100 border-t-amber-600 animate-spin mb-4" />
-          <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">Loading Updates...</p>
+          <div className="w-10 h-10 rounded-full border-4 border-amber-100 dark:border-amber-900 border-t-amber-600 animate-spin mb-4" />
+          <p className="text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest">Loading Updates...</p>
         </div>
       ) : error ? (
-        <div className="flex flex-col items-center justify-center text-center p-12 bg-red-50/50 rounded-[32px] border border-red-100/50 max-w-lg mx-auto">
-          <div className="w-12 h-12 rounded-2xl bg-red-100 text-red-600 flex items-center justify-center mb-4">
-            <Bell size={24} className="rotate-12 animate-pulse text-red-600" />
+        <div className="flex flex-col items-center justify-center text-center p-12 bg-red-50/50 dark:bg-red-950/30 rounded-[32px] border border-red-100/50 dark:border-red-900/50 max-w-lg mx-auto">
+          <div className="w-12 h-12 rounded-2xl bg-red-100 dark:bg-red-900/50 text-red-600 dark:text-red-400 flex items-center justify-center mb-4">
+            <Bell size={24} className="rotate-12 animate-pulse text-red-600 dark:text-red-400" />
           </div>
-          <h3 className="text-lg font-black text-red-950 mb-2">Connection Problem</h3>
-          <p className="text-sm font-medium text-red-600/80 mb-6">{error}</p>
+          <h3 className="text-lg font-black text-red-950 dark:text-red-200 mb-2">Connection Problem</h3>
+          <p className="text-sm font-medium text-red-600/80 dark:text-red-400 mb-6">{error}</p>
           <Button variant="secondary" onClick={fetchNotices}>
             Try Again
           </Button>
@@ -110,8 +110,8 @@ export default function ParentNotices() {
                 layout
                 exit={{ opacity: 0, scale: 0.95 }}
                 onClick={() => !notice.is_read && handleMarkRead(notice.id, notice.source || 'unified')}
-                className={`bg-white rounded-[32px] border transition-all overflow-hidden cursor-pointer ${
-                  !notice.is_read ? 'border-amber-200 shadow-xl shadow-amber-50 ring-2 ring-amber-50' : 'border-gray-100 shadow-sm opacity-90'
+                className={`bg-white dark:bg-gray-800 rounded-[32px] border transition-all overflow-hidden cursor-pointer ${
+                  !notice.is_read ? 'border-amber-200 dark:border-amber-700/60 shadow-xl shadow-amber-50 dark:shadow-none ring-2 ring-amber-50 dark:ring-amber-950/40' : 'border-gray-100 dark:border-gray-700 shadow-sm opacity-90'
                 }`}
               >
                 <div className="p-8">
@@ -119,9 +119,9 @@ export default function ParentNotices() {
                     <div className="space-y-1">
                       <div className="flex items-center gap-2 mb-2">
                         <span className={`px-2 py-0.5 rounded-md text-[10px] font-black uppercase tracking-widest ${
-                          notice.priority === 'urgent' ? 'bg-red-50 text-red-600 border border-red-100' :
-                          notice.priority === 'normal' ? 'bg-indigo-50 text-indigo-600 border border-indigo-100' :
-                          'bg-blue-50 text-blue-600 border border-blue-100'
+                          notice.priority === 'urgent' ? 'bg-red-50 dark:bg-red-950/40 text-red-600 dark:text-red-400 border border-red-100 dark:border-red-900/50' :
+                          notice.priority === 'normal' ? 'bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400 border border-indigo-100 dark:border-indigo-900/50' :
+                          'bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 border border-blue-100 dark:border-blue-900/50'
                         }`}>
                           {notice.priority}
                         </span>
@@ -129,19 +129,19 @@ export default function ParentNotices() {
                           <span className="px-2 py-0.5 rounded-md bg-amber-500 text-white text-[10px] font-black uppercase tracking-widest">New</span>
                         )}
                         {notice.attachment_path && (
-                          <div className="p-1.5 bg-gray-50 rounded-lg border border-gray-100 text-gray-400">
+                          <div className="p-1.5 bg-gray-50 dark:bg-gray-900/50 rounded-lg border border-gray-100 dark:border-gray-700 text-gray-400 dark:text-gray-500">
                             <Paperclip size={12} />
                           </div>
                         )}
                         {notice.target_ward_name && (
-                          <div className="flex items-center gap-1.5 px-3 py-1 bg-indigo-50 rounded-lg text-indigo-600 border border-indigo-100">
+                          <div className="flex items-center gap-1.5 px-3 py-1 bg-indigo-50 dark:bg-indigo-950/40 rounded-lg text-indigo-600 dark:text-indigo-400 border border-indigo-100 dark:border-indigo-900/50">
                             <User size={12} />
                             <span className="text-[11px] font-bold uppercase tracking-wider">For {notice.target_ward_name}</span>
                           </div>
                         )}
                       </div>
-                      <h3 className="text-xl font-black text-gray-900 leading-tight">{notice.title}</h3>
-                      <div className="flex items-center gap-4 text-gray-400 mt-2">
+                      <h3 className="text-xl font-black text-gray-900 dark:text-gray-100 leading-tight">{notice.title}</h3>
+                      <div className="flex items-center gap-4 text-gray-400 dark:text-gray-500 mt-2">
                         <div className="flex items-center gap-1.5">
                           <Calendar size={13} />
                           <span className="text-[11px] font-bold uppercase tracking-wider">{formatDate(notice.created_at, 'MMM dd, yyyy')}</span>
@@ -155,8 +155,8 @@ export default function ParentNotices() {
                     
                     {notice.audience !== 'school_wide' && (
                       <div className="flex flex-col items-end">
-                        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Target Audience</p>
-                        <div className="flex items-center gap-1.5 px-3 py-1 bg-gray-50 rounded-lg text-gray-600 border border-gray-100">
+                        <p className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-1">Target Audience</p>
+                        <div className="flex items-center gap-1.5 px-3 py-1 bg-gray-50 dark:bg-gray-900/50 rounded-lg text-gray-600 dark:text-gray-300 border border-gray-100 dark:border-gray-700">
                           <ShieldCheck size={12} />
                           <span className="text-[11px] font-bold capitalize">{notice.audience}</span>
                         </div>
@@ -164,29 +164,29 @@ export default function ParentNotices() {
                     )}
                   </div>
                   
-                  <p className="text-sm text-gray-600 leading-relaxed whitespace-pre-wrap">
+                  <p className="text-sm text-gray-600 dark:text-gray-300 leading-relaxed whitespace-pre-wrap">
                     {notice.body || notice.content || ''}
                   </p>
 
                   {notice.attachment_path && (
-                    <div className="mt-6 flex items-center gap-4 p-4 bg-indigo-50/50 rounded-2xl border border-indigo-100/50 group hover:bg-indigo-50 transition-all cursor-pointer" onClick={(e) => { e.stopPropagation(); window.open(getFileUrl(notice.attachment_path), '_blank'); }}>
-                      <div className="p-3 bg-indigo-600 text-white rounded-xl shadow-lg shadow-indigo-200 group-hover:scale-110 transition-transform">
+                    <div className="mt-6 flex items-center gap-4 p-4 bg-indigo-50/50 dark:bg-indigo-950/30 rounded-2xl border border-indigo-100/50 dark:border-indigo-900/40 group hover:bg-indigo-50 dark:hover:bg-indigo-950/50 transition-all cursor-pointer" onClick={(e) => { e.stopPropagation(); window.open(getFileUrl(notice.attachment_path), '_blank'); }}>
+                      <div className="p-3 bg-indigo-600 text-white rounded-xl shadow-lg shadow-indigo-200/40 group-hover:scale-110 transition-transform">
                         <FileText size={20} />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-black text-indigo-900 truncate">Attachment Document</p>
+                        <p className="text-sm font-black text-indigo-900 dark:text-indigo-200 truncate">Attachment Document</p>
                         <p className="text-[10px] font-bold text-indigo-400 uppercase tracking-widest">Official PDF Resource</p>
                       </div>
-                      <ChevronRight size={20} className="text-indigo-300 group-hover:translate-x-1 transition-transform" />
+                      <ChevronRight size={20} className="text-indigo-300 dark:text-indigo-400 group-hover:translate-x-1 transition-transform" />
                     </div>
                   )}
 
-                  <div className="mt-8 pt-6 border-t border-gray-50 flex items-center justify-between">
-                    <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest italic">
+                  <div className="mt-8 pt-6 border-t border-gray-100 dark:border-gray-700 flex items-center justify-between">
+                    <span className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest italic">
                       Reference ID: #{notice.id.toString().padStart(6, '0')}
                     </span>
-                    <div className="flex items-center gap-2 text-xs font-black text-indigo-600 uppercase tracking-widest">
-                      Marked as viewed <ShieldCheck size={14} className={notice.is_read ? 'text-green-500' : 'text-gray-300'} />
+                    <div className="flex items-center gap-2 text-xs font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-widest">
+                      Marked as viewed <ShieldCheck size={14} className={notice.is_read ? 'text-green-500' : 'text-gray-300 dark:text-gray-600'} />
                     </div>
                   </div>
                 </div>

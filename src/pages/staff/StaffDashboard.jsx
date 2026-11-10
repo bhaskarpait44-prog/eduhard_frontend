@@ -250,7 +250,7 @@ const StaffDashboard = () => {
                 >
                   <div className={cn(
                     'mt-0.5 w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0',
-                    !notice.is_read ? 'bg-violet-100 text-violet-600' : 'bg-gray-100 text-gray-400'
+                    !notice.is_read ? 'bg-violet-100 dark:bg-violet-950/60 text-violet-600 dark:text-violet-400' : 'bg-gray-100 dark:bg-gray-800 text-gray-400 dark:text-gray-500'
                   )}>
                     {notice.is_read ? <CheckCircle2 size={13} /> : <AlertCircle size={13} />}
                   </div>

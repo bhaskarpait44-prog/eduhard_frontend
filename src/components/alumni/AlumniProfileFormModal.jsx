@@ -263,13 +263,13 @@ const AlumniProfileFormModal = ({ id, onClose, onSuccess }) => {
                     />
                   </div>
 
-                  <div className="space-y-1.5 p-4 bg-amber-50 rounded-2xl border border-amber-100">
-                    <label className="text-xs font-bold text-amber-800 ml-1">Internal Admin Notes (Private)</label>
+                  <div className="space-y-1.5 p-4 bg-amber-50 dark:bg-amber-950/30 rounded-2xl border border-amber-100 dark:border-amber-900/50">
+                    <label className="text-xs font-bold text-amber-800 dark:text-amber-200 ml-1">Internal Admin Notes (Private)</label>
                     <textarea
                       {...register('admin_notes')}
                       placeholder="Confidential notes about this alumni..."
                       rows={2}
-                      className="w-full px-4 py-2.5 bg-white border border-amber-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-amber-200 transition-all resize-none"
+                      className="w-full px-4 py-2.5 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 border border-amber-200 dark:border-amber-900/60 rounded-xl text-sm outline-none focus:ring-2 focus:ring-amber-200 dark:focus:ring-amber-800 transition-all resize-none"
                     />
                   </div>
                 </div>

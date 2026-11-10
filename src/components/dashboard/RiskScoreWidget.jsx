@@ -29,7 +29,7 @@ const RiskScoreWidget = ({ limit = 5, sessionId }) => {
 
   if (isLoading) {
     return (
-      <Card className="animate-pulse bg-white border-brand/10 p-6">
+      <Card className="animate-pulse bg-white dark:bg-gray-800 border-brand/10 p-6">
         <div className="flex items-center justify-between mb-6">
           <div className="h-5 w-32 bg-brand/5 rounded" />
           <div className="h-5 w-16 bg-brand/5 rounded" />

@@ -65,7 +65,7 @@ const AIBriefingPanel = ({ sessionId }) => {
           size="sm" 
           onClick={fetchDashboardSummary} 
           icon={RefreshCw}
-          className="bg-white border-red-200 text-red-700 hover:bg-red-50"
+          className="bg-white dark:bg-gray-800 border-red-200 dark:border-red-900/60 text-red-700 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/40"
         >
           Retry
         </Button>
@@ -81,7 +81,7 @@ const AIBriefingPanel = ({ sessionId }) => {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5, ease: "easeOut" }}
     >
-      <Card className="relative overflow-hidden border-brand/20 bg-white shadow-xl shadow-brand/5 group">
+      <Card className="relative overflow-hidden border-brand/20 bg-white dark:bg-gray-800 shadow-xl shadow-brand/5 group">
         {/* Subtle Decorative Elements */}
         <div className="absolute top-0 right-0 -mt-8 -mr-8 w-48 h-48 bg-brand/5 rounded-full blur-3xl group-hover:bg-brand/10 transition-colors duration-700" />
         <div className="absolute bottom-0 left-0 -mb-12 -ml-12 w-64 h-64 bg-brand/5 rounded-full blur-3xl group-hover:bg-brand/10 transition-colors duration-700" />

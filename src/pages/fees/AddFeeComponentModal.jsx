@@ -245,7 +245,7 @@ const AddFeeComponentModal = ({ open, onClose, sessionId, classId: preSelectedCl
               {isBulk ? (
                 <div className="grid grid-cols-2 gap-2 p-3 rounded-xl border border-dashed border-gray-200 dark:border-gray-700 bg-surface-raised/30 max-h-[150px] overflow-y-auto">
                   {classes.map(c => (
-                    <label key={c.value} className="flex items-center gap-2 p-2 rounded-lg hover:bg-white transition-colors cursor-pointer group">
+                    <label key={c.value} className="flex items-center gap-2 p-2 rounded-lg hover:bg-white dark:hover:bg-gray-800 transition-colors cursor-pointer group">
                       <input 
                         type="checkbox" 
                         className="rounded border-gray-300 dark:border-gray-600 text-brand focus:ring-brand/20 w-4 h-4"

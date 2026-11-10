@@ -181,7 +181,7 @@ const ReceiptPrint = ({ receipt, schoolProfile }) => {
         <PDFDownloadLink
           document={<FeeReceiptPDF data={{ school, receipt: { ...receipt, receipt_no: receipt.receipt_no || `RCP-${receipt.id}` } }} />}
           fileName={`Receipt_${receipt.receipt_no || `RCP-${receipt.id}`}.pdf`}
-          className="flex items-center gap-2 px-4 py-2 text-xs font-bold bg-white border border-slate-200 text-slate-600 rounded-xl hover:bg-slate-50 transition-all active:scale-95 shadow-sm"
+          className="flex items-center gap-2 px-4 py-2 text-xs font-bold bg-white dark:bg-gray-800 border border-slate-200 dark:border-gray-700 text-slate-600 dark:text-slate-300 rounded-xl hover:bg-slate-50 dark:hover:bg-gray-750 transition-all active:scale-95 shadow-sm"
         >
           {({ loading }) => (
             <>
@@ -250,7 +250,7 @@ const ReceiptPrint = ({ receipt, schoolProfile }) => {
 
         {/* Separator for print (Dashed line) */}
         <div className="copy-separator border-t-2 border-dashed border-slate-200 my-10 relative print:my-0 print:border-none">
-          <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-white px-4 text-[9px] font-black text-slate-300 uppercase tracking-[0.3em] print:hidden">
+          <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-white dark:bg-gray-900 px-4 text-[9px] font-black text-slate-300 dark:text-slate-600 uppercase tracking-[0.3em] print:hidden">
             Cut Along This Line
           </div>
         </div>

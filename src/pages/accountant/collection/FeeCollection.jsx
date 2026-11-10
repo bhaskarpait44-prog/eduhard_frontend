@@ -536,15 +536,15 @@ const FeeCollection = () => {
                 
                 <div className="grid gap-6 md:grid-cols-2">
                   <div className="space-y-3 rounded-2xl bg-gray-50/50 dark:bg-gray-900/40 border border-gray-100/50 dark:border-gray-800/50 p-5 text-sm font-semibold text-gray-500 dark:text-gray-400">
-                    <div className="flex justify-between border-b border-gray-100/40 pb-2">
+                    <div className="flex justify-between border-b border-gray-100/40 dark:border-gray-800/60 pb-2">
                       <span>Student:</span>
                       <span className="font-extrabold text-gray-900 dark:text-white">{student.first_name} {student.last_name}</span>
                     </div>
-                    <div className="flex justify-between border-b border-gray-100/40 py-2">
+                    <div className="flex justify-between border-b border-gray-100/40 dark:border-gray-800/60 py-2">
                       <span>Invoices selected:</span>
                       <span className="font-extrabold text-gray-900 dark:text-white">{selectedRows.length} item(s)</span>
                     </div>
-                    <div className="flex justify-between border-b border-gray-100/40 py-2">
+                    <div className="flex justify-between border-b border-gray-100/40 dark:border-gray-800/60 py-2">
                       <span>Payment Mode:</span>
                       <span className="font-extrabold uppercase text-gray-900 dark:text-white">{paymentData.payment_mode}</span>
                     </div>

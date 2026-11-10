@@ -49,11 +49,11 @@ export default function EnrollmentHistoryModal({ open, student, onClose }) {
             <div key={item.id} className="relative pl-8 pb-4 last:pb-0">
               {/* Timeline Connector */}
               {idx !== history.length - 1 && (
-                <div className="absolute left-[11px] top-6 bottom-0 w-0.5 bg-gray-200" />
+                <div className="absolute left-[11px] top-6 bottom-0 w-0.5 bg-gray-200 dark:bg-gray-700" />
               )}
               
               {/* Timeline Dot */}
-              <div className={`absolute left-0 top-1 w-6 h-6 rounded-full flex items-center justify-center border-2 bg-white z-10`} style={{ borderColor: item.status === 'active' ? '#16a34a' : '#cbd5e1' }}>
+              <div className={`absolute left-0 top-1 w-6 h-6 rounded-full flex items-center justify-center border-2 bg-white dark:bg-gray-800 z-10`} style={{ borderColor: item.status === 'active' ? '#16a34a' : '#cbd5e1' }}>
                 {item.leaving_type === 'graduated' ? <GraduationCap size={12} className="text-blue-600" /> : 
                  item.leaving_type === 'left' ? <LogOut size={12} className="text-red-600" /> :
                  <BookOpen size={12} className="text-slate-500" />}

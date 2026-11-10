@@ -23,18 +23,18 @@ export default function ParentWards() {
   return (
     <div className="max-w-6xl mx-auto space-y-8 pb-10">
       <div className="flex items-center gap-4">
-        <div className="p-3 bg-indigo-50 rounded-2xl">
-          <Users className="text-indigo-600" size={24} />
+        <div className="p-3 bg-indigo-50 dark:bg-indigo-950/40 rounded-2xl">
+          <Users className="text-indigo-600 dark:text-indigo-400" size={24} />
         </div>
         <div>
-          <h1 className="text-xl font-black text-gray-900 tracking-tight">Family Wards</h1>
-          <p className="text-sm font-medium text-gray-500">Students linked to your guardian account</p>
+          <h1 className="text-xl font-black text-gray-900 dark:text-white tracking-tight">Family Wards</h1>
+          <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Students linked to your guardian account</p>
         </div>
       </div>
 
       {isLoading && wards.length === 0 ? (
         <div className="flex justify-center p-20">
-          <div className="w-10 h-10 rounded-full border-4 border-indigo-100 border-t-indigo-600 animate-spin" />
+          <div className="w-10 h-10 rounded-full border-4 border-indigo-100 dark:border-indigo-900 border-t-indigo-600 animate-spin" />
         </div>
       ) : wards.length === 0 ? (
         <EmptyState title="No students linked" description="Please contact the school administration to link your children." />
@@ -44,10 +44,10 @@ export default function ParentWards() {
             <div 
               key={ward.id} 
               onClick={() => handleSelectWard(ward.id)}
-              className={`bg-white rounded-[32px] border transition-all cursor-pointer group relative overflow-hidden ${
+              className={`bg-white dark:bg-gray-800 rounded-[32px] border transition-all cursor-pointer group relative overflow-hidden ${
                 selectedWardId === ward.id 
-                  ? 'border-indigo-600 shadow-xl shadow-indigo-100 ring-4 ring-indigo-50' 
-                  : 'border-gray-100 shadow-sm hover:border-indigo-200'
+                  ? 'border-indigo-600 dark:border-indigo-500 shadow-xl shadow-indigo-100 dark:shadow-none ring-4 ring-indigo-50 dark:ring-indigo-950/50' 
+                  : 'border-gray-100 dark:border-gray-700 shadow-sm hover:border-indigo-200 dark:hover:border-indigo-800'
               }`}
             >
               {selectedWardId === ward.id && (
@@ -61,37 +61,37 @@ export default function ParentWards() {
               <div className="p-8">
                 <div className="flex items-center gap-5 mb-8">
                   <div className={`w-20 h-20 rounded-[24px] flex items-center justify-center text-3xl font-black transition-transform group-hover:scale-105 ${
-                    selectedWardId === ward.id ? 'bg-indigo-600 text-white' : 'bg-indigo-50 text-indigo-600'
+                    selectedWardId === ward.id ? 'bg-indigo-600 text-white' : 'bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400'
                   }`}>
                     {ward.first_name.charAt(0)}
                   </div>
                   <div>
-                    <h2 className="text-xl font-black text-gray-900">{ward.first_name} {ward.last_name}</h2>
-                    <p className="text-xs font-bold text-gray-400 uppercase tracking-[0.2em] mt-1">{ward.admission_no}</p>
+                    <h2 className="text-xl font-black text-gray-900 dark:text-gray-100">{ward.first_name} {ward.last_name}</h2>
+                    <p className="text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] mt-1">{ward.admission_no}</p>
                     <div className="flex items-center gap-2 mt-3">
-                      <span className="px-2 py-0.5 rounded-md bg-green-50 text-green-600 text-[10px] font-bold uppercase tracking-widest border border-green-100">Active Student</span>
+                      <span className="px-2 py-0.5 rounded-md bg-green-50 dark:bg-green-950/40 text-green-600 dark:text-green-400 text-[10px] font-bold uppercase tracking-widest border border-green-100 dark:border-green-900/50">Active Student</span>
                     </div>
                   </div>
                 </div>
                 
                 <div className="grid grid-cols-2 gap-3">
-                  <div className="p-4 rounded-2xl bg-gray-50 border border-gray-50 space-y-1">
-                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest flex items-center gap-1.5">
+                  <div className="p-4 rounded-2xl bg-gray-50 dark:bg-gray-900/50 border border-gray-100 dark:border-gray-700 space-y-1">
+                    <p className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest flex items-center gap-1.5">
                       <GraduationCap size={12} /> Class
                     </p>
-                    <p className="text-sm font-black text-gray-900">{ward.class_name || 'N/A'}</p>
+                    <p className="text-sm font-black text-gray-900 dark:text-gray-100">{ward.class_name || 'N/A'}</p>
                   </div>
-                  <div className="p-4 rounded-2xl bg-gray-50 border border-gray-50 space-y-1">
-                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest flex items-center gap-1.5">
+                  <div className="p-4 rounded-2xl bg-gray-50 dark:bg-gray-900/50 border border-gray-100 dark:border-gray-700 space-y-1">
+                    <p className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest flex items-center gap-1.5">
                       <MapPin size={12} /> Section
                     </p>
-                    <p className="text-sm font-black text-gray-900">{ward.section_name || 'General'}</p>
+                    <p className="text-sm font-black text-gray-900 dark:text-gray-100">{ward.section_name || 'General'}</p>
                   </div>
                 </div>
 
-                <div className="mt-8 pt-6 border-t border-gray-50 flex items-center justify-between">
-                  <span className="text-xs font-bold text-gray-400 uppercase tracking-widest">Enrollment ID: {ward.enrollment_id}</span>
-                  <div className="flex items-center gap-2 text-sm font-black text-indigo-600 group-hover:gap-4 transition-all">
+                <div className="mt-8 pt-6 border-t border-gray-100 dark:border-gray-700 flex items-center justify-between">
+                  <span className="text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest">Enrollment ID: {ward.enrollment_id}</span>
+                  <div className="flex items-center gap-2 text-sm font-black text-indigo-600 dark:text-indigo-400 group-hover:gap-4 transition-all">
                     Switch To Portal <ArrowRight size={18} />
                   </div>
                 </div>

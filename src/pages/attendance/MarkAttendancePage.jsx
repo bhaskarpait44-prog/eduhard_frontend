@@ -277,7 +277,7 @@ const MarkAttendancePage = () => {
         >
           {requiresReason && (
             <div className="mb-6 p-5 rounded-2xl border border-orange-200 bg-orange-50/20 max-w-2xl">
-              <label className="block text-xs font-bold text-orange-800 uppercase tracking-widest mb-2.5">
+              <label className="block text-xs font-bold text-orange-800 dark:text-orange-300 uppercase tracking-widest mb-2.5">
                 Modification Reason Required (minimum 10 characters)
               </label>
               <textarea
@@ -285,14 +285,14 @@ const MarkAttendancePage = () => {
                 onChange={(e) => setReason(e.target.value)}
                 rows={2}
                 placeholder="Explain why you are editing or marking attendance for a past or pre-marked date..."
-                className="w-full rounded-2xl border border-orange-200 px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-orange-100 transition-all bg-white font-medium"
+                className="w-full rounded-2xl border border-orange-200 dark:border-orange-800 px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-orange-100 dark:focus:ring-orange-900 transition-all bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 font-medium"
               />
             </div>
           )}
 
-          <div className="mb-6 p-4 rounded-2xl bg-amber-50/50 border border-amber-100 flex items-start gap-3 max-w-2xl">
-            <Info className="text-amber-600 shrink-0 mt-0.5" size={16} />
-            <p className="text-xs font-semibold text-amber-900 leading-normal">
+          <div className="mb-6 p-4 rounded-2xl bg-amber-50/50 dark:bg-amber-950/30 border border-amber-100 dark:border-amber-900/50 flex items-start gap-3 max-w-2xl">
+            <Info className="text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" size={16} />
+            <p className="text-xs font-semibold text-amber-900 dark:text-amber-200 leading-normal">
               <strong>Notice:</strong> Eduhard operates on an exceptions-only marking pattern. Any student not explicitly marked Absent, Late, or Half Day will default to <strong>Present</strong>.
             </p>
           </div>

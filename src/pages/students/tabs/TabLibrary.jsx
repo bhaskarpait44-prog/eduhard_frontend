@@ -43,10 +43,10 @@ export default function TabLibrary({ student }) {
   }
 
   return (
-    <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
-      <div className="p-4 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
-        <h3 className="text-sm font-bold text-gray-900 flex items-center gap-2">
-          <Library size={16} className="text-indigo-600" /> Library
+    <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm overflow-hidden">
+      <div className="p-4 border-b border-gray-100 dark:border-gray-700 flex justify-between items-center bg-gray-50/50 dark:bg-gray-900/40">
+        <h3 className="text-sm font-bold text-gray-900 dark:text-gray-100 flex items-center gap-2">
+          <Library size={16} className="text-indigo-600 dark:text-indigo-400" /> Library
         </h3>
         <Select
           size="sm"
@@ -61,7 +61,7 @@ export default function TabLibrary({ student }) {
         {loading ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {[1, 2, 3].map((i) => (
-              <div key={i} className="rounded-xl border border-gray-100 bg-gray-50 animate-pulse h-32" />
+              <div key={i} className="rounded-xl border border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/40 animate-pulse h-32" />
             ))}
           </div>
         ) : issues.length > 0 ? (
@@ -72,8 +72,8 @@ export default function TabLibrary({ student }) {
           </div>
         ) : (
           <div className="p-12 text-center">
-            <BookOpen size={48} className="mx-auto text-gray-200 mb-3" />
-            <p className="text-sm text-gray-400 font-medium">No library records found.</p>
+            <BookOpen size={48} className="mx-auto text-gray-200 dark:text-gray-700 mb-3" />
+            <p className="text-sm text-gray-400 dark:text-gray-500 font-medium">No library records found.</p>
           </div>
         )}
       </div>
@@ -86,26 +86,26 @@ const BookCard = ({ issue }) => {
   const isReturned = issue.status === 'returned'
 
   const statusConfig = {
-    returned: { icon: CheckCircle, color: 'text-green-500', bg: 'bg-green-50', label: 'Returned' },
-    overdue: { icon: AlertCircle, color: 'text-red-500', bg: 'bg-red-50', label: 'Overdue' },
-    issued: { icon: Clock, color: 'text-indigo-500', bg: 'bg-indigo-50', label: 'Issued' },
+    returned: { icon: CheckCircle, color: 'text-green-500 dark:text-green-400', bg: 'bg-green-50 dark:bg-green-950/40', label: 'Returned' },
+    overdue: { icon: AlertCircle, color: 'text-red-500 dark:text-red-400', bg: 'bg-red-50 dark:bg-red-950/40', label: 'Overdue' },
+    issued: { icon: Clock, color: 'text-indigo-500 dark:text-indigo-400', bg: 'bg-indigo-50 dark:bg-indigo-950/40', label: 'Issued' },
   }
   const cfg = statusConfig[issue.status] || statusConfig.issued
   const StatusIcon = cfg.icon
 
   return (
-    <div className={`rounded-xl border shadow-sm overflow-hidden hover:shadow-md transition-shadow group ${isOverdue ? 'border-red-200' : 'border-gray-100'}`}>
+    <div className={`rounded-xl border shadow-sm overflow-hidden hover:shadow-md transition-shadow group bg-white dark:bg-gray-800 ${isOverdue ? 'border-red-200 dark:border-red-900/60' : 'border-gray-100 dark:border-gray-700'}`}>
       <div className="p-4 flex gap-4">
-        <div className="h-24 w-16 rounded shadow-sm shrink-0 overflow-hidden relative border border-gray-50 bg-gradient-to-br from-indigo-50 to-white">
+        <div className="h-24 w-16 rounded shadow-sm shrink-0 overflow-hidden relative border border-gray-50 dark:border-gray-700 bg-gradient-to-br from-indigo-50 to-white dark:from-indigo-950/40 dark:to-gray-800">
           <div className="absolute inset-0 flex flex-col items-center justify-center p-1">
-            <BookOpen size={24} className="text-indigo-200" />
-            <p className="text-[6px] font-black text-indigo-300 uppercase tracking-tighter text-center mt-1">LIBRARY</p>
+            <BookOpen size={24} className="text-indigo-200 dark:text-indigo-400/50" />
+            <p className="text-[6px] font-black text-indigo-300 dark:text-indigo-400 uppercase tracking-tighter text-center mt-1">LIBRARY</p>
           </div>
-          <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-indigo-600/10 border-r border-indigo-600/5" />
+          <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-indigo-600/10 dark:bg-indigo-400/10 border-r border-indigo-600/5" />
         </div>
 
         <div className="min-w-0 flex-1 space-y-2">
-          <h4 className="text-xs font-black text-gray-900 line-clamp-2 leading-tight">{issue.book_title}</h4>
+          <h4 className="text-xs font-black text-gray-900 dark:text-gray-100 line-clamp-2 leading-tight">{issue.book_title}</h4>
 
           <div className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider ${cfg.bg} ${cfg.color}`}>
             <StatusIcon size={9} />
@@ -114,21 +114,21 @@ const BookCard = ({ issue }) => {
 
           <div className="grid grid-cols-2 gap-2">
             <div>
-              <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-0.5">Issued</p>
-              <p className="text-[10px] font-bold text-gray-700">{formatDate(issue.issue_date)}</p>
+              <p className="text-[9px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-0.5">Issued</p>
+              <p className="text-[10px] font-bold text-gray-700 dark:text-gray-300">{formatDate(issue.issue_date)}</p>
             </div>
             <div>
-              <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-0.5">
+              <p className="text-[9px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-0.5">
                 {isReturned ? 'Returned' : 'Due Date'}
               </p>
-              <p className={`text-[10px] font-bold ${isOverdue ? 'text-red-600' : 'text-gray-700'}`}>
+              <p className={`text-[10px] font-bold ${isOverdue ? 'text-red-600 dark:text-red-400' : 'text-gray-700 dark:text-gray-300'}`}>
                 {isReturned ? formatDate(issue.return_date) : formatDate(issue.due_date)}
               </p>
             </div>
           </div>
 
           {issue.fine_amount > 0 && (
-            <div className={`flex items-center gap-1 text-[9px] font-black ${issue.fine_status === 'paid' ? 'text-green-600' : 'text-red-600'}`}>
+            <div className={`flex items-center gap-1 text-[9px] font-black ${issue.fine_status === 'paid' ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
               Fine: ₹{issue.fine_amount}
               <span className="opacity-70 normal-case font-medium">({issue.fine_status})</span>
             </div>

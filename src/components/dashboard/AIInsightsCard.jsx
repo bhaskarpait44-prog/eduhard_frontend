@@ -35,7 +35,7 @@ const AIInsightsCard = ({ sessionId }) => {
 
   if (isLoading) {
     return (
-      <Card className="animate-pulse bg-white border-brand/10 p-6">
+      <Card className="animate-pulse bg-white dark:bg-gray-800 border-brand/10 p-6">
         <div className="flex items-center gap-3 mb-6">
           <div className="w-8 h-8 rounded-lg bg-brand/10" />
           <div className="h-4 w-48 bg-brand/10 rounded" />
@@ -54,19 +54,19 @@ const AIInsightsCard = ({ sessionId }) => {
 
   if (error) {
     return (
-      <Card className="bg-red-50 border-red-100 p-8 flex flex-col items-center justify-center text-center gap-4">
-        <div className="p-3 bg-red-100 rounded-full text-red-500">
+      <Card className="bg-red-50 dark:bg-red-950/30 border-red-100 dark:border-red-900/50 p-8 flex flex-col items-center justify-center text-center gap-4">
+        <div className="p-3 bg-red-100 dark:bg-red-900/50 rounded-full text-red-500 dark:text-red-400">
           <AlertTriangle size={32} />
         </div>
         <div>
-          <h3 className="text-lg font-bold text-red-900">AI Analysis Interrupted</h3>
-          <p className="text-sm text-red-700 mt-1 max-w-xs mx-auto">
+          <h3 className="text-lg font-bold text-red-900 dark:text-red-200">AI Analysis Interrupted</h3>
+          <p className="text-sm text-red-700 dark:text-red-300 mt-1 max-w-xs mx-auto">
             We encountered a technical hitch while processing the latest school metrics.
           </p>
         </div>
         <button 
           onClick={refetch}
-          className="px-6 py-2 bg-white border border-red-200 text-red-600 rounded-xl font-bold text-sm hover:bg-red-50 transition-colors shadow-sm"
+          className="px-6 py-2 bg-white dark:bg-gray-800 border border-red-200 dark:border-red-900/60 text-red-600 dark:text-red-400 rounded-xl font-bold text-sm hover:bg-red-50 dark:hover:bg-red-950/40 transition-colors shadow-sm"
         >
           Try Again
         </button>
@@ -86,7 +86,7 @@ const AIInsightsCard = ({ sessionId }) => {
       viewport={{ once: true, margin: "-100px" }}
       className="space-y-4"
     >
-      <Card className="bg-white border-brand/10 p-0 overflow-hidden relative shadow-xl shadow-brand/5">
+      <Card className="bg-white dark:bg-gray-800 border-brand/10 p-0 overflow-hidden relative shadow-xl shadow-brand/5">
         {/* Subtle Gradient Glow */}
         <div className="absolute -top-24 -right-24 w-64 h-64 bg-brand/5 rounded-full blur-3xl" />
         
